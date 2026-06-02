@@ -6,29 +6,19 @@ Superpowers Project is a local Codex plugin and skill family that extends Superp
 - roadmap and milestone pages;
 - native question UI for grilling assumptions;
 - GitHub issue mirrors and milestone linkage;
-- goal-backed issue resolution with Superpowers execution skills.
+- native `/goal` issue resolution with Superpowers execution skills.
 
 This repository is the canonical source. The live Codex install is a deployment target.
 
 ## Current Skills
 
-- `$using-milestones`: routes Milestones workflow requests to the correct skill and Superpowers method.
-- `$setup-project-milestones`: sets up `docs/milestones`, issue types/forms/labels, and project metadata.
-- `$milestones-doctor`: audits and repairs existing milestone workflows.
-- `$explore-ideas`: performs deep repo exploration and writes milestone-local idea briefs.
-- `$convert-idea-to-issue`: turns an idea brief or broad intent into one issue or an approved issue set.
-- `$milestone-writing-issue-plan`: writes implementation plans into milestone-local issue files.
-- `$resolve-issue-with-goal`: resolves one issue through GoalBuddy, tests, PR, merge, issue closure, and cleanup.
-
-## Target Skills
-
 - `$superpowers-project`: routes extension workflows.
 - `$project-context`: creates and maintains project context and milestone pages.
 - `$project-brainstorm`: runs Superpowers brainstorming with native grilling.
-- `$project-writing-plan`: writes Superpowers plans with project context.
-- `$plan-to-issue`: creates GitHub issue mirrors and GitHub issues.
+- `$project-writing-plan`: writes Superpowers implementation plans with project context.
+- `$plan-to-issue`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
 - `$resolve-issue-with-goal`: resolves one issue with native `/goal` and Superpowers execution.
-- `$project-doctor`: audits project, GitHub, and live-sync drift.
+- `$project-doctor`: audits project, GitHub, migration, and live-sync drift.
 
 ## Canonical Layout
 
@@ -39,16 +29,6 @@ skills/<skill-name>/
 scripts/install.ps1
 scripts/sync-live.ps1
 scripts/validate.ps1
-docs/milestones/PROJECT_CONTEXT.md
-```
-
-`canonical-skills/` contains the canonical user-level skill implementations.
-
-`skills/` contains plugin namespace wrappers that point to the deployed user-level skills. This keeps the plugin menu organized without duplicating live behavior and satisfies the plugin validator's required skill-root name.
-
-The target Superpowers Project artifact model is:
-
-```text
 docs/superpowers/PROJECT_CONTEXT.md
 docs/superpowers/specs/
 docs/superpowers/plans/
@@ -56,14 +36,11 @@ docs/superpowers/issues/
 docs/superpowers/milestones/
 ```
 
-The old Milestones artifact model is being retired:
+`canonical-skills/` contains the canonical user-level skill implementations.
 
-```text
-docs/milestones/<milestone-folder>/ideas/
-docs/milestones/<milestone-folder>/issues/
-```
+`skills/` contains plugin namespace wrappers that point to the deployed user-level skills. This keeps the plugin menu organized without duplicating live behavior and satisfies the plugin validator's required skill-root name.
 
-`docs/ideas`, root-level `docs/issues`, `docs/plans`, and `docs/milestones/<milestone-folder>/plans` are not part of this repo's workflow.
+The retired Milestones artifact model is migration history only. New Superpowers Project artifacts should not be written under the old Milestones issue or idea folders, root-level issue folders, root-level plan folders, or milestone-local plan folders.
 
 ## Validate
 
@@ -79,7 +56,7 @@ GitHub Actions runs the same validation command used locally:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
-Release gates and tag rules are documented in `docs/milestones/M2-distribution/RELEASE_POLICY.md`.
+Release gates and tag rules are documented in `docs/milestones/M2-distribution/RELEASE_POLICY.md`. The first release after this migration is `v0.2.0`.
 
 ## Sync To Live Codex Install
 
