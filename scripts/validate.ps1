@@ -139,6 +139,33 @@ function Test-PluginWrapperContracts {
         Assert-TextContains -Text $text -Needle "do not invent separate behavior" -Path $wrapperPath -Reason "missing no separate behavior rule"
     }
 }
+function Test-SuperpowersProjectPathContract {
+    $projectSkillNames = @(
+        "superpowers-project",
+        "project-context",
+        "project-brainstorm",
+        "project-writing-plan",
+        "plan-to-issue",
+        "project-doctor"
+    )
+    $forbiddenPatterns = @(
+        "docs/milestones/<milestone-folder>/ideas",
+        "docs/milestones/<milestone-folder>/issues",
+        "docs/plans",
+        "docs/issues"
+    )
+
+    foreach ($name in $projectSkillNames) {
+        $skillPath = Join-Path $skillRoot "$name\SKILL.md"
+        if (-not (Test-Path -LiteralPath $skillPath -PathType Leaf)) { continue }
+        $text = Get-Content -LiteralPath $skillPath -Raw
+        foreach ($pattern in $forbiddenPatterns) {
+            if ($text.Contains($pattern)) {
+                throw "active Superpowers Project skill uses retired canonical path '$pattern': $skillPath"
+            }
+        }
+    }
+}
 
 $results = [System.Collections.Generic.List[object]]::new()
 
@@ -157,6 +184,9 @@ try {
 
     $results.Add((Invoke-Step "Plugin wrapper source contract" {
         Test-PluginWrapperContracts
+    }))
+    $results.Add((Invoke-Step "Superpowers project path contract" {
+        Test-SuperpowersProjectPathContract
     }))
 
     $results.Add((Invoke-Step "PowerShell parser check" {

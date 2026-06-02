@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 - 2026-06-02
+
+- Started the Superpowers Project migration.
+- Renamed plugin metadata from Milestones to Superpowers Project.
+- Moved the target artifact contract to `docs/superpowers`.
+
 ## 0.1.0 - 2026-06-02
 
 - Created canonical source repository for the Milestones plugin.

@@ -1,26 +1,30 @@
 {
-  "name": "milestones",
-  "version": "0.1.0",
-  "description": "GitHub milestone setup, audit, idea exploration, issue planning, issue-file implementation planning, and GoalBuddy issue-resolution workflows.",
+  "name": "superpowers-project",
+  "version": "0.2.0",
+  "description": "Superpowers extension for durable project context, GitHub issues and milestones, native user-input grilling, and goal-backed execution.",
   "author": {
     "name": "Tanner Local"
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "Milestones",
-    "shortDescription": "Route, set up, audit, plan, and resolve milestone-backed GitHub issues.",
-    "longDescription": "Milestones groups the local project-management workflow skills for routing milestone work, strict milestone setup, milestone audits and repairs, exploratory idea audits, GitHub issue creation, milestone-local issue-file implementation plans, and GoalBuddy-backed issue execution. It composes with Superpowers for brainstorming, TDD, debugging, subagents, review, and verification.",
+    "displayName": "Superpowers Project",
+    "shortDescription": "Project context, GitHub issues, milestones, and goal-backed execution for Superpowers.",
+    "longDescription": "Superpowers Project extends Superpowers with large-scope project context, roadmap and milestone mapping, GitHub issue mirrors, issue triage, native request_user_input grilling, and native /goal-backed issue resolution.",
     "developerName": "Tanner Local",
     "category": "Productivity",
-    "capabilities": ["Planning", "GitHub", "Workflow"],
+    "capabilities": [
+      "Planning",
+      "GitHub",
+      "Workflow"
+    ],
     "defaultPrompt": [
-      "Which Milestones skill should I use for this workflow?",
-      "Set up this repo's milestone workflow.",
-      "Audit this repo's milestone workflow.",
-      "Explore this repo idea under a milestone.",
-      "Convert this idea into milestone-backed GitHub issues.",
-      "Write the issue-file implementation plan.",
-      "Resolve this GitHub issue with a goal."
+      "Which Superpowers Project skill should I use for this workflow?",
+      "Set up this repo's Superpowers project context.",
+      "Audit this repo's Superpowers project workflow.",
+      "Brainstorm this project idea with native grilling.",
+      "Convert this plan into GitHub issue mirrors.",
+      "Write the project implementation plan.",
+      "Resolve this GitHub issue with a native goal."
     ]
   }
 }

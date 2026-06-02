@@ -35,8 +35,22 @@ if (-not (Test-Path -LiteralPath $sourcePluginSkillsRoot -PathType Container)) {
 
 $activeSkillNames = @(Get-SkillDirectoryNames -Root $sourceSkillsRoot)
 $activePluginSkillNames = @(Get-SkillDirectoryNames -Root $sourcePluginSkillsRoot)
-$retiredSkillNames = @()
-$retiredPluginSkillNames = @()
+$retiredSkillNames = @(
+    "using-milestones",
+    "setup-project-milestones",
+    "explore-ideas",
+    "milestone-writing-issue-plan",
+    "convert-idea-to-issue",
+    "milestones-doctor"
+)
+$retiredPluginSkillNames = @(
+    "using-milestones",
+    "setup-project-milestones",
+    "explore-ideas",
+    "milestone-writing-issue-plan",
+    "convert-idea-to-issue",
+    "milestones-doctor"
+)
 
 if ($Validate) {
     & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate.ps1")

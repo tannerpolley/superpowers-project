@@ -1,6 +1,6 @@
-# Milestones Plugin
+# Superpowers Project Plugin
 
-Milestones is currently being redesigned into **Superpowers Project**: a local Codex plugin and skill family that extends Superpowers with GitHub-backed project management:
+Superpowers Project is a local Codex plugin and skill family that extends Superpowers with GitHub-backed project management:
 
 - durable project context under `docs/superpowers`;
 - roadmap and milestone pages;
@@ -10,7 +10,7 @@ Milestones is currently being redesigned into **Superpowers Project**: a local C
 
 This repository is the canonical source. The live Codex install is a deployment target.
 
-## Skills
+## Current Skills
 
 - `$using-milestones`: routes Milestones workflow requests to the correct skill and Superpowers method.
 - `$setup-project-milestones`: sets up `docs/milestones`, issue types/forms/labels, and project metadata.
@@ -19,6 +19,16 @@ This repository is the canonical source. The live Codex install is a deployment 
 - `$convert-idea-to-issue`: turns an idea brief or broad intent into one issue or an approved issue set.
 - `$milestone-writing-issue-plan`: writes implementation plans into milestone-local issue files.
 - `$resolve-issue-with-goal`: resolves one issue through GoalBuddy, tests, PR, merge, issue closure, and cleanup.
+
+## Target Skills
+
+- `$superpowers-project`: routes extension workflows.
+- `$project-context`: creates and maintains project context and milestone pages.
+- `$project-brainstorm`: runs Superpowers brainstorming with native grilling.
+- `$project-writing-plan`: writes Superpowers plans with project context.
+- `$plan-to-issue`: creates GitHub issue mirrors and GitHub issues.
+- `$resolve-issue-with-goal`: resolves one issue with native `/goal` and Superpowers execution.
+- `$project-doctor`: audits project, GitHub, and live-sync drift.
 
 ## Canonical Layout
 
