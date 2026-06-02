@@ -34,11 +34,15 @@ try {
         if (Test-Property -Object $ledger -Name $forbidden) { throw "$forbidden is outside the native goal setup ledger" }
     }
     if (Test-ContainsForbiddenGoalBuddyValue -Value $ledger) { throw "docs/goals is outside the default execution model" }
-    foreach ($field in @("issue_url", "issue_mirror", "source_plan", "branch", "goal_activation_proof", "goal_objective", "proof_oracle")) {
+    foreach ($field in @("issue_url", "issue_mirror", "source_plan", "branch", "goal_activation_proof", "goal_objective", "execution_decision", "proof_oracle")) {
         if (-not (Test-Property -Object $ledger -Name $field)) { throw "$field is required in setup ledger" }
     }
     if (-not (Test-Property -Object $ledger -Name "goal_id") -and -not (Test-Property -Object $ledger -Name "thread_goal_proof")) { throw "goal_id or thread goal proof is required" }
     Assert-NativeGoalProof -Proof $ledger.goal_activation_proof
+    Assert-ExecutionDecision -Decision $ledger.execution_decision
+    if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker" -and (-not (Test-Property -Object $ledger -Name "worker_handoff") -or $null -eq $ledger.worker_handoff)) {
+        throw "worker_handoff is required for orchestrated-worker execution"
+    }
     $issueMirror = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$ledger.issue_mirror) -Prefix "docs/superpowers/issues" -Name "issue mirror"
     $sourcePlan = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$ledger.source_plan) -Prefix "docs/superpowers/plans" -Name "source plan"
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $issueMirror) -PathType Leaf)) { throw "issue mirror file is missing" }

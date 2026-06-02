@@ -16,9 +16,14 @@ Read the source material and project map before proposing issues:
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `docs/superpowers/milestones`
 - existing `docs/superpowers/issues`
+- tracker label vocabulary from `docs/agents/triage-labels.md` or `docs/agents/project-roadmap.json` when present
 - GitHub labels, GitHub milestones, and open GitHub issues when the repo is linked
 
 Use `request_user_input` when callable to approve granularity, dependencies, milestone assignment, and whether each slice is AFK or HITL.
+
+## Native Question Debug Mode
+
+For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not publish GitHub issues and must not be used to pretend a live user approved issue boundaries, dependencies, labels, milestones, AFK/HITL classification, or publication.
 
 ## Slice Rules
 
@@ -30,7 +35,7 @@ For each proposed slice, show:
 - AFK or HITL classification
 - Blocked by
 - GitHub Milestone
-- Labels, including `ready-for-agent` or `needs-info`
+- Labels from the configured tracker vocabulary, including the ready status label for AFK slices or the blocked/triage status label for HITL slices
 - Acceptance Criteria
 - Proof oracle
 - Goal Command for AFK slices
@@ -46,7 +51,7 @@ Before publishing, ask the user to approve:
 - AFK/HITL classification
 - labels and milestone assignment
 - Acceptance Criteria and proof oracle
-- which slices are ready-for-agent and which must stay needs-info
+- which slices are ready for agent execution and which must stay triage or blocked
 
 Publish issues in dependency order so blockers get real GitHub issue identifiers first.
 
@@ -63,11 +68,20 @@ Each mirror must include:
 - Classification: AFK or HITL
 - Labels
 - Goal Command for AFK issues
+- Execution Mode
+- Worktree Policy
+- Integration Policy
+- TDD Policy
+- Parallelization Plan
+- Reviewer Role
+- Script Gate Mode
 - Acceptance Criteria as checkboxes
 - Blocked by
 - Non-goals
 - Proof oracle
 - GitHub body text or a close mirror of it
+
+Workflow metadata guides `$resolve-issue-with-goal`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -80,12 +94,19 @@ Use this shape for each issue body and mirror:
 
 **GitHub Issue:** <url or pre-publication>
 **GitHub Milestone:** <milestone title or none>
-**Issue Type:** <bug|enhancement|task>
+**Issue Type:** <bug|feature|task>
 **Source Spec:** <path or none>
 **Source Plan:** <path or none>
 **Classification:** <AFK|HITL>
-**Labels:** ready-for-agent, <other labels>
+**Labels:** <configured ready/status label>, <type label>
 **Goal Command:** /goal <objective for AFK execution>
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
 
 ## What To Build
 
@@ -108,7 +129,7 @@ Use this shape for each issue body and mirror:
 - <command, artifact, review state, or visible behavior>
 ```
 
-For HITL issues, replace `ready-for-agent` with `needs-info` until the missing human decision is resolved.
+For HITL issues, use the configured triage or blocked status label until the missing human decision is resolved.
 
 ## Mirror Validation
 
@@ -124,6 +145,7 @@ Validation must prove:
 - AFK/HITL classification is present
 - Goal Command is present for AFK issues
 - bug mirrors include Reproduction or Feedback Loop evidence
+- workflow metadata is present or reported as advisory migration drift
 
 ## Execution Boundary
 

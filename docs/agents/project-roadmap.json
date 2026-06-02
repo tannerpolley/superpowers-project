@@ -8,8 +8,8 @@
   "spec_file_template": "docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md",
   "plan_file_template": "docs/superpowers/plans/<YYYY-MM-DD>-<slug>-plan.md",
   "issue_file_template": "docs/superpowers/issues/<issue-number>-<slug>.md",
-  "issue_types": ["bug", "enhancement", "task"],
-  "triage_states": ["needs-triage", "needs-info", "ready-for-agent", "ready-for-human", "wontfix"],
-  "labels": ["type:bug", "type:enhancement", "type:task", "status:triage", "status:ready", "status:blocked"],
+  "issue_types": ["bug", "feature", "task"],
+  "triage_states": ["status:triage", "status:ready", "status:blocked"],
+  "labels": ["type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked"],
   "forbidden_canonical_roots": ["docs/milestones/<milestone-folder>/ideas", "docs/milestones/<milestone-folder>/issues", "docs/plans", "docs/issues"]
 }

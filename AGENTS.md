@@ -1,15 +1,18 @@
-# Milestones Plugin Repo
+# Superpowers Project Plugin Repo
 
-This repository is the canonical source of truth for the local Milestones Codex plugin and its user-level skills.
+This repository is the canonical source of truth for the local Superpowers Project Codex plugin and its user-level skills.
 
 ## Rules
 
-- Treat this repo as source. Treat `C:\Users\Tanner\plugins\milestones` and `C:\Users\Tanner\.agents\skills\<milestones-skill>` as deployed copies.
+- Treat this repo as source. Treat `C:\Users\Tanner\plugins\milestones` and `C:\Users\Tanner\.agents\skills\<superpowers-project-skill>` as deployed copies.
 - Do not edit the live deployed copies directly when this repo is available; edit this repo, validate, then run `scripts\sync-live.ps1`.
 - Keep skills self-contained and testable with their bundled scenario scripts.
-- New idea briefs for this repo belong under `docs/milestones/<milestone-folder>/ideas/`.
-- Local issue files for this repo belong under `docs/milestones/<milestone-folder>/issues/`.
-- Do not create `docs/ideas`, `docs/issues`, `docs/plans`, or `docs/milestones/<milestone-folder>/plans`.
+- Canonical specs, PRDs, plans, issue mirrors, and milestone pages for this repo belong under `docs/superpowers/`.
+- New specs or PRDs belong under `docs/superpowers/specs/`.
+- New implementation plans belong under `docs/superpowers/plans/`.
+- Local GitHub issue mirrors belong under `docs/superpowers/issues/`.
+- Roadmap milestone pages belong under `docs/superpowers/milestones/`.
+- Do not create canonical artifacts under `docs/ideas`, root-level `docs/issues`, root-level `docs/plans`, or retired `docs/milestones/<milestone-folder>/ideas|issues|plans`.
 
 ## Validation
 

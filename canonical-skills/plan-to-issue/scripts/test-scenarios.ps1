@@ -60,10 +60,21 @@ $scenarios = @(
             "GitHub Issue",
             "GitHub Milestone",
             "Goal Command",
-            "ready-for-agent",
-            "needs-info"
+            "docs/agents/triage-labels.md",
+            "configured tracker vocabulary"
         )) {
             Assert-Contains $text $needle "missing plan-to-issue contract: $needle"
+        }
+        foreach ($needle in @(
+            "Execution Mode",
+            "Worktree Policy",
+            "Integration Policy",
+            "TDD Policy",
+            "Parallelization Plan",
+            "Reviewer Role",
+            "Script Gate Mode"
+        )) {
+            Assert-Contains $text $needle "missing workflow metadata contract: $needle"
         }
     }
     Invoke-Scenario "metadata and wrapper are present" {
@@ -101,6 +112,13 @@ $scenarios = @(
 **Source Plan:** docs/superpowers/plans/2026-06-02-sample-plan.md
 **Classification:** AFK
 **Goal Command:** /goal Resolve sample issue
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
 
 ## Acceptance Criteria
 

@@ -101,6 +101,28 @@ try {
     }
     Add-Check -Name "goal command" -Ok $true -Reason "passed"
 
+    $workflowFields = [ordered]@{
+        "Execution Mode" = @("Ask at runtime", "Inline", "Orchestrated worker")
+        "Worktree Policy" = @("Native Codex worktree thread first")
+        "Integration Policy" = @("Worker PR reviewed by main thread", "Current thread owns PR")
+        "TDD Policy" = @("Required", "User-approved opt-out")
+        "Parallelization Plan" = @("None", "Source plan packets")
+        "Reviewer Role" = @("Main thread orchestrator")
+        "Script Gate Mode" = @("Safety only")
+    }
+
+    foreach ($fieldName in $workflowFields.Keys) {
+        $value = Get-FieldValue -Text $text -Name $fieldName
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            Add-Check -Name "workflow metadata: $fieldName" -Ok $false -Reason "advisory: missing"
+            continue
+        }
+        if ($workflowFields[$fieldName] -notcontains $value) {
+            Complete -Ok $false -Reason "$fieldName must be one of: $($workflowFields[$fieldName] -join ', ')"
+        }
+        Add-Check -Name "workflow metadata: $fieldName" -Ok $true -Reason "passed"
+    }
+
     $issueType = Get-FieldValue -Text $text -Name "Issue Type"
     if ($issueType -and $issueType.Equals("bug", [System.StringComparison]::OrdinalIgnoreCase)) {
         $hasBugEvidence = [regex]::IsMatch($text, "(?im)^##\s*(Repro|Reproduction|Feedback Loop)\b")

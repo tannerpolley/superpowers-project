@@ -27,6 +27,10 @@ Create missing directories only when the repo is adopting Superpowers Project or
 
 Use `request_user_input` when callable in Default mode for decisions that affect roadmap shape, milestone boundaries, GitHub policy, or `/goal` issue execution criteria. Ask one to three short questions, with mutually exclusive choices when the UI supports it. If a choice depends on the answer to an earlier question, ask it after that answer.
 
+## Native Question Debug Mode
+
+For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not be used for normal project setup or to pretend a live user approved roadmap, milestone, GitHub, or `/goal` execution decisions.
+
 ## Project context shape
 
 `docs/superpowers/PROJECT_CONTEXT.md` should include these sections:

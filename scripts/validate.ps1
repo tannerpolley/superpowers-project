@@ -10,8 +10,8 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $skillRoot = Join-Path $repoRoot "canonical-skills"
 $pluginSkillRoot = Join-Path $repoRoot "skills"
 $pluginRoot = $repoRoot
-$quickValidate = Join-Path $env:USERPROFILE ".codex\skills\.system\skill-creator\scripts\quick_validate.py"
-$pluginValidate = Join-Path $env:USERPROFILE ".codex\skills\.system\plugin-creator\scripts\validate_plugin.py"
+$quickValidate = Join-Path $PSScriptRoot "quick-validate-skill.py"
+$pluginValidate = Join-Path $PSScriptRoot "validate-plugin.py"
 
 function Resolve-PythonForValidators {
     $candidates = @(
@@ -219,6 +219,11 @@ try {
     $results.Add((Invoke-Step "superpowers project dummy repo" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-project-dummy-repo.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "superpowers project dummy repo failed" }
+    }))
+
+    $results.Add((Invoke-Step "superpowers project repo contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-project-repo-contract.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "superpowers project repo contract failed" }
     }))
     $results.Add((Invoke-Step "Plugin manifest validation" {
         if (-not (Test-Path -LiteralPath $pluginValidate -PathType Leaf)) {

@@ -73,6 +73,13 @@ Dummy repo proves Superpowers Project artifacts.
 **Classification:** AFK
 **Goal Command:** /goal Resolve dummy issue
 **Branch:** codex/dummy
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
 
 ## Acceptance Criteria
 
@@ -97,7 +104,23 @@ Dummy repo proves Superpowers Project artifacts.
     if (-not $inspect.ok) { throw "resolve inspect failed: $($inspect.reason)" }
     Add-Check -Name "resolve inspect" -Ok $true -Reason "passed"
 
-    $missingGoal = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $tempRoot, "-HandoffJson", ($inspect.evidence.handoff_json))
+    $inlineDecision = @{
+        question_id = "resolve_execution_topology"
+        source = "debug_question_mode"
+        selected_mode = "inline"
+        recommended_mode = "inline"
+        options = @("orchestrated-worker", "inline")
+    } | ConvertTo-Json -Depth 8 -Compress
+
+    $workerDecision = @{
+        question_id = "resolve_execution_topology"
+        source = "debug_question_mode"
+        selected_mode = "orchestrated-worker"
+        recommended_mode = "orchestrated-worker"
+        options = @("orchestrated-worker", "inline")
+    } | ConvertTo-Json -Depth 8 -Compress
+
+    $missingGoal = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $tempRoot, "-HandoffJson", ($inspect.evidence.handoff_json), "-ExecutionDecisionJson", $inlineDecision)
     if ($missingGoal.ok -or $missingGoal.reason -notmatch "goal proof|GoalProof") { throw "missing native goal proof did not block" }
     Add-Check -Name "missing native goal proof blocks" -Ok $true -Reason "passed"
 
@@ -107,9 +130,15 @@ Dummy repo proves Superpowers Project artifacts.
         goal_id = "dummy-thread-goal"
         objective = [string]$inspect.evidence.handoff.goal_objective
     } | ConvertTo-Json -Depth 8 -Compress
-    $finalize = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $tempRoot, "-HandoffJson", ($inspect.evidence.handoff_json), "-GoalProofJson", $goalProof)
+    $finalize = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $tempRoot, "-HandoffJson", ($inspect.evidence.handoff_json), "-GoalProofJson", $goalProof, "-ExecutionDecisionJson", $inlineDecision)
     if (-not $finalize.ok) { throw "structured native goal proof failed: $($finalize.reason)" }
     Add-Check -Name "structured native goal proof passes" -Ok $true -Reason "passed"
+
+    $workerFinalize = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $tempRoot, "-HandoffJson", ($inspect.evidence.handoff_json), "-GoalProofJson", $goalProof, "-ExecutionDecisionJson", $workerDecision)
+    if (-not $workerFinalize.ok) { throw "worker setup finalization failed: $($workerFinalize.reason)" }
+    if ($workerFinalize.setup_ledger.execution_decision.selected_mode -ne "orchestrated-worker") { throw "worker execution decision was not recorded" }
+    if (-not $workerFinalize.setup_ledger.worker_handoff) { throw "worker handoff was not recorded" }
+    Add-Check -Name "worker setup decision" -Ok $true -Reason "passed"
 
     $setupValidator = Join-Path $repoRoot "canonical-skills\resolve-issue-with-goal\scripts\validate-setup.ps1"
     $setupResult = Invoke-JsonScript -ScriptPath $setupValidator -Arguments @("-RepoRoot", $tempRoot, "-SetupLedgerJson", ($finalize.setup_ledger_json))

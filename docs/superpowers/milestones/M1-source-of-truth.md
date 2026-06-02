@@ -10,11 +10,11 @@ Keep canonical plugin skills, plugin wrappers, project docs, live sync behavior,
 
 ## Related Specs
 
-- None yet
+- `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
 
 ## Related Plans
 
-- None yet
+- `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
 
 ## Related Issues
 

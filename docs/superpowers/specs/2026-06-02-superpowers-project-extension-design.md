@@ -175,11 +175,11 @@ Issue mirror shape:
 
 **GitHub Issue:** <url>
 **GitHub Milestone:** <milestone title>
-**Local Milestone:** `docs/superpowers/milestones/<milestone>.md`
 **Source Spec:** `docs/superpowers/specs/<spec>.md`
 **Source Plan:** `docs/superpowers/plans/<plan>.md`
-**Slice Type:** AFK | HITL
-**Blocked By:** <issue links or None>
+**Classification:** AFK | HITL
+**Labels:** <configured type/status labels>
+**Blocked by:** <issue links or None>
 **Goal Command:** `/goal <objective>`
 
 ## GitHub Issue Body
@@ -224,8 +224,8 @@ The extension should support the `triage` role model for GitHub issues:
 - `bug`;
 - `enhancement`;
 - `needs-triage`;
-- `needs-info`;
-- `ready-for-agent`;
+- configured status labels from `docs/agents/triage-labels.md`;
+- configured type labels from `docs/agents/triage-labels.md`;
 - `ready-for-human`;
 - `wontfix`.
 
