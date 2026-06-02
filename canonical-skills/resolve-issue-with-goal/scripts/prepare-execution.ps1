@@ -528,7 +528,7 @@ $verifyYaml
     stop_if:
       - 'Need files outside allowed_files.'
       - 'Issue scope, non-goals, or proof oracle is contradicted.'
-      - 'Required credentials or external services are unavailable.'
+      - 'Required credentials or external services cannot be reached.'
     receipt: null
 checks: []
 "@

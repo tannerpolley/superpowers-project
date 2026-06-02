@@ -100,7 +100,7 @@ Fresh intake may run in Default mode or Plan mode. Default mode is preferred whe
 
 Use `request_user_input` to ask as many material questions per call as the active UI/tool allows. Prefer batching independent questions together so the issue can converge quickly. Ask one question at a time only when the answer changes which follow-up questions are valid.
 
-If `request_user_input` is unavailable during fresh intake, block instead of substituting plain-text questions. If a valid handoff already exists, validate it with the bundled validator before publishing.
+If `request_user_input` cannot be called during fresh intake, block instead of substituting plain-text questions. If a valid handoff already exists, validate it with the bundled validator before publishing.
 
 In Default mode, after all material decisions are locked, ask a final native approval question before any mutation:
 

@@ -12,3 +12,7 @@ Install/sync scripts, validation automation, release hygiene, changelog/versioni
 
 - Ideas: `docs/milestones/M2-distribution/ideas/`
 - Issues: `docs/milestones/M2-distribution/issues/`
+
+## Release Policy
+
+Release gates and tag rules live in `docs/milestones/M2-distribution/RELEASE_POLICY.md`.

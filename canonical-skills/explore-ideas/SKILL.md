@@ -22,7 +22,7 @@ Run this skill in Default mode.
 - Continue asking until the material decision inventory is exhausted or the user explicitly pauses.
 - Do not end after only one or two broad questions unless the topic is genuinely tiny and the decision inventory is empty.
 
-When `request_user_input` is not available, stop with the blocked response. Do not fake native UI usage with plain-text questions.
+When `request_user_input` cannot be called, stop with the blocked response. Do not fake native UI usage with plain-text questions.
 
 ## Hard Failures
 
@@ -35,7 +35,7 @@ Stop immediately when any of these are true:
 - The agent skips repo/docs exploration for a repo topic that can be inspected locally.
 - The agent emits a final issue plan or says the issue is ready without first asking the material questions.
 - The agent uses only narrative questions when `request_user_input` is available.
-- `request_user_input` is unavailable, because this skill requires native question UI.
+- `request_user_input` cannot be called, because this skill requires native question UI.
 - The agent omits the inlined docs-grilling pass for repo work.
 - The agent fails to audit code health, current features, workflows, docs, and their connections when those repo surfaces are relevant to the topic.
 - The agent writes a new idea brief under legacy `docs/ideas/` instead of `docs/milestones/<milestone-folder>/ideas/`.

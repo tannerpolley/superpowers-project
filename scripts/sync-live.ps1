@@ -6,6 +6,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "lib\sync-tree.ps1")
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
@@ -32,6 +33,11 @@ if (-not (Test-Path -LiteralPath $sourcePluginSkillsRoot -PathType Container)) {
     throw "missing source plugin wrapper skills root: $sourcePluginSkillsRoot"
 }
 
+$activeSkillNames = @(Get-SkillDirectoryNames -Root $sourceSkillsRoot)
+$activePluginSkillNames = @(Get-SkillDirectoryNames -Root $sourcePluginSkillsRoot)
+$retiredSkillNames = @()
+$retiredPluginSkillNames = @()
+
 if ($Validate) {
     & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate.ps1")
     if ($LASTEXITCODE -ne 0) { throw "validation failed before sync" }
@@ -45,41 +51,32 @@ New-Item -ItemType Directory -Path $userSkillsRootResolved -Force | Out-Null
 
 Copy-Item -LiteralPath $sourcePluginManifest -Destination (Join-Path $livePluginManifestDir "plugin.json") -Force
 
-$deployedPluginSkills = [System.Collections.Generic.List[object]]::new()
-foreach ($sourcePluginSkill in (Get-ChildItem -LiteralPath $sourcePluginSkillsRoot -Directory | Sort-Object Name)) {
-    $pluginTarget = Join-Path $livePluginSkillsRoot $sourcePluginSkill.Name
-    $resolvedParent = [IO.Path]::GetFullPath((Split-Path $pluginTarget -Parent))
-    if ($resolvedParent -ne $livePluginSkillsRoot) {
-        throw "refusing to deploy outside approved plugin skills root: $pluginTarget"
-    }
-    if (Test-Path -LiteralPath $pluginTarget) {
-        Remove-Item -LiteralPath $pluginTarget -Recurse -Force
-    }
-    Copy-Item -LiteralPath $sourcePluginSkill.FullName -Destination $pluginTarget -Recurse
-    $deployedPluginSkills.Add([pscustomobject]@{
-        skill = $sourcePluginSkill.Name
-        plugin_target = $pluginTarget
-    })
+Copy-SkillDirectories -SourceRoot $sourcePluginSkillsRoot -TargetRoot $livePluginSkillsRoot
+$removedPluginSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $livePluginSkillsRoot -ActiveSkillNames $activePluginSkillNames -RetiredSkillNames $retiredPluginSkillNames)
+
+Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved
+$removedUserSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $userSkillsRootResolved -ActiveSkillNames $activeSkillNames -RetiredSkillNames $retiredSkillNames)
+
+Assert-NoTreeDrift -SourceRoot (Split-Path $sourcePluginManifest -Parent) -TargetRoot $livePluginManifestDir -Label "plugin manifest"
+foreach ($skillName in $activePluginSkillNames) {
+    Assert-NoTreeDrift -SourceRoot (Join-Path $sourcePluginSkillsRoot $skillName) -TargetRoot (Join-Path $livePluginSkillsRoot $skillName) -Label "plugin wrapper $skillName"
+}
+foreach ($skillName in $activeSkillNames) {
+    Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $userSkillsRootResolved $skillName) -Label "user skill $skillName"
 }
 
-$deployedUserSkills = [System.Collections.Generic.List[object]]::new()
-foreach ($sourceSkill in (Get-ChildItem -LiteralPath $sourceSkillsRoot -Directory | Sort-Object Name)) {
-    $userSkillTarget = Join-Path $userSkillsRootResolved $sourceSkill.Name
-
-    $resolvedParent = [IO.Path]::GetFullPath((Split-Path $userSkillTarget -Parent))
-    if ($resolvedParent -ne $userSkillsRootResolved) {
-        throw "refusing to deploy outside approved user skills root: $userSkillTarget"
+$deployedPluginSkills = @($activePluginSkillNames | ForEach-Object {
+    [pscustomobject]@{
+        skill = $_
+        plugin_target = Join-Path $livePluginSkillsRoot $_
     }
-    if (Test-Path -LiteralPath $userSkillTarget) {
-        Remove-Item -LiteralPath $userSkillTarget -Recurse -Force
+})
+$deployedUserSkills = @($activeSkillNames | ForEach-Object {
+    [pscustomobject]@{
+        skill = $_
+        user_skill_target = Join-Path $userSkillsRootResolved $_
     }
-    Copy-Item -LiteralPath $sourceSkill.FullName -Destination $userSkillTarget -Recurse
-
-    $deployedUserSkills.Add([pscustomobject]@{
-        skill = $sourceSkill.Name
-        user_skill_target = $userSkillTarget
-    })
-}
+})
 
 [pscustomobject]@{
     ok = $true
@@ -88,4 +85,6 @@ foreach ($sourceSkill in (Get-ChildItem -LiteralPath $sourceSkillsRoot -Director
     user_skills_root = $userSkillsRootResolved
     deployed_plugin_skills = $deployedPluginSkills
     deployed_user_skills = $deployedUserSkills
+    removed_plugin_skills = $removedPluginSkills
+    removed_user_skills = $removedUserSkills
 } | ConvertTo-Json -Depth 8

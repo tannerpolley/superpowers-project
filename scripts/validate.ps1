@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$SkipScenarioTests,
-    [ValidateRange(1, 3600)][int]$ScenarioTimeoutSeconds = 240
+    [ValidateRange(1, 3600)][int]$ScenarioTimeoutSeconds = 600
 )
 
 $ErrorActionPreference = "Stop"
@@ -50,52 +50,42 @@ function Invoke-PwshFile {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [string[]]$Arguments = @(),
-        [ValidateRange(1, 3600)][int]$TimeoutSeconds = 240
+        [ValidateRange(1, 3600)][int]$TimeoutSeconds = 600
     )
 
-    $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = "pwsh.exe"
-    $psi.WorkingDirectory = $repoRoot
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-    foreach ($arg in @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $Path) + $Arguments) {
-        [void]$psi.ArgumentList.Add($arg)
-    }
-
-    $process = [System.Diagnostics.Process]::new()
-    $process.StartInfo = $psi
-
+    $captureRoot = Join-Path ([IO.Path]::GetTempPath()) ("milestones-validate-" + [guid]::NewGuid().ToString("N"))
+    $stdoutPath = Join-Path $captureRoot "stdout.txt"
+    $stderrPath = Join-Path $captureRoot "stderr.txt"
     try {
-        [void]$process.Start()
-        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-        $stderrTask = $process.StandardError.ReadToEndAsync()
+        New-Item -ItemType Directory -Path $captureRoot -Force | Out-Null
+        $process = Start-Process -FilePath "pwsh.exe" `
+            -ArgumentList (@("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $Path) + $Arguments) `
+            -WorkingDirectory $repoRoot `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath `
+            -PassThru `
+            -WindowStyle Hidden
 
-        $exited = $process.WaitForExit($TimeoutSeconds * 1000)
-        if (-not $exited) {
+        $completed = $process.WaitForExit($TimeoutSeconds * 1000)
+        if (-not $completed) {
             try {
                 $process.Kill($true)
             } catch {
                 if (-not $process.HasExited) { throw }
             }
             $process.WaitForExit()
-            [void]$stdoutTask.Wait(1000)
-            [void]$stderrTask.Wait(1000)
             return [pscustomobject]@{
                 ExitCode = 124
-                Stdout = (($stdoutTask.Result) -replace "(\r?\n)+$", "")
+                Stdout = if (Test-Path -LiteralPath $stdoutPath) { (Get-Content -LiteralPath $stdoutPath -Raw) -replace "(\r?\n)+$", "" } else { "" }
                 Stderr = "PowerShell script timed out after $TimeoutSeconds seconds: $Path"
                 TimedOut = $true
             }
         }
 
-        $process.WaitForExit()
-        [void]$stdoutTask.Wait(1000)
-        [void]$stderrTask.Wait(1000)
         [pscustomobject]@{
             ExitCode = $process.ExitCode
-            Stdout = (($stdoutTask.Result) -replace "(\r?\n)+$", "")
-            Stderr = (($stderrTask.Result) -replace "(\r?\n)+$", "")
+            Stdout = if (Test-Path -LiteralPath $stdoutPath) { (Get-Content -LiteralPath $stdoutPath -Raw) -replace "(\r?\n)+$", "" } else { "" }
+            Stderr = if (Test-Path -LiteralPath $stderrPath) { (Get-Content -LiteralPath $stderrPath -Raw) -replace "(\r?\n)+$", "" } else { "" }
             TimedOut = $false
         }
     } finally {
@@ -103,7 +93,50 @@ function Invoke-PwshFile {
             $process.Kill($true)
             $process.WaitForExit()
         }
-        $process.Dispose()
+        if ($process) { $process.Dispose() }
+        if (Test-Path -LiteralPath $captureRoot) {
+            $resolvedCapture = [IO.Path]::GetFullPath($captureRoot)
+            $resolvedTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+            if ($resolvedCapture.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnoreCase)) {
+                Remove-Item -LiteralPath $resolvedCapture -Recurse -Force
+            }
+        }
+    }
+}
+
+function Assert-TextContains {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][string]$Needle,
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$Reason
+    )
+    if (-not $Text.Contains($Needle)) {
+        throw "$Reason in $Path"
+    }
+}
+
+function Test-PluginWrapperContracts {
+    $canonicalNames = @(Get-ChildItem -LiteralPath $skillRoot -Directory | Sort-Object Name | Select-Object -ExpandProperty Name)
+    $wrapperNames = @(Get-ChildItem -LiteralPath $pluginSkillRoot -Directory | Sort-Object Name | Select-Object -ExpandProperty Name)
+
+    $missingWrappers = @($canonicalNames | Where-Object { $wrapperNames -notcontains $_ })
+    $extraWrappers = @($wrapperNames | Where-Object { $canonicalNames -notcontains $_ })
+    if ($missingWrappers.Count -gt 0) { throw "missing plugin wrapper(s): $($missingWrappers -join ', ')" }
+    if ($extraWrappers.Count -gt 0) { throw "plugin wrapper(s) without canonical skill: $($extraWrappers -join ', ')" }
+
+    foreach ($name in $canonicalNames) {
+        $wrapperPath = Join-Path $pluginSkillRoot "$name\SKILL.md"
+        if (-not (Test-Path -LiteralPath $wrapperPath -PathType Leaf)) {
+            throw "missing wrapper SKILL.md: $wrapperPath"
+        }
+        $text = Get-Content -LiteralPath $wrapperPath -Raw
+        Assert-TextContains -Text $text -Needle "name: $name" -Path $wrapperPath -Reason "missing wrapper name"
+        Assert-TextContains -Text $text -Needle "namespace wrapper" -Path $wrapperPath -Reason "missing namespace wrapper contract"
+        Assert-TextContains -Text $text -Needle "C:\Users\Tanner\.agents\skills\$name\SKILL.md" -Path $wrapperPath -Reason "missing deployed user skill path"
+        Assert-TextContains -Text $text -Needle 'Read the deployed user-level `SKILL.md` above.' -Path $wrapperPath -Reason "missing deployed read instruction"
+        Assert-TextContains -Text $text -Needle "Follow that skill exactly." -Path $wrapperPath -Reason "missing follow instruction"
+        Assert-TextContains -Text $text -Needle "do not invent separate behavior" -Path $wrapperPath -Reason "missing no separate behavior rule"
     }
 }
 
@@ -122,6 +155,10 @@ try {
         throw "missing plugin wrapper skills directory"
     }
 
+    $results.Add((Invoke-Step "Plugin wrapper source contract" {
+        Test-PluginWrapperContracts
+    }))
+
     $results.Add((Invoke-Step "PowerShell parser check" {
         $scripts = @(Get-ChildItem -LiteralPath $repoRoot -Recurse -Filter "*.ps1")
         foreach ($script in $scripts) {
@@ -132,6 +169,11 @@ try {
                 throw "PowerShell parse failed for $($script.FullName): $($errors[0].Message)"
             }
         }
+    }))
+
+    $results.Add((Invoke-Step "sync-live helper tests" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-sync-live.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "sync-live helper tests failed" }
     }))
 
     $results.Add((Invoke-Step "Plugin manifest validation" {

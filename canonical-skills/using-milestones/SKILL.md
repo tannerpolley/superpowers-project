@@ -52,7 +52,7 @@ Before invoking the routed skill, identify:
 
 ## Blocked Response
 
-If the correct downstream skill is unavailable or the request cannot be routed without a material decision, respond with:
+If the correct downstream skill cannot be loaded or the request cannot be routed without a material decision, respond with:
 
 ```text
 Blocked by using-milestones contract: <reason>

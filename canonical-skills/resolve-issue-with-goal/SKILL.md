@@ -244,7 +244,7 @@ If native goal tools are available, their use is mandatory:
 - Call `get_goal` again and record structured proof with `objective_refs`.
 - Do not treat a plain-text claim that `/goal` was started as compliant execution.
 
-If native goal tools are unavailable, print the exact `/goal` command and stop. Do not continue implementation in the same turn.
+If native goal tools cannot be called, print the exact `/goal` command and stop. Do not continue implementation in the same turn.
 
 ## Scripted Gates
 

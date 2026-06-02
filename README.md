@@ -57,6 +57,16 @@ docs/milestones/<milestone-folder>/issues/
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
+## CI And Releases
+
+GitHub Actions runs the same validation command used locally:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```
+
+Release gates and tag rules are documented in `docs/milestones/M2-distribution/RELEASE_POLICY.md`.
+
 ## Sync To Live Codex Install
 
 ```powershell

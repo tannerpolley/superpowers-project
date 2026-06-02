@@ -35,7 +35,7 @@ try {
     try {
         Assert-Contains -Text $skill -Pattern "Run this skill in Default mode" -Reason "SKILL.md must require Default mode"
         Assert-Contains -Text $skill -Pattern "request_user_input" -Reason "SKILL.md must require request_user_input"
-        Assert-Contains -Text $skill -Pattern "this skill requires native question UI" -Reason "SKILL.md must block when native question UI is unavailable"
+        Assert-Contains -Text $skill -Pattern "this skill requires native question UI" -Reason "SKILL.md must block when native question UI cannot be called"
         Assert-Contains -Text $skill -Pattern "If the thread is in Plan mode, stop" -Reason "SKILL.md must block Plan mode"
         Assert-Contains -Text $skill -Pattern "Implement Plan" -Reason "SKILL.md must mention avoiding Implement Plan"
         Add-Result -Name "mode and native UI contract present" -Passed $true -Reason "passed"
