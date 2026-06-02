@@ -4,9 +4,10 @@ param()
 $ErrorActionPreference = "Stop"
 $scriptRoot = $PSScriptRoot
 $skillRoot = Split-Path $scriptRoot -Parent
+$repoRoot = (Resolve-Path -LiteralPath (Join-Path $skillRoot "..\..")).Path
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
-$pluginWrapperFile = Join-Path $env:USERPROFILE "plugins\milestones\skills\milestone-writing-issue-plan\SKILL.md"
+$pluginWrapperFile = Join-Path $repoRoot "skills\milestone-writing-issue-plan\SKILL.md"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -96,12 +97,13 @@ $scenarios = @(
         Assert-Contains $text "systematic-debugging for debugging" "missing metadata debugging rule"
         Assert-Contains $text "verification-before-completion before completion" "missing metadata completion rule"
     }
-    Invoke-Scenario "plugin wrapper points to canonical skill" {
+    Invoke-Scenario "plugin wrapper points to deployed user skill" {
         $text = Get-Content -LiteralPath $pluginWrapperFile -Raw
         Assert-Match $text "(?s)^---\s*name:\s*milestone-writing-issue-plan\s*description:" "missing wrapper frontmatter"
         Assert-Contains $text "namespace wrapper" "missing wrapper declaration"
-        Assert-Contains $text "C:\Users\Tanner\.agents\skills\milestone-writing-issue-plan\SKILL.md" "missing canonical skill path"
-        Assert-Contains $text "Follow that canonical skill exactly" "missing canonical follow rule"
+        Assert-Contains $text "C:\Users\Tanner\.agents\skills\milestone-writing-issue-plan\SKILL.md" "missing deployed user skill path"
+        Assert-Contains $text 'Read the deployed user-level `SKILL.md` above.' "missing deployed read instruction"
+        Assert-Contains $text "Follow that skill exactly." "missing follow instruction"
         Assert-Contains $text "Treat this plugin wrapper as organization only" "missing no separate behavior rule"
     }
 )
