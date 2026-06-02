@@ -25,3 +25,19 @@ New issue mirrors should include:
 ```
 
 These fields tell `$project-resolve` how to ask the runtime execution question and who owns integration. Missing fields are migration drift; malformed values should be fixed before GitHub publication.
+
+## Project Merge Metadata
+
+New issue mirrors should include:
+
+```markdown
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+```
+
+These fields tell `$project-merge` who owns final integration, when native approval is required, and what cleanup evidence must exist after merge.

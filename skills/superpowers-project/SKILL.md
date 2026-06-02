@@ -14,6 +14,7 @@ This skill is the router for the Superpowers Project extension. It does not repl
 - Implementation planning from a spec, issue mirror, or approved direct request: `$project-plan`
 - Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project-issue`
 - One ready issue execution with native `/goal` proof: `$project-resolve`
+- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project-merge`
 - Drift audit, migration, label review, milestone review, or live sync review: `$project-doctor`
 
 ## Artifact Root
@@ -30,6 +31,10 @@ Canonical project artifacts live under `docs/superpowers`.
 
 Use Superpowers skills for method: `superpowers:brainstorming`, `superpowers:writing-plans`, `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:systematic-debugging`, `superpowers:subagent-driven-development`, and `superpowers:verification-before-completion`.
 
+## Continuation Routing
+
+At major handoffs, use native continuation questions and treat the selected answer as executable routing. The agent should start the selected next skill in the same turn when possible instead of ending with a prompt suggestion.
+
 ## Native User Input
 
 When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for one to three short, decision-oriented questions. Batch independent questions together. Ask dependent questions one step at a time after the prior answer changes the branch.
@@ -44,4 +49,4 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 ## Goal Routing
 
-Issue execution must use `$project-resolve` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan.
+Issue implementation must use `$project-resolve` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$project-resolve` creates PR-ready evidence, final integration must route to `$project-merge`.

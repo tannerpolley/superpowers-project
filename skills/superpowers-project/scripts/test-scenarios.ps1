@@ -17,7 +17,7 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     try {
-        foreach ($needle in @('project-context','project-brainstorm','project-plan','project-issue','project-resolve','project-doctor','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal')) {
+        foreach ($needle in @('project-context','project-brainstorm','project-plan','project-issue','project-resolve','project-merge','project-doctor','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
         Add-Result -Name "router contract present" -Ok $true -Reason "passed"

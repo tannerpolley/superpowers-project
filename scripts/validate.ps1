@@ -124,6 +124,7 @@ function Get-ActiveSkillNames {
         "project-plan",
         "project-issue",
         "project-resolve",
+        "project-merge",
         "project-doctor"
     )
 }

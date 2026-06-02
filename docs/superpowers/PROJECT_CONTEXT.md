@@ -32,7 +32,7 @@ Milestone pages under `docs/superpowers/milestones/` are the durable project map
 
 ## Execution Model
 
-Issue execution uses native `/goal` or goal tools plus Superpowers execution skills. GoalBuddy boards are outside the default execution model.
+Issue implementation uses native `/goal` or goal tools plus Superpowers execution skills through `$project-resolve`. PR integration, linked issue close verification, branch/worktree cleanup, pruning, and final clean repo proof are owned by `$project-merge`. GoalBuddy boards are outside the default execution model.
 
 ## Extension Skills
 
@@ -42,6 +42,7 @@ Issue execution uses native `/goal` or goal tools plus Superpowers execution ski
 - `project-plan`
 - `project-issue`
 - `project-resolve`
+- `project-merge`
 - `project-doctor`
 
 ## Current Open Questions

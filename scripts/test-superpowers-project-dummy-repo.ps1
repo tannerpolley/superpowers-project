@@ -81,6 +81,14 @@ Dummy repo proves Superpowers Project artifacts.
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
 
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
 ## Acceptance Criteria
 
 - [ ] Dummy issue is resolved through native goal setup
@@ -138,6 +146,8 @@ Dummy repo proves Superpowers Project artifacts.
     if (-not $workerFinalize.ok) { throw "worker setup finalization failed: $($workerFinalize.reason)" }
     if ($workerFinalize.setup_ledger.execution_decision.selected_mode -ne "orchestrated-worker") { throw "worker execution decision was not recorded" }
     if (-not $workerFinalize.setup_ledger.worker_handoff) { throw "worker handoff was not recorded" }
+    if (-not $workerFinalize.setup_ledger.dynamic_work_packet_map) { throw "dynamic work packet map was not recorded" }
+    if ($workerFinalize.setup_ledger.dynamic_work_packet_map.merge_owner -ne "project-merge") { throw "dynamic work packet map merge owner mismatch" }
     Add-Check -Name "worker setup decision" -Ok $true -Reason "passed"
 
     $setupValidator = Join-Path $repoRoot "skills\project-resolve\scripts\validate-setup.ps1"

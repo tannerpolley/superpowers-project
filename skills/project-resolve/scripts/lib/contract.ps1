@@ -180,6 +180,60 @@ function Assert-ExecutionDecision {
     }
 }
 
+function New-DynamicWorkPacketMap {
+    param($Handoff, $Decision)
+    [ordered]@{
+        goal = [string]$Handoff.goal_objective
+        success_criteria = @(
+            "acceptance criteria covered",
+            "verification passes",
+            "branch pushed",
+            "PR opened and closes linked issue",
+            "PR-ready handoff sent to main orchestrator"
+        )
+        repo_context = [ordered]@{
+            issue_url = [string]$Handoff.issue_url
+            issue_mirror = Normalize-RepoPath ([string]$Handoff.issue_mirror)
+            source_plan = Normalize-RepoPath ([string]$Handoff.source_plan)
+            branch = Normalize-RepoPath ([string]$Handoff.branch)
+        }
+        orchestrator_owner = "main-thread-orchestrator"
+        merge_owner = "project-merge"
+        full_dynamic_workflow_policy = "Use only when scope, risk, independent packets, separate verification, reusable workflow value, or explicit user request justifies it."
+        worker_packet = [ordered]@{
+            objective = "Implement the linked issue to PR-ready evidence."
+            do = @(
+                "use superpowers:using-git-worktrees",
+                "use superpowers:test-driven-development unless the source plan records an explicit opt-out",
+                "use superpowers:executing-plans or superpowers:subagent-driven-development",
+                "use superpowers:verification-before-completion",
+                "use superpowers:finishing-a-development-branch",
+                "open a PR that closes the exact linked issue",
+                "send PR-ready handoff to the main orchestrator"
+            )
+            do_not = @(
+                "merge the PR",
+                "delete branches outside the owned implementation branch",
+                "create GoalBuddy boards",
+                "create .workflow directories for ordinary issue resolution"
+            )
+            expected_output = "PR-ready handoff ledger"
+            verification = Get-StringArray $Handoff.proof_oracle
+        }
+        wakeup_policy = "worker handoff or bounded heartbeat"
+    }
+}
+
+function Assert-DynamicWorkPacketMap {
+    param($Map)
+    if ($null -eq $Map) { throw "dynamic_work_packet_map is required for orchestrated-worker execution" }
+    if ($Map -is [string]) { throw "dynamic_work_packet_map must be structured" }
+    foreach ($field in @("goal", "success_criteria", "repo_context", "orchestrator_owner", "merge_owner", "worker_packet", "wakeup_policy")) {
+        if (-not (Test-Property -Object $Map -Name $field)) { throw "dynamic_work_packet_map missing $field" }
+    }
+    if ([string]$Map.merge_owner -ne "project-merge") { throw "dynamic_work_packet_map merge_owner must be project-merge" }
+}
+
 function New-WorkerHandoff {
     param($Handoff, $Decision)
     [ordered]@{
@@ -197,7 +251,8 @@ function New-WorkerHandoff {
             "superpowers:verification-before-completion",
             "superpowers:finishing-a-development-branch"
         )
-        closeout_owner = "main-thread-orchestrator"
+        dynamic_work_packet_map = New-DynamicWorkPacketMap -Handoff $Handoff -Decision $Decision
+        integration_owner = "project-merge"
     }
 }
 

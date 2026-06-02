@@ -18,6 +18,7 @@ This repository is the canonical source. The live Codex install is a deployment 
 - `$project-plan`: writes Superpowers implementation plans with project context.
 - `$project-issue`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
 - `$project-resolve`: resolves one issue with native `/goal` and Superpowers execution.
+- `$project-merge`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
 - `$project-doctor`: audits project, GitHub, migration, and live-sync drift.
 
 ## Canonical Layout

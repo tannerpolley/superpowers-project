@@ -75,6 +75,12 @@ Each mirror must include:
 - Parallelization Plan
 - Reviewer Role
 - Script Gate Mode
+- Project Merge section
+- Merge Owner
+- Merge Gate
+- Merge Policy
+- Worktree Cleanup Policy
+- Orchestrator Wakeup Policy
 - Acceptance Criteria as checkboxes
 - Blocked by
 - Non-goals
@@ -107,6 +113,14 @@ Use this shape for each issue body and mirror:
 **Parallelization Plan:** None
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
+
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
 ## What To Build
 
@@ -146,7 +160,12 @@ Validation must prove:
 - Goal Command is present for AFK issues
 - bug mirrors include Reproduction or Feedback Loop evidence
 - workflow metadata is present or reported as advisory migration drift
+- Project Merge metadata is present and valid
 
 ## Execution Boundary
 
 This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$project-resolve`.
+
+## Native Continuation Gate
+
+After approved issue mirrors or GitHub issues are created and validated, ask how to continue when `request_user_input` is callable. Options should include resolving the first ready issue with `$project-resolve`, resolving a selected issue with `$project-resolve`, or stopping after issue creation. Start the selected next skill in the same turn when tools and state allow it.

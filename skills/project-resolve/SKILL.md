@@ -1,11 +1,11 @@
 ---
 name: project-resolve
-description: Use when one ready GitHub issue mirror under docs/superpowers/issues must be resolved through native goal activation, Superpowers execution, PR, merge, issue closure, and cleanup.
+description: Use when one ready GitHub issue mirror under docs/superpowers/issues must be implemented through native goal activation, Superpowers execution, pushed branch, opened PR, and PR-ready handoff.
 ---
 
 # Project Resolve
 
-This skill owns execution for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with a merged PR, closed issue, native goal completion, synced default branch, goal branch cleanup, and cleanup proof.
+This skill owns implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$project-merge`.
 
 GoalBuddy boards are outside the default execution model. Do not create `docs/goals`, GoalBuddy board files, GoalBuddy state, or local live boards from this skill unless the user explicitly requests separate GoalBuddy work outside this default issue-resolution path.
 
@@ -21,11 +21,8 @@ Stop immediately when any of these are true:
 - Native goal proof is missing, a plain string, inactive, or not from `get_goal`.
 - Setup ledger contains `goal_board_path`, `goalbuddy_checker`, or `docs/goals`.
 - Code edits or implementation tests begin before setup validation passes.
-- PR evidence does not close the exact linked GitHub issue.
-- Required checks fail, are pending, or are missing while policy requires existing checks.
-- PR changed files are not covered by verification receipts tied to the source plan.
-- Issue acceptance criteria are unchecked and no closeout proof covers them.
-- Closeout lacks merged PR proof, closed issue proof, native goal completion proof, branch cleanup proof, or cleanup hook proof.
+- PR-ready evidence does not close the exact linked GitHub issue.
+- PR-ready evidence does not show acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
 
 ## State Machine
 
@@ -41,12 +38,8 @@ Follow this order exactly:
 8. `worktree and branch setup`: create or verify inline worktree/branch, or create the worker handoff for a worker worktree thread.
 9. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
 10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
-11. `main thread review`: review worker or inline PR evidence before merge.
-12. `premerge`: validate PR closure, checks, issue criteria, changed-file coverage, and proof receipts.
-13. `merge`: squash-merge the approved PR.
-14. `issue close`: verify the exact linked GitHub issue is closed.
-15. `goal complete`: call native goal completion with tool support or record exact slash-command completion evidence.
-16. `cleanup`: sync default branch, delete only the goal branch, remove owned temporary scaffolding, and run the repo cleanup hook.
+11. `PR-ready validation`: validate branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$project-merge`.
 
 ## Execution Topology Question
 
@@ -69,9 +62,9 @@ For explicit non-interactive smoke tests, use `debug_question_mode` instead of `
 
 ## Orchestrated Worker Mode
 
-When the selected mode is `orchestrated-worker`, this thread remains the lifecycle owner. It creates the native goal, prepares the worker handoff, opens a Codex worktree thread when native thread tools are callable, reviews the worker PR, handles CI or review feedback, merges, closes the linked issue, completes the native goal, syncs default, deletes the owned branch, and records cleanup proof.
+When the selected mode is `orchestrated-worker`, this thread remains the implementation lifecycle owner. It creates the native goal, prepares the worker handoff, opens a Codex worktree thread when native thread tools are callable, validates PR-ready evidence, completes the native goal, and routes final integration to `$project-merge`.
 
-The worker thread must use `superpowers:using-git-worktrees`, `superpowers:test-driven-development`, `superpowers:executing-plans` or `superpowers:subagent-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Use `codex-dynamic-workflows` and `superpowers:dispatching-parallel-agents` when the source plan contains independent packets.
+The worker thread must use `superpowers:using-git-worktrees`, `superpowers:test-driven-development`, `superpowers:executing-plans` or `superpowers:subagent-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Worker mode must record a lightweight Dynamic Work Packet Map in the setup ledger or worker handoff. Use full `codex-dynamic-workflows` and `superpowers:dispatching-parallel-agents` only when scope, risk, independent packets, separate verification, reusable workflow value, or explicit user request justifies it.
 
 If native thread tools are absent, stop after producing the worker handoff and ask the user to open the worker thread. Do not silently convert the run to inline execution.
 
@@ -84,8 +77,7 @@ Run bundled scripts from this skill package with explicit `-RepoRoot`:
 - `scripts/prepare-execution.ps1 -Mode ApplySetup`: creates or verifies the implementation branch and prints the native goal objective.
 - `scripts/prepare-execution.ps1 -Mode FinalizeSetup`: accepts structured `get_goal` proof and writes the native setup ledger.
 - `scripts/validate-setup.ps1`: rejects GoalBuddy board fields and requires issue mirror, source plan, branch, proof oracle, goal id or thread goal proof, and structured native goal proof.
-- `scripts/premerge.ps1`: validates PR closing reference, required checks, issue acceptance state, and source-plan verification receipts for changed files.
-- `scripts/closeout.ps1`: validates merged PR, closed issue, native goal completion proof, branch cleanup, and cleanup hook result.
+- `scripts/validate-pr-ready.ps1`: validates branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
 
 All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is false, block with the script reason.
 
@@ -122,6 +114,7 @@ The setup ledger must include:
     "script_gate_mode": "Safety only"
   },
   "worker_handoff": null,
+  "dynamic_work_packet_map": null,
   "proof_oracle": ["<commands, artifacts, review state, or visible behavior>"],
   "branch_inventory_before": {
     "local": ["main"],
@@ -139,7 +132,7 @@ If native goal tools are callable, use them:
 - Call `get_goal` before activation. If an unrelated active goal exists, block.
 - Activate the exact `/goal` objective from `prepare-execution.ps1`.
 - Call `get_goal` again and pass that structured proof to `FinalizeSetup`.
-- At closeout, call native goal completion when tool support exists and record the structured result.
+- At PR-ready, call native goal completion when tool support exists and record the structured result in the PR-ready ledger.
 
 If the run uses a slash-command flow instead of tools, record the exact `/goal` activation and completion evidence in ledgers. Do not continue from a plain-text claim.
 
@@ -152,21 +145,25 @@ Use Superpowers for the engineering method inside this GitHub lifecycle:
 - `superpowers:using-git-worktrees` before implementation work begins.
 - `superpowers:test-driven-development` for feature or bug code unless the plan records an explicit opt-out.
 - `superpowers:systematic-debugging` or `diagnose` for bugs, regressions, failing tests, CI failures, performance work, or unclear failure modes.
-- `codex-dynamic-workflows` when the issue needs an orchestrator/worker split or work packet map.
+- a lightweight Dynamic Work Packet Map when the issue needs an orchestrator/worker split.
+- `codex-dynamic-workflows` only when the issue meets the heavier orchestration decision rule or the user explicitly requests it.
 - `superpowers:dispatching-parallel-agents` when independent packets can run in parallel.
-- `superpowers:verification-before-completion` before PR-ready, merge-ready, or complete claims.
-- `superpowers:finishing-a-development-branch` after verification and before integration.
+- `superpowers:verification-before-completion` before PR-ready claims.
+- `superpowers:finishing-a-development-branch` after verification and before PR creation.
 
 GitHub specialists can be used for CI or review-thread work, but bundled gate scripts remain authoritative.
 
+## Native Continuation Gate
+
+After PR-ready handoff proof passes, ask how to continue when `request_user_input` is callable. Options should include starting `$project-merge`, resolving another ready issue, or stopping at PR-ready. Start the selected next skill in the same turn when tools and state allow it.
+
 ## Completion Rule
 
-Do not send a success-style final response until closeout proof shows:
+Do not send a success-style final response until PR-ready proof shows:
 
-- PR merged.
-- Exact linked issue closed.
-- Native goal marked complete.
-- Default branch synced.
-- Only the goal branch deleted.
-- Owned temporary scaffolding removed.
-- Repo cleanup hook passed.
+- Acceptance criteria are covered.
+- Verification passed.
+- Branch is pushed.
+- PR is opened and closes the exact linked issue.
+- Native resolve goal is marked complete.
+- PR-ready handoff was sent or recorded for `$project-merge`.

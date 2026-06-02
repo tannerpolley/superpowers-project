@@ -214,6 +214,8 @@ try {
         Assert-True ($result.ok) $result.reason
         Assert-True ($result.setup_ledger.execution_decision.selected_mode -eq "orchestrated-worker") "worker mode was not recorded"
         Assert-True ($result.setup_ledger.worker_handoff.issue_mirror -eq "docs/superpowers/issues/12-sample.md") "worker handoff missing issue mirror"
+        Assert-True ($result.setup_ledger.worker_handoff.dynamic_work_packet_map.worker_packet.objective -match "Implement") "worker packet objective missing"
+        Assert-True ($result.setup_ledger.dynamic_work_packet_map.merge_owner -eq "project-merge") "merge owner must be project-merge"
     }
 
     Invoke-Scenario "happy setup passes with structured native goal proof" {
@@ -223,28 +225,26 @@ try {
         Assert-True (-not ($result.setup_ledger.PSObject.Properties.Name -contains "goal_board_path")) "setup ledger must not contain goal_board_path"
     }
 
-    Invoke-Scenario "happy closeout marks goal complete after merge and issue close" {
-        $prFixture = Join-Path $tempRoot "pr.json"
-        $issueFixture = Join-Path $tempRoot "issue.json"
-        New-PrFixture -Path $prFixture
-        New-IssueFixture -Path $issueFixture
-        $completion = @{
+    Invoke-Scenario "happy PR-ready handoff marks resolve goal complete" {
+        $prReady = @{
             pr_url = "https://github.com/example/repo/pull/5"
             issue_url = "https://github.com/example/repo/issues/12"
-            merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
-            linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
-            branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+            branch = "codex/sample-issue"
+            branch_pushed = $true
+            pr_closes_issue = $true
+            acceptance_criteria_covered = $true
+            verification_passed = $true
+            handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
             goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
-            cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
         } | ConvertTo-Json -Depth 16 -Compress
-        $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", $completion, "-PrFixturePath", $prFixture, "-IssueFixturePath", $issueFixture)
+        $result = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", $prReady)
         Assert-True ($result.ok) $result.reason
-        Assert-True ($result.evidence.goal_status -eq "complete") "goal completion was not recorded"
+        Assert-True ($result.evidence.goal_status -eq "complete") "resolve goal completion was not recorded"
     }
 
     Invoke-Scenario "skill text declares native goal state machine" {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
-        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "goal complete", "GoalBuddy boards are outside the default execution model")) {
+        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "PR-ready validation", "GoalBuddy boards are outside the default execution model")) {
             Assert-True ($text.Contains($needle)) "missing skill text: $needle"
         }
         foreach ($needle in @(
@@ -254,12 +254,14 @@ try {
             "request_user_input",
             "debug_question_mode",
             "using-git-worktrees",
+            "Dynamic Work Packet Map",
             "codex-dynamic-workflows",
-            "dispatching-parallel-agents",
             "test-driven-development",
             "verification-before-completion",
             "finishing-a-development-branch",
-            "main thread orchestrator"
+            "main thread orchestrator",
+            "project-merge",
+            "## Native Continuation Gate"
         )) {
             Assert-True ($text.Contains($needle)) "missing resolver workflow text: $needle"
         }
