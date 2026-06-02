@@ -1,0 +1,41 @@
+name: Bug
+description: Report a broken Milestones plugin behavior or validation failure.
+title: "[Bug]: "
+labels: ["type:bug", "status:triage"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Broken outcome
+      description: What should work, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkbox criteria that prove the fix is complete.
+      value: "- [ ] "
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: What should not change in this issue?
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Proof oracle
+      description: Commands, checks, or evidence required before closeout.
+    validations:
+      required: true
+  - type: input
+    id: plan-file
+    attributes:
+      label: Local issue file
+      description: docs/milestones/<milestone-folder>/issues/<issue-number>-<slug>.md
+    validations:
+      required: false

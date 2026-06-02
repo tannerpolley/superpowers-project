@@ -1,0 +1,12 @@
+{
+  "tracker": "github",
+  "repository": "tannerpolley/milestones-plugin",
+  "milestone_policy": "hard",
+  "project_policy": "dashboard-only",
+  "milestone_context": "docs/milestones/PROJECT_CONTEXT.md",
+  "idea_file_template": "docs/milestones/<milestone-folder>/ideas/<YYYY-MM-DD>-<slug>.md",
+  "issue_file_template": "docs/milestones/<milestone-folder>/issues/<issue-number>-<slug>.md",
+  "issue_types": ["bug", "feature", "task"],
+  "labels": ["type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked"],
+  "forbidden_local_roots": ["docs/ideas", "docs/issues", "docs/plans", "docs/milestones/<milestone-folder>/plans"]
+}

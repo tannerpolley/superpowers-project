@@ -1,0 +1,26 @@
+{
+  "name": "milestones",
+  "version": "0.1.0",
+  "description": "GitHub milestone setup, audit, idea exploration, issue planning, issue-file implementation planning, and GoalBuddy issue-resolution workflows.",
+  "author": {
+    "name": "Tanner Local"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Milestones",
+    "shortDescription": "Route, set up, audit, plan, and resolve milestone-backed GitHub issues.",
+    "longDescription": "Milestones groups the local project-management workflow skills for routing milestone work, strict milestone setup, milestone audits and repairs, exploratory idea audits, GitHub issue creation, milestone-local issue-file implementation plans, and GoalBuddy-backed issue execution. It composes with Superpowers for brainstorming, TDD, debugging, subagents, review, and verification.",
+    "developerName": "Tanner Local",
+    "category": "Productivity",
+    "capabilities": ["Planning", "GitHub", "Workflow"],
+    "defaultPrompt": [
+      "Which Milestones skill should I use for this workflow?",
+      "Set up this repo's milestone workflow.",
+      "Audit this repo's milestone workflow.",
+      "Explore this repo idea under a milestone.",
+      "Convert this idea into milestone-backed GitHub issues.",
+      "Write the issue-file implementation plan.",
+      "Resolve this GitHub issue with a goal."
+    ]
+  }
+}

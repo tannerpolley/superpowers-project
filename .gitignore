@@ -1,0 +1,9 @@
+.codex-local/
+.tmp/
+logs/
+*.log
+*.tmp
+*.bak
+__pycache__/
+.venv/
+node_modules/
