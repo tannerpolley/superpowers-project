@@ -1,0 +1,49 @@
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = "Stop"
+$skillRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = (Resolve-Path -LiteralPath (Join-Path $skillRoot "..\..")).Path
+$skillFile = Join-Path $skillRoot "SKILL.md"
+$metadataFile = Join-Path $skillRoot "agents\openai.yaml"
+$wrapperFile = Join-Path $repoRoot "skills\project-context\SKILL.md"
+$results = [System.Collections.Generic.List[object]]::new()
+
+function Add-Result { param([string]$Name, [bool]$Ok, [string]$Reason) $results.Add([pscustomobject]@{ name = $Name; ok = $Ok; reason = $Reason }) }
+function Assert-Contains { param([string]$Text, [string]$Needle, [string]$Reason) if (-not $Text.Contains($Needle)) { throw $Reason } }
+
+try {
+    if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
+    if (-not (Test-Path -LiteralPath $metadataFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
+    if (-not (Test-Path -LiteralPath $wrapperFile -PathType Leaf)) { throw "missing plugin wrapper" }
+    $skill = Get-Content -LiteralPath $skillFile -Raw
+    $metadata = Get-Content -LiteralPath $metadataFile -Raw
+    $wrapper = Get-Content -LiteralPath $wrapperFile -Raw
+
+    try {
+        foreach ($needle in @('docs/superpowers/PROJECT_CONTEXT.md','docs/superpowers/milestones','request_user_input','Project context shape','Milestone page shape','GitHub tracker config','/goal','Superpowers Project')) {
+            Assert-Contains -Text $skill -Needle $needle -Reason "missing project-context contract: $needle"
+        }
+        Add-Result -Name "project context contract present" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "project context contract present" -Ok $false -Reason $_.Exception.Message }
+
+    try {
+        Assert-Contains -Text $metadata -Needle 'project-context' -Reason "metadata missing skill name"
+        Assert-Contains -Text $metadata -Needle 'docs/superpowers/PROJECT_CONTEXT.md' -Reason "metadata missing project context path"
+        Add-Result -Name "metadata present" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "metadata present" -Ok $false -Reason $_.Exception.Message }
+
+    try {
+        Assert-Contains -Text $wrapper -Needle 'C:\Users\Tanner\.agents\skills\project-context\SKILL.md' -Reason "wrapper missing deployed path"
+        Assert-Contains -Text $wrapper -Needle 'Follow that skill exactly.' -Reason "wrapper missing follow instruction"
+        Add-Result -Name "wrapper contract present" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "wrapper contract present" -Ok $false -Reason $_.Exception.Message }
+
+    $failed = @($results | Where-Object { -not $_.ok })
+    $results | ConvertTo-Json -Depth 8
+    if ($failed.Count -gt 0) { exit 1 }
+} catch {
+    Add-Result -Name "fatal" -Ok $false -Reason $_.Exception.Message
+    $results | ConvertTo-Json -Depth 8
+    exit 1
+}

@@ -1,0 +1,4 @@
+version: 1
+skills:
+  project-context:
+    default_prompt: "Use $project-context to create or maintain the Superpowers Project large-context layer. Keep docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, specs, plans, and issue mirror contracts coherent with the GitHub tracker. Use request_user_input when callable for roadmap, milestone, tracker, or /goal execution decisions."

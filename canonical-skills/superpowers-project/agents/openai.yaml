@@ -1,0 +1,4 @@
+version: 1
+skills:
+  superpowers-project:
+    default_prompt: "Use $superpowers-project as the Superpowers Project extension router. Route project context and roadmap work to $project-context; brainstorming, specs, PRDs, product design, and architecture design to $project-brainstorm with superpowers:brainstorming; implementation planning to $project-writing-plan with superpowers:writing-plans; issue decomposition and GitHub issue mirror creation to $plan-to-issue; one ready issue execution to $resolve-issue-with-goal with native /goal proof; and drift audits or migrations to $project-doctor. Canonical artifacts live under docs/superpowers. Use request_user_input when callable for concise Default-mode decisions."
