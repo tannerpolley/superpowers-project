@@ -153,9 +153,9 @@ The extension must:
 - write the plan to `docs/superpowers/plans`;
 - never write implementation plans into `docs/milestones`.
 
-### Plan To Issues
+### Project Issues
 
-Plan-to-issue conversion uses `to-issues` vertical slicing.
+Project-issue conversion uses `to-issues` vertical slicing.
 
 The extension must:
 
@@ -273,15 +273,15 @@ Creates and maintains `docs/superpowers/PROJECT_CONTEXT.md` and `docs/superpower
 
 Runs Superpowers brainstorming with Matt-style grilling, native UI questions, project context, and milestone awareness. Writes specs under `docs/superpowers/specs`.
 
-### `project-writing-plan`
+### `project-plan`
 
 Runs Superpowers writing-plans with project context, source spec/PRD linkage, issue linkage when present, native UI questions, and grilling. Writes plans under `docs/superpowers/plans`.
 
-### `plan-to-issue`
+### `project-issue`
 
 Converts approved specs or plans into vertical-slice issue mirrors and GitHub issues. It owns AFK/HITL classification, blocked-by relationships, acceptance checkboxes, GitHub labels, and milestone assignment.
 
-### `resolve-issue-with-goal`
+### `project-resolve`
 
 Executes one issue through native `/goal` and Superpowers methods. It reads the issue mirror and source plan, verifies GitHub linkage, starts or verifies the goal, executes, validates, merges, closes, syncs, and records cleanup evidence.
 
@@ -326,7 +326,7 @@ Validation should include:
 - dummy repo project context creation;
 - dummy repo brainstorm/spec creation using native UI contract checks where testable;
 - dummy repo plan creation;
-- dummy repo plan-to-issue mirror generation;
+- dummy repo project-issue mirror generation;
 - dummy GitHub issue creation path through fixtures or a dry-run mode;
 - dummy issue resolution setup proving `/goal` is required and GoalBuddy boards are not created;
 - final sync-live validation.

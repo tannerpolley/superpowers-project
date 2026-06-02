@@ -41,9 +41,9 @@ $scenarios = @(
     Invoke-Scenario "skill frontmatter is valid" {
         if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
         $text = Get-Content -LiteralPath $skillFile -Raw
-        Assert-Contains $text "name: plan-to-issue" "missing skill name"
+        Assert-Contains $text "name: project-issue" "missing skill name"
         Assert-Contains $text "description: Use when" "description must start with Use when"
-        Assert-Contains $text "# Plan To Issue" "missing skill title"
+        Assert-Contains $text "# Project Issue" "missing skill title"
     }
     Invoke-Scenario "issue slicing contract is present" {
         $text = Get-Content -LiteralPath $skillFile -Raw
@@ -62,7 +62,7 @@ $scenarios = @(
             "docs/agents/triage-labels.md",
             "configured tracker vocabulary"
         )) {
-            Assert-Contains $text $needle "missing plan-to-issue contract: $needle"
+            Assert-Contains $text $needle "missing project-issue contract: $needle"
         }
         foreach ($needle in @(
             "Execution Mode",
@@ -79,7 +79,7 @@ $scenarios = @(
     Invoke-Scenario "metadata is present" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
-        Assert-Contains $metadata "plan-to-issue:" "missing metadata key"
+        Assert-Contains $metadata "project-issue:" "missing metadata key"
         Assert-Contains $metadata "docs/superpowers/issues" "missing metadata issue path"
         Assert-Contains $metadata "vertical slices" "missing metadata slice policy"
     }
@@ -90,7 +90,7 @@ $scenarios = @(
     }
     Invoke-Scenario "issue mirror validator accepts happy AFK issue" {
         if (-not (Test-Path -LiteralPath $validatorFile -PathType Leaf)) { throw "missing validate-issue-mirror.ps1" }
-        $root = Join-Path ([IO.Path]::GetTempPath()) ("plan-to-issue-" + [guid]::NewGuid().ToString("N"))
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("project-issue-" + [guid]::NewGuid().ToString("N"))
         try {
             New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\issues") -Force | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\plans") -Force | Out-Null
@@ -125,7 +125,7 @@ $scenarios = @(
     }
     Invoke-Scenario "bug issue mirror requires repro or feedback loop" {
         if (-not (Test-Path -LiteralPath $validatorFile -PathType Leaf)) { throw "missing validate-issue-mirror.ps1" }
-        $root = Join-Path ([IO.Path]::GetTempPath()) ("plan-to-issue-bug-" + [guid]::NewGuid().ToString("N"))
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("project-issue-bug-" + [guid]::NewGuid().ToString("N"))
         try {
             New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\issues") -Force | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\specs") -Force | Out-Null

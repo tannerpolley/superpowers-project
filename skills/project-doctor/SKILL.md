@@ -53,7 +53,7 @@ Check for drift across:
 
 ## Goal Execution Checks
 
-For active issue work, verify that issue mirrors include source plan linkage, AFK/HITL classification, Goal Command for AFK work, acceptance criteria, proof oracle, and native goal setup expectations consumed by `$resolve-issue-with-goal`.
+For active issue work, verify that issue mirrors include source plan linkage, AFK/HITL classification, Goal Command for AFK work, acceptance criteria, proof oracle, and native goal setup expectations consumed by `$project-resolve`.
 
 ## Repair Policy
 

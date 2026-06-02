@@ -117,8 +117,9 @@ try {
         "superpowers-project",
         "project-context",
         "project-brainstorm",
-        "project-writing-plan",
-        "plan-to-issue",
+        "project-plan",
+        "project-issue",
+        "project-resolve",
         "project-doctor"
     )) {
         $skillPath = Join-Path $repoRoot "skills/$skillName/SKILL.md"
@@ -141,7 +142,7 @@ try {
 
     $issueFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs/superpowers/issues") -Filter "*.md" -File | Where-Object { $_.Name -ne "README.md" })
     if ($issueFiles.Count -lt 1) { throw "docs/superpowers/issues must contain at least one issue mirror for smoke validation" }
-    $validator = Join-Path $repoRoot "skills/plan-to-issue/scripts/validate-issue-mirror.ps1"
+    $validator = Join-Path $repoRoot "skills/project-issue/scripts/validate-issue-mirror.ps1"
     foreach ($issueFile in $issueFiles) {
         $relative = [IO.Path]::GetRelativePath($repoRoot, $issueFile.FullName) -replace '\\', '/'
         $result = Invoke-JsonScript -ScriptPath $validator -Arguments @("-RepoRoot", $repoRoot, "-IssueFile", $relative, "-MilestoneRequired")

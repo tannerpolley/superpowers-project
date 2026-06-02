@@ -11,9 +11,9 @@ This skill is the router for the Superpowers Project extension. It does not repl
 
 - Project setup, roadmap context, or large-scope project map: `$project-context`
 - Brainstorming, specs, PRDs, broad product design, or architecture design: `$project-brainstorm`
-- Implementation planning from a spec, issue mirror, or approved direct request: `$project-writing-plan`
-- Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$plan-to-issue`
-- One ready issue execution with native `/goal` proof: `$resolve-issue-with-goal`
+- Implementation planning from a spec, issue mirror, or approved direct request: `$project-plan`
+- Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project-issue`
+- One ready issue execution with native `/goal` proof: `$project-resolve`
 - Drift audit, migration, label review, milestone review, or live sync review: `$project-doctor`
 
 ## Artifact Root
@@ -42,4 +42,4 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 ## Goal Routing
 
-Issue execution must use `$resolve-issue-with-goal` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan.
+Issue execution must use `$project-resolve` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan.

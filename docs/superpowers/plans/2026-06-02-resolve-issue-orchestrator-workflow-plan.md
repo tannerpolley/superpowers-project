@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an explicit inline-versus-worker execution decision to `resolve-issue-with-goal`, with native UI questioning, worktree-thread orchestration, TDD, PR finishing, and safety-focused script gates.
+**Goal:** Add an explicit inline-versus-worker execution decision to `project-resolve`, with native UI questioning, worktree-thread orchestration, TDD, PR finishing, and safety-focused script gates.
 
-**Architecture:** Keep `resolve-issue-with-goal` as the lifecycle owner for one GitHub issue mirror. The skill asks for execution topology before branch setup, records the answer in the setup ledger, and then either executes inline or orchestrates a worker worktree thread while the main thread owns review and closeout. Existing PowerShell scripts continue to validate path, goal, branch, PR, issue, and cleanup proof, while workflow preferences become readable metadata and advisory checks.
+**Architecture:** Keep `project-resolve` as the lifecycle owner for one GitHub issue mirror. The skill asks for execution topology before branch setup, records the answer in the setup ledger, and then either executes inline or orchestrates a worker worktree thread while the main thread owns review and closeout. Existing PowerShell scripts continue to validate path, goal, branch, PR, issue, and cleanup proof, while workflow preferences become readable metadata and advisory checks.
 
 **Tech Stack:** Codex skills, native `request_user_input`, native goal tools, Codex thread/worktree tools when callable, PowerShell 7 validation scripts, Markdown issue mirrors, GitHub issue and PR evidence, Superpowers execution/TDD/verification/branch-finish skills.
 
@@ -16,7 +16,7 @@
 
 ## Acceptance Criteria
 
-- `resolve-issue-with-goal` asks a native UI question in normal runs: open a worker worktree thread or resolve in the current thread.
+- `project-resolve` asks a native UI question in normal runs: open a worker worktree thread or resolve in the current thread.
 - The native question uses dynamic recommendation logic based on issue complexity.
 - `debug_question_mode` can exercise the same decision in smoke tests without calling `request_user_input`.
 - Setup ledgers record `execution_decision`, `workflow_policy`, and worker handoff details when worker mode is selected.
@@ -29,15 +29,15 @@
 
 ## File Map
 
-- Modify: `canonical-skills/resolve-issue-with-goal/SKILL.md`
-- Modify: `canonical-skills/resolve-issue-with-goal/agents/openai.yaml`
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/prepare-execution.ps1`
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/validate-setup.ps1`
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`
-- Modify: `canonical-skills/plan-to-issue/SKILL.md`
-- Modify: `canonical-skills/plan-to-issue/scripts/validate-issue-mirror.ps1`
-- Modify: `canonical-skills/plan-to-issue/scripts/test-scenarios.ps1`
-- Modify: `canonical-skills/plan-to-issue/agents/openai.yaml`
+- Modify: `canonical-skills/project-resolve/SKILL.md`
+- Modify: `canonical-skills/project-resolve/agents/openai.yaml`
+- Modify: `canonical-skills/project-resolve/scripts/prepare-execution.ps1`
+- Modify: `canonical-skills/project-resolve/scripts/validate-setup.ps1`
+- Modify: `canonical-skills/project-resolve/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/project-issue/SKILL.md`
+- Modify: `canonical-skills/project-issue/scripts/validate-issue-mirror.ps1`
+- Modify: `canonical-skills/project-issue/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/project-issue/agents/openai.yaml`
 - Modify: `docs/superpowers/issues/README.md`
 - Modify: `docs/superpowers/issues/smoke-test-workflow.md`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
@@ -57,16 +57,16 @@
 ## Task 1: Add Workflow Metadata To Issue Mirrors
 
 **Files:**
-- Modify: `canonical-skills/plan-to-issue/SKILL.md`
-- Modify: `canonical-skills/plan-to-issue/agents/openai.yaml`
-- Modify: `canonical-skills/plan-to-issue/scripts/validate-issue-mirror.ps1`
-- Modify: `canonical-skills/plan-to-issue/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/project-issue/SKILL.md`
+- Modify: `canonical-skills/project-issue/agents/openai.yaml`
+- Modify: `canonical-skills/project-issue/scripts/validate-issue-mirror.ps1`
+- Modify: `canonical-skills/project-issue/scripts/test-scenarios.ps1`
 - Modify: `docs/superpowers/issues/README.md`
 - Modify: `docs/superpowers/issues/smoke-test-workflow.md`
 
-- [ ] **Step 1: Write the failing plan-to-issue scenario**
+- [ ] **Step 1: Write the failing project-issue scenario**
 
-In `canonical-skills/plan-to-issue/scripts/test-scenarios.ps1`, extend the happy AFK issue fixture with:
+In `canonical-skills/project-issue/scripts/test-scenarios.ps1`, extend the happy AFK issue fixture with:
 
 ```markdown
 **Execution Mode:** Ask at runtime
@@ -99,14 +99,14 @@ foreach ($needle in @(
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\plan-to-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-issue\scripts\test-scenarios.ps1
 ```
 
 Expected: fails because the skill text and validator do not yet define the new workflow metadata contract.
 
 - [ ] **Step 3: Update the issue mirror skill contract**
 
-In `canonical-skills/plan-to-issue/SKILL.md`, add this block to the issue mirror shape:
+In `canonical-skills/project-issue/SKILL.md`, add this block to the issue mirror shape:
 
 ```markdown
 **Execution Mode:** Ask at runtime
@@ -121,14 +121,14 @@ In `canonical-skills/plan-to-issue/SKILL.md`, add this block to the issue mirror
 Add this policy paragraph after the mirror shape:
 
 ```markdown
-Workflow metadata guides `$resolve-issue-with-goal`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
+Workflow metadata guides `$project-resolve`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 ```
 
-In `canonical-skills/plan-to-issue/agents/openai.yaml`, include the same field names in the default prompt.
+In `canonical-skills/project-issue/agents/openai.yaml`, include the same field names in the default prompt.
 
 - [ ] **Step 4: Add advisory workflow checks to the mirror validator**
 
-In `canonical-skills/plan-to-issue/scripts/validate-issue-mirror.ps1`, after the goal command check, insert:
+In `canonical-skills/project-issue/scripts/validate-issue-mirror.ps1`, after the goal command check, insert:
 
 ```powershell
 $workflowFields = [ordered]@{
@@ -165,7 +165,7 @@ In `docs/superpowers/issues/smoke-test-workflow.md`, add the seven workflow fiel
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\plan-to-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-issue\scripts\test-scenarios.ps1
 ```
 
 Expected: exits zero.
@@ -173,20 +173,20 @@ Expected: exits zero.
 Commit:
 
 ```powershell
-git add canonical-skills/plan-to-issue docs/superpowers/issues
+git add canonical-skills/project-issue docs/superpowers/issues
 git commit -m "feat: add issue workflow metadata"
 ```
 
 ## Task 2: Add The Resolver Execution Topology Decision
 
 **Files:**
-- Modify: `canonical-skills/resolve-issue-with-goal/SKILL.md`
-- Modify: `canonical-skills/resolve-issue-with-goal/agents/openai.yaml`
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/project-resolve/SKILL.md`
+- Modify: `canonical-skills/project-resolve/agents/openai.yaml`
+- Modify: `canonical-skills/project-resolve/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Write failing resolver text scenarios**
 
-In `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`, extend the `skill text declares native goal state machine` scenario needles:
+In `canonical-skills/project-resolve/scripts/test-scenarios.ps1`, extend the `skill text declares native goal state machine` scenario needles:
 
 ```powershell
 foreach ($needle in @(
@@ -212,14 +212,14 @@ foreach ($needle in @(
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue-with-goal\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-resolve\scripts\test-scenarios.ps1
 ```
 
 Expected: fails because the skill text does not yet require the topology question and orchestration behavior.
 
 - [ ] **Step 3: Update the resolver state machine**
 
-In `canonical-skills/resolve-issue-with-goal/SKILL.md`, replace the current state machine with:
+In `canonical-skills/project-resolve/SKILL.md`, replace the current state machine with:
 
 ```markdown
 1. `repo gate`: verify the active repo and explicit target when needed.
@@ -242,7 +242,7 @@ In `canonical-skills/resolve-issue-with-goal/SKILL.md`, replace the current stat
 
 - [ ] **Step 4: Add the native question contract**
 
-In `canonical-skills/resolve-issue-with-goal/SKILL.md`, add:
+In `canonical-skills/project-resolve/SKILL.md`, add:
 
 ```markdown
 ## Execution Topology Question
@@ -279,7 +279,7 @@ If native thread tools are absent, stop after producing the worker handoff and a
 
 - [ ] **Step 6: Update resolver metadata prompt**
 
-In `canonical-skills/resolve-issue-with-goal/agents/openai.yaml`, add this sentence to the default prompt:
+In `canonical-skills/project-resolve/agents/openai.yaml`, add this sentence to the default prompt:
 
 ```yaml
 Ask the native execution topology question before branch setup: open a worker worktree thread or resolve in the current thread; keep the main thread as orchestrator, reviewer, merge owner, issue close owner, native goal completion owner, and cleanup owner.
@@ -290,7 +290,7 @@ Ask the native execution topology question before branch setup: open a worker wo
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue-with-goal\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-resolve\scripts\test-scenarios.ps1
 ```
 
 Expected: exits zero.
@@ -298,20 +298,20 @@ Expected: exits zero.
 Commit:
 
 ```powershell
-git add canonical-skills/resolve-issue-with-goal
+git add canonical-skills/project-resolve
 git commit -m "feat: add resolver execution topology decision"
 ```
 
 ## Task 3: Carry Execution Decisions Through Setup Ledgers
 
 **Files:**
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/prepare-execution.ps1`
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/validate-setup.ps1`
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/project-resolve/scripts/prepare-execution.ps1`
+- Modify: `canonical-skills/project-resolve/scripts/validate-setup.ps1`
+- Modify: `canonical-skills/project-resolve/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add failing setup ledger scenarios**
 
-In `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`, add helpers:
+In `canonical-skills/project-resolve/scripts/test-scenarios.ps1`, add helpers:
 
 ```powershell
 function New-ExecutionDecision {
@@ -353,14 +353,14 @@ Invoke-Scenario "orchestrated worker execution decision is recorded with worker 
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue-with-goal\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-resolve\scripts\test-scenarios.ps1
 ```
 
 Expected: fails because `prepare-execution.ps1` does not accept or validate `ExecutionDecisionJson`.
 
 - [ ] **Step 3: Add the execution decision parameter**
 
-In `canonical-skills/resolve-issue-with-goal/scripts/prepare-execution.ps1`, add the parameter:
+In `canonical-skills/project-resolve/scripts/prepare-execution.ps1`, add the parameter:
 
 ```powershell
 [string]$ExecutionDecisionJson,
@@ -371,7 +371,7 @@ Place it after `GoalProofPath`.
 
 - [ ] **Step 4: Add execution decision validation helpers**
 
-In `canonical-skills/resolve-issue-with-goal/scripts/lib/contract.ps1`, add:
+In `canonical-skills/project-resolve/scripts/lib/contract.ps1`, add:
 
 ```powershell
 function Assert-ExecutionDecision {
@@ -450,7 +450,7 @@ if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker" -
 
 - [ ] **Step 7: Update existing happy setup tests**
 
-Every existing `FinalizeSetup` call in `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1` must pass:
+Every existing `FinalizeSetup` call in `canonical-skills/project-resolve/scripts/test-scenarios.ps1` must pass:
 
 ```powershell
 "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "inline")
@@ -461,7 +461,7 @@ Every existing `FinalizeSetup` call in `canonical-skills/resolve-issue-with-goal
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue-with-goal\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-resolve\scripts\test-scenarios.ps1
 ```
 
 Expected: exits zero.
@@ -469,7 +469,7 @@ Expected: exits zero.
 Commit:
 
 ```powershell
-git add canonical-skills/resolve-issue-with-goal/scripts
+git add canonical-skills/project-resolve/scripts
 git commit -m "feat: record resolver execution decisions"
 ```
 

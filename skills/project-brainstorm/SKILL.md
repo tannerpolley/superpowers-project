@@ -64,4 +64,4 @@ A saved spec should include:
 - GitHub issue or PRD linkage when already known
 - proof oracle candidates for later planning
 
-Before reporting the spec ready, self-review for placeholders, contradictions, ambiguous wording, and scope that should be split before `project-writing-plan` runs.
+Before reporting the spec ready, self-review for placeholders, contradictions, ambiguous wording, and scope that should be split before `project-plan` runs.

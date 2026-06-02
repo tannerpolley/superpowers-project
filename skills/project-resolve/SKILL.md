@@ -1,9 +1,9 @@
 ---
-name: resolve-issue-with-goal
+name: project-resolve
 description: Use when one ready GitHub issue mirror under docs/superpowers/issues must be resolved through native goal activation, Superpowers execution, PR, merge, issue closure, and cleanup.
 ---
 
-# Resolve Issue With Goal
+# Project Resolve
 
 This skill owns execution for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with a merged PR, closed issue, native goal completion, synced default branch, goal branch cleanup, and cleanup proof.
 
@@ -63,7 +63,9 @@ Options:
 
 Recommend `Open worker thread` for non-trivial AFK issues, source plans with multiple independent tasks, risky shared-code changes, or work naturally ending in a PR. Recommend `Current thread` for small, single-step, low-risk issues.
 
-For explicit smoke tests, use `debug_question_mode` instead of `request_user_input` and record the Native Question Debug Ledger entry in the setup ledger.
+## Native Question Debug Mode
+
+For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry in the setup ledger with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not be used for normal issue execution or to pretend a live user chose the execution topology.
 
 ## Orchestrated Worker Mode
 

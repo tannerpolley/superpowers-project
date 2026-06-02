@@ -1,11 +1,11 @@
 ---
-name: plan-to-issue
+name: project-issue
 description: Use when a Superpowers Project spec, plan, PRD, or approved scope needs vertical-slice GitHub issues and synced issue mirrors.
 ---
 
-# Plan To Issue
+# Project Issue
 
-Plan To Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$resolve-issue-with-goal` to execute one issue at a time.
+Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$project-resolve` to execute one issue at a time.
 
 ## Inputs
 
@@ -81,7 +81,7 @@ Each mirror must include:
 - Proof oracle
 - GitHub body text or a close mirror of it
 
-Workflow metadata guides `$resolve-issue-with-goal`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
+Workflow metadata guides `$project-resolve`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -133,7 +133,7 @@ For HITL issues, use the configured triage or blocked status label until the mis
 
 ## Mirror Validation
 
-Use the bundled `scripts/validate-issue-mirror.ps1` before publishing an issue mirror or handing it to `$resolve-issue-with-goal`.
+Use the bundled `scripts/validate-issue-mirror.ps1` before publishing an issue mirror or handing it to `$project-resolve`.
 
 Validation must prove:
 
@@ -149,4 +149,4 @@ Validation must prove:
 
 ## Execution Boundary
 
-This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$resolve-issue-with-goal`.
+This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$project-resolve`.

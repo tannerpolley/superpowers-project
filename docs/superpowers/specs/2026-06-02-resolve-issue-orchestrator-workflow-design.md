@@ -20,7 +20,7 @@ The resolver should now support two execution shapes:
 
 ## Problem
 
-`resolve-issue-with-goal` currently treats issue execution as a single-thread lifecycle. That is enough for small issues, but it misses the stronger Superpowers pattern for complex work: isolate work in a worktree, let a worker implement the issue, and keep the main thread free to coordinate, review, and finish the GitHub lifecycle.
+`project-resolve` currently treats issue execution as a single-thread lifecycle. That is enough for small issues, but it misses the stronger Superpowers pattern for complex work: isolate work in a worktree, let a worker implement the issue, and keep the main thread free to coordinate, review, and finish the GitHub lifecycle.
 
 The resolver also needs to loosen PowerShell scripts into safety gates instead of style enforcers. Scripts should block unsafe or invalid lifecycle states, but they should not make the workflow brittle by hard-coding every agent choice.
 
@@ -70,7 +70,7 @@ The resolver could always spawn a worker worktree thread. This is clean for larg
 
 ### Native Execution Topology Question
 
-After repo, issue mirror, and source plan validation, and before implementation branch setup, `resolve-issue-with-goal` asks:
+After repo, issue mirror, and source plan validation, and before implementation branch setup, `project-resolve` asks:
 
 ```text
 How should this issue be resolved?
@@ -157,7 +157,7 @@ Parallelism is optional. TDD and verification are not optional for feature or bu
 
 ### Issue Mirror Workflow Fields
 
-`plan-to-issue` should include workflow metadata in new issue mirrors:
+`project-issue` should include workflow metadata in new issue mirrors:
 
 ```markdown
 **Execution Mode:** Ask at runtime
@@ -197,7 +197,7 @@ Scripts should report advisory checks for:
 
 ## Success Criteria
 
-- `resolve-issue-with-goal` asks the inline-versus-worker question in normal runs when `request_user_input` is callable.
+- `project-resolve` asks the inline-versus-worker question in normal runs when `request_user_input` is callable.
 - The setup ledger records the execution decision source, selected mode, recommendation, and options.
 - Orchestrated mode keeps main-thread ownership of review, merge, issue close, goal complete, and cleanup.
 - Worker handoff includes all context needed to resolve the issue without reading this conversation.
@@ -208,7 +208,7 @@ Scripts should report advisory checks for:
 
 ## Open Decisions Resolved
 
-- `resolve-issue-with-goal` must ask whether to solve inline or open a worker worktree thread.
+- `project-resolve` must ask whether to solve inline or open a worker worktree thread.
 - Main thread is the orchestrator, manager, reviewer, merge owner, issue close owner, and goal completion owner.
 - Native Codex worktree/thread support is preferred for worker execution.
 - TDD is required for feature and bug implementation.

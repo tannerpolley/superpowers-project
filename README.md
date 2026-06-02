@@ -15,9 +15,9 @@ This repository is the canonical source. The live Codex install is a deployment 
 - `$superpowers-project`: routes extension workflows.
 - `$project-context`: creates and maintains project context and milestone pages.
 - `$project-brainstorm`: runs Superpowers brainstorming with native grilling.
-- `$project-writing-plan`: writes Superpowers implementation plans with project context.
-- `$plan-to-issue`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
-- `$resolve-issue-with-goal`: resolves one issue with native `/goal` and Superpowers execution.
+- `$project-plan`: writes Superpowers implementation plans with project context.
+- `$project-issue`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
+- `$project-resolve`: resolves one issue with native `/goal` and Superpowers execution.
 - `$project-doctor`: audits project, GitHub, migration, and live-sync drift.
 
 ## Canonical Layout

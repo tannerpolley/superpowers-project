@@ -36,6 +36,9 @@ $retiredSkillNames = @(
     "explore-ideas",
     "milestone-writing-issue-plan",
     "convert-idea-to-issue",
+    "project-writing-plan",
+    "plan-to-issue",
+    "resolve-issue-with-goal",
     "milestones-doctor"
 )
 

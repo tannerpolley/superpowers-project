@@ -31,9 +31,9 @@ $scenarios = @(
     Invoke-Scenario "skill frontmatter is valid" {
         if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
         $text = Get-Content -LiteralPath $skillFile -Raw
-        Assert-Contains $text "name: project-writing-plan" "missing skill name"
+        Assert-Contains $text "name: project-plan" "missing skill name"
         Assert-Contains $text "description: Use when" "description must start with Use when"
-        Assert-Contains $text "# Project Writing Plan" "missing skill title"
+        Assert-Contains $text "# Project Plan" "missing skill title"
     }
     Invoke-Scenario "superpowers writing contract is present" {
         $text = Get-Content -LiteralPath $skillFile -Raw
@@ -48,17 +48,17 @@ $scenarios = @(
             "superpowers:systematic-debugging",
             "superpowers:verification-before-completion"
         )) {
-            Assert-Contains $text $needle "missing project-writing-plan contract: $needle"
+            Assert-Contains $text $needle "missing project-plan contract: $needle"
         }
     }
     Invoke-Scenario "old milestone issue target is retired" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         Assert-NotContains $text "docs/milestones/<milestone-folder>/issues" "old milestone issues path must not be active"
     }
-    Invoke-Scenario "metadata routes to project writing plan" {
+    Invoke-Scenario "metadata routes to project plan" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $text = Get-Content -LiteralPath $yamlFile -Raw
-        Assert-Contains $text "project-writing-plan:" "missing metadata key"
+        Assert-Contains $text "project-plan:" "missing metadata key"
         Assert-Contains $text "docs/superpowers/plans" "missing metadata plan path"
         Assert-Contains $text "superpowers:writing-plans" "missing metadata Superpowers route"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"

@@ -8,7 +8,7 @@ The Milestones plugin repo is the canonical source for the local plugin and its 
 
 The repo is currently clean on `main`, source and deployed copies are byte-for-byte synced, GitHub Issues and Projects are enabled, required labels exist, and the three GitHub milestones mirror `docs/milestones/PROJECT_CONTEXT.md`.
 
-Full validation is not green. `scripts/validate.ps1` fails on wrapper wording assertions, and the `resolve-issue-with-goal` scenario suite does not finish within a two-minute bound during manual review.
+Full validation is not green. `scripts/validate.ps1` fails on wrapper wording assertions, and the `project-resolve` scenario suite does not finish within a two-minute bound during manual review.
 
 ## Solidified Findings
 
@@ -16,7 +16,7 @@ The bootstrap work is driven by these findings:
 
 - `scripts/validate.ps1` fails because scenario tests expect wrapper wording that the current source and deployed wrappers do not contain.
 - `canonical-skills/using-milestones/scripts/test-scenarios.ps1` and `canonical-skills/milestone-writing-issue-plan/scripts/test-scenarios.ps1` validate wrappers through deployed live paths instead of source wrapper paths.
-- `canonical-skills/resolve-issue-with-goal/scripts/lib/contract.ps1` runs external processes with redirected output, synchronous stream reads, and no timeout. The matching scenario suite inherits that behavior and can hang validation.
+- `canonical-skills/project-resolve/scripts/lib/contract.ps1` runs external processes with redirected output, synchronous stream reads, and no timeout. The matching scenario suite inherits that behavior and can hang validation.
 - `canonical-skills/convert-idea-to-issue/scripts/lib/contract.ps1` uses the same unbounded process helper pattern, even though its current scenario suite passes.
 - `scripts/sync-live.ps1` deploys known source skills but does not remove stale deployed Milestones-owned skill directories after a source skill is removed or renamed.
 - There is no `.github/workflows` directory.

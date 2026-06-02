@@ -121,9 +121,9 @@ function Get-ActiveSkillNames {
         "superpowers-project",
         "project-context",
         "project-brainstorm",
-        "project-writing-plan",
-        "plan-to-issue",
-        "resolve-issue-with-goal",
+        "project-plan",
+        "project-issue",
+        "project-resolve",
         "project-doctor"
     )
 }
@@ -262,7 +262,7 @@ try {
         (Join-Path $repoRoot "AGENTS.md"),
         (Join-Path $repoRoot "CHANGELOG.md")
     )
-    $stale = @(rg -n "plan-goal-implement-merge|setup-project-roadmap|setup_project_roadmap_plan|grill-plan-to-issue|issue-goal-execute-merge|docs/ideas/<YYYY|docs/ideas/20|cross-milestone.*docs/ideas|docs/ideas.*cross-milestone" @scanRoots 2>$null)
+    $stale = @(rg -n "plan-goal-implement-merge|setup-project-roadmap|setup_project_roadmap_plan|grill-project-issue|issue-goal-execute-merge|docs/ideas/<YYYY|docs/ideas/20|cross-milestone.*docs/ideas|docs/ideas.*cross-milestone" @scanRoots 2>$null)
     $allowedNegativeFixture = "skills\convert-idea-to-issue\scripts\test-scenarios.ps1"
     $unexpected = @($stale | Where-Object { $_ -notmatch [regex]::Escape($allowedNegativeFixture) })
     if ($unexpected.Count -gt 0) {

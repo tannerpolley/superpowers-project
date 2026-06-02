@@ -16,7 +16,7 @@ Superpowers Project extends Superpowers with durable project context, roadmap an
 The project roadmap has three active GitHub-backed milestones:
 
 - `M0 - Governance`: validation, guardrails, and workflow contracts that keep the plugin dependable.
-- `M1 - Source Of Truth`: source/live sync, wrapper alignment, artifact layout, and drift prevention.
+- `M1 - Source Of Truth`: source/live skill alignment, artifact layout, and drift prevention.
 - `M2 - Distribution`: installation, CI, release policy, and deployment proof.
 
 Milestone pages under `docs/superpowers/milestones/` are the durable project map. GitHub milestones are the tracker-side grouping. Specs, plans, and issue mirrors should link back to one of these roadmap buckets when the work is milestone-owned.
@@ -39,9 +39,9 @@ Issue execution uses native `/goal` or goal tools plus Superpowers execution ski
 - `superpowers-project`
 - `project-context`
 - `project-brainstorm`
-- `project-writing-plan`
-- `plan-to-issue`
-- `resolve-issue-with-goal`
+- `project-plan`
+- `project-issue`
+- `project-resolve`
 - `project-doctor`
 
 ## Current Open Questions

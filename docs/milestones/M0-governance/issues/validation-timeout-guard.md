@@ -19,7 +19,7 @@
 
 **Acceptance Criteria:**
 
-- `canonical-skills/resolve-issue-with-goal/scripts/lib/contract.ps1` external commands support `-TimeoutSeconds` and return structured timeout evidence.
+- `canonical-skills/project-resolve/scripts/lib/contract.ps1` external commands support `-TimeoutSeconds` and return structured timeout evidence.
 - `canonical-skills/convert-idea-to-issue/scripts/lib/contract.ps1` external commands support the same timeout behavior.
 - `scripts/validate.ps1` runs each scenario suite through a bounded helper and reports the timed-out skill name.
 - A synthetic hung helper scenario proves the child process is stopped.
@@ -37,28 +37,28 @@
 
 ## File Map
 
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/lib/contract.ps1`  
-  Owns bounded external process execution for `resolve-issue-with-goal`.
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`  
+- Modify: `canonical-skills/project-resolve/scripts/lib/contract.ps1`
+  Owns bounded external process execution for `project-resolve`.
+- Modify: `canonical-skills/project-resolve/scripts/test-scenarios.ps1`
   Adds the hung-helper regression scenario.
-- Modify: `canonical-skills/convert-idea-to-issue/scripts/lib/contract.ps1`  
+- Modify: `canonical-skills/convert-idea-to-issue/scripts/lib/contract.ps1`
   Owns the same bounded external process contract for `convert-idea-to-issue`.
-- Modify: `canonical-skills/convert-idea-to-issue/scripts/test-scenarios.ps1`  
+- Modify: `canonical-skills/convert-idea-to-issue/scripts/test-scenarios.ps1`
   Adds the matching hung-helper regression scenario.
-- Modify: `scripts/validate.ps1`  
+- Modify: `scripts/validate.ps1`
   Runs scenario suites through a bounded PowerShell child process and reports timeout evidence.
 
-## Task 1: Add A Bounded Process Helper To Resolve Issue With Goal
+## Task 1: Add A Bounded Process Helper To Project Resolve
 
 **Files:**
 
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/lib/contract.ps1`
-- Modify: `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`
-- Test: `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/project-resolve/scripts/lib/contract.ps1`
+- Modify: `canonical-skills/project-resolve/scripts/test-scenarios.ps1`
+- Test: `canonical-skills/project-resolve/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add the failing timeout scenario**
 
-In `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`, immediately after line 688, where the `try` block creates `$tempRoot`, insert:
+In `canonical-skills/project-resolve/scripts/test-scenarios.ps1`, immediately after line 688, where the `try` block creates `$tempRoot`, insert:
 
 ```powershell
     $timeoutProbe = Invoke-External -FilePath "pwsh.exe" -Arguments @("-NoProfile", "-Command", "Start-Sleep -Seconds 5") -WorkingDirectory $tempRoot -TimeoutSeconds 1
@@ -86,14 +86,14 @@ In `canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1`, immedi
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue-with-goal\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-resolve\scripts\test-scenarios.ps1
 ```
 
 Expected: exits nonzero and reports a parameter binding failure for `TimeoutSeconds`.
 
 - [ ] **Step 3: Replace `Invoke-External` with a bounded implementation**
 
-In `canonical-skills/resolve-issue-with-goal/scripts/lib/contract.ps1`, replace the current `Invoke-External` function with:
+In `canonical-skills/project-resolve/scripts/lib/contract.ps1`, replace the current `Invoke-External` function with:
 
 ```powershell
 function Invoke-External {
@@ -179,7 +179,7 @@ function Invoke-External {
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue-with-goal\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-resolve\scripts\test-scenarios.ps1
 ```
 
 Expected: the `external helper timeout is bounded` result has `passed: true`. If other pre-existing scenario failures remain, record them separately and continue with this issue only if they are unrelated to timeout behavior.
@@ -189,7 +189,7 @@ Expected: the `external helper timeout is bounded` result has `passed: true`. If
 Run:
 
 ```powershell
-git add canonical-skills/resolve-issue-with-goal/scripts/lib/contract.ps1 canonical-skills/resolve-issue-with-goal/scripts/test-scenarios.ps1
+git add canonical-skills/project-resolve/scripts/lib/contract.ps1 canonical-skills/project-resolve/scripts/test-scenarios.ps1
 git commit -m "test: bound resolve issue helper processes"
 ```
 

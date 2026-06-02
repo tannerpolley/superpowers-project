@@ -1,0 +1,4 @@
+version: 1
+skills:
+  project-plan:
+    default_prompt: "Use $project-plan when an approved Superpowers Project spec or issue mirror needs an implementation plan. Use superpowers:writing-plans as the base workflow, save plans under docs/superpowers/plans, link docs/superpowers/specs and docs/superpowers/issues when present, use request_user_input in Default mode for material choices, require proof oracle evidence, require superpowers:test-driven-development for feature or bug plans unless explicit opt-out, require superpowers:systematic-debugging for bugs, and require superpowers:verification-before-completion before completion."

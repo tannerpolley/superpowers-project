@@ -1,13 +1,13 @@
 ---
-name: project-writing-plan
+name: project-plan
 description: Use when an approved Superpowers Project spec or issue mirror needs a detailed implementation plan before code changes.
 ---
 
-# Project Writing Plan
+# Project Plan
 
-Project Writing Plan is the Superpowers Project adapter for `superpowers:writing-plans`. It writes durable implementation plans under `docs/superpowers/plans` and keeps links to source specs, issue mirrors, milestones, and proof oracles.
+Project Plan is the Superpowers Project adapter for `superpowers:writing-plans`. It writes durable implementation plans under `docs/superpowers/plans` and keeps links to source specs, issue mirrors, milestones, and proof oracles.
 
-**Announce at start:** "I'm using the project-writing-plan skill with superpowers:writing-plans."
+**Announce at start:** "I'm using the project-plan skill with superpowers:writing-plans."
 
 ## Required Method
 
