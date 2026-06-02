@@ -217,6 +217,22 @@ try {
         foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "goal complete", "GoalBuddy boards are outside the default execution model")) {
             Assert-True ($text.Contains($needle)) "missing skill text: $needle"
         }
+        foreach ($needle in @(
+            "execution topology question",
+            "Open worker thread",
+            "Current thread",
+            "request_user_input",
+            "debug_question_mode",
+            "using-git-worktrees",
+            "codex-dynamic-workflows",
+            "dispatching-parallel-agents",
+            "test-driven-development",
+            "verification-before-completion",
+            "finishing-a-development-branch",
+            "main thread orchestrator"
+        )) {
+            Assert-True ($text.Contains($needle)) "missing resolver workflow text: $needle"
+        }
     }
 
     $failed = @($results | Where-Object { -not $_.ok })

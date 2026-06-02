@@ -35,16 +35,43 @@ Follow this order exactly:
 2. `issue mirror validation`: inspect `docs/superpowers/issues/<issue>.md`.
 3. `source plan validation`: read the linked `docs/superpowers/plans/<plan>.md`.
 4. `preflight`: verify the repo is ready for one issue execution.
-5. `branch setup`: create or verify the implementation branch.
+5. `execution topology question`: ask whether to open a worker thread or resolve in the current thread.
 6. `native goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
-7. `setup validation`: write and validate the setup ledger.
-8. `Superpowers execution`: use Superpowers execution, TDD, debugging, and verification skills as applicable.
-9. `verification`: record source-plan verification receipts for changed files.
-10. `premerge`: validate PR closure, checks, issue criteria, changed-file coverage, and proof receipts.
-11. `merge`: squash-merge the approved PR.
-12. `issue close`: verify the exact linked GitHub issue is closed.
-13. `goal complete`: call native goal completion with tool support or record exact slash-command completion evidence.
-14. `cleanup`: sync default branch, delete only the goal branch, remove owned temporary scaffolding, and run the repo cleanup hook.
+7. `setup validation`: write and validate the setup ledger, including the execution decision.
+8. `worktree and branch setup`: create or verify inline worktree/branch, or create the worker handoff for a worker worktree thread.
+9. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
+10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
+11. `main thread review`: review worker or inline PR evidence before merge.
+12. `premerge`: validate PR closure, checks, issue criteria, changed-file coverage, and proof receipts.
+13. `merge`: squash-merge the approved PR.
+14. `issue close`: verify the exact linked GitHub issue is closed.
+15. `goal complete`: call native goal completion with tool support or record exact slash-command completion evidence.
+16. `cleanup`: sync default branch, delete only the goal branch, remove owned temporary scaffolding, and run the repo cleanup hook.
+
+## Execution Topology Question
+
+Before branch setup or implementation, ask the user how to resolve the issue when `request_user_input` is callable.
+
+Question id: `resolve_execution_topology`
+
+Prompt: `How should this issue be resolved?`
+
+Options:
+
+- `Open worker thread`: create a Codex worktree thread for implementation while this thread acts as main thread orchestrator and reviewer.
+- `Current thread`: resolve the issue in this thread using worktree isolation.
+
+Recommend `Open worker thread` for non-trivial AFK issues, source plans with multiple independent tasks, risky shared-code changes, or work naturally ending in a PR. Recommend `Current thread` for small, single-step, low-risk issues.
+
+For explicit smoke tests, use `debug_question_mode` instead of `request_user_input` and record the Native Question Debug Ledger entry in the setup ledger.
+
+## Orchestrated Worker Mode
+
+When the selected mode is `orchestrated-worker`, this thread remains the lifecycle owner. It creates the native goal, prepares the worker handoff, opens a Codex worktree thread when native thread tools are callable, reviews the worker PR, handles CI or review feedback, merges, closes the linked issue, completes the native goal, syncs default, deletes the owned branch, and records cleanup proof.
+
+The worker thread must use `superpowers:using-git-worktrees`, `superpowers:test-driven-development`, `superpowers:executing-plans` or `superpowers:subagent-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Use `codex-dynamic-workflows` and `superpowers:dispatching-parallel-agents` when the source plan contains independent packets.
+
+If native thread tools are absent, stop after producing the worker handoff and ask the user to open the worker thread. Do not silently convert the run to inline execution.
 
 ## Scripted Gates
 
@@ -105,9 +132,13 @@ Use Superpowers for the engineering method inside this GitHub lifecycle:
 
 - `superpowers:executing-plans` when the source plan is ready for inline execution.
 - `superpowers:subagent-driven-development` when independent plan tasks can be delegated safely.
+- `superpowers:using-git-worktrees` before implementation work begins.
 - `superpowers:test-driven-development` for feature or bug code unless the plan records an explicit opt-out.
 - `superpowers:systematic-debugging` or `diagnose` for bugs, regressions, failing tests, CI failures, performance work, or unclear failure modes.
+- `codex-dynamic-workflows` when the issue needs an orchestrator/worker split or work packet map.
+- `superpowers:dispatching-parallel-agents` when independent packets can run in parallel.
 - `superpowers:verification-before-completion` before PR-ready, merge-ready, or complete claims.
+- `superpowers:finishing-a-development-branch` after verification and before integration.
 
 GitHub specialists can be used for CI or review-thread work, but bundled gate scripts remain authoritative.
 
