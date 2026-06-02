@@ -10,8 +10,8 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $skillRoot = Join-Path $repoRoot "canonical-skills"
 $pluginSkillRoot = Join-Path $repoRoot "skills"
 $pluginRoot = $repoRoot
-$quickValidate = Join-Path $env:USERPROFILE ".codex\skills\.system\skill-creator\scripts\quick_validate.py"
-$pluginValidate = Join-Path $env:USERPROFILE ".codex\skills\.system\plugin-creator\scripts\validate_plugin.py"
+$quickValidate = Join-Path $PSScriptRoot "quick-validate-skill.py"
+$pluginValidate = Join-Path $PSScriptRoot "validate-plugin.py"
 
 function Resolve-PythonForValidators {
     $candidates = @(
