@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [switch]$SkipScenarioTests
+    [switch]$SkipScenarioTests,
+    [ValidateRange(1, 3600)][int]$ScenarioTimeoutSeconds = 240
 )
 
 $ErrorActionPreference = "Stop"
@@ -43,6 +44,67 @@ function Invoke-Step {
     )
     & $Body
     [pscustomobject]@{ name = $Name; ok = $true }
+}
+
+function Invoke-PwshFile {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [string[]]$Arguments = @(),
+        [ValidateRange(1, 3600)][int]$TimeoutSeconds = 240
+    )
+
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = "pwsh.exe"
+    $psi.WorkingDirectory = $repoRoot
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    foreach ($arg in @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $Path) + $Arguments) {
+        [void]$psi.ArgumentList.Add($arg)
+    }
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+
+    try {
+        [void]$process.Start()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+
+        $exited = $process.WaitForExit($TimeoutSeconds * 1000)
+        if (-not $exited) {
+            try {
+                $process.Kill($true)
+            } catch {
+                if (-not $process.HasExited) { throw }
+            }
+            $process.WaitForExit()
+            [void]$stdoutTask.Wait(1000)
+            [void]$stderrTask.Wait(1000)
+            return [pscustomobject]@{
+                ExitCode = 124
+                Stdout = (($stdoutTask.Result) -replace "(\r?\n)+$", "")
+                Stderr = "PowerShell script timed out after $TimeoutSeconds seconds: $Path"
+                TimedOut = $true
+            }
+        }
+
+        $process.WaitForExit()
+        [void]$stdoutTask.Wait(1000)
+        [void]$stderrTask.Wait(1000)
+        [pscustomobject]@{
+            ExitCode = $process.ExitCode
+            Stdout = (($stdoutTask.Result) -replace "(\r?\n)+$", "")
+            Stderr = (($stderrTask.Result) -replace "(\r?\n)+$", "")
+            TimedOut = $false
+        }
+    } finally {
+        if ($process -and -not $process.HasExited) {
+            $process.Kill($true)
+            $process.WaitForExit()
+        }
+        $process.Dispose()
+    }
 }
 
 $results = [System.Collections.Generic.List[object]]::new()
@@ -96,8 +158,11 @@ try {
             $scenarioScript = Join-Path $skill.FullName "scripts\test-scenarios.ps1"
             if (Test-Path -LiteralPath $scenarioScript -PathType Leaf) {
                 $results.Add((Invoke-Step "scenario tests $($skill.Name)" {
-                    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $scenarioScript | Out-Host
-                    if ($LASTEXITCODE -ne 0) { throw "scenario tests failed for $($skill.Name)" }
+                    $scenarioResult = Invoke-PwshFile -Path $scenarioScript -TimeoutSeconds $ScenarioTimeoutSeconds
+                    if (-not [string]::IsNullOrWhiteSpace($scenarioResult.Stdout)) { $scenarioResult.Stdout | Out-Host }
+                    if (-not [string]::IsNullOrWhiteSpace($scenarioResult.Stderr)) { $scenarioResult.Stderr | Out-Host }
+                    if ($scenarioResult.TimedOut) { throw "scenario tests timed out for $($skill.Name)" }
+                    if ($scenarioResult.ExitCode -ne 0) { throw "scenario tests failed for $($skill.Name)" }
                 }))
             }
         }
