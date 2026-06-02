@@ -46,6 +46,7 @@ function New-TestRepo {
     & git -C $repo init -b main | Out-Null
     & git -C $repo config user.email tests@example.invalid | Out-Null
     & git -C $repo config user.name "Native Goal Tests" | Out-Null
+    & git -C $repo config core.autocrlf false | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $repo "docs\superpowers\plans") -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $repo "docs\superpowers\issues") -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $repo "src") -Force | Out-Null
