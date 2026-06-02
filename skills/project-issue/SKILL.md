@@ -147,7 +147,7 @@ For HITL issues, use the configured triage or blocked status label until the mis
 
 ## Mirror Validation
 
-Use the bundled `scripts/validate-issue-mirror.ps1` before publishing an issue mirror or handing it to `$project-resolve`.
+Use the bundled `scripts/validate-issue-mirror.ps1 -IssueFile <docs/superpowers/issues/file.md>` before publishing an issue mirror or handing it to `$project-resolve`.
 
 Validation must prove:
 

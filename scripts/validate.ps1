@@ -221,6 +221,12 @@ try {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-project-repo-contract.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "superpowers project repo contract failed" }
     }))
+
+    $results.Add((Invoke-Step "skill script parameter contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-skill-script-contract.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "skill script parameter contract failed" }
+    }))
+
     $results.Add((Invoke-Step "Plugin manifest validation" {
         if (-not (Test-Path -LiteralPath $pluginValidate -PathType Leaf)) {
             throw "plugin validator not found: $pluginValidate"
