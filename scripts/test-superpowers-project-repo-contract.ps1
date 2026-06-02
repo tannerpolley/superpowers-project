@@ -151,6 +151,24 @@ try {
     }
     Add-Check -Name "repo issue mirrors" -Ok $true -Reason "passed"
 
+    foreach ($issueFile in $issueFiles) {
+        $text = Get-Content -LiteralPath $issueFile.FullName -Raw
+        foreach ($needle in @(
+            "Execution Mode",
+            "Worktree Policy",
+            "Integration Policy",
+            "TDD Policy",
+            "Parallelization Plan",
+            "Reviewer Role",
+            "Script Gate Mode"
+        )) {
+            if (-not $text.Contains($needle)) {
+                throw "$($issueFile.Name) is missing workflow metadata: $needle"
+            }
+        }
+    }
+    Add-Check -Name "issue workflow metadata" -Ok $true -Reason "passed"
+
     $staleActiveRouting = @(rg -n "New idea briefs for this repo belong under|Local issue files for this repo belong under|keep implementation issues under `?docs/milestones|ready-for-agent|needs-info|type:enhancement" `
         (Join-Path $repoRoot "AGENTS.md") `
         (Join-Path $repoRoot "canonical-skills") `
