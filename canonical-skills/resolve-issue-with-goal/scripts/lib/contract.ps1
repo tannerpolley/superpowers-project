@@ -53,7 +53,8 @@ function Invoke-External {
     param(
         [Parameter(Mandatory = $true)][string]$FilePath,
         [string[]]$Arguments = @(),
-        [string]$WorkingDirectory = (Get-Location).Path
+        [string]$WorkingDirectory = (Get-Location).Path,
+        [ValidateRange(1, 3600)][int]$TimeoutSeconds = 60
     )
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
@@ -68,15 +69,51 @@ function Invoke-External {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    [void]$process.Start()
-    $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
-    $process.WaitForExit()
 
-    [pscustomobject]@{
-        ExitCode = $process.ExitCode
-        Stdout = ($stdout -replace "(\r?\n)+$","")
-        Stderr = ($stderr -replace "(\r?\n)+$","")
+    try {
+        [void]$process.Start()
+        $processId = $process.Id
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+
+        $exited = $process.WaitForExit($TimeoutSeconds * 1000)
+        if (-not $exited) {
+            try {
+                $process.Kill($true)
+            } catch {
+                if (-not $process.HasExited) { throw }
+            }
+            $process.WaitForExit()
+            [void]$stdoutTask.Wait(1000)
+            [void]$stderrTask.Wait(1000)
+            [pscustomobject]@{
+                ExitCode = 124
+                Stdout = (($stdoutTask.Result) -replace "(\r?\n)+$", "")
+                Stderr = "external command timed out after $TimeoutSeconds seconds: $FilePath $($Arguments -join ' ')"
+                TimedOut = $true
+                TimeoutSeconds = $TimeoutSeconds
+                ProcessId = $processId
+            }
+            return
+        }
+
+        $process.WaitForExit()
+        [void]$stdoutTask.Wait(1000)
+        [void]$stderrTask.Wait(1000)
+        [pscustomobject]@{
+            ExitCode = $process.ExitCode
+            Stdout = (($stdoutTask.Result) -replace "(\r?\n)+$", "")
+            Stderr = (($stderrTask.Result) -replace "(\r?\n)+$", "")
+            TimedOut = $false
+            TimeoutSeconds = $TimeoutSeconds
+            ProcessId = $processId
+        }
+    } finally {
+        if ($process -and -not $process.HasExited) {
+            $process.Kill($true)
+            $process.WaitForExit()
+        }
+        $process.Dispose()
     }
 }
 

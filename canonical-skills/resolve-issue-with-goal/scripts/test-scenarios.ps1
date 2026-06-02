@@ -686,6 +686,24 @@ function Initialize-SetupRepo {
 
 try {
     New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+    $timeoutProbe = Invoke-External -FilePath "pwsh.exe" -Arguments @("-NoProfile", "-Command", "Start-Sleep -Seconds 5") -WorkingDirectory $tempRoot -TimeoutSeconds 1
+    $timeoutProbeStillRunning = $false
+    if ($timeoutProbe.ProcessId -gt 0) {
+        Start-Sleep -Milliseconds 200
+        $timeoutProbeStillRunning = [bool](Get-Process -Id $timeoutProbe.ProcessId -ErrorAction SilentlyContinue)
+    }
+    Add-TestResult -Name "external helper timeout is bounded" -Passed (
+        $timeoutProbe.TimedOut -eq $true -and
+        $timeoutProbe.ExitCode -eq 124 -and
+        $timeoutProbe.Stderr -match "timed out" -and
+        $timeoutProbeStillRunning -eq $false
+    ) -Reason "timeout result should prove owned child process termination" -Details @{
+        exit_code = $timeoutProbe.ExitCode
+        timed_out = $timeoutProbe.TimedOut
+        process_id = $timeoutProbe.ProcessId
+        still_running = $timeoutProbeStillRunning
+        stderr = $timeoutProbe.Stderr
+    }
     $handoff = New-HandoffJson
     $emptyMilestonesFixture = New-MilestonesFixturePath -Name "milestones-empty.json" -Empty
     $epcsaftMilestonesFixture = New-MilestonesFixturePath -Name "milestones-epcsaft.json"
