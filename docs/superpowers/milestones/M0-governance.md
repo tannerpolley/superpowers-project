@@ -19,3 +19,4 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 ## Related Issues
 
 - `docs/superpowers/issues/smoke-test-workflow.md`
+- `docs/superpowers/issues/2-project-merge-workflow.md`
