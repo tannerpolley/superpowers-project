@@ -195,7 +195,7 @@ Modify `docs/agents/project-roadmap.json` so the templates are:
   "plan_file_template": "docs/superpowers/plans/<YYYY-MM-DD>-<slug>-plan.md",
   "issue_file_template": "docs/superpowers/issues/<issue-number>-<slug>.md",
   "issue_types": ["bug", "enhancement", "task"],
-  "triage_states": ["needs-triage", "needs-info", "ready-for-agent", "ready-for-human", "wontfix"],
+  "triage_states": ["status:triage", "status:ready", "status:blocked"],
   "forbidden_canonical_roots": ["docs/milestones/<milestone-folder>/ideas", "docs/milestones/<milestone-folder>/issues", "docs/plans", "docs/issues"]
 }
 ```
@@ -566,8 +566,9 @@ Acceptance Criteria
 GitHub Issue
 GitHub Milestone
 Goal Command
-ready-for-agent
-needs-info
+configured tracker vocabulary
+status:ready
+status:blocked
 ```
 
 It must also test that bug issues require a feedback-loop or repro section.

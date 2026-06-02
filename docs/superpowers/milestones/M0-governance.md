@@ -10,12 +10,12 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 ## Related Specs
 
-- None yet
+- `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
 
 ## Related Plans
 
-- None yet
+- `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
 
 ## Related Issues
 
-- None yet
+- `docs/superpowers/issues/smoke-test-workflow.md`

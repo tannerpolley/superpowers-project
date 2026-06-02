@@ -60,8 +60,8 @@ $scenarios = @(
             "GitHub Issue",
             "GitHub Milestone",
             "Goal Command",
-            "ready-for-agent",
-            "needs-info"
+            "docs/agents/triage-labels.md",
+            "configured tracker vocabulary"
         )) {
             Assert-Contains $text $needle "missing plan-to-issue contract: $needle"
         }

@@ -15,6 +15,10 @@ Use `superpowers:brainstorming` as the base workflow. Do not implement code, cre
 
 Use `request_user_input` in Default mode when the tool is callable and a material decision needs the user. Ask one to three short questions per call. Batch independent questions; ask dependent branches sequentially.
 
+## Native Question Debug Mode
+
+For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not be used for normal brainstorming or to pretend a live user approved product, architecture, PRD, or scope decisions.
+
 ## Context First
 
 Inspect the project context before grilling or designing:

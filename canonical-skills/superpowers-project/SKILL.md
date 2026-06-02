@@ -34,6 +34,12 @@ Use Superpowers skills for method: `superpowers:brainstorming`, `superpowers:wri
 
 When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for one to three short, decision-oriented questions. Batch independent questions together. Ask dependent questions one step at a time after the prior answer changes the branch.
 
+## Native Question Debug Mode
+
+Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only when the user explicitly asks for non-interactive smoke testing, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer that modal prompt.
+
+In `debug_question_mode`, do not call `request_user_input`. Instead, record a Native Question Debug Ledger in the active smoke issue mirror or final smoke report. Each ledger entry must include the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults. Debug mode must not be used as a substitute for native UI in normal work; it is test-only evidence and never counts as a live user decision.
+
 ## Goal Routing
 
 Issue execution must use `$resolve-issue-with-goal` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan.

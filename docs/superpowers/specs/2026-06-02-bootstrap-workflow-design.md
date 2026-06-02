@@ -126,4 +126,4 @@ Release policy should stay lightweight:
 - Use staged bootstrap repair rather than tracker-first or release-pipeline-first work.
 - Keep the four ownership boundaries: validation entrypoint, scenario suites, live sync, and GitHub workflow.
 - Add bounded process execution and a hung-helper regression test.
-- Write this brainstorming spec under `docs/superpowers/specs/` and keep implementation issues under `docs/milestones/<milestone-folder>/issues/`.
+- Write this brainstorming spec under `docs/superpowers/specs/` and keep implementation issue mirrors under `docs/superpowers/issues/`.

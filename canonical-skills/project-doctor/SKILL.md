@@ -59,6 +59,10 @@ For active issue work, verify that issue mirrors include source plan linkage, AF
 
 Default mode is audit-only. If repairs are needed, ask the user which repair set to apply with `request_user_input` when callable. A repair plan must list exact files and GitHub objects before any change.
 
+## Native Question Debug Mode
+
+For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not perform repairs and must not be used to pretend a live user approved mutation.
+
 Allowed repairs after approval are limited to project docs, issue mirrors, labels, milestone metadata, wrappers, and live sync cleanup owned by this plugin. Do not edit product code, implementation tests, runtime config, branches, PRs, merges, issue close state, or native goals from Project Doctor.
 
 ## Report Shape
