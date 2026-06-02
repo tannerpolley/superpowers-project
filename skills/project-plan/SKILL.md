@@ -19,6 +19,8 @@ Require one of these inputs before planning:
 - an issue mirror under `docs/superpowers/issues` with a linked source spec or source plan
 - an explicit user decision to plan directly from the current conversation
 
+If the request is still an idea, naming choice, product direction, architecture direction, scope boundary, or other unresolved brainstorming decision, route back to `$project-brainstorm` before writing an implementation plan.
+
 If assumptions remain material, run a short planning grill before writing tasks:
 
 `Interview me relentlessly about every aspect of this plan`

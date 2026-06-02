@@ -52,6 +52,18 @@ $scenarios = @(
             Assert-Contains $text $needle "missing project-brainstorm contract: $needle"
         }
     }
+    Invoke-Scenario "native UI and grill pressure are mandatory for decisions" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "slightest hint of a shared decision",
+            'Do not answer a brainstorming decision in prose when `request_user_input` is callable.',
+            "inspect codebase and project context before asking",
+            "report back with evidence gathered, decision points, and assumptions to remove",
+            'Use the same grilling pressure as `$project-brainstorm` plus `grill-me`.'
+        )) {
+            Assert-Contains $text $needle "missing native UI/grill pressure contract: $needle"
+        }
+    }
     Invoke-Scenario "old milestone idea target is retired" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         Assert-NotContains $text "docs/milestones/<milestone-folder>/ideas" "old milestone ideas path must not be active"

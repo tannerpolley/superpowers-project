@@ -10,7 +10,7 @@ This skill is the router for the Superpowers Project extension. It does not repl
 ## Routing
 
 - Project setup, roadmap context, or large-scope project map: `$project-context`
-- Brainstorming, specs, PRDs, broad product design, or architecture design: `$project-brainstorm`
+- Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$project-brainstorm`
 - Implementation planning from a spec, issue mirror, or approved direct request: `$project-plan`
 - Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project-issue`
 - One ready issue execution with native `/goal` proof: `$project-resolve`
@@ -33,6 +33,8 @@ Use Superpowers skills for method: `superpowers:brainstorming`, `superpowers:wri
 ## Native User Input
 
 When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for one to three short, decision-oriented questions. Batch independent questions together. Ask dependent questions one step at a time after the prior answer changes the branch.
+
+For `$project-brainstorm`, use native UI more aggressively: if there is any unresolved idea, naming, scope, tradeoff, route, or assumption decision, inspect project context and relevant code first, then ask through `request_user_input` instead of resolving the decision in prose.
 
 ## Native Question Debug Mode
 

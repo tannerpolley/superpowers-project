@@ -13,7 +13,9 @@ Project Brainstorm is the Superpowers Project adapter for `superpowers:brainstor
 
 Use `superpowers:brainstorming` as the base workflow. Do not implement code, create issues, write implementation plans, start issue execution, create branches, open PRs, or merge work from this skill.
 
-Use `request_user_input` in Default mode when the tool is callable and a material decision needs the user. Ask one to three short questions per call. Batch independent questions; ask dependent branches sequentially.
+Native UI is mandatory for brainstorming decisions. If there is the slightest hint of a shared decision, fork, preference, naming choice, scope boundary, tradeoff, assumption, or path to figure out, call `request_user_input` when the tool is callable. Do not answer a brainstorming decision in prose when `request_user_input` is callable.
+
+Ask one to three short questions per call. Batch independent questions; ask dependent branches sequentially. Put the recommended option first when codebase evidence supports one, but still ask unless the user explicitly authorized automatic recommended defaults.
 
 ## Native Question Debug Mode
 
@@ -21,7 +23,7 @@ For explicit non-interactive smoke tests, use `debug_question_mode` instead of `
 
 ## Context First
 
-Inspect the project context before grilling or designing:
+For repo-backed work, inspect codebase and project context before asking user-facing questions unless the repo cannot be read. Inspect:
 
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `docs/superpowers/milestones`
@@ -31,13 +33,15 @@ Inspect the project context before grilling or designing:
 - `CONTEXT.md`, context maps, and `docs/adr` when present
 - relevant code, tests, workflows, GitHub issues, labels, and milestones when the topic touches them
 
-Use this evidence to challenge fuzzy terms, stale claims, hidden dependencies, duplicated workflows, and scope that is too large for one spec.
+After inspection, report back with evidence gathered, decision points, and assumptions to remove, then use native UI to resolve those choices. Use this evidence to challenge fuzzy terms, stale claims, hidden dependencies, duplicated workflows, and scope that is too large for one spec.
 
 ## Matt-Style Grilling
 
 Carry this grill-me wording verbatim into brainstorming and planning questions when assumptions are still loose:
 
 `Interview me relentlessly about every aspect of this plan`
+
+Use the same grilling pressure as `$project-brainstorm` plus `grill-me`. Do not settle for the first plausible interpretation when a term, boundary, owner, workflow, success criterion, or tradeoff can be sharpened.
 
 Treat `grill-with-docs` as source behavior for repo-aware challenge: compare the user's terms against context docs, ADRs, project context, milestones, and code reality. Surface contradictions directly and turn them into decisions.
 
