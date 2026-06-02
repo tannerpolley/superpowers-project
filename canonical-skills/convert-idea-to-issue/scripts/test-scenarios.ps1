@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "lib\contract.ps1")
 $scriptRoot = $PSScriptRoot
 $skillDir = Split-Path $scriptRoot -Parent
 $skillsRoot = Split-Path $skillDir -Parent
@@ -161,6 +162,18 @@ function Base-Handoff {
 }
 
 $scenarios = @(
+    Invoke-Scenario "external helper timeout is bounded" {
+        $timeoutProbe = Invoke-External -FilePath "pwsh.exe" -Arguments @("-NoProfile", "-Command", "Start-Sleep -Seconds 5") -WorkingDirectory $env:TEMP -TimeoutSeconds 1
+        $timeoutProbeStillRunning = $false
+        if ($timeoutProbe.ProcessId -gt 0) {
+            Start-Sleep -Milliseconds 200
+            $timeoutProbeStillRunning = [bool](Get-Process -Id $timeoutProbe.ProcessId -ErrorAction SilentlyContinue)
+        }
+        Assert-True ($timeoutProbe.TimedOut -eq $true) "timeout result did not mark TimedOut"
+        Assert-True ($timeoutProbe.ExitCode -eq 124) "timeout result did not use exit code 124"
+        Assert-True ($timeoutProbe.Stderr -match "timed out") "timeout result did not explain timeout"
+        Assert-True (-not $timeoutProbeStillRunning) "timed-out child process is still running"
+    }
     Invoke-Scenario "happy path handoff passes" {
         $result = Run-Validator -Handoff (Base-Handoff)
         Assert-True $result.ok $result.reason
