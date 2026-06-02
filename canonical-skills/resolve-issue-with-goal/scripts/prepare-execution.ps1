@@ -7,6 +7,8 @@ param(
     [string]$HandoffPath,
     [string]$GoalProofJson,
     [string]$GoalProofPath,
+    [string]$ExecutionDecisionJson,
+    [string]$ExecutionDecisionPath,
     [string]$OutputDir,
     [ValidateSet("create", "reuse-current")][string]$BranchPolicy = "create"
 )
@@ -81,6 +83,8 @@ try {
         Complete-Contract -Phase $phase -Reason "branch ready; native goal activation required next" -Evidence @{ branch = $branch; issue_mirror = $issueMirror; source_plan = $sourcePlan; goal_objective = [string]$handoff.goal_objective; branch_inventory_before = $inventoryBefore }
     }
 
+    $executionDecision = Read-JsonInput -Json $ExecutionDecisionJson -Path $ExecutionDecisionPath -Name "execution decision"
+    Assert-ExecutionDecision -Decision $executionDecision
     $goalProof = Read-JsonInput -Json $GoalProofJson -Path $GoalProofPath -Name "goal proof"
     Assert-NativeGoalProof -Proof $goalProof
     $inventory = Get-BranchInventorySafe -RepoRoot $root
@@ -93,6 +97,15 @@ try {
         goal_id = $goalId
         goal_objective = [string]$handoff.goal_objective
         goal_activation_proof = $goalProof
+        execution_decision = $executionDecision
+        workflow_policy = [ordered]@{
+            worktree_policy = "Native Codex worktree thread first"
+            integration_policy = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { "Worker PR reviewed by main thread" } else { "Current thread owns PR" }
+            tdd_policy = "Required"
+            reviewer_role = "Main thread orchestrator"
+            script_gate_mode = "Safety only"
+        }
+        worker_handoff = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { New-WorkerHandoff -Handoff $handoff -Decision $executionDecision } else { $null }
         proof_oracle = Get-StringArray $handoff.proof_oracle
         branch_inventory_before = $inventory
     }

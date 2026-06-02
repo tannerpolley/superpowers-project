@@ -110,6 +110,17 @@ function New-GoalProof {
     } | ConvertTo-Json -Depth 8 -Compress
 }
 
+function New-ExecutionDecision {
+    param([string]$SelectedMode = "inline", [string]$Source = "request_user_input")
+    @{
+        question_id = "resolve_execution_topology"
+        source = $Source
+        selected_mode = $SelectedMode
+        recommended_mode = $SelectedMode
+        options = @("orchestrated-worker", "inline")
+    } | ConvertTo-Json -Depth 8 -Compress
+}
+
 function New-SetupLedger {
     param([object]$Extra = $null, [object]$GoalProof = $null)
     $ledger = [ordered]@{
@@ -120,6 +131,7 @@ function New-SetupLedger {
         goal_id = "thread-goal"
         goal_objective = "Resolve https://github.com/example/repo/issues/12 on codex/sample-issue using docs/superpowers/issues/12-sample.md and docs/superpowers/plans/2026-06-02-sample-plan.md."
         goal_activation_proof = if ($null -eq $GoalProof) { (New-GoalProof | ConvertFrom-Json) } else { $GoalProof }
+        execution_decision = (New-ExecutionDecision | ConvertFrom-Json)
         proof_oracle = @("pwsh -NoProfile -Command 'exit 0'")
         branch_inventory_before = @{ local = @("main"); remote = @() }
     }
@@ -186,8 +198,26 @@ try {
         Assert-True ($result.ok) $result.reason
     }
 
-    Invoke-Scenario "happy setup passes with structured native goal proof" {
+    Invoke-Scenario "missing execution decision blocks setup finalization" {
         $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof))
+        Assert-True (-not $result.ok -and $result.reason -match "execution decision") "expected missing execution decision failure"
+    }
+
+    Invoke-Scenario "inline execution decision is recorded" {
+        $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "inline"))
+        Assert-True ($result.ok) $result.reason
+        Assert-True ($result.setup_ledger.execution_decision.selected_mode -eq "inline") "inline mode was not recorded"
+    }
+
+    Invoke-Scenario "orchestrated worker execution decision is recorded with worker handoff" {
+        $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "orchestrated-worker"))
+        Assert-True ($result.ok) $result.reason
+        Assert-True ($result.setup_ledger.execution_decision.selected_mode -eq "orchestrated-worker") "worker mode was not recorded"
+        Assert-True ($result.setup_ledger.worker_handoff.issue_mirror -eq "docs/superpowers/issues/12-sample.md") "worker handoff missing issue mirror"
+    }
+
+    Invoke-Scenario "happy setup passes with structured native goal proof" {
+        $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "inline"))
         Assert-True ($result.ok) $result.reason
         Assert-True ($result.setup_ledger.goal_id -eq "thread-goal") "missing goal id in setup ledger"
         Assert-True (-not ($result.setup_ledger.PSObject.Properties.Name -contains "goal_board_path")) "setup ledger must not contain goal_board_path"

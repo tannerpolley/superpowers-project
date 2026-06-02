@@ -105,6 +105,21 @@ The setup ledger must include:
     "goal_id": "<id>",
     "objective": "<active objective>"
   },
+  "execution_decision": {
+    "question_id": "resolve_execution_topology",
+    "source": "request_user_input",
+    "selected_mode": "inline",
+    "recommended_mode": "inline",
+    "options": ["orchestrated-worker", "inline"]
+  },
+  "workflow_policy": {
+    "worktree_policy": "Native Codex worktree thread first",
+    "integration_policy": "Current thread owns PR",
+    "tdd_policy": "Required",
+    "reviewer_role": "Main thread orchestrator",
+    "script_gate_mode": "Safety only"
+  },
+  "worker_handoff": null,
   "proof_oracle": ["<commands, artifacts, review state, or visible behavior>"],
   "branch_inventory_before": {
     "local": ["main"],

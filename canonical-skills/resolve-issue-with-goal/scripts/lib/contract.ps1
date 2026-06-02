@@ -163,6 +163,44 @@ function Assert-NativeGoalProof {
     }
 }
 
+function Assert-ExecutionDecision {
+    param($Decision)
+    if ($null -eq $Decision) { throw "execution decision is required" }
+    if ($Decision -is [string]) { throw "execution decision must be structured, not a string" }
+    foreach ($field in @("question_id", "source", "selected_mode", "recommended_mode", "options")) {
+        if (-not (Test-Property -Object $Decision -Name $field)) { throw "execution decision missing $field" }
+    }
+    if ([string]$Decision.question_id -ne "resolve_execution_topology") { throw "execution decision question_id mismatch" }
+    if ([string]$Decision.source -notin @("request_user_input", "debug_question_mode")) { throw "execution decision source must be request_user_input or debug_question_mode" }
+    if ([string]$Decision.selected_mode -notin @("inline", "orchestrated-worker")) { throw "execution decision selected_mode must be inline or orchestrated-worker" }
+    if ([string]$Decision.recommended_mode -notin @("inline", "orchestrated-worker")) { throw "execution decision recommended_mode must be inline or orchestrated-worker" }
+    $options = Get-StringArray $Decision.options
+    foreach ($requiredOption in @("orchestrated-worker", "inline")) {
+        if ($options -notcontains $requiredOption) { throw "execution decision options must include $requiredOption" }
+    }
+}
+
+function New-WorkerHandoff {
+    param($Handoff, $Decision)
+    [ordered]@{
+        issue_url = [string]$Handoff.issue_url
+        issue_mirror = Normalize-RepoPath ([string]$Handoff.issue_mirror)
+        source_plan = Normalize-RepoPath ([string]$Handoff.source_plan)
+        branch = Normalize-RepoPath ([string]$Handoff.branch)
+        goal_objective = [string]$Handoff.goal_objective
+        proof_oracle = Get-StringArray $Handoff.proof_oracle
+        execution_mode = [string]$Decision.selected_mode
+        required_skills = @(
+            "superpowers:using-git-worktrees",
+            "superpowers:test-driven-development",
+            "superpowers:executing-plans",
+            "superpowers:verification-before-completion",
+            "superpowers:finishing-a-development-branch"
+        )
+        closeout_owner = "main-thread-orchestrator"
+    }
+}
+
 function Test-ClosingKeywordForIssue {
     param([string]$Body, [int]$IssueNumber)
     if ([string]::IsNullOrWhiteSpace($Body) -or $IssueNumber -le 0) { return $false }
