@@ -68,11 +68,20 @@ Each mirror must include:
 - Classification: AFK or HITL
 - Labels
 - Goal Command for AFK issues
+- Execution Mode
+- Worktree Policy
+- Integration Policy
+- TDD Policy
+- Parallelization Plan
+- Reviewer Role
+- Script Gate Mode
 - Acceptance Criteria as checkboxes
 - Blocked by
 - Non-goals
 - Proof oracle
 - GitHub body text or a close mirror of it
+
+Workflow metadata guides `$resolve-issue-with-goal`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -91,6 +100,13 @@ Use this shape for each issue body and mirror:
 **Classification:** <AFK|HITL>
 **Labels:** <configured ready/status label>, <type label>
 **Goal Command:** /goal <objective for AFK execution>
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
 
 ## What To Build
 
@@ -129,6 +145,7 @@ Validation must prove:
 - AFK/HITL classification is present
 - Goal Command is present for AFK issues
 - bug mirrors include Reproduction or Feedback Loop evidence
+- workflow metadata is present or reported as advisory migration drift
 
 ## Execution Boundary
 

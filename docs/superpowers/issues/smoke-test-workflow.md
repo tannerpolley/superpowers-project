@@ -9,6 +9,13 @@
 **Classification:** AFK
 **Labels:** type:task, status:ready
 **Goal Command:** /goal Validate the Superpowers Project extension workflow in tannerpolley/milestones-plugin using docs/superpowers/issues/smoke-test-workflow.md and docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md.
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
 
 ## What To Build
 
