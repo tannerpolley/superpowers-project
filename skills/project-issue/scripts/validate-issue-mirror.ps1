@@ -123,6 +123,31 @@ try {
         Add-Check -Name "workflow metadata: $fieldName" -Ok $true -Reason "passed"
     }
 
+    $hasProjectMergeSection = [regex]::IsMatch($text, "(?im)^##\s*Project Merge\s*$")
+    if (-not $hasProjectMergeSection) {
+        Complete -Ok $false -Reason "Project Merge section is required"
+    }
+    Add-Check -Name "project merge section" -Ok $true -Reason "passed"
+
+    $mergeFields = [ordered]@{
+        "Merge Owner" = @("Main thread orchestrator")
+        "Merge Gate" = @("Native UI approval required")
+        "Merge Policy" = @("Repo default", "Squash", "Merge commit", "Rebase")
+        "Worktree Cleanup Policy" = @("Remove owned worktree after merge", "No worktree created")
+        "Orchestrator Wakeup Policy" = @("Worker handoff or bounded heartbeat", "User resumes from handoff", "Inline run")
+    }
+
+    foreach ($fieldName in $mergeFields.Keys) {
+        $value = Get-FieldValue -Text $text -Name $fieldName
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            Complete -Ok $false -Reason "$fieldName is required in Project Merge section"
+        }
+        if ($mergeFields[$fieldName] -notcontains $value) {
+            Complete -Ok $false -Reason "$fieldName must be one of: $($mergeFields[$fieldName] -join ', ')"
+        }
+        Add-Check -Name "project merge metadata: $fieldName" -Ok $true -Reason "passed"
+    }
+
     $issueType = Get-FieldValue -Text $text -Name "Issue Type"
     if ($issueType -and $issueType.Equals("bug", [System.StringComparison]::OrdinalIgnoreCase)) {
         $hasBugEvidence = [regex]::IsMatch($text, "(?im)^##\s*(Repro|Reproduction|Feedback Loop)\b")

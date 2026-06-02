@@ -105,6 +105,7 @@ try {
             reviewer_role = "Main thread orchestrator"
             script_gate_mode = "Safety only"
         }
+        dynamic_work_packet_map = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { New-DynamicWorkPacketMap -Handoff $handoff -Decision $executionDecision } else { $null }
         worker_handoff = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { New-WorkerHandoff -Handoff $handoff -Decision $executionDecision } else { $null }
         proof_oracle = Get-StringArray $handoff.proof_oracle
         branch_inventory_before = $inventory

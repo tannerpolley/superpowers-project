@@ -120,6 +120,7 @@ try {
         "project-plan",
         "project-issue",
         "project-resolve",
+        "project-merge",
         "project-doctor"
     )) {
         $skillPath = Join-Path $repoRoot "skills/$skillName/SKILL.md"
@@ -161,7 +162,13 @@ try {
             "TDD Policy",
             "Parallelization Plan",
             "Reviewer Role",
-            "Script Gate Mode"
+            "Script Gate Mode",
+            "Project Merge",
+            "Merge Owner",
+            "Merge Gate",
+            "Merge Policy",
+            "Worktree Cleanup Policy",
+            "Orchestrator Wakeup Policy"
         )) {
             if (-not $text.Contains($needle)) {
                 throw "$($issueFile.Name) is missing workflow metadata: $needle"

@@ -71,7 +71,13 @@ $scenarios = @(
             "TDD Policy",
             "Parallelization Plan",
             "Reviewer Role",
-            "Script Gate Mode"
+            "Script Gate Mode",
+            "Project Merge",
+            "Merge Owner",
+            "Merge Gate",
+            "Merge Policy",
+            "Worktree Cleanup Policy",
+            "Orchestrator Wakeup Policy"
         )) {
             Assert-Contains $text $needle "missing workflow metadata contract: $needle"
         }
@@ -113,6 +119,14 @@ $scenarios = @(
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
 
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
 ## Acceptance Criteria
 
 - [ ] Sample issue can be resolved by an agent
@@ -140,6 +154,14 @@ $scenarios = @(
 **Source Spec:** docs/superpowers/specs/2026-06-02-bug-design.md
 **Classification:** AFK
 **Goal Command:** /goal Resolve bug issue
+
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
 ## Acceptance Criteria
 

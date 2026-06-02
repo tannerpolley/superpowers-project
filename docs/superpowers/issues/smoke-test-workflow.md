@@ -17,6 +17,14 @@
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
 
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
 ## What To Build
 
 Use this repository as a smoke-test fixture for the Superpowers Project extension workflow: project context, brainstorming/spec output, writing-plan output, issue mirror validation, native-goal setup gates, and project-doctor drift checks.

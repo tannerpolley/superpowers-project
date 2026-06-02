@@ -43,6 +43,10 @@ try {
     if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker" -and (-not (Test-Property -Object $ledger -Name "worker_handoff") -or $null -eq $ledger.worker_handoff)) {
         throw "worker_handoff is required for orchestrated-worker execution"
     }
+    if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") {
+        Assert-DynamicWorkPacketMap -Map $ledger.dynamic_work_packet_map
+        Assert-DynamicWorkPacketMap -Map $ledger.worker_handoff.dynamic_work_packet_map
+    }
     $issueMirror = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$ledger.issue_mirror) -Prefix "docs/superpowers/issues" -Name "issue mirror"
     $sourcePlan = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$ledger.source_plan) -Prefix "docs/superpowers/plans" -Name "source plan"
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $issueMirror) -PathType Leaf)) { throw "issue mirror file is missing" }

@@ -95,6 +95,26 @@ Use the Superpowers task shape:
 
 Replace generic labels with real file paths, code, commands, and expected results before saving. A plan is not ready while any step relies on vague wording, missing files, or unspecified verification.
 
+## Native Continuation Gate
+
+After saving and self-reviewing the plan, ask a native continuation question when `request_user_input` is callable. This question is executable routing, not advisory text.
+
+Question id: `project_plan_next_step`
+
+Prompt: `How should I continue from this project plan?`
+
+Options:
+
+- `Project Issue First`: continue to `$project-issue` using the saved plan path.
+- `Subagent Execute`: continue with `superpowers:subagent-driven-development` using the saved plan path.
+- `Inline Execute`: continue with `superpowers:executing-plans` using the saved plan path.
+
+Recommend `Project Issue First` for repos using the Superpowers Project GitHub issue backbone. Recommend direct execution only when the user intentionally wants to bypass issue creation.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the saved plan path, source spec or issue mirror path, decisions, acceptance criteria, and proof oracle. Do not only tell the user what to prompt next.
+
+If the selected next skill needs its own material decision, ask that next skill's native UI question. If the route needs unavailable tools or an external write that still requires approval, stop with a clear pending state and exact resume target.
+
 ## Self-Review
 
 Before reporting the plan ready:

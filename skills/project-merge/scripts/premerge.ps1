@@ -1,13 +1,13 @@
 [CmdletBinding()]
 param(
     [string]$RepoRoot = ".",
-    [string]$HandoffJson,
-    [string]$HandoffPath,
     [string]$SetupLedgerJson,
     [string]$SetupLedgerPath,
     [string]$VerificationLedgerJson,
     [string]$VerificationLedgerPath,
+    [string]$PrJson,
     [string]$PrFixturePath,
+    [string]$IssueJson,
     [string]$IssueFixturePath
 )
 
@@ -16,11 +16,11 @@ $ErrorActionPreference = "Stop"
 $phase = "premerge"
 
 try {
-    $root = Resolve-RepoRoot -RepoRoot $RepoRoot
+    [void](Resolve-RepoRoot -RepoRoot $RepoRoot)
     $setup = Read-JsonInput -Json $SetupLedgerJson -Path $SetupLedgerPath -Name "setup ledger"
     $verification = Read-JsonInput -Json $VerificationLedgerJson -Path $VerificationLedgerPath -Name "verification ledger"
-    $pr = Read-JsonInput -Path $PrFixturePath -Name "PR fixture"
-    $issue = Read-JsonInput -Path $IssueFixturePath -Name "issue fixture"
+    $pr = Read-JsonInput -Json $PrJson -Path $PrFixturePath -Name "PR evidence"
+    $issue = Read-JsonInput -Json $IssueJson -Path $IssueFixturePath -Name "issue evidence"
     $issueNumber = Get-IssueNumberFromUrl -IssueUrl ([string]$setup.issue_url)
     if (-not (Test-ClosingKeywordForIssue -Body ([string]$pr.body) -IssueNumber $issueNumber) -and -not (Test-ClosingReferenceIncludesIssue -References $pr.closingIssuesReferences -IssueNumber $issueNumber)) { throw "PR must close the linked issue" }
     $policy = if (Test-Property -Object $verification -Name "required_checks_policy") { [string]$verification.required_checks_policy } else { "require-existing" }
