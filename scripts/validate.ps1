@@ -221,6 +221,10 @@ try {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-project-repo-contract.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "superpowers project repo contract failed" }
     }))
+    $results.Add((Invoke-Step "GitHub check normalization tests" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-github-checks.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "GitHub check normalization tests failed" }
+    }))
     $results.Add((Invoke-Step "Plugin manifest validation" {
         if (-not (Test-Path -LiteralPath $pluginValidate -PathType Leaf)) {
             throw "plugin validator not found: $pluginValidate"

@@ -25,11 +25,12 @@ try {
     if (-not (Test-ClosingKeywordForIssue -Body ([string]$pr.body) -IssueNumber $issueNumber) -and -not (Test-ClosingReferenceIncludesIssue -References $pr.closingIssuesReferences -IssueNumber $issueNumber)) { throw "PR must close the linked issue" }
     $policy = if (Test-Property -Object $verification -Name "required_checks_policy") { [string]$verification.required_checks_policy } else { "require-existing" }
     $checks = @($pr.requiredChecks)
-    if ($policy -eq "require-existing" -and $checks.Count -eq 0) { throw "required GitHub checks are missing" }
-    foreach ($check in $checks) {
-        $state = ([string]$check.state + " " + [string]$check.conclusion).ToUpperInvariant()
-        if ($state -notmatch "SUCCESS|PASS|COMPLETED") { throw "required GitHub checks must pass" }
-    }
+    $checkResult = Test-GitHubRequiredChecks `
+        -Checks $checks `
+        -Policy $policy `
+        -RequiredCheckNames (Get-StringArray $verification.required_checks) `
+        -OptionalCheckNames (Get-StringArray $verification.optional_checks)
+    if (-not $checkResult.ok) { throw $checkResult.reason }
     $issueBody = [string]$issue.body
     if ($issueBody -match "(?m)^\s*[-*]\s+\[ \]") {
         if (-not (Test-Property -Object $verification -Name "acceptance_criteria_closeout_proof") -or $verification.acceptance_criteria_closeout_proof -ne $true) { throw "issue acceptance criteria must be checked or reflected in closeout proof" }

@@ -114,6 +114,38 @@ Invoke-Scenario "premerge accepts happy fixture" {
     if (-not $result.ok) { throw $result.reason }
 }
 
+Invoke-Scenario "premerge allows explicitly optional skipped check" {
+    $verification = (New-VerificationLedger | ConvertFrom-Json)
+    $verification | Add-Member -NotePropertyName "optional_checks" -NotePropertyValue @("docs")
+    $verification.changed_files_covered = @("src/example.txt")
+    $verificationJson = $verification | ConvertTo-Json -Depth 12 -Compress
+    $pr = @{
+        url = "https://github.com/example/repo/pull/5"
+        state = "OPEN"
+        body = "Closes #12"
+        closingIssuesReferences = @(@{ number = 12 })
+        requiredChecks = @(@{ name = "docs"; status = "COMPLETED"; conclusion = "SKIPPED" })
+        files = @(@{ path = "src/example.txt" })
+    } | ConvertTo-Json -Depth 12 -Compress
+    $issue = @{ state = "OPEN"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-VerificationLedgerJson", $verificationJson, "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $result.ok) { throw $result.reason }
+}
+
+Invoke-Scenario "premerge blocks skipped required check" {
+    $pr = @{
+        url = "https://github.com/example/repo/pull/5"
+        state = "OPEN"
+        body = "Closes #12"
+        closingIssuesReferences = @(@{ number = 12 })
+        requiredChecks = @(@{ name = "unit"; status = "COMPLETED"; conclusion = "SKIPPED" })
+        files = @(@{ path = "src/example.txt" })
+    } | ConvertTo-Json -Depth 12 -Compress
+    $issue = @{ state = "OPEN"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-VerificationLedgerJson", (New-VerificationLedger), "-PrJson", $pr, "-IssueJson", $issue)
+    if ($result.ok -or $result.reason -notmatch "skipped") { throw "expected skipped required check to block" }
+}
+
 Invoke-Scenario "merge approval blocks declined decision" {
     $premerge = @{ ok = $true; phase = "premerge"; reason = "passed"; evidence = @{} } | ConvertTo-Json -Depth 8 -Compress
     $result = Invoke-JsonScript -ScriptName "validate-merge-decision.ps1" -Arguments @("-PremergeResultJson", $premerge, "-MergeDecisionJson", (New-MergeDecision -SelectedAction "decline"))
