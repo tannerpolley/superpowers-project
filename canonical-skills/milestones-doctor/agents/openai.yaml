@@ -1,4 +1,0 @@
-version: 1
-skills:
-  milestones-doctor:
-    default_prompt: "Use $milestones-doctor to audit an existing milestone workflow before cleanup or repair. Require target_repo and target_repo_root. Run bundled audit-milestones.ps1 with -RepoRoot, inspect docs/milestones/PROJECT_CONTEXT.md, per-milestone README/ideas/issues folders, local issue files, legacy docs/ideas, obsolete docs/issues/docs/plans/milestone plans paths, project-roadmap metadata, issue forms, labels, GitHub milestones, and Projects dashboard evidence. Produce a report first; do not mutate files or GitHub until the user approves a repair plan. Never change product code, create branches, GoalBuddy boards, PRs, merges, or delete unreviewed user-authored docs."

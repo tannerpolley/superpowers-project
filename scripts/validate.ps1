@@ -116,16 +116,33 @@ function Assert-TextContains {
     }
 }
 
+function Get-ActiveSkillNames {
+    @(
+        "superpowers-project",
+        "project-context",
+        "project-brainstorm",
+        "project-writing-plan",
+        "plan-to-issue",
+        "resolve-issue-with-goal",
+        "project-doctor"
+    )
+}
 function Test-PluginWrapperContracts {
+    $activeNames = @(Get-ActiveSkillNames)
     $canonicalNames = @(Get-ChildItem -LiteralPath $skillRoot -Directory | Sort-Object Name | Select-Object -ExpandProperty Name)
     $wrapperNames = @(Get-ChildItem -LiteralPath $pluginSkillRoot -Directory | Sort-Object Name | Select-Object -ExpandProperty Name)
 
-    $missingWrappers = @($canonicalNames | Where-Object { $wrapperNames -notcontains $_ })
-    $extraWrappers = @($wrapperNames | Where-Object { $canonicalNames -notcontains $_ })
-    if ($missingWrappers.Count -gt 0) { throw "missing plugin wrapper(s): $($missingWrappers -join ', ')" }
-    if ($extraWrappers.Count -gt 0) { throw "plugin wrapper(s) without canonical skill: $($extraWrappers -join ', ')" }
+    $missingCanonical = @($activeNames | Where-Object { $canonicalNames -notcontains $_ })
+    $extraCanonical = @($canonicalNames | Where-Object { $activeNames -notcontains $_ })
+    if ($missingCanonical.Count -gt 0) { throw "missing active canonical skill(s): $($missingCanonical -join ', ')" }
+    if ($extraCanonical.Count -gt 0) { throw "unexpected canonical skill(s): $($extraCanonical -join ', ')" }
 
-    foreach ($name in $canonicalNames) {
+    $missingWrappers = @($activeNames | Where-Object { $wrapperNames -notcontains $_ })
+    $extraWrappers = @($wrapperNames | Where-Object { $activeNames -notcontains $_ })
+    if ($missingWrappers.Count -gt 0) { throw "missing plugin wrapper(s): $($missingWrappers -join ', ')" }
+    if ($extraWrappers.Count -gt 0) { throw "unexpected plugin wrapper(s): $($extraWrappers -join ', ')" }
+
+    foreach ($name in $activeNames) {
         $wrapperPath = Join-Path $pluginSkillRoot "$name\SKILL.md"
         if (-not (Test-Path -LiteralPath $wrapperPath -PathType Leaf)) {
             throw "missing wrapper SKILL.md: $wrapperPath"
@@ -140,14 +157,7 @@ function Test-PluginWrapperContracts {
     }
 }
 function Test-SuperpowersProjectPathContract {
-    $projectSkillNames = @(
-        "superpowers-project",
-        "project-context",
-        "project-brainstorm",
-        "project-writing-plan",
-        "plan-to-issue",
-        "project-doctor"
-    )
+    $projectSkillNames = @(Get-ActiveSkillNames)
     $forbiddenPatterns = @(
         "docs/milestones/<milestone-folder>/ideas",
         "docs/milestones/<milestone-folder>/issues",

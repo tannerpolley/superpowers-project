@@ -1,0 +1,4 @@
+version: 1
+skills:
+  project-doctor:
+    default_prompt: "Use $project-doctor for Superpowers Project drift audits, migration review, tracker alignment, live plugin sync drift, or repair planning. Audit docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, specs, plans, issues, GitHub issue mirror fields, GitHub milestone linkage, label vocabulary, retired docs/milestones canonical usage, active goal execution checks, and live plugin sync drift. Report first, group findings as blocking, repairable, informational, and healthy, and make no mutation without user approval."
