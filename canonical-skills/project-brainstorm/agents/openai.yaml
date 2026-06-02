@@ -1,0 +1,4 @@
+version: 1
+skills:
+  project-brainstorm:
+    default_prompt: "Use $project-brainstorm for repo-backed ideas, specs, PRDs, architecture concepts, or broad feature requests. Use superpowers:brainstorming as the base workflow, inspect docs/superpowers/PROJECT_CONTEXT.md and docs/superpowers/milestones first, use request_user_input in Default mode when callable, carry the grill-me wording into assumption checks, and save approved specs under docs/superpowers/specs. Route product-shaped work through to-prd behavior and architecture-heavy work through improve-codebase-architecture behavior."
