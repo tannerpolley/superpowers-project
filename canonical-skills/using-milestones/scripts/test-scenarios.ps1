@@ -4,9 +4,10 @@ param()
 $ErrorActionPreference = "Stop"
 $scriptRoot = $PSScriptRoot
 $skillRoot = Split-Path $scriptRoot -Parent
+$repoRoot = (Resolve-Path -LiteralPath (Join-Path $skillRoot "..\..")).Path
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
-$pluginWrapper = "C:\Users\Tanner\plugins\milestones\skills\using-milestones\SKILL.md"
+$pluginWrapper = Join-Path $repoRoot "skills\using-milestones\SKILL.md"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -98,12 +99,13 @@ $scenarios = @(
         Assert-True ($text -match 'legacy only') "missing yaml legacy docs/ideas policy"
         Assert-True ($text -match 'Do not implement workflow behavior') "missing yaml router-only warning"
     }
-    Invoke-Scenario "plugin wrapper points to canonical skill" {
+    Invoke-Scenario "plugin wrapper points to deployed user skill" {
         $text = Get-Content -LiteralPath $pluginWrapper -Raw
         Assert-True ($text -match '(?m)^---\s*\r?\nname: using-milestones') "missing wrapper frontmatter"
-        Assert-True ($text.Contains('C:\Users\Tanner\.agents\skills\using-milestones\SKILL.md')) "missing canonical wrapper path"
+        Assert-True ($text.Contains('C:\Users\Tanner\.agents\skills\using-milestones\SKILL.md')) "missing deployed user skill path"
         Assert-True ($text -match 'namespace wrapper') "missing namespace wrapper wording"
-        Assert-True ($text -match 'Read the canonical `SKILL.md`') "missing canonical read instruction"
+        Assert-True ($text.Contains('Read the deployed user-level `SKILL.md` above.')) "missing deployed read instruction"
+        Assert-True ($text.Contains('Follow that skill exactly.')) "missing follow instruction"
         Assert-True ($text -match 'do not invent separate behavior') "missing no separate behavior warning"
     }
 )
