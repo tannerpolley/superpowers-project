@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Keep canonical plugin skills, plugin wrappers, project docs, live sync behavior, and deployed copies aligned after the artifact model moves under `docs/superpowers`.
+Keep plugin skills, project docs, live sync behavior, and deployed copies aligned after the artifact model moves under `docs/superpowers`.
 
 ## GitHub Milestone
 

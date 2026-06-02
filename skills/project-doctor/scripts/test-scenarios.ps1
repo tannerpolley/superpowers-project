@@ -4,10 +4,8 @@ param()
 $ErrorActionPreference = "Stop"
 $scriptRoot = $PSScriptRoot
 $skillRoot = Split-Path $scriptRoot -Parent
-$repoRoot = (Resolve-Path -LiteralPath (Join-Path $skillRoot "..\..")).Path
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
-$pluginWrapperFile = Join-Path $repoRoot "skills\project-doctor\SKILL.md"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -55,18 +53,12 @@ $scenarios = @(
             Assert-Contains $text $needle "missing report/drift contract: $needle"
         }
     }
-    Invoke-Scenario "metadata and wrapper are present" {
+    Invoke-Scenario "metadata is present" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
-        if (-not (Test-Path -LiteralPath $pluginWrapperFile -PathType Leaf)) { throw "missing plugin wrapper" }
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
-        $wrapper = Get-Content -LiteralPath $pluginWrapperFile -Raw
         Assert-Contains $metadata "project-doctor:" "missing metadata key"
         Assert-Contains $metadata "docs/superpowers/PROJECT_CONTEXT.md" "missing metadata project context path"
         Assert-Contains $metadata "live plugin sync drift" "missing metadata live sync drift"
-        Assert-Contains $wrapper "name: project-doctor" "missing wrapper name"
-        Assert-Contains $wrapper "C:\Users\Tanner\.agents\skills\project-doctor\SKILL.md" "missing deployed path"
-        Assert-Contains $wrapper "namespace wrapper" "missing wrapper declaration"
-        Assert-Contains $wrapper "Follow that skill exactly." "missing follow instruction"
     }
 )
 

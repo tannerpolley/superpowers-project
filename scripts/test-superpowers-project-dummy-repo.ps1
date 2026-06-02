@@ -94,12 +94,12 @@ Dummy repo proves Superpowers Project artifacts.
     & git -C $tempRoot commit -m "seed dummy superpowers project" | Out-Null
     Add-Check -Name "dummy repo seeded" -Ok $true -Reason "passed"
 
-    $mirrorValidator = Join-Path $repoRoot "canonical-skills\plan-to-issue\scripts\validate-issue-mirror.ps1"
+    $mirrorValidator = Join-Path $repoRoot "skills\plan-to-issue\scripts\validate-issue-mirror.ps1"
     $mirrorResult = Invoke-JsonScript -ScriptPath $mirrorValidator -Arguments @("-RepoRoot", $tempRoot, "-IssueFile", "docs/superpowers/issues/12-dummy.md", "-MilestoneRequired")
     if (-not $mirrorResult.ok) { throw "issue mirror validation failed: $($mirrorResult.reason)" }
     Add-Check -Name "issue mirror validator" -Ok $true -Reason "passed"
 
-    $prepareScript = Join-Path $repoRoot "canonical-skills\resolve-issue-with-goal\scripts\prepare-execution.ps1"
+    $prepareScript = Join-Path $repoRoot "skills\resolve-issue-with-goal\scripts\prepare-execution.ps1"
     $inspect = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "Inspect", "-RepoRoot", $tempRoot, "-IssueMirror", "docs/superpowers/issues/12-dummy.md")
     if (-not $inspect.ok) { throw "resolve inspect failed: $($inspect.reason)" }
     Add-Check -Name "resolve inspect" -Ok $true -Reason "passed"
@@ -140,7 +140,7 @@ Dummy repo proves Superpowers Project artifacts.
     if (-not $workerFinalize.setup_ledger.worker_handoff) { throw "worker handoff was not recorded" }
     Add-Check -Name "worker setup decision" -Ok $true -Reason "passed"
 
-    $setupValidator = Join-Path $repoRoot "canonical-skills\resolve-issue-with-goal\scripts\validate-setup.ps1"
+    $setupValidator = Join-Path $repoRoot "skills\resolve-issue-with-goal\scripts\validate-setup.ps1"
     $setupResult = Invoke-JsonScript -ScriptPath $setupValidator -Arguments @("-RepoRoot", $tempRoot, "-SetupLedgerJson", ($finalize.setup_ledger_json))
     if (-not $setupResult.ok) { throw "setup validation failed: $($setupResult.reason)" }
     Add-Check -Name "setup validator" -Ok $true -Reason "passed"

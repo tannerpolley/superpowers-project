@@ -121,7 +121,7 @@ try {
         "plan-to-issue",
         "project-doctor"
     )) {
-        $skillPath = Join-Path $repoRoot "canonical-skills/$skillName/SKILL.md"
+        $skillPath = Join-Path $repoRoot "skills/$skillName/SKILL.md"
         $skillText = Get-Content -LiteralPath $skillPath -Raw
         foreach ($needle in @(
             "## Native Question Debug Mode",
@@ -141,7 +141,7 @@ try {
 
     $issueFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs/superpowers/issues") -Filter "*.md" -File | Where-Object { $_.Name -ne "README.md" })
     if ($issueFiles.Count -lt 1) { throw "docs/superpowers/issues must contain at least one issue mirror for smoke validation" }
-    $validator = Join-Path $repoRoot "canonical-skills/plan-to-issue/scripts/validate-issue-mirror.ps1"
+    $validator = Join-Path $repoRoot "skills/plan-to-issue/scripts/validate-issue-mirror.ps1"
     foreach ($issueFile in $issueFiles) {
         $relative = [IO.Path]::GetRelativePath($repoRoot, $issueFile.FullName) -replace '\\', '/'
         $result = Invoke-JsonScript -ScriptPath $validator -Arguments @("-RepoRoot", $repoRoot, "-IssueFile", $relative, "-MilestoneRequired")
@@ -171,7 +171,7 @@ try {
 
     $staleActiveRouting = @(rg -n "New idea briefs for this repo belong under|Local issue files for this repo belong under|keep implementation issues under `?docs/milestones|ready-for-agent|needs-info|type:enhancement" `
         (Join-Path $repoRoot "AGENTS.md") `
-        (Join-Path $repoRoot "canonical-skills") `
+        (Join-Path $repoRoot "skills") `
         (Join-Path $repoRoot "docs/agents") `
         (Join-Path $repoRoot "docs/superpowers") 2>$null)
     if ($staleActiveRouting.Count -gt 0) {

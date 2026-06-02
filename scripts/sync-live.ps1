@@ -10,8 +10,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
-$sourceSkillsRoot = Join-Path $repoRoot "canonical-skills"
-$sourcePluginSkillsRoot = Join-Path $repoRoot "skills"
+$sourceSkillsRoot = Join-Path $repoRoot "skills"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
 $expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones"))
@@ -27,23 +26,11 @@ if (-not (Test-Path -LiteralPath $sourcePluginManifest -PathType Leaf)) {
     throw "missing source plugin manifest: $sourcePluginManifest"
 }
 if (-not (Test-Path -LiteralPath $sourceSkillsRoot -PathType Container)) {
-    throw "missing canonical source skills root: $sourceSkillsRoot"
-}
-if (-not (Test-Path -LiteralPath $sourcePluginSkillsRoot -PathType Container)) {
-    throw "missing source plugin wrapper skills root: $sourcePluginSkillsRoot"
+    throw "missing source skills root: $sourceSkillsRoot"
 }
 
 $activeSkillNames = @(Get-SkillDirectoryNames -Root $sourceSkillsRoot)
-$activePluginSkillNames = @(Get-SkillDirectoryNames -Root $sourcePluginSkillsRoot)
 $retiredSkillNames = @(
-    "using-milestones",
-    "setup-project-milestones",
-    "explore-ideas",
-    "milestone-writing-issue-plan",
-    "convert-idea-to-issue",
-    "milestones-doctor"
-)
-$retiredPluginSkillNames = @(
     "using-milestones",
     "setup-project-milestones",
     "explore-ideas",
@@ -65,21 +52,21 @@ New-Item -ItemType Directory -Path $userSkillsRootResolved -Force | Out-Null
 
 Copy-Item -LiteralPath $sourcePluginManifest -Destination (Join-Path $livePluginManifestDir "plugin.json") -Force
 
-Copy-SkillDirectories -SourceRoot $sourcePluginSkillsRoot -TargetRoot $livePluginSkillsRoot
-$removedPluginSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $livePluginSkillsRoot -ActiveSkillNames $activePluginSkillNames -RetiredSkillNames $retiredPluginSkillNames)
+Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $livePluginSkillsRoot
+$removedPluginSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $livePluginSkillsRoot -ActiveSkillNames $activeSkillNames -RetiredSkillNames $retiredSkillNames)
 
 Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved
 $removedUserSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $userSkillsRootResolved -ActiveSkillNames $activeSkillNames -RetiredSkillNames $retiredSkillNames)
 
 Assert-NoTreeDrift -SourceRoot (Split-Path $sourcePluginManifest -Parent) -TargetRoot $livePluginManifestDir -Label "plugin manifest"
-foreach ($skillName in $activePluginSkillNames) {
-    Assert-NoTreeDrift -SourceRoot (Join-Path $sourcePluginSkillsRoot $skillName) -TargetRoot (Join-Path $livePluginSkillsRoot $skillName) -Label "plugin wrapper $skillName"
+foreach ($skillName in $activeSkillNames) {
+    Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $livePluginSkillsRoot $skillName) -Label "plugin skill $skillName"
 }
 foreach ($skillName in $activeSkillNames) {
     Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $userSkillsRootResolved $skillName) -Label "user skill $skillName"
 }
 
-$deployedPluginSkills = @($activePluginSkillNames | ForEach-Object {
+$deployedPluginSkills = @($activeSkillNames | ForEach-Object {
     [pscustomobject]@{
         skill = $_
         plugin_target = Join-Path $livePluginSkillsRoot $_

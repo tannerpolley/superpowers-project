@@ -8,7 +8,6 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $skillRoot "..\..")).Path
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
 $validatorFile = Join-Path $scriptRoot "validate-issue-mirror.ps1"
-$pluginWrapperFile = Join-Path $repoRoot "skills\plan-to-issue\SKILL.md"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -77,18 +76,12 @@ $scenarios = @(
             Assert-Contains $text $needle "missing workflow metadata contract: $needle"
         }
     }
-    Invoke-Scenario "metadata and wrapper are present" {
+    Invoke-Scenario "metadata is present" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
-        if (-not (Test-Path -LiteralPath $pluginWrapperFile -PathType Leaf)) { throw "missing plugin wrapper" }
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
-        $wrapper = Get-Content -LiteralPath $pluginWrapperFile -Raw
         Assert-Contains $metadata "plan-to-issue:" "missing metadata key"
         Assert-Contains $metadata "docs/superpowers/issues" "missing metadata issue path"
         Assert-Contains $metadata "vertical slices" "missing metadata slice policy"
-        Assert-Contains $wrapper "name: plan-to-issue" "missing wrapper name"
-        Assert-Contains $wrapper "C:\Users\Tanner\.agents\skills\plan-to-issue\SKILL.md" "missing deployed path"
-        Assert-Contains $wrapper "namespace wrapper" "missing namespace wrapper"
-        Assert-Contains $wrapper "Follow that skill exactly." "missing follow instruction"
     }
     Invoke-Scenario "old issue creation target is retired" {
         $text = Get-Content -LiteralPath $skillFile -Raw

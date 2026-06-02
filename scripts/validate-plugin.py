@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the repo's Codex plugin manifest and skill wrapper layout."""
+"""Validate the repo's Codex plugin manifest and skill layout."""
 
 from __future__ import annotations
 
@@ -82,7 +82,7 @@ def validate_plugin(plugin_root: Path) -> list[str]:
         if not skills_path.is_dir():
             errors.append(f"plugin skills path does not exist: {skills_value}")
         else:
-            validate_skill_wrappers(skills_path, errors)
+            validate_skill_directories(skills_path, errors)
 
     interface = manifest.get("interface")
     if not isinstance(interface, dict):
@@ -154,7 +154,7 @@ def validate_interface(interface: dict[str, Any], errors: list[str]) -> None:
         errors.append("interface field `capabilities` must be an array of non-empty strings")
 
 
-def validate_skill_wrappers(skills_path: Path, errors: list[str]) -> None:
+def validate_skill_directories(skills_path: Path, errors: list[str]) -> None:
     skill_dirs = [path for path in skills_path.iterdir() if path.is_dir()]
     if not skill_dirs:
         errors.append("plugin skills path must contain at least one skill directory")
@@ -162,7 +162,7 @@ def validate_skill_wrappers(skills_path: Path, errors: list[str]) -> None:
     for skill_dir in sorted(skill_dirs):
         skill_file = skill_dir / "SKILL.md"
         if not skill_file.is_file():
-            errors.append(f"missing skill wrapper SKILL.md: {skill_dir.name}")
+            errors.append(f"missing skill SKILL.md: {skill_dir.name}")
 
 
 if __name__ == "__main__":

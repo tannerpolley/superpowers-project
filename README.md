@@ -24,7 +24,6 @@ This repository is the canonical source. The live Codex install is a deployment 
 
 ```text
 .codex-plugin/plugin.json
-canonical-skills/<skill-name>/
 skills/<skill-name>/
 scripts/install.ps1
 scripts/sync-live.ps1
@@ -36,9 +35,7 @@ docs/superpowers/issues/
 docs/superpowers/milestones/
 ```
 
-`canonical-skills/` contains the canonical user-level skill implementations.
-
-`skills/` contains plugin namespace wrappers that point to the deployed user-level skills. This keeps the plugin menu organized without duplicating live behavior and satisfies the plugin validator's required skill-root name.
+`skills/` contains the full skill implementations and is the only skill source root.
 
 The retired Milestones artifact model is migration history only. New Superpowers Project artifacts should not be written under the old Milestones issue or idea folders, root-level issue folders, root-level plan folders, or milestone-local plan folders.
 
@@ -64,11 +61,11 @@ Release gates and tag rules are documented in `docs/milestones/M2-distribution/R
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
 ```
 
-The sync script deploys this repo's plugin manifest and plugin wrappers to:
+The sync script deploys this repo's plugin manifest and full skill implementations to:
 
 - `C:\Users\Tanner\plugins\milestones`
 
-It deploys canonical user-level skills from `canonical-skills/` to:
+It also deploys the same skill implementations to:
 
 - `C:\Users\Tanner\.agents\skills`
 

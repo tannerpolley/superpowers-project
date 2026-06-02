@@ -4,10 +4,8 @@ param()
 $ErrorActionPreference = "Stop"
 $scriptRoot = $PSScriptRoot
 $skillRoot = Split-Path $scriptRoot -Parent
-$repoRoot = (Resolve-Path -LiteralPath (Join-Path $skillRoot "..\..")).Path
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
-$pluginWrapperFile = Join-Path $repoRoot "skills\project-brainstorm\SKILL.md"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -65,16 +63,6 @@ $scenarios = @(
         Assert-Contains $text "docs/superpowers/specs" "missing metadata spec path"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"
         Assert-Contains $text "superpowers:brainstorming" "missing metadata Superpowers route"
-    }
-    Invoke-Scenario "plugin wrapper points to deployed user skill" {
-        if (-not (Test-Path -LiteralPath $pluginWrapperFile -PathType Leaf)) { throw "missing plugin wrapper" }
-        $text = Get-Content -LiteralPath $pluginWrapperFile -Raw
-        Assert-Contains $text "name: project-brainstorm" "missing wrapper name"
-        Assert-Contains $text "namespace wrapper" "missing wrapper declaration"
-        Assert-Contains $text "C:\Users\Tanner\.agents\skills\project-brainstorm\SKILL.md" "missing deployed path"
-        Assert-Contains $text 'Read the deployed user-level `SKILL.md` above.' "missing read instruction"
-        Assert-Contains $text "Follow that skill exactly." "missing follow instruction"
-        Assert-Contains $text "do not invent separate behavior" "missing no separate behavior rule"
     }
 )
 

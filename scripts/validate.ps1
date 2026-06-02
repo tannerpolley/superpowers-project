@@ -7,8 +7,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
-$skillRoot = Join-Path $repoRoot "canonical-skills"
-$pluginSkillRoot = Join-Path $repoRoot "skills"
+$skillRoot = Join-Path $repoRoot "skills"
+$retiredCanonicalSkillRoot = Join-Path $repoRoot "canonical-skills"
 $pluginRoot = $repoRoot
 $quickValidate = Join-Path $PSScriptRoot "quick-validate-skill.py"
 $pluginValidate = Join-Path $PSScriptRoot "validate-plugin.py"
@@ -127,33 +127,28 @@ function Get-ActiveSkillNames {
         "project-doctor"
     )
 }
-function Test-PluginWrapperContracts {
+function Test-SkillSourceContracts {
     $activeNames = @(Get-ActiveSkillNames)
-    $canonicalNames = @(Get-ChildItem -LiteralPath $skillRoot -Directory | Sort-Object Name | Select-Object -ExpandProperty Name)
-    $wrapperNames = @(Get-ChildItem -LiteralPath $pluginSkillRoot -Directory | Sort-Object Name | Select-Object -ExpandProperty Name)
+    $skillNames = @(Get-ChildItem -LiteralPath $skillRoot -Directory | Sort-Object Name | Select-Object -ExpandProperty Name)
 
-    $missingCanonical = @($activeNames | Where-Object { $canonicalNames -notcontains $_ })
-    $extraCanonical = @($canonicalNames | Where-Object { $activeNames -notcontains $_ })
-    if ($missingCanonical.Count -gt 0) { throw "missing active canonical skill(s): $($missingCanonical -join ', ')" }
-    if ($extraCanonical.Count -gt 0) { throw "unexpected canonical skill(s): $($extraCanonical -join ', ')" }
+    $missingSkills = @($activeNames | Where-Object { $skillNames -notcontains $_ })
+    $extraSkills = @($skillNames | Where-Object { $activeNames -notcontains $_ })
+    if ($missingSkills.Count -gt 0) { throw "missing active skill(s): $($missingSkills -join ', ')" }
+    if ($extraSkills.Count -gt 0) { throw "unexpected skill(s): $($extraSkills -join ', ')" }
 
-    $missingWrappers = @($activeNames | Where-Object { $wrapperNames -notcontains $_ })
-    $extraWrappers = @($wrapperNames | Where-Object { $activeNames -notcontains $_ })
-    if ($missingWrappers.Count -gt 0) { throw "missing plugin wrapper(s): $($missingWrappers -join ', ')" }
-    if ($extraWrappers.Count -gt 0) { throw "unexpected plugin wrapper(s): $($extraWrappers -join ', ')" }
-
+    if (Test-Path -LiteralPath $retiredCanonicalSkillRoot -PathType Container) {
+        throw "canonical-skills is retired; skills must be the single source root"
+    }
     foreach ($name in $activeNames) {
-        $wrapperPath = Join-Path $pluginSkillRoot "$name\SKILL.md"
-        if (-not (Test-Path -LiteralPath $wrapperPath -PathType Leaf)) {
-            throw "missing wrapper SKILL.md: $wrapperPath"
+        $skillPath = Join-Path $skillRoot "$name\SKILL.md"
+        if (-not (Test-Path -LiteralPath $skillPath -PathType Leaf)) {
+            throw "missing skill SKILL.md: $skillPath"
         }
-        $text = Get-Content -LiteralPath $wrapperPath -Raw
-        Assert-TextContains -Text $text -Needle "name: $name" -Path $wrapperPath -Reason "missing wrapper name"
-        Assert-TextContains -Text $text -Needle "namespace wrapper" -Path $wrapperPath -Reason "missing namespace wrapper contract"
-        Assert-TextContains -Text $text -Needle "C:\Users\Tanner\.agents\skills\$name\SKILL.md" -Path $wrapperPath -Reason "missing deployed user skill path"
-        Assert-TextContains -Text $text -Needle 'Read the deployed user-level `SKILL.md` above.' -Path $wrapperPath -Reason "missing deployed read instruction"
-        Assert-TextContains -Text $text -Needle "Follow that skill exactly." -Path $wrapperPath -Reason "missing follow instruction"
-        Assert-TextContains -Text $text -Needle "do not invent separate behavior" -Path $wrapperPath -Reason "missing no separate behavior rule"
+        $text = Get-Content -LiteralPath $skillPath -Raw
+        Assert-TextContains -Text $text -Needle "name: $name" -Path $skillPath -Reason "missing skill name"
+        if ($text.Contains("namespace wrapper") -or $text.Contains('Read the deployed user-level `SKILL.md` above.') -or $text.Contains("do not invent separate behavior")) {
+            throw "skills must contain full implementations, not namespace wrappers: $skillPath"
+        }
     }
 }
 function Test-SuperpowersProjectPathContract {
@@ -185,15 +180,15 @@ try {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot ".codex-plugin\plugin.json") -PathType Leaf)) {
         throw "missing .codex-plugin/plugin.json"
     }
-    if (-not (Test-Path -LiteralPath $skillRoot -PathType Container)) {
-        throw "missing canonical-skills directory"
+    if (Test-Path -LiteralPath $retiredCanonicalSkillRoot -PathType Container) {
+        throw "canonical-skills directory is retired"
     }
-    if (-not (Test-Path -LiteralPath $pluginSkillRoot -PathType Container)) {
-        throw "missing plugin wrapper skills directory"
+    if (-not (Test-Path -LiteralPath $skillRoot -PathType Container)) {
+        throw "missing skills directory"
     }
 
-    $results.Add((Invoke-Step "Plugin wrapper source contract" {
-        Test-PluginWrapperContracts
+    $results.Add((Invoke-Step "Skill source contract" {
+        Test-SkillSourceContracts
     }))
     $results.Add((Invoke-Step "Superpowers project path contract" {
         Test-SuperpowersProjectPathContract
@@ -261,7 +256,6 @@ try {
 
     $scanRoots = @(
         $skillRoot,
-        $pluginSkillRoot,
         (Join-Path $repoRoot "docs"),
         (Join-Path $repoRoot ".codex-plugin"),
         (Join-Path $repoRoot "README.md"),
