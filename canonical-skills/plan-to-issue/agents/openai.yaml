@@ -1,0 +1,4 @@
+version: 1
+skills:
+  plan-to-issue:
+    default_prompt: "Use $plan-to-issue when a Superpowers Project spec, plan, PRD, or approved scope needs vertical slices published as GitHub issues and synced mirrors. Read docs/superpowers/specs, docs/superpowers/plans, docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, and docs/superpowers/issues; classify each slice as AFK or HITL; capture Blocked by relationships, Acceptance Criteria, GitHub Issue, GitHub Milestone, labels such as ready-for-agent or needs-info, proof oracle, and Goal Command for AFK issues; write mirrors under docs/superpowers/issues; validate mirrors before handoff."
