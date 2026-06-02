@@ -1,12 +1,15 @@
 {
   "tracker": "github",
   "repository": "tannerpolley/milestones-plugin",
-  "milestone_policy": "hard",
+  "milestone_policy": "project-roadmap",
   "project_policy": "dashboard-only",
-  "milestone_context": "docs/milestones/PROJECT_CONTEXT.md",
-  "idea_file_template": "docs/milestones/<milestone-folder>/ideas/<YYYY-MM-DD>-<slug>.md",
-  "issue_file_template": "docs/milestones/<milestone-folder>/issues/<issue-number>-<slug>.md",
-  "issue_types": ["bug", "feature", "task"],
-  "labels": ["type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked"],
-  "forbidden_local_roots": ["docs/ideas", "docs/issues", "docs/plans", "docs/milestones/<milestone-folder>/plans"]
+  "project_context": "docs/superpowers/PROJECT_CONTEXT.md",
+  "milestone_root": "docs/superpowers/milestones",
+  "spec_file_template": "docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md",
+  "plan_file_template": "docs/superpowers/plans/<YYYY-MM-DD>-<slug>-plan.md",
+  "issue_file_template": "docs/superpowers/issues/<issue-number>-<slug>.md",
+  "issue_types": ["bug", "enhancement", "task"],
+  "triage_states": ["needs-triage", "needs-info", "ready-for-agent", "ready-for-human", "wontfix"],
+  "labels": ["type:bug", "type:enhancement", "type:task", "status:triage", "status:ready", "status:blocked"],
+  "forbidden_canonical_roots": ["docs/milestones/<milestone-folder>/ideas", "docs/milestones/<milestone-folder>/issues", "docs/plans", "docs/issues"]
 }

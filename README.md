@@ -1,13 +1,12 @@
 # Milestones Plugin
 
-Milestones is a local Codex plugin and skill family for GitHub-backed project management:
+Milestones is currently being redesigned into **Superpowers Project**: a local Codex plugin and skill family that extends Superpowers with GitHub-backed project management:
 
-- set up milestone-backed repos;
-- audit and repair milestone workflow drift;
-- explore ideas through native question UI;
-- convert scoped ideas into GitHub issues;
-- write milestone-local issue implementation plans;
-- resolve issues through GoalBuddy, verification, PR merge, closeout, and cleanup.
+- durable project context under `docs/superpowers`;
+- roadmap and milestone pages;
+- native question UI for grilling assumptions;
+- GitHub issue mirrors and milestone linkage;
+- goal-backed issue resolution with Superpowers execution skills.
 
 This repository is the canonical source. The live Codex install is a deployment target.
 
@@ -37,19 +36,24 @@ docs/milestones/PROJECT_CONTEXT.md
 
 `skills/` contains plugin namespace wrappers that point to the deployed user-level skills. This keeps the plugin menu organized without duplicating live behavior and satisfies the plugin validator's required skill-root name.
 
-Milestone-backed idea briefs belong under:
+The target Superpowers Project artifact model is:
+
+```text
+docs/superpowers/PROJECT_CONTEXT.md
+docs/superpowers/specs/
+docs/superpowers/plans/
+docs/superpowers/issues/
+docs/superpowers/milestones/
+```
+
+The old Milestones artifact model is being retired:
 
 ```text
 docs/milestones/<milestone-folder>/ideas/
-```
-
-Milestone-backed local issue files belong under:
-
-```text
 docs/milestones/<milestone-folder>/issues/
 ```
 
-`docs/ideas`, `docs/issues`, `docs/plans`, and `docs/milestones/<milestone-folder>/plans` are not part of this repo's workflow.
+`docs/ideas`, root-level `docs/issues`, `docs/plans`, and `docs/milestones/<milestone-folder>/plans` are not part of this repo's workflow.
 
 ## Validate
 

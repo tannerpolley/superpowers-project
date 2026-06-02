@@ -1,13 +1,17 @@
 # Project Roadmap Contract
 
-Milestones is managed through `docs/milestones/PROJECT_CONTEXT.md` and per-milestone local folders.
+Superpowers Project is managed through `docs/superpowers/PROJECT_CONTEXT.md` and `docs/superpowers/milestones/`.
 
-Idea briefs:
+Specs:
 
-- `docs/milestones/<milestone-folder>/ideas/<YYYY-MM-DD>-<slug>.md`
+- `docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md`
 
-Local issue files:
+Plans:
 
-- `docs/milestones/<milestone-folder>/issues/<issue-number>-<slug>.md`
+- `docs/superpowers/plans/<YYYY-MM-DD>-<slug>-plan.md`
 
-Do not create `docs/ideas`, `docs/issues`, `docs/plans`, or milestone `plans` folders.
+Issue mirrors:
+
+- `docs/superpowers/issues/<issue-number>-<slug>.md`
+
+Do not create canonical specs, plans, or issue mirrors under `docs/milestones`, `docs/plans`, or root-level `docs/issues`.
