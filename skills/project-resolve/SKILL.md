@@ -155,7 +155,22 @@ GitHub specialists can be used for CI or review-thread work, but bundled gate sc
 
 ## Native Continuation Gate
 
-After PR-ready handoff proof passes, ask how to continue when `request_user_input` is callable. Options should include starting `$project-merge`, resolving another ready issue, or stopping at PR-ready. Start the selected next skill in the same turn when tools and state allow it.
+After PR-ready handoff proof passes, summarize the resolved issue in chat before asking the continuation question. The summary must name the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
+
+Ask a native continuation question with `request_user_input` when callable.
+
+Question id: `project_resolve_next_step`
+
+Prompt: `How should I continue from this PR-ready issue?`
+
+Options:
+
+- `Project Merge`: start `$project-merge` from the PR URL or worker handoff.
+- `Resolve Another`: start `$project-resolve` for another ready issue mirror.
+- `Review First`: stop for main-thread review before merge.
+- `Stop`: stop at PR-ready handoff.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 
 ## Completion Rule
 

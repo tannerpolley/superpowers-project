@@ -97,7 +97,9 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 ## Native Continuation Gate
 
-After saving and self-reviewing the plan, ask a native continuation question when `request_user_input` is callable. This question is executable routing, not advisory text.
+After saving and self-reviewing the plan, summarize the plan in chat before asking the continuation question. The summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, and recommended next route.
+
+Ask a native continuation question when `request_user_input` is callable. This question is executable routing, not advisory text.
 
 Question id: `project_plan_next_step`
 
@@ -106,10 +108,12 @@ Prompt: `How should I continue from this project plan?`
 Options:
 
 - `Project Issue First`: continue to `$project-issue` using the saved plan path.
-- `Subagent Execute`: continue with `superpowers:subagent-driven-development` using the saved plan path.
-- `Inline Execute`: continue with `superpowers:executing-plans` using the saved plan path.
+- `Quick Apply`: apply a small, explicitly approved local-main change through the bundled Quick Apply gate.
+- `Review First`: stop for user review before issue creation or execution.
+- `Revise Plan`: continue `$project-plan` to revise the saved plan.
+- `Stop`: stop after the plan closeout.
 
-Recommend `Project Issue First` for repos using the Superpowers Project GitHub issue backbone. Recommend direct execution only when the user intentionally wants to bypass issue creation.
+Recommend `Project Issue First` for repos using the Superpowers Project GitHub issue backbone. Recommend `Quick Apply` only for small, guarded, explicitly approved local-main work that passes its gate.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the saved plan path, source spec or issue mirror path, decisions, acceptance criteria, and proof oracle. Do not only tell the user what to prompt next.
 

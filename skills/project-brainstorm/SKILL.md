@@ -69,3 +69,22 @@ A saved spec should include:
 - proof oracle candidates for later planning
 
 Before reporting the spec ready, self-review for placeholders, contradictions, ambiguous wording, and scope that should be split before `project-plan` runs.
+
+## Native Continuation Gate
+
+After saving or revising the brainstorm artifact, summarize the spec, PRD, architecture decision, or unresolved decision set in chat before asking the continuation question. The summary must name the artifact path when one was saved, the key decisions made, remaining open questions, and the recommended next route.
+
+Ask a native continuation question with `request_user_input` when callable.
+
+Question id: `project_brainstorm_next_step`
+
+Prompt: `How should I continue from this brainstorm?`
+
+Options:
+
+- `Project Plan`: start `$project-plan` from the approved spec or decision summary.
+- `Review First`: stop for user review before planning or issue creation.
+- `Revise Spec`: continue `$project-brainstorm` to revise the saved spec or decision summary.
+- `Stop`: stop after the brainstorm closeout.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

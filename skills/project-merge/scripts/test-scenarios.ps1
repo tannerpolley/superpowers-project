@@ -86,7 +86,14 @@ Invoke-Scenario "merge contract text is present" {
         "recommended-default",
         "user-provided-debug-answer",
         "Debug mode must not",
-        "## Native Continuation Gate"
+        "## Native Continuation Gate",
+        "summarize",
+        "project_merge_next_step",
+        "Project Doctor",
+        "Resolve Another",
+        "Review First",
+        "Stop",
+        "start the selected next skill"
     )) {
         Assert-Contains $text $needle "missing project-merge contract: $needle"
     }
@@ -98,6 +105,9 @@ Invoke-Scenario "metadata is present" {
     Assert-Contains $metadata "project-merge:" "missing metadata key"
     Assert-Contains $metadata "PR URL or worker handoff" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
+    foreach ($needle in @("summarize", "project_merge_next_step", "Project Doctor", "Resolve Another", "Review First", "Stop", "start the selected next skill")) {
+        Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
+    }
 }
 
 Invoke-Scenario "premerge accepts happy fixture" {

@@ -70,7 +70,22 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 ## Native Continuation Gate
 
-After closeout proof passes, ask how to continue when `request_user_input` is callable. Options should include resolving the next ready issue with `$project-resolve`, running `$project-doctor`, or stopping after clean closeout. Start the selected next skill in the same turn when tools and state allow it.
+After closeout proof passes, summarize the merge closeout in chat before asking the continuation question. The summary must name the merged PR URL, closed issue, synced default branch, branch and worktree cleanup proof, prune proof, cleanup hook proof, and clean repo proof.
+
+Ask a native continuation question with `request_user_input` when callable.
+
+Question id: `project_merge_next_step`
+
+Prompt: `How should I continue from this merge closeout?`
+
+Options:
+
+- `Project Doctor`: start `$project-doctor` for post-merge drift audit or live sync review.
+- `Resolve Another`: start `$project-resolve` for another ready issue mirror.
+- `Review First`: stop for user review after merge closeout.
+- `Stop`: stop after clean closeout.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 
 ## Scripted Gates
 
