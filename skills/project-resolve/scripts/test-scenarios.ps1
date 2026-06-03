@@ -242,6 +242,76 @@ try {
         Assert-True ($result.evidence.goal_status -eq "complete") "resolve goal completion was not recorded"
     }
 
+    Invoke-Scenario "collect-pr-ready-ledger emits gate-ready temp ledger" {
+        $outputDir = Join-Path $tempRoot "pr-ready-ledger-output"
+        $setupPath = Join-Path $tempRoot "setup-ledger.json"
+        New-SetupLedger | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+        $pr = @{
+            url = "https://github.com/example/repo/pull/5"
+            state = "OPEN"
+            body = "Closes #12"
+            closingIssuesReferences = @(@{ number = 12 })
+        } | ConvertTo-Json -Depth 12 -Compress
+        $acceptance = @(
+            @{ criterion = "Sample issue is resolved"; evidence = "fixture coverage" }
+        ) | ConvertTo-Json -Depth 8 -Compress
+        $handoff = @{
+            source = "worker-final-message"
+            status = "sent"
+            recipient = "main-thread-orchestrator"
+        } | ConvertTo-Json -Depth 8 -Compress
+        $goalCompletion = @{
+            source = "update_goal"
+            status = "complete"
+            issue_url = "https://github.com/example/repo/issues/12"
+        } | ConvertTo-Json -Depth 8 -Compress
+        $collected = Invoke-JsonScript -ScriptName "collect-pr-ready-ledger.ps1" -Arguments @(
+            "-RepoRoot", $repo,
+            "-SetupLedgerPath", $setupPath,
+            "-PrJson", $pr,
+            "-VerificationCommands", "pwsh -NoProfile -Command 'exit 0'",
+            "-AcceptanceCoverageJson", $acceptance,
+            "-HandoffProofJson", $handoff,
+            "-GoalCompletionProofJson", $goalCompletion,
+            "-OutputDir", $outputDir
+        )
+        Assert-True ($collected.ok) $collected.reason
+        Assert-True (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf) "collector did not write ledger path"
+        Assert-True ($collected.ledger_path.StartsWith($outputDir, [StringComparison]::OrdinalIgnoreCase)) "collector did not honor OutputDir"
+        $result = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerPath", $setupPath, "-PrReadyLedgerPath", $collected.ledger_path)
+        Assert-True ($result.ok) $result.reason
+    }
+
+    Invoke-Scenario "collect-pr-ready-ledger defaults generated ledgers to temp" {
+        $setupPath = Join-Path $tempRoot "setup-ledger-default.json"
+        New-SetupLedger | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+        $pr = @{
+            url = "https://github.com/example/repo/pull/5"
+            state = "OPEN"
+            body = "Closes #12"
+            closingIssuesReferences = @(@{ number = 12 })
+        } | ConvertTo-Json -Depth 12 -Compress
+        $acceptance = @(@{ criterion = "Sample issue is resolved"; evidence = "fixture coverage" }) | ConvertTo-Json -Depth 8 -Compress
+        $handoff = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" } | ConvertTo-Json -Depth 8 -Compress
+        $goalCompletion = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" } | ConvertTo-Json -Depth 8 -Compress
+        $collected = Invoke-JsonScript -ScriptName "collect-pr-ready-ledger.ps1" -Arguments @(
+            "-RepoRoot", $repo,
+            "-SetupLedgerPath", $setupPath,
+            "-PrJson", $pr,
+            "-VerificationCommands", "pwsh -NoProfile -Command 'exit 0'",
+            "-AcceptanceCoverageJson", $acceptance,
+            "-HandoffProofJson", $handoff,
+            "-GoalCompletionProofJson", $goalCompletion
+        )
+        Assert-True ($collected.ok) $collected.reason
+        Assert-True (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf) "collector did not write default temp ledger"
+        $tempPath = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+        $ledgerPath = [IO.Path]::GetFullPath([string]$collected.ledger_path)
+        $repoPath = [IO.Path]::GetFullPath($repo)
+        Assert-True ($ledgerPath.StartsWith($tempPath, [StringComparison]::OrdinalIgnoreCase)) "default ledger path was not under temp"
+        Assert-True (-not $ledgerPath.StartsWith($repoPath, [StringComparison]::OrdinalIgnoreCase)) "default ledger path must not be inside repo"
+    }
+
     Invoke-Scenario "skill text declares native goal state machine" {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
         foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "PR-ready validation", "GoalBuddy boards are outside the default execution model")) {
@@ -259,6 +329,10 @@ try {
             "test-driven-development",
             "verification-before-completion",
             "finishing-a-development-branch",
+            "collect-pr-ready-ledger.ps1",
+            "Temp Plus Evidence",
+            "generated ledgers passed to existing gates",
+            "no hand-authored JSON requirement",
             "main thread orchestrator",
             "project-merge",
             "## Native Continuation Gate",

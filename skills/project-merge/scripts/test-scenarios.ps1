@@ -6,6 +6,7 @@ $scriptRoot = $PSScriptRoot
 $skillRoot = Split-Path -Parent $scriptRoot
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $metadataFile = Join-Path $skillRoot "agents\openai.yaml"
+$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("project-merge-ledgers-" + [guid]::NewGuid().ToString("N"))
 $results = [System.Collections.Generic.List[object]]::new()
 
 function Add-Result { param([string]$Name, [bool]$Ok, [string]$Reason) $results.Add([pscustomobject]@{ name = $Name; ok = $Ok; reason = $Reason }) }
@@ -57,6 +58,19 @@ function New-MergeDecision {
     } | ConvertTo-Json -Depth 8 -Compress
 }
 
+function New-TestRepo {
+    $repo = Join-Path $tempRoot ("repo-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $repo -Force | Out-Null
+    & git -C $repo init -b main | Out-Null
+    & git -C $repo config user.email tests@example.invalid | Out-Null
+    & git -C $repo config user.name "Project Merge Tests" | Out-Null
+    & git -C $repo config core.autocrlf false | Out-Null
+    Set-Content -LiteralPath (Join-Path $repo "README.md") -Value "# Repo`n" -Encoding utf8NoBOM
+    & git -C $repo add . | Out-Null
+    & git -C $repo commit -m initial | Out-Null
+    $repo
+}
+
 Invoke-Scenario "skill frontmatter is valid" {
     if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
     $text = Get-Content -LiteralPath $skillFile -Raw
@@ -78,6 +92,11 @@ Invoke-Scenario "merge contract text is present" {
         "closeout.ps1",
         "git fetch --prune",
         "cleanup hook",
+        "collect-premerge-ledger.ps1",
+        "collect-closeout-ledger.ps1",
+        "Temp Plus Evidence",
+        "generated ledgers passed to existing gates",
+        "no hand-authored JSON requirement",
         "Do not merge without native UI approval",
         "## Native Question Debug Mode",
         "debug_question_mode",
@@ -184,6 +203,62 @@ Invoke-Scenario "happy closeout records clean proof" {
     if ($result.evidence.repo_clean -ne $true) { throw "clean proof was not recorded" }
 }
 
+Invoke-Scenario "collect-premerge-ledger emits evidence accepted by premerge" {
+    $repo = New-TestRepo
+    $setupPath = Join-Path $tempRoot "premerge-setup-ledger.json"
+    New-SetupLedger | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+    $pr = @{
+        url = "https://github.com/example/repo/pull/5"
+        state = "OPEN"
+        body = "Closes #12"
+        closingIssuesReferences = @(@{ number = 12 })
+        requiredChecks = @(@{ name = "local-proof"; state = "SUCCESS"; conclusion = "SUCCESS" })
+        files = @(@{ path = "src/example.txt" }, @{ path = "docs/superpowers/issues/12-sample.md" })
+    } | ConvertTo-Json -Depth 12 -Compress
+    $issue = @{ state = "OPEN"; body = "- [ ] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $outputDir = Join-Path $tempRoot "premerge-output"
+    $collected = Invoke-JsonScript -ScriptName "collect-premerge-ledger.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-PrJson", $pr,
+        "-IssueJson", $issue,
+        "-VerificationCommands", "pwsh -NoProfile -Command 'exit 0'",
+        "-ChangedFilesCovered", "src/example.txt,docs/superpowers/issues/12-sample.md",
+        "-OutputDir", $outputDir
+    )
+    if (-not $collected.ok) { throw $collected.reason }
+    if (-not (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf)) { throw "collector did not write premerge ledger" }
+    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerPath", $setupPath, "-VerificationLedgerPath", $collected.ledger_path, "-PrJson", $collected.pr_json, "-IssueJson", $collected.issue_json)
+    if (-not $result.ok) { throw $result.reason }
+}
+
+Invoke-Scenario "collect-closeout-ledger emits evidence accepted by closeout" {
+    $repo = New-TestRepo
+    $setupPath = Join-Path $tempRoot "closeout-setup-ledger.json"
+    New-SetupLedger | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $goal = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" } | ConvertTo-Json -Depth 8 -Compress
+    $mirrorCleanup = @{ policy = "retain"; reason = "fixture" } | ConvertTo-Json -Depth 8 -Compress
+    $outputDir = Join-Path $tempRoot "closeout-output"
+    $collected = Invoke-JsonScript -ScriptName "collect-closeout-ledger.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-PrJson", $pr,
+        "-IssueJson", $issue,
+        "-MergeDecisionJson", (New-MergeDecision),
+        "-CleanupHookOutput", "No matching leftover Codex processes under repo root.",
+        "-ResolveGoalCompletionProofJson", $goal,
+        "-MirrorCleanupJson", $mirrorCleanup,
+        "-OutputDir", $outputDir
+    )
+    if (-not $collected.ok) { throw $collected.reason }
+    if (-not (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf)) { throw "collector did not write closeout ledger" }
+    $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerPath", $setupPath, "-CompletionLedgerPath", $collected.ledger_path, "-PrJson", $collected.pr_json, "-IssueJson", $collected.issue_json)
+    if (-not $result.ok) { throw $result.reason }
+}
+
 $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
+if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
