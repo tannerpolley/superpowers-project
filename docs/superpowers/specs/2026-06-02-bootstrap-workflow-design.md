@@ -10,7 +10,7 @@ Historical bootstrap record. The validation repair, live sync cleanup, CI workfl
 
 The Milestones plugin repo is the canonical source for the local plugin and its user-level skills. The live plugin at `C:\Users\Tanner\plugins\milestones` and user skills under `C:\Users\Tanner\.agents\skills` are deployed copies.
 
-The repo is currently clean on `main`, source and deployed copies are byte-for-byte synced, GitHub Issues and Projects are enabled, required labels exist, and the three GitHub milestones mirror `docs/milestones/PROJECT_CONTEXT.md`.
+The repo is currently clean on `main`, source and deployed copies are byte-for-byte synced, GitHub Issues and Projects are enabled, required labels exist, and the three GitHub milestones mirror `docs/superpowers/PROJECT_CONTEXT.md`.
 
 Full validation is not green. `scripts/validate.ps1` fails on wrapper wording assertions, and the `project-resolve` scenario suite does not finish within a two-minute bound during manual review.
 

@@ -1,5 +1,5 @@
 name: Feature
-description: Propose a new Milestones plugin capability or workflow improvement.
+description: Propose a new Superpowers Project capability or workflow improvement.
 title: "[Feature]: "
 labels: ["type:feature", "status:triage"]
 body:
@@ -34,6 +34,6 @@ body:
     id: plan-file
     attributes:
       label: Local issue file
-      description: docs/milestones/<milestone-folder>/issues/<issue-number>-<slug>.md
+      description: docs/superpowers/issues/<issue-number>-<slug>.md
     validations:
       required: false

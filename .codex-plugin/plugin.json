@@ -3,14 +3,24 @@
   "version": "0.2.0",
   "description": "Superpowers extension for durable project setup, GitHub issues and milestones, native user-input grilling, goal-backed execution, and worker-thread orchestration.",
   "author": {
-    "name": "Tanner Local"
+    "name": "Tanner Polley"
   },
+  "homepage": "https://github.com/tannerpolley/codex-superpowers-project",
+  "repository": "https://github.com/tannerpolley/codex-superpowers-project",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "superpowers",
+    "github-issues",
+    "project-management",
+    "agent-workflows"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Superpowers Project",
     "shortDescription": "Project setup, GitHub issues, milestones, goal-backed execution, and orchestration for Superpowers.",
     "longDescription": "Superpowers Project extends Superpowers with large-scope project setup, roadmap and milestone mapping, GitHub issue mirrors, issue triage, native request_user_input grilling, native /goal-backed issue resolution, and optional worker-thread orchestration.",
-    "developerName": "Tanner Local",
+    "developerName": "Tanner Polley",
     "category": "Productivity",
     "capabilities": [
       "Planning",

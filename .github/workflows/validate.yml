@@ -25,6 +25,6 @@ jobs:
           choco install ripgrep -y --no-progress
           rg --version
 
-      - name: Validate Milestones plugin
+      - name: Validate Superpowers Project plugin
         shell: pwsh
         run: pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1

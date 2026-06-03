@@ -255,7 +255,7 @@ function Invoke-LocalDocsAudit {
     $sourceSkill = Get-RepoFile -Root $Root -RelativePath "skills/project-doctor/SKILL.md"
     if (Test-Path -LiteralPath $sourceSkill -PathType Leaf) {
         $liveTargets = @(
-            Join-Path $env:USERPROFILE "plugins/milestones/skills/project-doctor/SKILL.md"
+            Join-Path $env:USERPROFILE "plugins/superpowers-project/skills/project-doctor/SKILL.md"
             Join-Path $env:USERPROFILE ".agents/skills/project-doctor/SKILL.md"
         )
         $liveChecks = @($liveTargets | ForEach-Object { Compare-LiveFile -SourcePath $sourceSkill -TargetPath $_ })
@@ -267,6 +267,10 @@ function Invoke-LocalDocsAudit {
             Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "live-sync" -Severity "healthy" -Dimension "live-sync" -Message "Checked live Doctor skill target matches source." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = @($checked.target) })
         } else {
             Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live deployed Doctor skill target was not inspected." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = $liveTargets })
+        }
+        $retiredLiveRoot = Join-Path $env:USERPROFILE "plugins/milestones"
+        if (Test-Path -LiteralPath $retiredLiveRoot -PathType Container) {
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "retired-live-plugin-root" -Severity "repairable" -Dimension "live-sync" -Message "Retired Milestones live plugin root still exists; sync-live should remove the owned retired copy." -Artifact $retiredLiveRoot)
         }
     } else {
         Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live sync comparison skipped because the source Doctor skill file is absent." -Artifact "skills/project-doctor/SKILL.md")

@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [switch]$Validate,
-    [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\milestones"),
+    [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\superpowers-project"),
     [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills")
 )
 
@@ -13,11 +13,12 @@ $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
 $sourceSkillsRoot = Join-Path $repoRoot "skills"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
-$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones"))
+$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
+$retiredLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones"))
 $expectedUserSkillsRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".agents\skills"))
 
 if ($livePluginRootResolved -ne $expectedLivePluginRoot) {
-    throw "LivePluginRoot must be the Milestones live plugin path: $expectedLivePluginRoot"
+    throw "LivePluginRoot must be the Superpowers Project live plugin path: $expectedLivePluginRoot"
 }
 if ($userSkillsRootResolved -ne $expectedUserSkillsRoot) {
     throw "UserSkillsRoot must be the user skills path: $expectedUserSkillsRoot"
@@ -42,6 +43,34 @@ $retiredSkillNames = @(
     "milestones-doctor",
     "project-context"
 )
+
+function Remove-RetiredLivePluginRoot {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Container)) { return $false }
+
+    $pluginsRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins"))
+    $resolved = [IO.Path]::GetFullPath($Path)
+    if ($resolved -ne $retiredLivePluginRoot) {
+        throw "refusing to remove unexpected retired live plugin path: $resolved"
+    }
+    if (-not $resolved.StartsWith($pluginsRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "refusing to remove retired live plugin path outside plugins root: $resolved"
+    }
+
+    $manifestPath = Join-Path $resolved ".codex-plugin\plugin.json"
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw "retired live plugin path exists but has no ownership manifest: $resolved"
+    }
+
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    if ($manifest.name -ne "superpowers-project") {
+        throw "retired live plugin path is not owned by superpowers-project: $resolved"
+    }
+
+    Remove-Item -LiteralPath $resolved -Recurse -Force
+    $true
+}
 
 if ($Validate) {
     & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate.ps1")
@@ -70,6 +99,8 @@ foreach ($skillName in $activeSkillNames) {
     Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $userSkillsRootResolved $skillName) -Label "user skill $skillName"
 }
 
+$removedRetiredLivePluginRoot = Remove-RetiredLivePluginRoot -Path $retiredLivePluginRoot
+
 $deployedPluginSkills = @($activeSkillNames | ForEach-Object {
     [pscustomobject]@{
         skill = $_
@@ -92,4 +123,6 @@ $deployedUserSkills = @($activeSkillNames | ForEach-Object {
     deployed_user_skills = $deployedUserSkills
     removed_plugin_skills = $removedPluginSkills
     removed_user_skills = $removedUserSkills
+    retired_live_plugin_root = $retiredLivePluginRoot
+    removed_retired_live_plugin_root = $removedRetiredLivePluginRoot
 } | ConvertTo-Json -Depth 8

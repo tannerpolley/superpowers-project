@@ -1,5 +1,5 @@
 name: Task
-description: Track repository, docs, validation, release, or maintenance work.
+description: Track Superpowers Project repository, docs, validation, release, or maintenance work.
 title: "[Task]: "
 labels: ["type:task", "status:triage"]
 body:
@@ -33,6 +33,6 @@ body:
     id: plan-file
     attributes:
       label: Local issue file
-      description: docs/milestones/<milestone-folder>/issues/<issue-number>-<slug>.md
+      description: docs/superpowers/issues/<issue-number>-<slug>.md
     validations:
       required: false

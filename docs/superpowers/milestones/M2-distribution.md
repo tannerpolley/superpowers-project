@@ -19,3 +19,7 @@ Package, validate, sync, and release the Superpowers Project extension after dum
 ## Related Issues
 
 - None yet
+
+## Release Policy
+
+- `docs/superpowers/RELEASE_POLICY.md`
