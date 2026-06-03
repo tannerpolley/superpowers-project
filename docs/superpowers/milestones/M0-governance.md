@@ -19,4 +19,7 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 ## Related Issues
 
 - `docs/superpowers/issues/smoke-test-workflow.md`
-- `docs/superpowers/issues/2-project-merge-workflow.md`
+
+## Closed Issues
+
+- [#2 Add project-merge workflow and continuation gates](https://github.com/tannerpolley/milestones-plugin/issues/2) closed by [PR #3](https://github.com/tannerpolley/milestones-plugin/pull/3).
