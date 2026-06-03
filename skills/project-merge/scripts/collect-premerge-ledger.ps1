@@ -47,7 +47,12 @@ function New-OutputPath {
 
 function Invoke-GhJson {
     param([string[]]$Arguments)
-    $output = & gh @Arguments 2>&1
+    $ghCommand = "gh"
+    $windowsGh = "C:\Program Files\GitHub CLI\gh.exe"
+    if (-not (Get-Command $ghCommand -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath $windowsGh -PathType Leaf)) {
+        $ghCommand = $windowsGh
+    }
+    $output = & $ghCommand @Arguments 2>&1
     if ($LASTEXITCODE -ne 0) { throw "gh $($Arguments -join ' ') failed: $($output | Out-String)" }
     ($output | Out-String).Trim() | ConvertFrom-Json
 }
