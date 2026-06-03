@@ -1,5 +1,22 @@
 $ErrorActionPreference = "Stop"
 
+$githubChecksPath = $null
+$cursor = $PSScriptRoot
+while (-not [string]::IsNullOrWhiteSpace($cursor)) {
+    $candidate = Join-Path $cursor "scripts\lib\github-checks.ps1"
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        $githubChecksPath = $candidate
+        break
+    }
+    $parent = Split-Path -Parent $cursor
+    if ($parent -eq $cursor) { break }
+    $cursor = $parent
+}
+if ([string]::IsNullOrWhiteSpace($githubChecksPath)) {
+    throw "shared GitHub check helper not found"
+}
+. $githubChecksPath
+
 function Write-ContractResult {
     param(
         [Parameter(Mandatory = $true)][string]$Phase,
