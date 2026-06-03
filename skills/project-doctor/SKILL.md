@@ -7,6 +7,12 @@ description: Use when a Superpowers Project repo needs drift audit, migration re
 
 Project Doctor audits Superpowers Project structure and reports drift before any repair. It is report-first: no mutation without user approval.
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Scripted Audit Gate
 
 Run `skills/project-doctor/scripts/audit-project.ps1` before proposing or applying repairs.

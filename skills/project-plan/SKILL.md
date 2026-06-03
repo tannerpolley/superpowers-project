@@ -9,6 +9,12 @@ Project Plan is the Superpowers Project adapter for `superpowers:writing-plans`.
 
 **Announce at start:** "I'm using the project-plan skill with superpowers:writing-plans."
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Required Method
 
 Use `superpowers:writing-plans` as the base workflow. Do not touch implementation code while writing the plan.

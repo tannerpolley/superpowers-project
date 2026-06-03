@@ -11,6 +11,12 @@ If the user wants delegated worker-thread implementation, route to `$project-orc
 
 GoalBuddy boards are outside the default execution model. Do not create `docs/goals`, GoalBuddy board files, GoalBuddy state, or local live boards from this skill unless the user explicitly requests separate GoalBuddy work outside this default issue-resolution path.
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Artifact Source Of Truth
 
 Project Resolve executes the `spec -> plan -> issue` lifecycle from flat canonical roots. It accepts one issue mirror from `docs/superpowers/issues`, requires a source plan from `docs/superpowers/plans`, and may read upstream loose specs from `docs/superpowers/specs`. Milestone pages are index views: they link to the flat canonical artifacts and do not own nested implementation records.

@@ -11,6 +11,12 @@ Use this skill when a repo needs the Superpowers Project setup layer: durable in
 
 Project setup gives agents the bigger picture before they brainstorm, plan, split issues, or execute work. It should explain why the project exists, what milestones mean, how GitHub is linked, which optional board surfaces exist, and which artifacts are canonical.
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Required Artifacts
 
 A Superpowers Project repo must keep these artifacts current:

@@ -9,6 +9,12 @@ Use this skill when one ready GitHub issue mirror should be implemented by a sep
 
 `$project-orchestrate` does not replace `$project-resolve`. `$project-resolve` is the direct current-thread route. `$project-orchestrate` is the delegated worker-thread route.
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Hard Failures
 
 Stop before creating a worker thread when any of these are true:

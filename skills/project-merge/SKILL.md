@@ -9,6 +9,12 @@ This skill owns integration after `$project-resolve` creates PR-ready evidence. 
 
 `$project-merge` is normally run by the main orchestrator thread. Workers do not merge their own PR by default.
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Hard Failures
 
 Stop immediately when any of these are true:

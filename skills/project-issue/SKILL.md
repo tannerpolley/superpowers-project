@@ -7,6 +7,12 @@ description: Use when a Superpowers Project spec, plan, PRD, or approved scope n
 
 Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$project-resolve` to execute one issue at a time.
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Inputs
 
 Read the source material and project map before proposing issues:

@@ -201,6 +201,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Native Q&A SVG contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Native continuation loop contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-native-continuation-loop.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Native continuation loop contract failed" }
+    }))
+
     $results.Add((Invoke-Step "PowerShell parser check" {
         $scripts = @(Get-ChildItem -LiteralPath $repoRoot -Recurse -Filter "*.ps1")
         foreach ($script in $scripts) {
