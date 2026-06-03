@@ -75,6 +75,25 @@ $scenarios = @(
         Assert-Contains $text "docs/superpowers/specs" "missing metadata spec path"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"
         Assert-Contains $text "superpowers:brainstorming" "missing metadata Superpowers route"
+        foreach ($needle in @("summarize", "project_brainstorm_next_step", "Project Plan", "Review First", "Revise Spec", "start the selected next skill")) {
+            Assert-Contains $text $needle "missing metadata continuation route: $needle"
+        }
+    }
+    Invoke-Scenario "native continuation gate is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "## Native Continuation Gate",
+            "summarize",
+            "Review First",
+            "stop",
+            "request_user_input",
+            "start the selected next skill",
+            "project_brainstorm_next_step",
+            "Project Plan",
+            "Revise Spec"
+        )) {
+            Assert-Contains $text $needle "missing continuation gate text: $needle"
+        }
     }
 )
 

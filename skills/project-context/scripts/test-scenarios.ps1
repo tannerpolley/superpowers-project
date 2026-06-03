@@ -26,8 +26,31 @@ try {
     try {
         Assert-Contains -Text $metadata -Needle 'project-context' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers/PROJECT_CONTEXT.md' -Reason "metadata missing project context path"
+        foreach ($needle in @('summarize','project_context_next_step','Project Brainstorm','Project Plan','Project Issue','Project Doctor','Stop','start the selected next skill')) {
+            Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing continuation route: $needle"
+        }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "metadata present" -Ok $false -Reason $_.Exception.Message }
+
+    try {
+        foreach ($needle in @(
+            '## Native Continuation Gate',
+            'summarize',
+            'Review First',
+            'stop',
+            'request_user_input',
+            'start the selected next skill',
+            'project_context_next_step',
+            'Project Brainstorm',
+            'Project Plan',
+            'Project Issue',
+            'Project Doctor',
+            'Stop'
+        )) {
+            Assert-Contains -Text $skill -Needle $needle -Reason "missing continuation gate text: $needle"
+        }
+        Add-Result -Name "native continuation gate is present" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "native continuation gate is present" -Ok $false -Reason $_.Exception.Message }
 
     $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8

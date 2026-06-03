@@ -168,4 +168,19 @@ This skill creates and updates issue tracker artifacts only. It does not create 
 
 ## Native Continuation Gate
 
-After approved issue mirrors or GitHub issues are created and validated, ask how to continue when `request_user_input` is callable. Options should include resolving the first ready issue with `$project-resolve`, resolving a selected issue with `$project-resolve`, or stopping after issue creation. Start the selected next skill in the same turn when tools and state allow it.
+After approved issue mirrors or GitHub issues are created and validated, summarize the issue set in chat before asking the continuation question. The summary must name the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, and recommended next route.
+
+Ask a native continuation question with `request_user_input` when callable.
+
+Question id: `project_issue_next_step`
+
+Prompt: `How should I continue from these project issues?`
+
+Options:
+
+- `Resolve First Ready`: start `$project-resolve` on the first ready AFK issue.
+- `Resolve Selected`: start `$project-resolve` on a user-selected ready issue.
+- `Review First`: stop for user review before execution.
+- `Stop`: stop after issue creation.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

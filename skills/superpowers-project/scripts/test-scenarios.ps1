@@ -20,12 +20,18 @@ try {
         foreach ($needle in @('project-context','project-brainstorm','project-plan','project-issue','project-resolve','project-merge','project-doctor','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
+        foreach ($needle in @('## Native Continuation Gate','summarize','Review First','stop','start the selected next skill','selected native answers','executable routing')) {
+            Assert-Contains -Text $skill -Needle $needle -Reason "missing router continuation contract: $needle"
+        }
         Add-Result -Name "router contract present" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "router contract present" -Ok $false -Reason $_.Exception.Message }
 
     try {
         Assert-Contains -Text $metadata -Needle 'superpowers-project' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers' -Reason "metadata missing artifact root"
+        foreach ($needle in @('summarize','selected native answers','executable routing','start selected continuation routes')) {
+            Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing router continuation contract: $needle"
+        }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "metadata present" -Ok $false -Reason $_.Exception.Message }
 
