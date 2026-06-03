@@ -227,13 +227,15 @@ try {
         Assert-True ($result.setup_ledger.execution_decision.selected_mode -eq "inline") "inline mode was not recorded"
     }
 
-    Invoke-Scenario "orchestrated worker execution decision is recorded with worker handoff" {
+    Invoke-Scenario "orchestrated worker mode is owned by project-orchestrate" {
         $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "orchestrated-worker"))
-        Assert-True ($result.ok) $result.reason
-        Assert-True ($result.setup_ledger.execution_decision.selected_mode -eq "orchestrated-worker") "worker mode was not recorded"
-        Assert-True ($result.setup_ledger.worker_handoff.issue_mirror -eq "docs/superpowers/issues/12-sample.md") "worker handoff missing issue mirror"
-        Assert-True ($result.setup_ledger.worker_handoff.dynamic_work_packet_map.worker_packet.objective -match "Implement") "worker packet objective missing"
-        Assert-True ($result.setup_ledger.dynamic_work_packet_map.merge_owner -eq "project-merge") "merge owner must be project-merge"
+        Assert-True (-not $result.ok -and $result.reason -match "project-orchestrate") "expected worker mode to route to project-orchestrate"
+
+        $ledger = New-SetupLedger -Extra ([pscustomobject]@{
+            execution_decision = (New-ExecutionDecision -SelectedMode "orchestrated-worker" | ConvertFrom-Json)
+        })
+        $validation = Invoke-JsonScript -ScriptName "validate-setup.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", $ledger)
+        Assert-True (-not $validation.ok -and $validation.reason -match "project-orchestrate") "expected setup validation to reject worker mode"
     }
 
     Invoke-Scenario "happy setup passes with structured native goal proof" {
@@ -336,14 +338,12 @@ try {
             Assert-True ($text.Contains($needle)) "missing skill text: $needle"
         }
         foreach ($needle in @(
-            "execution topology question",
-            "Open worker thread",
-            "Current thread",
+            "direct current-thread",
+            "project-orchestrate",
+            "project_issue_resolution_route",
             "request_user_input",
             "debug_question_mode",
             "using-git-worktrees",
-            "Dynamic Work Packet Map",
-            "codex-dynamic-workflows",
             "test-driven-development",
             "verification-before-completion",
             "finishing-a-development-branch",

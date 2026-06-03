@@ -14,4 +14,10 @@ Issue mirrors:
 
 - `docs/superpowers/issues/<issue-number>-<slug>.md`
 
+GitHub Project board:
+
+- Optional dashboard evidence owned by `$project-setup`.
+- Native approval is required before creating or mutating a board.
+- Required board fields when configured: `Status`, `Milestone`.
+
 Do not create canonical specs, plans, or issue mirrors under `docs/milestones`, `docs/plans`, or root-level `docs/issues`.

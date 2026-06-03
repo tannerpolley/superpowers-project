@@ -1,15 +1,15 @@
 ---
-name: project-context
-description: Create or maintain the Superpowers Project context, milestone map, GitHub tracker configuration, and roadmap artifacts under docs/superpowers.
+name: project-setup
+description: Create or maintain the Superpowers Project setup, milestone map, GitHub tracker configuration, GitHub Project board configuration, and roadmap artifacts under docs/superpowers.
 ---
 
-# Project Context
+# Project Setup
 
-Use this skill when a repo needs the Superpowers Project large-context layer: durable intent, roadmap framing, milestone pages, tracker rules, and the shared map that makes Superpowers specs, plans, and issues add up to a coherent project.
+Use this skill when a repo needs the Superpowers Project setup layer: durable intent, roadmap framing, milestone pages, tracker rules, approved GitHub Project board configuration, and the shared map that makes Superpowers specs, plans, and issues add up to a coherent project.
 
 ## Purpose
 
-Project context gives agents the bigger picture before they brainstorm, plan, split issues, or execute work. It should explain why the project exists, what milestones mean, how GitHub is linked, and which artifacts are canonical.
+Project setup gives agents the bigger picture before they brainstorm, plan, split issues, or execute work. It should explain why the project exists, what milestones mean, how GitHub is linked, which optional board surfaces exist, and which artifacts are canonical.
 
 ## Required Artifacts
 
@@ -41,9 +41,9 @@ Use `request_user_input` when callable in Default mode for decisions that affect
 
 ## Native Question Debug Mode
 
-For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not be used for normal project setup or to pretend a live user approved roadmap, milestone, GitHub, or `/goal` execution decisions.
+For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not be used for normal project setup or to pretend a live user approved roadmap, milestone, GitHub, board creation, or `/goal` execution decisions.
 
-## Project context shape
+## Project Context Shape
 
 `docs/superpowers/PROJECT_CONTEXT.md` should include these sections:
 
@@ -84,6 +84,16 @@ When the repo is GitHub-linked, record the tracker config in project docs and ke
 
 Issue mirrors should match GitHub issue body and status closely enough that an agent can audit drift before changing code.
 
+## GitHub Project Board Setup
+
+When a repo is GitHub-linked, `$project-setup` can create or verify a GitHub Project board after native approval.
+
+Board setup is optional project-management evidence. GitHub Projects must not become canonical storage for specs, plans, issue mirrors, or milestone pages. The canonical artifacts remain under `docs/superpowers`.
+
+Before creating or mutating a board, summarize the proposed board title, repository, milestone/status fields, issue-linking scope, and dry-run evidence, then ask native question `project_setup_board_approval` with `Create Board`, `Verify Only`, and `Stop` options. Do not call `gh project` mutation commands unless the selected action is `create`.
+
+Record board configuration in `docs/agents/project-roadmap.json` and, when useful for humans, `docs/agents/project-roadmap.md`.
+
 ## Validation
 
 Before reporting setup or repair complete, verify:
@@ -92,17 +102,17 @@ Before reporting setup or repair complete, verify:
 - `docs/superpowers/milestones` exists and contains a README or milestone pages.
 - GitHub tracker config names the repository when issue mirrors or milestones are used.
 - `/goal` execution criteria are present for issue work that can be assigned to an agent.
-- Superpowers Project skill names are listed where agents will discover them.
+- Superpowers Project skill names are listed where agents will discover them, including `$project-setup`.
 
 ## Native Continuation Gate
 
-After creating, auditing, or repairing project context, summarize the context result in chat before asking the continuation question. The summary must name changed or verified artifacts, unresolved roadmap or tracker decisions, and the recommended next workflow.
+After creating, auditing, or repairing project setup, summarize the setup result in chat before asking the continuation question. The summary must name changed or verified artifacts, unresolved roadmap or tracker decisions, GitHub Project board status when relevant, and the recommended next workflow.
 
 Ask a native continuation question with `request_user_input` when callable.
 
-Question id: `project_context_next_step`
+Question id: `project_setup_next_step`
 
-Prompt: `How should I continue from this project context work?`
+Prompt: `How should I continue from this project setup work?`
 
 Options:
 

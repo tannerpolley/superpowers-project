@@ -119,7 +119,8 @@ function Assert-TextContains {
 function Get-ActiveSkillNames {
     @(
         "superpowers-project",
-        "project-context",
+        "project-setup",
+        "project-orchestrate",
         "project-brainstorm",
         "project-plan",
         "project-issue",

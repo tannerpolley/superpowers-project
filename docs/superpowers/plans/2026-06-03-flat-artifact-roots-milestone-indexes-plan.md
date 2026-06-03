@@ -16,6 +16,8 @@
 
 **GitHub issue:** https://github.com/tannerpolley/milestones-plugin/issues/15
 
+**Source note:** This plan was intentionally issue-sourced from GitHub issue #15 rather than spec-sourced. The local issue mirror was deleted during merge closeout according to the closed-mirror lifecycle policy; durable history now lives in the GitHub issue, this plan, and the M1 milestone closed-issue summary.
+
 **Planning decision evidence:**
 
 - Specs remain loose upstream idea/design/PRD records. They may mention milestones, packages, categories, or future issues, but they are not milestone-owned implementation records.

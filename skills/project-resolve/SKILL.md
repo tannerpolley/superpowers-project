@@ -1,11 +1,13 @@
 ---
 name: project-resolve
-description: Use when one ready GitHub issue mirror under docs/superpowers/issues must be implemented through native goal activation, Superpowers execution, pushed branch, opened PR, and PR-ready handoff.
+description: Use when one ready GitHub issue mirror under docs/superpowers/issues must be implemented directly in the current thread through native goal activation, Superpowers execution, pushed branch, opened PR, and PR-ready handoff.
 ---
 
 # Project Resolve
 
-This skill owns implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$project-merge`.
+This skill owns direct current-thread implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence for the main thread orchestrator: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$project-merge`.
+
+If the user wants delegated worker-thread implementation, route to `$project-orchestrate` before setup. `$project-resolve` must not create worker threads or worker handoff ledgers.
 
 GoalBuddy boards are outside the default execution model. Do not create `docs/goals`, GoalBuddy board files, GoalBuddy state, or local live boards from this skill unless the user explicitly requests separate GoalBuddy work outside this default issue-resolution path.
 
@@ -38,41 +40,28 @@ Follow this order exactly:
 2. `issue mirror validation`: inspect `docs/superpowers/issues/<issue>.md`.
 3. `source plan validation`: read the linked `docs/superpowers/plans/<plan>.md`.
 4. `preflight`: verify the repo is ready for one issue execution.
-5. `execution topology question`: ask whether to open a worker thread or resolve in the current thread.
+5. `route check`: if worker-thread execution is requested, stop and route to `$project-orchestrate`.
 6. `native goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
-7. `setup validation`: write and validate the setup ledger, including the execution decision.
-8. `worktree and branch setup`: create or verify inline worktree/branch, or create the worker handoff for a worker worktree thread.
+7. `setup validation`: write and validate the setup ledger for direct current-thread execution.
+8. `worktree and branch setup`: create or verify the current-thread worktree/branch.
 9. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
 10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
 11. `PR-ready validation`: validate branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
 12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$project-merge`.
 
-## Execution Topology Question
+## Route Check
 
-Before branch setup or implementation, ask the user how to resolve the issue when `request_user_input` is callable.
+`$project-resolve` is the direct current-thread route. If the user wants a worker thread, use `$project-orchestrate`.
 
-Question id: `resolve_execution_topology`
-
-Prompt: `How should this issue be resolved?`
-
-Options:
-
-- `Open worker thread`: create a Codex worktree thread for implementation while this thread acts as main thread orchestrator and reviewer.
-- `Current thread`: resolve the issue in this thread using worktree isolation.
-
-Recommend `Open worker thread` for non-trivial AFK issues, source plans with multiple independent tasks, risky shared-code changes, or work naturally ending in a PR. Recommend `Current thread` for small, single-step, low-risk issues.
+When the requested route is ambiguous and `request_user_input` is callable, the router should ask native question `project_issue_resolution_route` before starting either skill. If `$project-resolve` receives an execution decision whose selected mode is `orchestrated-worker`, stop immediately with the reason: `orchestrated worker execution is owned by project-orchestrate; use project-resolve only for direct current-thread execution`.
 
 ## Native Question Debug Mode
 
 For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry in the setup ledger with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not be used for normal issue execution or to pretend a live user chose the execution topology.
 
-## Orchestrated Worker Mode
+## Worker Route Boundary
 
-When the selected mode is `orchestrated-worker`, this thread remains the implementation lifecycle owner. It creates the native goal, prepares the worker handoff, opens a Codex worktree thread when native thread tools are callable, validates PR-ready evidence, completes the native goal, and routes final integration to `$project-merge`.
-
-The worker thread must use `superpowers:using-git-worktrees`, `superpowers:test-driven-development`, `superpowers:executing-plans` or `superpowers:subagent-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Worker mode must record a lightweight Dynamic Work Packet Map in the setup ledger or worker handoff. Use full `codex-dynamic-workflows` and `superpowers:dispatching-parallel-agents` only when scope, risk, independent packets, separate verification, reusable workflow value, or explicit user request justifies it.
-
-If native thread tools are absent, stop after producing the worker handoff and ask the user to open the worker thread. Do not silently convert the run to inline execution.
+Worker-thread orchestration is owned by `$project-orchestrate`. That skill derives the canonical worker thread title, branch name, evidence folder, and worker handoff, then routes PR-ready output to `$project-merge`.
 
 ## Scripted Gates
 
@@ -158,9 +147,9 @@ Use Superpowers for the engineering method inside this GitHub lifecycle:
 - `superpowers:using-git-worktrees` before implementation work begins.
 - `superpowers:test-driven-development` for feature or bug code unless the plan records an explicit opt-out.
 - `superpowers:systematic-debugging` or `diagnose` for bugs, regressions, failing tests, CI failures, performance work, or unclear failure modes.
-- a lightweight Dynamic Work Packet Map when the issue needs an orchestrator/worker split.
-- `codex-dynamic-workflows` only when the issue meets the heavier orchestration decision rule or the user explicitly requests it.
-- `superpowers:dispatching-parallel-agents` when independent packets can run in parallel.
+- `$project-orchestrate` when the issue needs an orchestrator/worker split.
+- `codex-dynamic-workflows` only through `$project-orchestrate` when the issue meets the heavier orchestration decision rule or the user explicitly requests it.
+- `superpowers:dispatching-parallel-agents` only when independent packets can run in parallel and the selected route supports delegation.
 - `superpowers:verification-before-completion` before PR-ready claims.
 - `superpowers:finishing-a-development-branch` after verification and before PR creation.
 

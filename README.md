@@ -13,11 +13,12 @@ This repository is the canonical source. The live Codex install is a deployment 
 ## Current Skills
 
 - `$superpowers-project`: routes extension workflows.
-- `$project-context`: creates and maintains project context and milestone pages.
+- `$project-setup`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
 - `$project-brainstorm`: runs Superpowers brainstorming with native grilling.
 - `$project-plan`: writes Superpowers implementation plans with project context.
 - `$project-issue`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
-- `$project-resolve`: resolves one issue with native `/goal` and Superpowers execution.
+- `$project-resolve`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
+- `$project-orchestrate`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
 - `$project-merge`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
 - `$project-doctor`: audits project, GitHub, migration, and live-sync drift.
 

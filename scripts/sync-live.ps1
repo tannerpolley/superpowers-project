@@ -39,7 +39,8 @@ $retiredSkillNames = @(
     "project-writing-plan",
     "plan-to-issue",
     "resolve-issue-with-goal",
-    "milestones-doctor"
+    "milestones-doctor",
+    "project-context"
 )
 
 if ($Validate) {

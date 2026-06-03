@@ -1,0 +1,4 @@
+version: 1
+skills:
+  project-orchestrate:
+    default_prompt: "Use $project-orchestrate when a ready Superpowers Project issue should be delegated to a Codex worktree worker thread. Validate the issue mirror and source plan, create or verify the orchestrator-owned native goal, derive one canonical worker identity with derive-worker-identity.ps1, create the worker thread from main with matching thread title and branch naming, send a topology handoff, monitor progress, collect PR-ready evidence, and route the finished PR to $project-merge. Do not implement code yourself except for explicitly approved recovery edits. Use request_user_input when callable for route, publish, recovery, merge, or continuation decisions. Ask project_orchestrate_next_step after PR-ready handoff."

@@ -2,7 +2,13 @@
   "tracker": "github",
   "repository": "tannerpolley/milestones-plugin",
   "milestone_policy": "project-roadmap",
-  "project_policy": "dashboard-only",
+  "project_policy": "optional-dashboard-evidence",
+  "github_project_board": {
+    "status": "not-configured",
+    "native_approval_required": true,
+    "owner_skill": "project-setup",
+    "required_fields": ["Status", "Milestone"]
+  },
   "project_context": "docs/superpowers/PROJECT_CONTEXT.md",
   "milestone_root": "docs/superpowers/milestones",
   "spec_file_template": "docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md",
