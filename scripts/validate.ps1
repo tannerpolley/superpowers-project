@@ -196,6 +196,11 @@ try {
         Test-SuperpowersProjectPathContract
     }))
 
+    $results.Add((Invoke-Step "Native Q&A SVG contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-native-qa-svg.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Native Q&A SVG contract failed" }
+    }))
+
     $results.Add((Invoke-Step "PowerShell parser check" {
         $scripts = @(Get-ChildItem -LiteralPath $repoRoot -Recurse -Filter "*.ps1")
         foreach ($script in $scripts) {

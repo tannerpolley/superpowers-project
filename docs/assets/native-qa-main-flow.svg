@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1960" viewBox="0 0 1400 1960" role="img" aria-labelledby="title desc">
+  <title id="title">Native Q&amp;A main workflow flowchart</title>
+  <desc id="desc">A fixed-layout flowchart with Brainstorm, Plan, Issue, Resolve, and Merge aligned in one centered column. Gray side actions branch left. Stop nodes branch right. Revise routes return to the side of the originating skill box.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" class="arrow-head" />
+    </marker>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --line: #111827;
+        --label: #111827;
+        --title: #111827;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1020;
+          --line: #f8fafc;
+          --label: #f8fafc;
+          --title: #f8fafc;
+        }
+      }
+      .title { font: 700 28px Arial, sans-serif; fill: var(--title); }
+      .node-title { font: 700 18px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .node-text { font: 14px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .label { font: 700 13px Arial, sans-serif; fill: var(--label); }
+      .small-label { font: 700 12px Arial, sans-serif; fill: var(--label); }
+      .start-text { font: 700 16px Arial, sans-serif; fill: #ffffff; text-anchor: middle; dominant-baseline: middle; }
+      .done-text { font: 700 15px Arial, sans-serif; fill: #166534; text-anchor: middle; dominant-baseline: middle; }
+      .stop-text { font: 700 15px Arial, sans-serif; fill: #991b1b; text-anchor: middle; dominant-baseline: middle; }
+      .skill { fill: #dbeafe; stroke: #2563eb; stroke-width: 3; }
+      .decision { fill: #fef3c7; stroke: #d97706; stroke-width: 3; }
+      .side { fill: #f3f4f6; stroke: #6b7280; stroke-width: 3; }
+      .start { fill: #0f172a; stroke: #020617; stroke-width: 3; }
+      .done { fill: #dcfce7; stroke: #16a34a; stroke-width: 3; }
+      .stop { fill: #fee2e2; stroke: #dc2626; stroke-width: 3; }
+      .arrow { fill: none; stroke: var(--line); stroke-width: 2.5; marker-end: url(#arrow); }
+      .line { fill: none; stroke: var(--line); stroke-width: 2.5; }
+      .arrow-head { fill: var(--line); }
+      .canvas { fill: var(--bg); }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="1960" class="canvas" />
+
+  <text x="700" y="32" class="title" text-anchor="middle">Native Q&amp;A Workflow</text>
+
+  <rect x="625" y="55" width="150" height="50" rx="25" class="start" />
+  <text x="700" y="80" class="start-text">Start</text>
+
+  <rect x="520" y="150" width="360" height="90" rx="4" class="skill" />
+  <text x="700" y="178" class="node-title">Brainstorm</text>
+  <text x="700" y="202" class="node-text">define the idea, pressure-test assumptions,</text>
+  <text x="700" y="222" class="node-text">write the spec</text>
+
+  <polygon points="700,275 820,335 700,395 580,335" class="decision" />
+  <text x="700" y="326" class="node-title">Continue</text>
+  <text x="700" y="348" class="node-text">from Brainstorm?</text>
+
+  <rect x="520" y="465" width="360" height="90" rx="4" class="skill" />
+  <text x="700" y="493" class="node-title">Plan</text>
+  <text x="700" y="517" class="node-text">turn the approved spec</text>
+  <text x="700" y="537" class="node-text">into implementation steps</text>
+
+  <polygon points="700,590 820,650 700,710 580,650" class="decision" />
+  <text x="700" y="641" class="node-title">Continue</text>
+  <text x="700" y="663" class="node-text">from Plan?</text>
+
+  <rect x="520" y="780" width="360" height="90" rx="4" class="skill" />
+  <text x="700" y="808" class="node-title">Issue</text>
+  <text x="700" y="832" class="node-text">create the GitHub issue</text>
+  <text x="700" y="852" class="node-text">and local issue mirror</text>
+
+  <polygon points="700,905 820,965 700,1025 580,965" class="decision" />
+  <text x="700" y="956" class="node-title">Continue</text>
+  <text x="700" y="978" class="node-text">from Issue?</text>
+
+  <polygon points="700,1060 820,1120 700,1180 580,1120" class="decision" />
+  <text x="700" y="1111" class="node-title">Resolve</text>
+  <text x="700" y="1133" class="node-text">where?</text>
+
+  <rect x="520" y="1245" width="360" height="90" rx="4" class="skill" />
+  <text x="700" y="1273" class="node-title">Resolve</text>
+  <text x="700" y="1297" class="node-text">current thread implements,</text>
+  <text x="700" y="1317" class="node-text">tests, commits, opens PR</text>
+
+  <polygon points="700,1370 820,1430 700,1490 580,1430" class="decision" />
+  <text x="700" y="1421" class="node-title">PR ready</text>
+  <text x="700" y="1443" class="node-text">for Merge?</text>
+
+  <rect x="520" y="1560" width="360" height="90" rx="4" class="skill" />
+  <text x="700" y="1588" class="node-title">Merge</text>
+  <text x="700" y="1612" class="node-text">review, verify checks, merge,</text>
+  <text x="700" y="1632" class="node-text">clean branch/worktree</text>
+
+  <polygon points="700,1685 820,1745 700,1805 580,1745" class="decision" />
+  <text x="700" y="1736" class="node-title">Merge</text>
+  <text x="700" y="1758" class="node-text">now?</text>
+
+  <rect x="635" y="1860" width="130" height="46" rx="23" class="done" />
+  <text x="700" y="1883" class="done-text">Done</text>
+
+  <rect x="155" y="610" width="290" height="82" rx="4" class="side" />
+  <text x="300" y="638" class="node-title">Quick Implement</text>
+  <text x="300" y="662" class="node-text">small local-main change,</text>
+  <text x="300" y="682" class="node-text">verify, cleanup</text>
+  <rect x="235" y="735" width="130" height="46" rx="23" class="done" />
+  <text x="300" y="758" class="done-text">Done</text>
+
+  <rect x="155" y="1245" width="290" height="90" rx="4" class="side" />
+  <text x="300" y="1273" class="node-title">Orchestrate</text>
+  <text x="300" y="1297" class="node-text">worker worktree implements,</text>
+  <text x="300" y="1317" class="node-text">main thread reviews PR</text>
+
+  <rect x="1005" y="315" width="100" height="40" rx="20" class="stop" />
+  <text x="1055" y="335" class="stop-text">Stop</text>
+  <rect x="1005" y="630" width="100" height="40" rx="20" class="stop" />
+  <text x="1055" y="650" class="stop-text">Stop</text>
+  <rect x="1005" y="945" width="100" height="40" rx="20" class="stop" />
+  <text x="1055" y="965" class="stop-text">Stop</text>
+  <rect x="1005" y="1100" width="100" height="40" rx="20" class="stop" />
+  <text x="1055" y="1120" class="stop-text">Stop</text>
+  <rect x="1005" y="1410" width="100" height="40" rx="20" class="stop" />
+  <text x="1055" y="1430" class="stop-text">Stop</text>
+  <rect x="1005" y="1725" width="100" height="40" rx="20" class="stop" />
+  <text x="1055" y="1745" class="stop-text">Stop</text>
+
+  <!-- Main default path -->
+  <line x1="700" y1="105" x2="700" y2="150" class="arrow" />
+  <line x1="700" y1="240" x2="700" y2="275" class="arrow" />
+  <line x1="700" y1="395" x2="700" y2="465" class="arrow" />
+  <text x="714" y="430" class="label">Plan</text>
+  <line x1="700" y1="555" x2="700" y2="590" class="arrow" />
+  <line x1="700" y1="710" x2="700" y2="780" class="arrow" />
+  <text x="714" y="746" class="label">Issue flow</text>
+  <line x1="700" y1="870" x2="700" y2="905" class="arrow" />
+  <line x1="700" y1="1025" x2="700" y2="1060" class="arrow" />
+  <text x="714" y="1048" class="label">Resolve</text>
+  <line x1="700" y1="1180" x2="700" y2="1245" class="arrow" />
+  <text x="714" y="1215" class="label">This thread</text>
+  <line x1="700" y1="1335" x2="700" y2="1370" class="arrow" />
+  <line x1="700" y1="1490" x2="700" y2="1560" class="arrow" />
+  <text x="714" y="1528" class="label">Merge</text>
+  <line x1="700" y1="1650" x2="700" y2="1685" class="arrow" />
+  <line x1="700" y1="1805" x2="700" y2="1860" class="arrow" />
+  <text x="714" y="1840" class="label">Yes</text>
+
+  <!-- Revise paths leave below the decision and return to the source skill side. -->
+  <polyline points="700,410 455,410 455,195 520,195" class="arrow" />
+  <text x="460" y="393" class="small-label">Revise</text>
+  <polyline points="700,725 455,725 455,510 520,510" class="arrow" />
+  <text x="460" y="708" class="small-label">Revise</text>
+  <polyline points="700,1040 455,1040 455,825 520,825" class="arrow" />
+  <text x="460" y="1023" class="small-label">Revise issue</text>
+  <polyline points="700,1505 455,1505 455,1290 520,1290" class="arrow" />
+  <text x="460" y="1488" class="small-label">Continue work</text>
+
+  <!-- Local stop paths. -->
+  <polyline points="820,335 1005,335" class="arrow" />
+  <text x="900" y="320" class="label">Stop</text>
+  <polyline points="820,650 1005,650" class="arrow" />
+  <text x="900" y="635" class="label">Stop</text>
+  <polyline points="820,965 1005,965" class="arrow" />
+  <text x="900" y="950" class="label">Stop</text>
+  <polyline points="820,1120 1005,1120" class="arrow" />
+  <text x="900" y="1105" class="label">Stop</text>
+  <polyline points="820,1430 1005,1430" class="arrow" />
+  <text x="900" y="1415" class="label">Stop</text>
+  <polyline points="820,1745 1005,1745" class="arrow" />
+  <text x="900" y="1730" class="label">No</text>
+
+  <!-- Side alternatives. -->
+  <polyline points="580,650 445,650" class="arrow" />
+  <text x="455" y="635" class="label">Quick implement</text>
+  <line x1="300" y1="692" x2="300" y2="735" class="arrow" />
+  <polyline points="580,1120 300,1120 300,1245" class="arrow" />
+  <text x="330" y="1105" class="label">Worker worktree</text>
+  <polyline points="300,1335 300,1350 640,1350 640,1370" class="arrow" />
+</svg>
