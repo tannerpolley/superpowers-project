@@ -143,7 +143,7 @@ Options:
 
 Only `Apply on Main` records `selected_action: apply`. Treat every other answer as a stop or issue-backed route, not approval to edit.
 
-Validate the Quick Apply ledger with `skills/project-plan/scripts/validate-quick-apply.ps1`. The gate requires clean synced `main`, the `project_quick_apply_approval` ledger, passed verification commands, a passed cleanup hook result, and explicit push approval before any push. Run the gate before edits for approval and repository state, then again after focused verification and cleanup evidence are available.
+Validate the Quick Apply ledger with `skills/project-plan/scripts/validate-quick-apply.ps1`. The gate requires clean synced `main`, the `project_quick_apply_approval` ledger, passed verification commands, and a passed cleanup hook result. After a successful local commit, ask the next continuation or permission question with `request_user_input` when callable, including whether to push, review, revise, or stop. Run the gate before edits for approval and repository state, then again after focused verification and cleanup evidence are available.
 
 ## Self-Review
 

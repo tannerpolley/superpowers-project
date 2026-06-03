@@ -8,9 +8,6 @@ param(
     [string]$VerificationPath,
     [string]$CleanupJson,
     [string]$CleanupPath,
-    [switch]$AllowPush,
-    [string]$PushApprovalJson,
-    [string]$PushApprovalPath,
     [ValidateSet("PreChange", "PostChange")][string]$Mode = "PreChange",
     [string[]]$ChangedFiles = @()
 )
@@ -158,21 +155,6 @@ try {
         throw "cleanup hook command must include codex-cleanup.ps1"
     }
 
-    $pushProof = $null
-    if (-not [string]::IsNullOrWhiteSpace($PushApprovalJson) -or -not [string]::IsNullOrWhiteSpace($PushApprovalPath)) {
-        $pushProof = Read-JsonInput -Json $PushApprovalJson -Path $PushApprovalPath -Name "push approval"
-    }
-    $pushRequested = $AllowPush.IsPresent
-    if (Test-Property $approval "push_requested") { $pushRequested = $pushRequested -or ($approval.push_requested -eq $true) }
-    if (Test-Property $verification "push_performed") { $pushRequested = $pushRequested -or ($verification.push_performed -eq $true) }
-    if ($pushRequested) {
-        $approvedByMainApproval = (Test-Property $approval "push_approved") -and $approval.push_approved -eq $true
-        $approvedByPushProof = $null -ne $pushProof -and (Test-Property $pushProof "approved") -and $pushProof.approved -eq $true
-        if (-not ($approvedByMainApproval -or $approvedByPushProof)) {
-            throw "push is not allowed without explicit push approval"
-        }
-    }
-
     Complete-QuickApply -Reason "Quick Apply gate passed" -Evidence @{
         repo_root = $repoTop
         plan_path = $relativePlan
@@ -180,7 +162,6 @@ try {
         mode = $Mode
         verification_commands = $commands.Count
         cleanup_command = [string]$cleanup.command
-        push_allowed = [bool]$pushRequested
     }
 } catch {
     Fail-QuickApply -Reason $_.Exception.Message

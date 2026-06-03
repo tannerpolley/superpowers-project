@@ -188,7 +188,7 @@ $scenarios = @(
             "clean synced ``main``",
             "verification commands",
             "cleanup hook",
-            "push"
+            "native continuation"
         )) {
             Assert-Contains $text $needle "missing Quick Apply skill contract: $needle"
             Assert-Contains $metadata $needle "missing Quick Apply metadata contract: $needle"
@@ -229,10 +229,6 @@ $scenarios = @(
         $repo = New-QuickApplyFixture
         $result = Invoke-QuickApplyGate -Repo $repo -Extra @{ CleanupJson = "" }
         Assert-True ($result.ok -eq $false -and $result.reason -match "cleanup") "missing cleanup should fail"
-
-        $repo = New-QuickApplyFixture
-        $result = Invoke-QuickApplyGate -Repo $repo -Extra @{ AllowPush = $true }
-        Assert-True ($result.ok -eq $false -and $result.reason -match "push") "unapproved push should fail"
     }
 )
 

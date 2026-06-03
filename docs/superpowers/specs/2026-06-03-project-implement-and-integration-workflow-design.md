@@ -27,7 +27,7 @@ This spec covers skill behavior only. The public SVG flowchart is covered by `do
 - `project-implement` mirrors Superpowers `executing-plans`: load plan, review critically, stop for blockers, execute tasks exactly, verify tasks, and finish through `finishing-a-development-branch`.
 - `project-implement` uses a development branch and does not default to local-main quick edits.
 - `project-implement` does not create GitHub issue mirrors and must not claim issue closure.
-- Do not create a canonical `docs/superpowers/implementations` folder by default. The plan plus branch, goal, verification, push approval, and merge proof are sufficient.
+- Do not create a canonical `docs/superpowers/implementations` folder by default. The plan plus branch, goal, verification, native publish permission, and merge proof are sufficient.
 - Push approval happens before PR-ready or merge-ready handoff.
 - `project-merge` should integrate issue-backed PRs, non-issue PRs, and local branch merges.
 - Local branch merges are allowed only from clean synced `main` with validation and cleanup proof.
@@ -63,8 +63,8 @@ Implement this as a skill-system expansion:
 - Use `superpowers:using-git-worktrees` when worktree mode is selected.
 - Use `superpowers:verification-before-completion` before completion claims.
 - Use `superpowers:finishing-a-development-branch` before integration.
-- Ask native push approval before pushing or marking work merge-ready.
-- Produce merge-ready proof from the plan, branch, native goal, verification output, push approval, and finishing-branch result.
+- Ask a native publish permission question before pushing or marking work merge-ready.
+- Produce merge-ready proof from the plan, branch, native goal, verification output, native publish permission, and finishing-branch result.
 - Route to `project-merge`.
 
 `project-implement` should not:
@@ -112,8 +112,8 @@ Project skills should reference it for nested decision trees where native UI has
 
 - `project-brainstorm`: scope, naming, route, and design tradeoffs.
 - `project-plan`: Issue, Implement, review, revise, or stop continuation.
-- `project-implement`: topology, push approval, and merge route.
-- `project-resolve`: push approval and PR-ready routing.
+- `project-implement`: topology, publish permission, and merge route.
+- `project-resolve`: publish permission and PR-ready routing.
 - `project-orchestrate`: issue-set selection, worker count, recovery, and publish approval.
 - `project-merge`: merge approval, decline/reassess routing, and post-merge continuation.
 
@@ -131,7 +131,7 @@ The native UI limit remains 1-3 questions and 2-3 options per question. Larger d
 
 ## Milestone Linkage
 
-- `M0 - Governance`: native Q&A decision-tree contracts, push approval, merge approval, proof gates.
+- `M0 - Governance`: native Q&A decision-tree contracts, publish permission, merge approval, proof gates.
 - `M1 - Source Of Truth`: skill routing, artifact ownership, bundled skill dependency.
 - `M2 - Distribution`: public plugin workflow clarity once behavior and docs align.
 
@@ -142,11 +142,11 @@ The native UI limit remains 1-3 questions and 2-3 options per question. Larger d
 - `scripts/validate.ps1` active skill list includes `advanced-user-input` and `project-implement`.
 - `superpowers-project` routes to Implement.
 - `project-plan` continuation includes Project Implement and no longer treats branch-backed non-issue work as Quick Apply.
-- `project-implement` scenario tests cover missing plan, missing goal proof, inline topology, worktree topology, push approval, and merge-ready proof.
+- `project-implement` scenario tests cover missing plan, missing goal proof, inline topology, worktree topology, native publish permission, and merge-ready proof.
 - `project-merge` scenario tests cover `pr-issue`, `pr-no-issue`, and `local-branch`.
 - `project-orchestrate` scenario tests cover autonomous ready issue selection and local/GitHub drift reroute to Doctor.
 - Validation rejects non-issue work that claims issue closure.
-- Validation rejects merge-ready work without native push approval proof.
+- Validation rejects merge-ready work without native publish permission proof.
 
 ## Open Questions For Planning
 

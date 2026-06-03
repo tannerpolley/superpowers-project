@@ -52,7 +52,7 @@ The main workflow is a chain of small native Codex questions. Each skill summari
 
 Quick Apply is the small-work escape hatch after `$project-plan`: it can apply a narrow, low-risk plan directly on local clean synced `main` only after the native `project_quick_apply_approval` question selects `Apply on Main`.
 
-Use the bundled `skills/project-plan/scripts/validate-quick-apply.ps1` gate to require approval, focused verification commands, cleanup hook evidence, and explicit push approval before any push. The issue-backed `$project-issue` and `$project-resolve` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed work, and PR-bound implementation.
+Use the bundled `skills/project-plan/scripts/validate-quick-apply.ps1` gate to require approval, focused verification commands, and cleanup hook evidence. Publishing after Quick Apply is handled by the normal native continuation question when `request_user_input` is callable. The issue-backed `$project-issue` and `$project-resolve` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed work, and PR-bound implementation.
 
 ## Canonical Layout
 
