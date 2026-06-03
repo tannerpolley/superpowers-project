@@ -34,6 +34,18 @@ Inspect and report on:
 - live plugin sync drift
 - active issue goal execution checks
 
+## Flat Artifact Root Audit
+
+Doctor enforces flat canonical roots for the `spec -> plan -> issue` lifecycle:
+
+- loose specs belong in `docs/superpowers/specs`
+- implementation plans belong in `docs/superpowers/plans`
+- GitHub issue mirrors belong in `docs/superpowers/issues`
+
+Milestone pages are index views. They should link to flat canonical artifacts and may group by milestone, package, or category through frontmatter plus milestone indexes. They must not own canonical nested copies. Report nested canonical milestone artifact folders are drift when `docs/superpowers/milestones/<milestone>/specs`, `docs/superpowers/milestones/<milestone>/plans`, or `docs/superpowers/milestones/<milestone>/issues` exists, unless the folder is explicitly marked as generated index/view output.
+
+Migration guidance: move canonical files back to the flat roots, preserve milestone identity in frontmatter and filenames where applicable, then regenerate milestone README/dashboard views as links. Specs stay loose; move implementation-only metadata into the matching plan or issue mirror.
+
 GitHub checks should compare issue URLs, issue states, milestone titles, labels, and issue mirror bodies when credentials and target repo context allow it. Local-docs-only audits may skip GitHub calls but must say which GitHub checks were skipped.
 
 ## Report Categories

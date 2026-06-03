@@ -82,12 +82,28 @@ $scenarios = @(
             Assert-Contains $text $needle "missing workflow metadata contract: $needle"
         }
     }
+    Invoke-Scenario "flat canonical issue root contract is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "flat canonical roots",
+            "spec -> plan -> issue",
+            "issue mirrors include the GitHub issue number",
+            "docs/superpowers/issues/<issue-number>-<slug>.md",
+            "Milestone pages are index views",
+            "frontmatter plus milestone indexes",
+            "nested canonical milestone artifact folders are drift"
+        )) {
+            Assert-Contains $text $needle "missing flat canonical issue root contract: $needle"
+        }
+    }
     Invoke-Scenario "metadata is present" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
         Assert-Contains $metadata "project-issue:" "missing metadata key"
         Assert-Contains $metadata "docs/superpowers/issues" "missing metadata issue path"
         Assert-Contains $metadata "vertical slices" "missing metadata slice policy"
+        Assert-Contains $metadata "flat canonical roots" "missing metadata flat root policy"
+        Assert-Contains $metadata "issue mirrors include the GitHub issue number" "missing metadata issue filename policy"
         foreach ($needle in @("summarize", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }

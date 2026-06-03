@@ -162,6 +162,24 @@ try {
     $repo = New-TestRepo
     $issueMirror = Write-IssueMirror -Repo $repo
 
+    Invoke-Scenario "skill documents flat canonical roots" {
+        $skillText = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
+        foreach ($needle in @(
+            "flat canonical roots",
+            "spec -> plan -> issue",
+            "docs/superpowers/specs",
+            "docs/superpowers/plans",
+            "docs/superpowers/issues",
+            "Milestone pages are index views",
+            "nested canonical milestone artifact folders are drift"
+        )) {
+            Assert-True ($skillText.Contains($needle)) "missing flat artifact root resolve contract: $needle"
+        }
+        $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
+        Assert-True ($metadata.Contains("flat canonical roots")) "metadata missing flat root policy"
+        Assert-True ($metadata.Contains("Milestone pages are index views")) "metadata missing milestone index policy"
+    }
+
     Invoke-Scenario "issue mirror path outside docs/superpowers/issues blocks" {
         $badMirror = Write-IssueMirror -Repo $repo -RelativePath "docs/superpowers/plans/not-an-issue.md"
         $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "Inspect", "-RepoRoot", $repo, "-IssueMirror", $badMirror)

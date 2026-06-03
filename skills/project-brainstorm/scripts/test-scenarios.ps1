@@ -52,6 +52,21 @@ $scenarios = @(
             Assert-Contains $text $needle "missing project-brainstorm contract: $needle"
         }
     }
+    Invoke-Scenario "loose spec flat root contract is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "flat canonical roots",
+            "spec -> plan -> issue",
+            "loose specs",
+            "docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md",
+            "milestone identity is optional",
+            "frontmatter plus milestone indexes",
+            "Milestone pages are index views",
+            "nested canonical milestone artifact folders are drift"
+        )) {
+            Assert-Contains $text $needle "missing loose spec flat root contract: $needle"
+        }
+    }
     Invoke-Scenario "native UI and grill pressure are mandatory for decisions" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         foreach ($needle in @(
@@ -75,6 +90,8 @@ $scenarios = @(
         Assert-Contains $text "docs/superpowers/specs" "missing metadata spec path"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"
         Assert-Contains $text "superpowers:brainstorming" "missing metadata Superpowers route"
+        Assert-Contains $text "flat canonical roots" "missing metadata flat root policy"
+        Assert-Contains $text "loose specs" "missing metadata loose spec policy"
         foreach ($needle in @("summarize", "project_brainstorm_next_step", "Project Plan", "Review First", "Revise Spec", "start the selected next skill")) {
             Assert-Contains $text $needle "missing metadata continuation route: $needle"
         }

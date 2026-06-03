@@ -231,6 +231,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "skill script parameter contract failed" }
     }))
 
+    $results.Add((Invoke-Step "flat artifact root contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-flat-artifact-roots.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "flat artifact root contract failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-flat-artifact-roots.ps1") -RepoRoot $repoRoot | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "flat artifact root validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Plugin manifest validation" {
         if (-not (Test-Path -LiteralPath $pluginValidate -PathType Leaf)) {
             throw "plugin validator not found: $pluginValidate"

@@ -24,6 +24,29 @@ try {
     } catch { Add-Result -Name "project context contract present" -Ok $false -Reason $_.Exception.Message }
 
     try {
+        foreach ($needle in @(
+            'flat canonical roots',
+            'spec -> plan -> issue',
+            'docs/superpowers/specs',
+            'docs/superpowers/plans',
+            'docs/superpowers/issues',
+            'Milestone pages are index views',
+            'frontmatter plus milestone indexes',
+            'nested canonical milestone artifact folders are drift'
+        )) {
+            Assert-Contains -Text $skill -Needle $needle -Reason "missing flat artifact root contract: $needle"
+        }
+        foreach ($needle in @(
+            'flat canonical roots',
+            'Milestone pages are index views',
+            'frontmatter plus milestone indexes'
+        )) {
+            Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing flat artifact root contract: $needle"
+        }
+        Add-Result -Name "flat artifact root contract is present" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "flat artifact root contract is present" -Ok $false -Reason $_.Exception.Message }
+
+    try {
         Assert-Contains -Text $metadata -Needle 'project-context' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers/PROJECT_CONTEXT.md' -Reason "metadata missing project context path"
         foreach ($needle in @('summarize','project_context_next_step','Project Brainstorm','Project Plan','Project Issue','Project Doctor','Stop','start the selected next skill')) {

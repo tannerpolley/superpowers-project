@@ -125,6 +125,21 @@ $scenarios = @(
             Assert-Contains $text $needle "missing project-plan contract: $needle"
         }
     }
+    Invoke-Scenario "flat canonical plan root contract is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "flat canonical roots",
+            "spec -> plan -> issue",
+            "plans include creation date and milestone identity where applicable",
+            "docs/superpowers/plans/<yyyy-mm-dd>-<milestone-or-category>-<slug>-plan.md",
+            "link one or more loose specs or a raw approved idea",
+            "Milestone pages are index views",
+            "frontmatter plus milestone indexes",
+            "nested canonical milestone artifact folders are drift"
+        )) {
+            Assert-Contains $text $needle "missing flat canonical plan root contract: $needle"
+        }
+    }
     Invoke-Scenario "old milestone issue target is retired" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         Assert-NotContains $text "docs/milestones/<milestone-folder>/issues" "old milestone issues path must not be active"
@@ -136,6 +151,8 @@ $scenarios = @(
         Assert-Contains $text "docs/superpowers/plans" "missing metadata plan path"
         Assert-Contains $text "superpowers:writing-plans" "missing metadata Superpowers route"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"
+        Assert-Contains $text "flat canonical roots" "missing metadata flat root policy"
+        Assert-Contains $text "plans include creation date and milestone identity where applicable" "missing metadata plan filename policy"
         Assert-Contains $text "project_plan_next_step" "missing continuation question id"
         Assert-Contains $text "start the selected next skill" "missing executable routing guidance"
         foreach ($needle in @("summarize", "Project Issue First", "Quick Apply", "Review First", "Revise Plan")) {

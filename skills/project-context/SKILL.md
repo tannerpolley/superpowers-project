@@ -23,6 +23,18 @@ A Superpowers Project repo must keep these artifacts current:
 
 Create missing directories only when the repo is adopting Superpowers Project or when the user explicitly asks to repair project structure.
 
+## Artifact Source Of Truth
+
+Superpowers Project uses flat canonical roots for the implementation artifact lifecycle:
+
+- loose specs live under `docs/superpowers/specs`
+- implementation plans live under `docs/superpowers/plans`
+- GitHub issue mirrors live under `docs/superpowers/issues`
+
+The lifecycle is `spec -> plan -> issue`. Specs are loose specs: idea, design, PRD, or brainstorming records that may mention related milestones, packages, categories, or future issue candidates, but they do not need GitHub issue metadata, source plans, implementation branches, proof oracles, or issue-ready execution fields. Plans become the milestone-aware execution design when work is implementation-facing. Issues are the official implementation records and require tracker metadata, milestone ownership, acceptance criteria, proof oracle, AFK/HITL classification, branch, and worktree execution fields.
+
+Milestone pages are index views. They may list related specs, plans, and issues, but they link to the flat canonical roots instead of owning nested canonical copies. Represent milestone/category views through artifact frontmatter plus milestone indexes. Treat nested canonical milestone artifact folders are drift, including `docs/superpowers/milestones/<milestone>/specs`, `docs/superpowers/milestones/<milestone>/plans`, and `docs/superpowers/milestones/<milestone>/issues`, unless an approved generator explicitly marks the path as generated index/view output.
+
 ## Native Question Policy
 
 Use `request_user_input` when callable in Default mode for decisions that affect roadmap shape, milestone boundaries, GitHub policy, or `/goal` issue execution criteria. Ask one to three short questions, with mutually exclusive choices when the UI supports it. If a choice depends on the answer to an earlier question, ask it after that answer.
