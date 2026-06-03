@@ -20,13 +20,14 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Related Issues
 
-- `docs/superpowers/issues/8-closed-mirror-cleanup.md`
-- `docs/superpowers/issues/9-project-plan-quick-apply.md`
-- `docs/superpowers/issues/10-project-doctor-audit-gate.md`
-- `docs/superpowers/issues/15-flat-artifact-roots-milestone-indexes.md`
+- None currently
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/milestones-plugin/issues/15](https://github.com/tannerpolley/milestones-plugin/issues/15) closed by [https://github.com/tannerpolley/milestones-plugin/pull/19](https://github.com/tannerpolley/milestones-plugin/pull/19) on 06/03/2026 03:35:55
+- [https://github.com/tannerpolley/milestones-plugin/issues/10](https://github.com/tannerpolley/milestones-plugin/issues/10) closed by [https://github.com/tannerpolley/milestones-plugin/pull/18](https://github.com/tannerpolley/milestones-plugin/pull/18) on 06/03/2026 03:27:31
+- [https://github.com/tannerpolley/milestones-plugin/issues/9](https://github.com/tannerpolley/milestones-plugin/issues/9) closed by [https://github.com/tannerpolley/milestones-plugin/pull/17](https://github.com/tannerpolley/milestones-plugin/pull/17) on 06/03/2026 03:14:09
+- [https://github.com/tannerpolley/milestones-plugin/issues/8](https://github.com/tannerpolley/milestones-plugin/issues/8) closed by [https://github.com/tannerpolley/milestones-plugin/pull/16](https://github.com/tannerpolley/milestones-plugin/pull/16) on 06/03/2026 03:13:32
 - [#4 Enforce native continuation closeouts across project skills](https://github.com/tannerpolley/milestones-plugin/issues/4) closed by [PR #13](https://github.com/tannerpolley/milestones-plugin/pull/13).
 - [#5 Validate skill docs against script parameters](https://github.com/tannerpolley/milestones-plugin/issues/5) closed by [PR #11](https://github.com/tannerpolley/milestones-plugin/pull/11).
 - [#6 Normalize GitHub check states consistently](https://github.com/tannerpolley/milestones-plugin/issues/6) closed by [PR #12](https://github.com/tannerpolley/milestones-plugin/pull/12).
