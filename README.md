@@ -33,35 +33,98 @@ This checkout may still be hosted under the older `milestones-plugin` repository
 The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks one clear "what next?" question, and then starts the selected next skill automatically.
 
 ```mermaid
+%%{init: {"flowchart": {"curve": "stepAfter", "nodeSpacing": 45, "rankSpacing": 70}}}%%
+flowchart TB
+    Brainstorm["Brainstorm<br/>define the idea, pressure-test assumptions,<br/>write the spec"]
+    BrainstormQ{"Continue<br/>from Brainstorm?"}
+
+    Plan["Plan<br/>turn the approved spec<br/>into implementation steps"]
+    PlanQ{"Continue<br/>from Plan?"}
+
+    Issue["Issue<br/>create the GitHub issue<br/>and local issue mirror"]
+    IssueQ{"Continue<br/>from Issue?"}
+
+    RouteQ{"Resolve<br/>where?"}
+    Resolve["Resolve<br/>current thread implements,<br/>tests, commits, opens PR"]
+    Orchestrate["Orchestrate<br/>worker worktree implements,<br/>main thread reviews PR"]
+
+    ReadyQ{"PR ready<br/>for Merge?"}
+    Merge["Merge<br/>review, verify checks,<br/>merge, clean branch/worktree"]
+    Done([Done])
+
+    QuickFix["Quick Fix<br/>small local-main change,<br/>verify, cleanup"]
+    Review["Review / revise / stop"]
+
+    Brainstorm --> BrainstormQ
+    BrainstormQ -- "Plan" --> Plan
+    BrainstormQ -- "Review or revise" --> Review
+
+    Plan --> PlanQ
+    PlanQ -- "Issue flow" --> Issue
+    PlanQ -- "Quick fix" --> QuickFix
+    PlanQ -- "Review or revise" --> Review
+
+    Issue --> IssueQ
+    IssueQ -- "Resolve" --> RouteQ
+    IssueQ -- "Review or stop" --> Review
+
+    RouteQ -- "This thread" --> Resolve
+    RouteQ -- "Worker worktree" --> Orchestrate
+    RouteQ -- "Review first" --> Review
+
+    Resolve --> ReadyQ
+    Orchestrate --> ReadyQ
+    ReadyQ -- "Merge" --> Merge
+    ReadyQ -- "Review or continue work" --> Review
+
+    Merge --> Done
+    QuickFix --> Done
+
+    classDef skill fill:#dbeafe,color:#111827,stroke:#2563eb,stroke-width:2px;
+    classDef decision fill:#fef3c7,color:#111827,stroke:#d97706,stroke-width:2px;
+    classDef side fill:#f3f4f6,color:#111827,stroke:#6b7280,stroke-width:2px;
+    classDef finish fill:#dcfce7,color:#111827,stroke:#16a34a,stroke-width:2px;
+
+    class Brainstorm,Plan,Issue,Resolve,Orchestrate,Merge skill;
+    class BrainstormQ,PlanQ,IssueQ,RouteQ,ReadyQ decision;
+    class Review,QuickFix side;
+    class Done finish;
+```
+
+<details>
+<summary>Archived full setup, Doctor, and router flow</summary>
+
+```mermaid
+%%{init: {"flowchart": {"curve": "stepAfter", "nodeSpacing": 45, "rankSpacing": 70}}}%%
 flowchart TD
-    Start([Start<br/>$superpowers-project])
+    Start([Start<br/>superpowers-project])
     Router["Router skill<br/>choose the right Project workflow"]
 
     SetupQ{"Need setup<br/>or audit first?"}
-    Setup["$project-setup<br/>Initialize or refresh<br/>project context, roadmap,<br/>GitHub tracker"]
-    Doctor["$project-doctor<br/>Audit drift, mirrors,<br/>repo hygiene, validation"]
+    Setup["Setup<br/>Initialize or refresh<br/>project context, roadmap,<br/>GitHub tracker"]
+    Doctor["Doctor<br/>Audit drift, mirrors,<br/>repo hygiene, validation"]
 
     SetupNext{"Continue<br/>from setup?"}
     DoctorNext{"Continue<br/>from audit?"}
 
-    Brainstorm["$project-brainstorm<br/>Grill assumptions,<br/>ask native Q&A,<br/>write spec"]
+    Brainstorm["Brainstorm<br/>Grill assumptions,<br/>ask native Q&A,<br/>write spec"]
     BrainstormNext{"Continue<br/>from brainstorm?"}
 
-    Plan["$project-plan<br/>Turn approved spec<br/>into implementation plan"]
+    Plan["Plan<br/>Turn approved spec<br/>into implementation plan"]
     PlanNext{"Continue<br/>from plan?"}
 
     QuickApplyQ{"Small safe change<br/>on local main?"}
     QuickApply["Quick Apply<br/>implement narrow plan,<br/>verify, cleanup"]
 
-    Issue["$project-issue<br/>Create GitHub issue<br/>and local issue mirror"]
+    Issue["Issue<br/>Create GitHub issue<br/>and local issue mirror"]
     IssueNext{"Continue<br/>from issues?"}
 
     RouteQ{"Where should<br/>the issue be resolved?"}
-    Resolve["$project-resolve<br/>Current thread implements,<br/>tests, commits, opens PR"]
-    Orchestrate["$project-orchestrate<br/>Spawn worktree worker,<br/>orchestrate, review PR"]
+    Resolve["Resolve<br/>Current thread implements,<br/>tests, commits, opens PR"]
+    Orchestrate["Orchestrate<br/>Spawn worktree worker,<br/>orchestrate, review PR"]
 
     PRNext{"PR ready.<br/>What next?"}
-    Merge["$project-merge<br/>Review PR, verify checks,<br/>merge, prune branch/worktree"]
+    Merge["Merge<br/>Review PR, verify checks,<br/>merge, prune branch/worktree"]
     MergeQ{"Merge PR now?"}
     MergeNext{"Continue<br/>after merge?"}
 
@@ -145,18 +208,20 @@ flowchart TD
     class Review hold;
 ```
 
+</details>
+
 | Native question | Where it appears | Main choices |
 | --- | --- | --- |
-| `project_setup_next_step` | After `$project-setup` | Project Brainstorm, Project Plan, Project Issue, Project Doctor, Review First, Stop |
-| `project_brainstorm_next_step` | After `$project-brainstorm` | Project Plan, Review First, Revise Spec, Stop |
-| `project_plan_next_step` | After `$project-plan` | Project Issue First, Quick Apply, Review First, Revise Plan, Stop |
+| `project_setup_next_step` | After Setup | Brainstorm, Plan, Issue, Doctor, Review First, Stop |
+| `project_brainstorm_next_step` | After Brainstorm | Plan, Review First, Revise Spec, Stop |
+| `project_plan_next_step` | After Plan | Issue First, Quick Apply, Review First, Revise Plan, Stop |
 | `project_quick_apply_approval` | Before a small local-main change | Apply on Main, Use Issue Flow, Stop |
-| `project_issue_next_step` | After `$project-issue` | Resolve First Ready, Resolve Selected, Review First, Stop |
-| `project_issue_resolution_route` | Before issue implementation when route is ambiguous | Project Resolve, Project Orchestrate, Review First |
-| `project_resolve_next_step` | After direct issue work is PR-ready | Project Merge, Resolve Another, Review First, Stop |
-| `project_orchestrate_next_step` | After worker-thread issue work is PR-ready | Project Merge, Recover Worker, Review First, Stop |
+| `project_issue_next_step` | After Issue | Resolve First Ready, Resolve Selected, Review First, Stop |
+| `project_issue_resolution_route` | Before issue implementation when route is ambiguous | Resolve, Orchestrate, Review First |
+| `project_resolve_next_step` | After direct issue work is PR-ready | Merge, Resolve Another, Review First, Stop |
+| `project_orchestrate_next_step` | After worker-thread issue work is PR-ready | Merge, Recover Worker, Review First, Stop |
 | `project_merge_approval` | Before merge | Merge, Decline |
-| `project_merge_next_step` | After merge closeout | Project Doctor, Resolve Another, Review First, Stop |
+| `project_merge_next_step` | After merge closeout | Doctor, Resolve Another, Review First, Stop |
 | `project_doctor_next_step` | After a Doctor audit | Apply Repair, Create Planning Spec, Run Audit Again, Review First, Stop |
 
 ## Quick Apply
