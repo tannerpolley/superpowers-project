@@ -81,6 +81,32 @@ function Resolve-RepoRoot {
     [IO.Path]::GetFullPath((Resolve-Path -LiteralPath $RepoRoot).Path)
 }
 
+function Resolve-RepoFile {
+    param([string]$RepoRoot, [string]$Path)
+    if ([IO.Path]::IsPathRooted($Path)) { return [IO.Path]::GetFullPath($Path) }
+    [IO.Path]::GetFullPath((Join-Path $RepoRoot $Path))
+}
+
+function Get-RelativeRepoPath {
+    param([string]$RepoRoot, [string]$Path)
+    Normalize-RepoPath ([IO.Path]::GetRelativePath($RepoRoot, (Resolve-RepoFile -RepoRoot $RepoRoot -Path $Path)))
+}
+
+function Get-FieldValue {
+    param([string]$Text, [string]$Name)
+    $escaped = [regex]::Escape($Name)
+    $patterns = @(
+        "(?im)^\s*\*\*$escaped\s*:\s*\*\*\s*(.+?)\s*$",
+        "(?im)^\s*\*\*$escaped\*\*\s*:\s*(.+?)\s*$",
+        "(?im)^\s*$escaped\s*:\s*(.+?)\s*$"
+    )
+    foreach ($pattern in $patterns) {
+        $match = [regex]::Match($Text, $pattern)
+        if ($match.Success) { return $match.Groups[1].Value.Trim() }
+    }
+    $null
+}
+
 function Get-IssueNumberFromUrl {
     param([string]$IssueUrl)
     if ($IssueUrl -match '/issues/(?<n>\d+)(?:$|[?#])') { return [int]$Matches.n }

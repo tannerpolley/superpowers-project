@@ -125,6 +125,26 @@ After the user selects an option, start the selected next skill in the same turn
 
 If the selected next skill needs its own material decision, ask that next skill's native UI question. If the route needs unavailable tools or an external write that still requires approval, stop with a clear pending state and exact resume target.
 
+## Quick Apply Approval Gate
+
+Quick Apply is only for small, low-risk plan follow-up work on clean synced `main`. Non-trivial, risky, multi-issue, branch-backed, or PR-bound implementation stays on the default `$project-issue` and `$project-resolve` path.
+
+Before any edits, ask a second native approval question when `request_user_input` is callable:
+
+Question id: `project_quick_apply_approval`
+
+Prompt: `Apply this small plan directly on local main?`
+
+Options:
+
+- `Apply on Main`: approve the local-main Quick Apply path.
+- `Use Issue Flow`: route to `$project-issue` instead.
+- `Stop`: stop without edits.
+
+Only `Apply on Main` records `selected_action: apply`. Treat every other answer as a stop or issue-backed route, not approval to edit.
+
+Validate the Quick Apply ledger with `skills/project-plan/scripts/validate-quick-apply.ps1`. The gate requires clean synced `main`, the `project_quick_apply_approval` ledger, passed verification commands, a passed cleanup hook result, and explicit push approval before any push. Run the gate before edits for approval and repository state, then again after focused verification and cleanup evidence are available.
+
 ## Self-Review
 
 Before reporting the plan ready:

@@ -25,6 +25,8 @@ Stop immediately when any of these are true:
 - Worktree cleanup targets a path outside the owned worktree.
 - Cleanup hook proof is missing or failed.
 - Final repo state is dirty.
+- Closed issue mirror cleanup evidence is missing: closed mirrors are deleted by default, or explicitly retained only when marked `**Mirror Retention:** Keep`.
+- Milestone closed-summary evidence is missing the GitHub issue link or PR link.
 
 ## State Machine
 
@@ -41,7 +43,8 @@ Follow this order exactly:
 9. `worktree cleanup`: remove only the owned worktree when one exists.
 10. `prune`: run `git fetch --prune`.
 11. `cleanup hook`: run the repo cleanup hook.
-12. `clean state`: verify clean repo state and record closeout proof through `scripts/closeout.ps1`.
+12. `closed mirror cleanup`: delete the closed issue mirror by default, or retain it only with `**Mirror Retention:** Keep`; preserve the milestone history as a closed issue summary with GitHub issue and PR links.
+13. `clean state`: verify clean repo state and record closeout proof through `scripts/closeout.ps1`.
 
 ## Native Merge Approval
 
@@ -94,8 +97,8 @@ Run bundled scripts with explicit `-RepoRoot`:
 - `scripts/collect-premerge-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrNumber <n> -IssueNumber <n> -VerificationCommands <commands> -ChangedFilesCovered <paths> -OutputDir <temp-or-handoff-dir>`: collects PR, issue, changed-file, check, and verification evidence into the verification ledger consumed by `scripts/premerge.ps1`.
 - `scripts/premerge.ps1`: validates PR closing reference, checks, issue acceptance state, changed-file coverage, and proof commands.
 - `scripts/validate-merge-decision.ps1`: validates the native merge approval ledger and blocks declined decisions.
-- `scripts/collect-closeout-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrNumber <n> -IssueNumber <n> -MergeDecisionJson <json> -CleanupHookOutput <text> -ResolveGoalCompletionProofJson <json> -MirrorCleanupJson <json> -OutputDir <temp-or-handoff-dir>`: collects merged PR, closed issue, cleanup, clean repo, native goal completion, and mirror cleanup evidence into the completion ledger consumed by `scripts/closeout.ps1`.
-- `scripts/closeout.ps1`: validates merged PR proof, linked issue closure proof, branch cleanup, worktree cleanup, prune proof, cleanup hook proof, and clean repo proof.
+- `scripts/collect-closeout-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrNumber <n> -IssueNumber <n> -MergeDecisionJson <json> -CleanupHookOutput <text> -ResolveGoalCompletionProofJson <json> -MirrorCleanupJson <json> -OutputDir <temp-or-handoff-dir>`: collects merged PR, closed issue, cleanup, clean repo, native goal completion, mirror cleanup confirmation, and milestone closed-summary evidence into the completion ledger consumed by `scripts/closeout.ps1`. When no explicit `MirrorCleanupJson` is supplied for a closed issue, it deletes the mirror unless the mirror is marked `**Mirror Retention:** Keep`, and updates the milestone closed summary with GitHub issue and PR links.
+- `scripts/closeout.ps1`: validates merged PR proof, linked issue closure proof, branch cleanup, worktree cleanup, prune proof, cleanup hook proof, closed mirror deletion or retention evidence, milestone closed-summary issue and PR links, and clean repo proof.
 
 All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is false, block with the script reason.
 
@@ -116,4 +119,6 @@ Do not send a success-style final response until closeout proof shows:
 - Owned worktree removed or proven absent.
 - `git fetch --prune` passed.
 - Repo cleanup hook passed.
+- Closed issue mirror was deleted by default or explicitly retained with `Mirror Retention: Keep`.
+- Milestone page kept a closed issue summary with GitHub issue and PR links.
 - Repo state is clean.

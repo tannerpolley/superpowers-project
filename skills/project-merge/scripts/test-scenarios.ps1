@@ -71,6 +71,37 @@ function New-TestRepo {
     $repo
 }
 
+function Add-SampleMirrorAndMilestone {
+    param([string]$Repo)
+    New-Item -ItemType Directory -Path (Join-Path $Repo "docs/superpowers/issues") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Repo "docs/superpowers/milestones") -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $Repo "docs/superpowers/issues/12-sample.md") -Value "# Sample`n`n**GitHub Issue:** https://github.com/example/repo/issues/12`n**GitHub Milestone:** M1 - Source Of Truth`n" -Encoding utf8NoBOM
+    Set-Content -LiteralPath (Join-Path $Repo "docs/superpowers/milestones/M1-source-of-truth.md") -Value "# M1 - Source Of Truth`n`n## Related Issues`n`n- ``docs/superpowers/issues/12-sample.md```n" -Encoding utf8NoBOM
+}
+
+function New-MirrorCleanupConfirmation {
+    param(
+        [bool]$Deleted = $true,
+        [bool]$Retained = $false,
+        [string]$Policy = "delete-after-close",
+        [string]$RetentionReason = "",
+        [string]$MilestoneRecord = "closed-summary"
+    )
+    @{
+        policy = $Policy
+        issue_mirror = "docs/superpowers/issues/12-sample.md"
+        deleted = $Deleted
+        retained = $Retained
+        retention_reason = $RetentionReason
+        milestone_record = $MilestoneRecord
+        milestone_summary = @{
+            milestone_page = "docs/superpowers/milestones/M1-source-of-truth.md"
+            issue_url = "https://github.com/example/repo/issues/12"
+            pr_url = "https://github.com/example/repo/pull/5"
+        }
+    }
+}
+
 Invoke-Scenario "skill frontmatter is valid" {
     if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
     $text = Get-Content -LiteralPath $skillFile -Raw
@@ -197,10 +228,54 @@ Invoke-Scenario "happy closeout records clean proof" {
         cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
         clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
         resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        mirror_cleanup_confirmation = New-MirrorCleanupConfirmation
     } | ConvertTo-Json -Depth 16 -Compress
     $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", $completion, "-PrJson", $pr, "-IssueJson", $issue)
     if (-not $result.ok) { throw $result.reason }
     if ($result.evidence.repo_clean -ne $true) { throw "clean proof was not recorded" }
+}
+
+Invoke-Scenario "closeout blocks closed issue without mirror cleanup evidence" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $completion = @{
+        pr_url = "https://github.com/example/repo/pull/5"
+        issue_url = "https://github.com/example/repo/issues/12"
+        merge_decision = (New-MergeDecision | ConvertFrom-Json)
+        merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+        linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+        default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+        branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+        worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+        fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+        cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+        clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+        resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+    } | ConvertTo-Json -Depth 16 -Compress
+    $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", $completion, "-PrJson", $pr, "-IssueJson", $issue)
+    if ($result.ok -or $result.reason -notmatch "mirror cleanup") { throw "expected missing mirror cleanup evidence to block" }
+}
+
+Invoke-Scenario "closeout accepts explicit retained mirror evidence" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $completion = @{
+        pr_url = "https://github.com/example/repo/pull/5"
+        issue_url = "https://github.com/example/repo/issues/12"
+        merge_decision = (New-MergeDecision | ConvertFrom-Json)
+        merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+        linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+        default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+        branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+        worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+        fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+        cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+        clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+        resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        mirror_cleanup_confirmation = New-MirrorCleanupConfirmation -Deleted $false -Retained $true -Policy "retain" -RetentionReason "audit fixture"
+    } | ConvertTo-Json -Depth 16 -Compress
+    $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", $completion, "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $result.ok) { throw $result.reason }
 }
 
 Invoke-Scenario "collect-premerge-ledger emits evidence accepted by premerge" {
@@ -239,7 +314,7 @@ Invoke-Scenario "collect-closeout-ledger emits evidence accepted by closeout" {
     $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
     $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
     $goal = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" } | ConvertTo-Json -Depth 8 -Compress
-    $mirrorCleanup = @{ policy = "retain"; reason = "fixture" } | ConvertTo-Json -Depth 8 -Compress
+    $mirrorCleanup = New-MirrorCleanupConfirmation -Deleted $false -Retained $true -Policy "retain" -RetentionReason "fixture" | ConvertTo-Json -Depth 12 -Compress
     $outputDir = Join-Path $tempRoot "closeout-output"
     $collected = Invoke-JsonScript -ScriptName "collect-closeout-ledger.ps1" -Arguments @(
         "-RepoRoot", $repo,
@@ -256,6 +331,35 @@ Invoke-Scenario "collect-closeout-ledger emits evidence accepted by closeout" {
     if (-not (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf)) { throw "collector did not write closeout ledger" }
     $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerPath", $setupPath, "-CompletionLedgerPath", $collected.ledger_path, "-PrJson", $collected.pr_json, "-IssueJson", $collected.issue_json)
     if (-not $result.ok) { throw $result.reason }
+}
+
+Invoke-Scenario "collect-closeout-ledger deletes closed mirror and records milestone summary by default" {
+    $repo = New-TestRepo
+    Add-SampleMirrorAndMilestone -Repo $repo
+    $setupPath = Join-Path $tempRoot "closeout-default-setup-ledger.json"
+    New-SetupLedger | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "CLOSED"; body = "- [x] Sample issue is resolved"; closedAt = "2026-06-03T01:00:00Z" } | ConvertTo-Json -Depth 8 -Compress
+    $goal = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" } | ConvertTo-Json -Depth 8 -Compress
+    $outputDir = Join-Path $tempRoot "closeout-default-output"
+    $collected = Invoke-JsonScript -ScriptName "collect-closeout-ledger.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-PrJson", $pr,
+        "-IssueJson", $issue,
+        "-MergeDecisionJson", (New-MergeDecision),
+        "-CleanupHookOutput", "No matching leftover Codex processes under repo root.",
+        "-ResolveGoalCompletionProofJson", $goal,
+        "-OutputDir", $outputDir
+    )
+    if (-not $collected.ok) { throw $collected.reason }
+    if (Test-Path -LiteralPath (Join-Path $repo "docs/superpowers/issues/12-sample.md")) { throw "closed mirror was not deleted" }
+    $milestone = Get-Content -LiteralPath (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth.md") -Raw
+    Assert-Contains $milestone "## Closed Issues" "milestone closed issue section was not written"
+    Assert-Contains $milestone "https://github.com/example/repo/issues/12" "milestone summary missing issue link"
+    Assert-Contains $milestone "https://github.com/example/repo/pull/5" "milestone summary missing PR link"
+    if ($collected.ledger.mirror_cleanup_confirmation.deleted -ne $true) { throw "collector did not record deletion evidence" }
+    if ([string]$collected.ledger.mirror_cleanup_confirmation.milestone_record -ne "closed-summary") { throw "collector did not record closed-summary milestone evidence" }
 }
 
 $failed = @($results | Where-Object { -not $_.ok })

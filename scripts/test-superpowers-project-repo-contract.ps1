@@ -148,6 +148,20 @@ try {
     )
     Add-Check -Name "skill script parameter contract wiring" -Ok $true -Reason "passed"
 
+    Assert-RelativePathExists -RelativePath "skills/project-doctor/scripts/audit-project.ps1" -Kind File
+    Assert-TextContains -RelativePath "skills/project-doctor/SKILL.md" -Needles @(
+        "audit-project.ps1",
+        "-Mode LocalDocs",
+        "-Mode GitHubAware",
+        "native repair approval"
+    )
+    Assert-TextContains -RelativePath "skills/project-doctor/agents/openai.yaml" -Needles @(
+        "audit-project.ps1",
+        "-Mode LocalDocs",
+        "-Mode GitHubAware"
+    )
+    Add-Check -Name "project doctor audit gate wiring" -Ok $true -Reason "passed"
+
     $issueFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs/superpowers/issues") -Filter "*.md" -File | Where-Object { $_.Name -ne "README.md" })
     if ($issueFiles.Count -lt 1) { throw "docs/superpowers/issues must contain at least one issue mirror for smoke validation" }
     $validator = Join-Path $repoRoot "skills/project-issue/scripts/validate-issue-mirror.ps1"
