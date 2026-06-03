@@ -85,6 +85,9 @@ try {
 
     $executionDecision = Read-JsonInput -Json $ExecutionDecisionJson -Path $ExecutionDecisionPath -Name "execution decision"
     Assert-ExecutionDecision -Decision $executionDecision
+    if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") {
+        throw "orchestrated worker execution is owned by project-orchestrate; use project-resolve only for direct current-thread execution"
+    }
     $goalProof = Read-JsonInput -Json $GoalProofJson -Path $GoalProofPath -Name "goal proof"
     Assert-NativeGoalProof -Proof $goalProof
     $inventory = Get-BranchInventorySafe -RepoRoot $root
@@ -100,13 +103,13 @@ try {
         execution_decision = $executionDecision
         workflow_policy = [ordered]@{
             worktree_policy = "Native Codex worktree thread first"
-            integration_policy = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { "Worker PR reviewed by main thread" } else { "Current thread owns PR" }
+            integration_policy = "Current thread owns PR"
             tdd_policy = "Required"
             reviewer_role = "Main thread orchestrator"
             script_gate_mode = "Safety only"
         }
-        dynamic_work_packet_map = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { New-DynamicWorkPacketMap -Handoff $handoff -Decision $executionDecision } else { $null }
-        worker_handoff = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { New-WorkerHandoff -Handoff $handoff -Decision $executionDecision } else { $null }
+        dynamic_work_packet_map = $null
+        worker_handoff = $null
         proof_oracle = Get-StringArray $handoff.proof_oracle
         branch_inventory_before = $inventory
     }

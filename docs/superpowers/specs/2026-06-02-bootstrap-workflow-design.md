@@ -2,6 +2,10 @@
 
 Date: 2026-06-02
 
+## Status
+
+Historical bootstrap record. The validation repair, live sync cleanup, CI workflow, and initial GitHub-backed project workflow have since been implemented by later plans and merged PRs. Do not create a retroactive implementation plan for this spec unless release/tag policy is reopened as new work.
+
 ## Context
 
 The Milestones plugin repo is the canonical source for the local plugin and its user-level skills. The live plugin at `C:\Users\Tanner\plugins\milestones` and user skills under `C:\Users\Tanner\.agents\skills` are deployed copies.

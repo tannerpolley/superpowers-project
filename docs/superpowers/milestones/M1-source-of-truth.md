@@ -13,10 +13,12 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 ## Related Specs
 
 - `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
+- `docs/superpowers/specs/2026-06-03-project-setup-orchestration-design.md`
 
 ## Related Plans
 
 - `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
+- `docs/superpowers/plans/2026-06-03-project-setup-orchestration-plan.md`
 
 ## Related Issues
 

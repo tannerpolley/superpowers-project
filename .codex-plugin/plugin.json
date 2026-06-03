@@ -1,15 +1,15 @@
 {
   "name": "superpowers-project",
   "version": "0.2.0",
-  "description": "Superpowers extension for durable project context, GitHub issues and milestones, native user-input grilling, and goal-backed execution.",
+  "description": "Superpowers extension for durable project setup, GitHub issues and milestones, native user-input grilling, goal-backed execution, and worker-thread orchestration.",
   "author": {
     "name": "Tanner Local"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Superpowers Project",
-    "shortDescription": "Project context, GitHub issues, milestones, and goal-backed execution for Superpowers.",
-    "longDescription": "Superpowers Project extends Superpowers with large-scope project context, roadmap and milestone mapping, GitHub issue mirrors, issue triage, native request_user_input grilling, and native /goal-backed issue resolution.",
+    "shortDescription": "Project setup, GitHub issues, milestones, goal-backed execution, and orchestration for Superpowers.",
+    "longDescription": "Superpowers Project extends Superpowers with large-scope project setup, roadmap and milestone mapping, GitHub issue mirrors, issue triage, native request_user_input grilling, native /goal-backed issue resolution, and optional worker-thread orchestration.",
     "developerName": "Tanner Local",
     "category": "Productivity",
     "capabilities": [
@@ -19,12 +19,13 @@
     ],
     "defaultPrompt": [
       "Which Superpowers Project skill should I use for this workflow?",
-      "Set up this repo's Superpowers project context.",
+      "Set up this repo's Superpowers project setup and tracker context.",
       "Audit this repo's Superpowers project workflow.",
       "Brainstorm this project idea with native grilling.",
       "Convert this plan into GitHub issue mirrors.",
       "Write the project implementation plan.",
-      "Resolve this GitHub issue with a native goal.",
+      "Resolve this GitHub issue directly with a native goal.",
+      "Orchestrate this GitHub issue in a worker worktree thread.",
       "Merge a PR-ready issue handoff with project-merge."
     ]
   }

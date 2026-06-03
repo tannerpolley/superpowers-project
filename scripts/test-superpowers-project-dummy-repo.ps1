@@ -143,12 +143,16 @@ Dummy repo proves Superpowers Project artifacts.
     Add-Check -Name "structured native goal proof passes" -Ok $true -Reason "passed"
 
     $workerFinalize = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $tempRoot, "-HandoffJson", ($inspect.evidence.handoff_json), "-GoalProofJson", $goalProof, "-ExecutionDecisionJson", $workerDecision)
-    if (-not $workerFinalize.ok) { throw "worker setup finalization failed: $($workerFinalize.reason)" }
-    if ($workerFinalize.setup_ledger.execution_decision.selected_mode -ne "orchestrated-worker") { throw "worker execution decision was not recorded" }
-    if (-not $workerFinalize.setup_ledger.worker_handoff) { throw "worker handoff was not recorded" }
-    if (-not $workerFinalize.setup_ledger.dynamic_work_packet_map) { throw "dynamic work packet map was not recorded" }
-    if ($workerFinalize.setup_ledger.dynamic_work_packet_map.merge_owner -ne "project-merge") { throw "dynamic work packet map merge owner mismatch" }
-    Add-Check -Name "worker setup decision" -Ok $true -Reason "passed"
+    if ($workerFinalize.ok -or $workerFinalize.reason -notmatch "project-orchestrate") { throw "worker mode should route away from project-resolve" }
+    Add-Check -Name "resolve rejects worker mode" -Ok $true -Reason "passed"
+
+    $orchestratePrepare = Join-Path $repoRoot "skills\project-orchestrate\scripts\prepare-worker-handoff.ps1"
+    $orchestrateValidate = Join-Path $repoRoot "skills\project-orchestrate\scripts\validate-worker-handoff.ps1"
+    $workerHandoff = Invoke-JsonScript -ScriptPath $orchestratePrepare -Arguments @("-RepoRoot", $tempRoot, "-IssueFile", "docs/superpowers/issues/12-dummy.md", "-OutputPath", "handoff/worker-handoff.json")
+    if (-not $workerHandoff.ok) { throw "worker handoff preparation failed: $($workerHandoff.reason)" }
+    $workerValidation = Invoke-JsonScript -ScriptPath $orchestrateValidate -Arguments @("-RepoRoot", $tempRoot, "-HandoffPath", "handoff/worker-handoff.json")
+    if (-not $workerValidation.ok) { throw "worker handoff validation failed: $($workerValidation.reason)" }
+    Add-Check -Name "project-orchestrate worker handoff" -Ok $true -Reason "passed"
 
     $setupValidator = Join-Path $repoRoot "skills\project-resolve\scripts\validate-setup.ps1"
     $setupResult = Invoke-JsonScript -ScriptPath $setupValidator -Arguments @("-RepoRoot", $tempRoot, "-SetupLedgerJson", ($finalize.setup_ledger_json))

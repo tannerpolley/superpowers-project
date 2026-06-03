@@ -40,12 +40,8 @@ try {
     if (-not (Test-Property -Object $ledger -Name "goal_id") -and -not (Test-Property -Object $ledger -Name "thread_goal_proof")) { throw "goal_id or thread goal proof is required" }
     Assert-NativeGoalProof -Proof $ledger.goal_activation_proof
     Assert-ExecutionDecision -Decision $ledger.execution_decision
-    if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker" -and (-not (Test-Property -Object $ledger -Name "worker_handoff") -or $null -eq $ledger.worker_handoff)) {
-        throw "worker_handoff is required for orchestrated-worker execution"
-    }
     if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") {
-        Assert-DynamicWorkPacketMap -Map $ledger.dynamic_work_packet_map
-        Assert-DynamicWorkPacketMap -Map $ledger.worker_handoff.dynamic_work_packet_map
+        throw "orchestrated worker execution is owned by project-orchestrate; use project-resolve only for direct current-thread execution"
     }
     $issueMirror = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$ledger.issue_mirror) -Prefix "docs/superpowers/issues" -Name "issue mirror"
     $sourcePlan = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$ledger.source_plan) -Prefix "docs/superpowers/plans" -Name "source plan"
