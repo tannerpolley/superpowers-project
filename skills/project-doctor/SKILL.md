@@ -7,6 +7,17 @@ description: Use when a Superpowers Project repo needs drift audit, migration re
 
 Project Doctor audits Superpowers Project structure and reports drift before any repair. It is report-first: no mutation without user approval.
 
+## Scripted Audit Gate
+
+Run `skills/project-doctor/scripts/audit-project.ps1` before proposing or applying repairs.
+
+Supported modes:
+
+- `-Mode LocalDocs`: inspect local project docs, issue mirrors, native UI contracts, ignored-path traps, closed mirror lifecycle policy, and live sync surfaces without network.
+- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, and `-LabelFixturePath` for deterministic smoke tests.
+
+The script reports JSON findings grouped as `blocking`, `repairable`, `informational`, and `healthy`. It is audit-only: repairs require native repair approval through `request_user_input` before mutation.
+
 ## Audit Scope
 
 Inspect and report on:
