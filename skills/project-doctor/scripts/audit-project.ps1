@@ -112,7 +112,11 @@ function Get-IssueMirrors {
         Where-Object { $_.Name -ne "README.md" } |
         ForEach-Object {
             $text = Get-Content -LiteralPath $_.FullName -Raw
-            $labels = @(Get-FieldValue -Text $text -Name "Labels" -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+            $labelText = Get-FieldValue -Text $text -Name "Labels"
+            $labels = @()
+            if (-not [string]::IsNullOrWhiteSpace($labelText)) {
+                $labels = @($labelText -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+            }
             $issueUrl = Get-FieldValue -Text $text -Name "GitHub Issue"
             [pscustomobject]@{
                 path = ConvertTo-RepoPath -Root $Root -Path $_.FullName
@@ -189,7 +193,12 @@ function Get-RepoSlug {
 function Read-GitHubIssues {
     param([string]$Root, [string]$FixturePath)
     $fixture = @(Read-JsonArray -Path $FixturePath -Name "issue")
-    if ($fixture.Count -gt 0) { return $fixture }
+    if ($fixture.Count -gt 0) {
+        if ($fixture.Count -eq 1 -and $fixture[0].PSObject.Properties.Name -contains "issues") {
+            return @($fixture[0].issues)
+        }
+        return $fixture
+    }
     $repo = Get-RepoSlug -Root $Root
     if ([string]::IsNullOrWhiteSpace($repo)) { return @() }
     $gh = Get-Command gh -ErrorAction SilentlyContinue
@@ -220,8 +229,8 @@ function Invoke-LocalDocsAudit {
     }
 
     $skillPath = Get-RepoFile -Root $Root -RelativePath "skills/project-doctor/SKILL.md"
-    $skillText = Get-Content -LiteralPath $skillPath -Raw
-    if (Test-TextContainsAll -Text $skillText -Needles @("## Native Continuation Gate", "request_user_input", "project_doctor_next_step", "Review First", "Stop")) {
+    $skillText = if (Test-Path -LiteralPath $skillPath -PathType Leaf) { Get-Content -LiteralPath $skillPath -Raw } else { "" }
+    if (-not [string]::IsNullOrWhiteSpace($skillText) -and (Test-TextContainsAll -Text $skillText -Needles @("## Native Continuation Gate", "request_user_input", "project_doctor_next_step", "Review First", "Stop"))) {
         Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "native-ui-closeout" -Severity "healthy" -Dimension "native-ui-contracts" -Message "Doctor native closeout wording is present." -Artifact "skills/project-doctor/SKILL.md")
     } else {
         Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "native-ui-closeout" -Severity "repairable" -Dimension "native-ui-contracts" -Message "Doctor native closeout wording needs repair." -Artifact "skills/project-doctor/SKILL.md")
@@ -236,7 +245,7 @@ function Invoke-LocalDocsAudit {
     }
 
     $readmePath = Get-RepoFile -Root $Root -RelativePath "docs/superpowers/issues/README.md"
-    $readmeText = Get-Content -LiteralPath $readmePath -Raw
+    $readmeText = if (Test-Path -LiteralPath $readmePath -PathType Leaf) { Get-Content -LiteralPath $readmePath -Raw } else { "" }
     if ($readmeText.Contains("closed mirror") -or $readmeText.Contains("Mirror Retention")) {
         Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "closed-mirror-lifecycle" -Severity "healthy" -Dimension "closed-mirror-lifecycle" -Message "Closed mirror lifecycle policy is documented." -Artifact "docs/superpowers/issues/README.md")
     } else {
@@ -244,19 +253,23 @@ function Invoke-LocalDocsAudit {
     }
 
     $sourceSkill = Get-RepoFile -Root $Root -RelativePath "skills/project-doctor/SKILL.md"
-    $liveTargets = @(
-        Join-Path $env:USERPROFILE "plugins/milestones/skills/project-doctor/SKILL.md"
-        Join-Path $env:USERPROFILE ".agents/skills/project-doctor/SKILL.md"
-    )
-    $liveChecks = @($liveTargets | ForEach-Object { Compare-LiveFile -SourcePath $sourceSkill -TargetPath $_ })
-    $checked = @($liveChecks | Where-Object { $_.checked })
-    $drifted = @($checked | Where-Object { -not $_.equal })
-    if ($drifted.Count -gt 0) {
-        Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "live-sync" -Severity "repairable" -Dimension "live-sync" -Message "Live deployed Doctor skill differs from source." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = @($drifted.target) })
-    } elseif ($checked.Count -gt 0) {
-        Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "live-sync" -Severity "healthy" -Dimension "live-sync" -Message "Checked live Doctor skill target matches source." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = @($checked.target) })
+    if (Test-Path -LiteralPath $sourceSkill -PathType Leaf) {
+        $liveTargets = @(
+            Join-Path $env:USERPROFILE "plugins/milestones/skills/project-doctor/SKILL.md"
+            Join-Path $env:USERPROFILE ".agents/skills/project-doctor/SKILL.md"
+        )
+        $liveChecks = @($liveTargets | ForEach-Object { Compare-LiveFile -SourcePath $sourceSkill -TargetPath $_ })
+        $checked = @($liveChecks | Where-Object { $_.checked })
+        $drifted = @($checked | Where-Object { -not $_.equal })
+        if ($drifted.Count -gt 0) {
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "live-sync" -Severity "repairable" -Dimension "live-sync" -Message "Live deployed Doctor skill differs from source." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = @($drifted.target) })
+        } elseif ($checked.Count -gt 0) {
+            Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "live-sync" -Severity "healthy" -Dimension "live-sync" -Message "Checked live Doctor skill target matches source." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = @($checked.target) })
+        } else {
+            Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live deployed Doctor skill target was not inspected." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = $liveTargets })
+        }
     } else {
-        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live deployed Doctor skill target was not inspected." -Artifact "skills/project-doctor/SKILL.md" -Evidence @{ targets = $liveTargets })
+        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live sync comparison skipped because the source Doctor skill file is absent." -Artifact "skills/project-doctor/SKILL.md")
     }
 }
 
@@ -301,7 +314,7 @@ function Invoke-GitHubAwareAudit {
         }
 
         if ([string]$issue.state -eq "CLOSED" -and [string]$mirror.mirror_retention -ne "retain") {
-            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "closed-mirror-lifecycle" -Severity "repairable" -Dimension "closed-mirror-lifecycle" -Message "Closed GitHub issue still has a live local mirror without retention evidence." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url })
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "closed-mirror-lifecycle" -Severity "repairable" -Dimension "closed-mirror-lifecycle" -Message "stale closed issue mirror still exists without retention evidence." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url })
         }
     }
 

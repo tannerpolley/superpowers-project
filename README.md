@@ -21,6 +21,12 @@ This repository is the canonical source. The live Codex install is a deployment 
 - `$project-merge`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
 - `$project-doctor`: audits project, GitHub, migration, and live-sync drift.
 
+## Quick Apply
+
+Quick Apply is the small-work escape hatch after `$project-plan`: it can apply a narrow, low-risk plan directly on local clean synced `main` only after the native `project_quick_apply_approval` question selects `Apply on Main`.
+
+Use the bundled `skills/project-plan/scripts/validate-quick-apply.ps1` gate to require approval, focused verification commands, cleanup hook evidence, and explicit push approval before any push. The issue-backed `$project-issue` and `$project-resolve` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed work, and PR-bound implementation.
+
 ## Canonical Layout
 
 ```text

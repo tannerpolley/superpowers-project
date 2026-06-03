@@ -58,9 +58,12 @@ Check for drift across:
 - specs vs plans
 - plans vs issue mirrors
 - issue mirrors vs GitHub issues
+- closed mirror lifecycle drift
 - issue labels vs label vocabulary
 - issue execution fields vs native `/goal` requirements
 - live plugin install vs source repo, including retired skill directories and active wrappers
+
+Run `scripts/audit-project.ps1 -RepoRoot . -Mode LocalDocs` for a local-docs audit, or `scripts/audit-project.ps1 -RepoRoot . -Mode GitHubAware` when GitHub or fixture evidence is available. The scripted audit reports stale closed issue mirrors as repairable drift unless the mirror is explicitly marked `**Mirror Retention:** Keep`.
 
 ## Goal Execution Checks
 
