@@ -91,6 +91,81 @@ function Get-IssueEvidence {
     Invoke-GhJson -Arguments @("issue", "view", $IssueNumber, "--json", "number,url,state,body,title,closedAt")
 }
 
+function Find-MilestonePage {
+    param([string]$RepoRoot, [string]$MilestoneTitle)
+    if ([string]::IsNullOrWhiteSpace($MilestoneTitle)) { throw "GitHub Milestone is required for closed mirror cleanup" }
+    $milestoneRoot = Join-Path $RepoRoot "docs/superpowers/milestones"
+    if (-not (Test-Path -LiteralPath $milestoneRoot -PathType Container)) { throw "milestone directory is missing" }
+    $matches = @(Get-ChildItem -LiteralPath $milestoneRoot -Filter "*.md" | Where-Object {
+        $text = Get-Content -LiteralPath $_.FullName -Raw
+        $text -match "(?im)^\s*#\s*$([regex]::Escape($MilestoneTitle))\s*$" -or
+        $text -match "(?im)^\s*-\s*Title:\s*``?$([regex]::Escape($MilestoneTitle))``?\s*$"
+    })
+    if ($matches.Count -ne 1) { throw "expected one milestone page for '$MilestoneTitle', found $($matches.Count)" }
+    Get-RelativeRepoPath -RepoRoot $RepoRoot -Path $matches[0].FullName
+}
+
+function Update-MilestoneClosedSummary {
+    param(
+        [string]$RepoRoot,
+        [string]$MilestonePage,
+        [string]$IssueMirror,
+        [string]$IssueUrl,
+        [string]$PrUrl,
+        [string]$ClosedAt
+    )
+    $path = Resolve-RepoFile -RepoRoot $RepoRoot -Path $MilestonePage
+    $text = Get-Content -LiteralPath $path -Raw
+    $mirrorPattern = "(?m)^\s*-\s*``$([regex]::Escape($IssueMirror))``\s*\r?\n?"
+    $text = [regex]::Replace($text, $mirrorPattern, "")
+    $summaryLine = "- [$IssueUrl]($IssueUrl) closed by [$PrUrl]($PrUrl)"
+    if (-not [string]::IsNullOrWhiteSpace($ClosedAt)) { $summaryLine += " on $ClosedAt" }
+    if ($text -notmatch "(?m)^##\s+Closed Issues\s*$") {
+        $text = $text.TrimEnd() + "`n`n## Closed Issues`n`n$summaryLine`n"
+    } elseif (-not $text.Contains($IssueUrl)) {
+        $text = [regex]::Replace($text, "(?m)^##\s+Closed Issues\s*$", "## Closed Issues`n`n$summaryLine", 1)
+    }
+    Set-Content -LiteralPath $path -Value $text -Encoding utf8NoBOM
+}
+
+function Get-MirrorCleanupConfirmation {
+    param([string]$RepoRoot, $Setup, $Pr, $Issue, $ProvidedCleanup)
+    if ($null -ne $ProvidedCleanup) { return $ProvidedCleanup }
+    if ([string]$Issue.state -ne "CLOSED") { return $null }
+    $issueMirror = Normalize-RepoPath ([string]$Setup.issue_mirror)
+    $mirrorPath = Resolve-RepoFile -RepoRoot $RepoRoot -Path $issueMirror
+    if (-not (Test-Path -LiteralPath $mirrorPath -PathType Leaf)) { throw "issue mirror is missing; provide MirrorCleanupJson with deletion evidence" }
+    $mirrorText = Get-Content -LiteralPath $mirrorPath -Raw
+    $retentionMarked = $mirrorText -match '(?im)^\s*\*\*Mirror Retention:\*\*\s*Keep\s*$'
+    $milestoneTitle = Get-FieldValue -Text $mirrorText -Name "GitHub Milestone"
+    $milestonePage = Find-MilestonePage -RepoRoot $RepoRoot -MilestoneTitle $milestoneTitle
+    $issueUrl = if ((Test-Property -Object $Issue -Name "url") -and -not [string]::IsNullOrWhiteSpace([string]$Issue.url)) { [string]$Issue.url } else { [string]$Setup.issue_url }
+    $prUrl = [string]$Pr.url
+    $closedAt = if (Test-Property -Object $Issue -Name "closedAt") { [string]$Issue.closedAt } else { "" }
+    Update-MilestoneClosedSummary -RepoRoot $RepoRoot -MilestonePage $milestonePage -IssueMirror $issueMirror -IssueUrl $issueUrl -PrUrl $prUrl -ClosedAt $closedAt
+    if ($retentionMarked) {
+        return [ordered]@{
+            policy = "retain"
+            issue_mirror = $issueMirror
+            deleted = $false
+            retained = $true
+            retention_reason = "Mirror Retention: Keep"
+            milestone_record = "closed-summary"
+            milestone_summary = [ordered]@{ milestone_page = $milestonePage; issue_url = $issueUrl; pr_url = $prUrl }
+        }
+    }
+    Remove-Item -LiteralPath $mirrorPath -Force
+    [ordered]@{
+        policy = "delete-after-close"
+        issue_mirror = $issueMirror
+        deleted = $true
+        retained = $false
+        retention_reason = ""
+        milestone_record = "closed-summary"
+        milestone_summary = [ordered]@{ milestone_page = $milestonePage; issue_url = $issueUrl; pr_url = $prUrl }
+    }
+}
+
 try {
     $root = Resolve-RepoRoot -RepoRoot $RepoRoot
     $setup = Read-JsonInput -Path $SetupLedgerPath -Name "setup ledger"
@@ -98,7 +173,8 @@ try {
     $issue = Get-IssueEvidence
     $mergeDecision = Read-JsonInput -Json $MergeDecisionJson -Name "merge decision"
     $resolveGoal = Read-JsonInput -Json $ResolveGoalCompletionProofJson -Name "resolve goal completion proof"
-    $mirrorCleanup = if ([string]::IsNullOrWhiteSpace($MirrorCleanupJson)) { $null } else { Read-JsonInput -Json $MirrorCleanupJson -Name "mirror cleanup proof" }
+    $providedMirrorCleanup = if ([string]::IsNullOrWhiteSpace($MirrorCleanupJson)) { $null } else { Read-JsonInput -Json $MirrorCleanupJson -Name "mirror cleanup proof" }
+    $mirrorCleanup = Get-MirrorCleanupConfirmation -RepoRoot $root -Setup $setup -Pr $pr -Issue $issue -ProvidedCleanup $providedMirrorCleanup
     $branch = Normalize-RepoPath ([string]$setup.branch)
     $localBranch = Invoke-GitCapture -RepoRoot $root -Arguments @("show-ref", "--verify", "--quiet", "refs/heads/$branch")
     $remoteBranch = Invoke-GitCapture -RepoRoot $root -Arguments @("ls-remote", "--heads", "origin", $branch)
@@ -160,7 +236,7 @@ try {
             status_output = [string]$status.stdout
         }
         resolve_goal_completion_proof = $resolveGoal
-        mirror_cleanup = $mirrorCleanup
+        mirror_cleanup_confirmation = $mirrorCleanup
     }
     $ledgerPath = New-OutputPath -OutputDir $OutputDir
     $ledger | ConvertTo-Json -Depth 32 | Set-Content -LiteralPath $ledgerPath -Encoding utf8NoBOM

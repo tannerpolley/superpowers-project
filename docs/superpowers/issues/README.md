@@ -41,3 +41,19 @@ New issue mirrors should include:
 ```
 
 These fields tell `$project-merge` who owns final integration, when native approval is required, and what cleanup evidence must exist after merge.
+
+## Closed Mirror Lifecycle
+
+Issue mirrors are execution inputs, not the durable historical record. While an issue is open, its mirror stays under `docs/superpowers/issues/` so `$project-resolve`, `$project-merge`, and `$project-doctor` can audit source plan linkage, acceptance criteria, proof oracles, and native goal setup.
+
+After `$project-merge` verifies that the linked GitHub issue is closed, the closed mirror is deleted by default. The closeout ledger must include structured mirror cleanup confirmation showing the mirror path, deletion evidence, and milestone `closed-summary` evidence.
+
+Use this marker only for unusual mirrors that must remain as historical artifacts:
+
+```markdown
+**Mirror Retention:** Keep
+```
+
+Retained mirrors must include a retention reason in closeout evidence. `$project-doctor` reports closed mirrors without this marker as repairable drift.
+
+Milestone pages keep durable closed issue history. When a mirror is deleted, the milestone page should remove the active mirror link and add a concise closed summary with both the GitHub issue link and the PR link that closed it.

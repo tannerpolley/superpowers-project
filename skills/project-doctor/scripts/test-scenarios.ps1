@@ -6,6 +6,7 @@ $scriptRoot = $PSScriptRoot
 $skillRoot = Split-Path $scriptRoot -Parent
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
+$auditScript = Join-Path $scriptRoot "audit-project.ps1"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -22,6 +23,28 @@ function Assert-Contains {
     if (-not $Text.Contains($Needle)) { throw $Message }
 }
 
+function Invoke-JsonScript {
+    param([string]$ScriptPath, [string[]]$Arguments)
+    $output = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $ScriptPath @Arguments 2>&1
+    $raw = ($output | Out-String).Trim()
+    try {
+        if ([string]::IsNullOrWhiteSpace($raw)) { throw "empty output" }
+        return ($raw | ConvertFrom-Json)
+    } catch {
+        return [pscustomobject]@{ ok = $false; phase = "audit-project"; reason = $raw }
+    }
+}
+
+function New-TestRepo {
+    $repo = Join-Path ([IO.Path]::GetTempPath()) ("project-doctor-audit-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path (Join-Path $repo "docs/superpowers/issues") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $repo "docs/superpowers/milestones") -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/PROJECT_CONTEXT.md") -Value "# Project Context`n" -Encoding utf8NoBOM
+    Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth.md") -Value "# M1 - Source Of Truth`n`n## Related Issues`n`n- ``docs/superpowers/issues/12-sample.md```n" -Encoding utf8NoBOM
+    Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/12-sample.md") -Value "# Sample`n`n**GitHub Issue:** https://github.com/example/repo/issues/12`n**GitHub Milestone:** M1 - Source Of Truth`n**Source Plan:** docs/superpowers/plans/2026-06-02-sample-plan.md`n**Classification:** AFK`n`n## Acceptance Criteria`n`n- [x] Sample issue is resolved.`n" -Encoding utf8NoBOM
+    $repo
+}
+
 $scenarios = @(
     Invoke-Scenario "skill frontmatter is valid" {
         if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
@@ -33,6 +56,7 @@ $scenarios = @(
     Invoke-Scenario "audit surface contract is present" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         foreach ($needle in @(
+            "audit-project.ps1",
             "docs/superpowers/PROJECT_CONTEXT.md",
             "docs/superpowers/milestones",
             "docs/superpowers/specs",
@@ -40,6 +64,7 @@ $scenarios = @(
             "docs/superpowers/issues",
             "GitHub issue mirror fields",
             "GitHub milestone linkage",
+            "closed mirror lifecycle drift",
             "label vocabulary",
             "retired docs/milestones canonical usage",
             "live plugin sync drift"
@@ -79,6 +104,21 @@ $scenarios = @(
             "Stop"
         )) {
             Assert-Contains $text $needle "missing continuation gate text: $needle"
+        }
+    }
+    Invoke-Scenario "audit-project reports stale closed mirrors as repairable drift" {
+        if (-not (Test-Path -LiteralPath $auditScript -PathType Leaf)) { throw "missing audit-project.ps1" }
+        $repo = New-TestRepo
+        try {
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            @{ issues = @(@{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "CLOSED"; labels = @("status:done"); milestone = @{ title = "M1 - Source Of Truth" } }) } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $issueFixture -Encoding utf8NoBOM
+            $result = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
+            if (-not $result.ok) { throw $result.reason }
+            $repairableText = $result.findings.repairable | ConvertTo-Json -Depth 12 -Compress
+            Assert-Contains $repairableText "stale closed issue mirror" "closed mirror was not reported as repairable drift"
+            Assert-Contains $repairableText "docs/superpowers/issues/12-sample.md" "repairable drift did not name the stale mirror"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
         }
     }
 )
