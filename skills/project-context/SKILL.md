@@ -81,3 +81,24 @@ Before reporting setup or repair complete, verify:
 - GitHub tracker config names the repository when issue mirrors or milestones are used.
 - `/goal` execution criteria are present for issue work that can be assigned to an agent.
 - Superpowers Project skill names are listed where agents will discover them.
+
+## Native Continuation Gate
+
+After creating, auditing, or repairing project context, summarize the context result in chat before asking the continuation question. The summary must name changed or verified artifacts, unresolved roadmap or tracker decisions, and the recommended next workflow.
+
+Ask a native continuation question with `request_user_input` when callable.
+
+Question id: `project_context_next_step`
+
+Prompt: `How should I continue from this project context work?`
+
+Options:
+
+- `Project Brainstorm`: start `$project-brainstorm` for a spec, PRD, architecture idea, or product direction.
+- `Project Plan`: start `$project-plan` from an approved spec or issue mirror.
+- `Project Issue`: start `$project-issue` for vertical slices and GitHub issue mirrors.
+- `Project Doctor`: start `$project-doctor` for drift audit or repair planning.
+- `Review First`: stop for user review before routing.
+- `Stop`: stop after the project context closeout.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

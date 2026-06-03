@@ -141,6 +141,13 @@ try {
     }
     Add-Check -Name "native question debug mode" -Ok $true -Reason "passed"
 
+    Assert-RelativePathExists -RelativePath "scripts/validate-skill-script-contract.ps1" -Kind File
+    Assert-TextContains -RelativePath "scripts/validate.ps1" -Needles @(
+        "validate-skill-script-contract.ps1",
+        "skill script parameter contract"
+    )
+    Add-Check -Name "skill script parameter contract wiring" -Ok $true -Reason "passed"
+
     $issueFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs/superpowers/issues") -Filter "*.md" -File | Where-Object { $_.Name -ne "README.md" })
     if ($issueFiles.Count -lt 1) { throw "docs/superpowers/issues must contain at least one issue mirror for smoke validation" }
     $validator = Join-Path $repoRoot "skills/project-issue/scripts/validate-issue-mirror.ps1"

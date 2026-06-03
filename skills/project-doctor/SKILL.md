@@ -76,3 +76,23 @@ A useful report includes:
 - migration report
 - proposed repairs, if any
 - validation commands to run after approved repairs
+
+## Native Continuation Gate
+
+After the audit report or approved repair proof is ready, summarize the Doctor result in chat before asking the continuation question. The summary must name blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts, and recommended next route.
+
+Ask a native continuation question with `request_user_input` when callable.
+
+Question id: `project_doctor_next_step`
+
+Prompt: `How should I continue from this project audit?`
+
+Options:
+
+- `Apply Repair`: apply an approved, exact repair plan.
+- `Create Planning Spec`: start `$project-brainstorm` or `$project-plan` for a larger repair design.
+- `Run Audit Again`: rerun `$project-doctor` after changes or new GitHub evidence.
+- `Review First`: stop for user review before mutation.
+- `Stop`: stop after the Doctor closeout.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

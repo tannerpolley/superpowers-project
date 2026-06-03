@@ -35,6 +35,14 @@ Use Superpowers skills for method: `superpowers:brainstorming`, `superpowers:wri
 
 At major handoffs, use native continuation questions and treat the selected answer as executable routing. The agent should start the selected next skill in the same turn when possible instead of ending with a prompt suggestion.
 
+## Native Continuation Gate
+
+Every Superpowers Project skill must summarize its artifact or result in chat before a closeout continuation question. The summary should name created or changed artifacts, validation or proof status, unresolved decisions, and the recommended next route.
+
+When `request_user_input` is callable, ask the skill-specific native continuation question and include `Review First` or another review route plus a `Stop` option. Treat selected native answers as executable routing: start the selected next skill in the same turn when tools and state allow it.
+
+If routing cannot continue because tools, permissions, GitHub state, or user approval are missing, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests and never counts as live approval.
+
 ## Native User Input
 
 When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for one to three short, decision-oriented questions. Batch independent questions together. Ask dependent questions one step at a time after the prior answer changes the branch.

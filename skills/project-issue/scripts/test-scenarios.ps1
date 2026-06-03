@@ -88,6 +88,26 @@ $scenarios = @(
         Assert-Contains $metadata "project-issue:" "missing metadata key"
         Assert-Contains $metadata "docs/superpowers/issues" "missing metadata issue path"
         Assert-Contains $metadata "vertical slices" "missing metadata slice policy"
+        foreach ($needle in @("summarize", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
+            Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
+        }
+    }
+    Invoke-Scenario "native continuation gate is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "## Native Continuation Gate",
+            "summarize",
+            "Review First",
+            "stop",
+            "request_user_input",
+            "start the selected next skill",
+            "project_issue_next_step",
+            "Resolve First Ready",
+            "Resolve Selected",
+            "Stop"
+        )) {
+            Assert-Contains $text $needle "missing continuation gate text: $needle"
+        }
     }
     Invoke-Scenario "old issue creation target is retired" {
         $text = Get-Content -LiteralPath $skillFile -Raw
