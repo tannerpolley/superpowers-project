@@ -10,6 +10,8 @@ docs/superpowers/issues/<issue-number>-<slug>.md
 
 Before GitHub publication, use a slug-only file with `Pre-Publication: true`. After publication, rename the file to include the GitHub issue number and update the `GitHub Issue` field.
 
+Issue mirrors are flat canonical artifacts. Do not create canonical mirrors under `docs/superpowers/milestones/<milestone>/issues`. Milestone pages are index views that link back to this directory.
+
 ## Workflow Metadata
 
 New issue mirrors should include:

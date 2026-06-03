@@ -47,6 +47,22 @@ $scenarios = @(
             Assert-Contains $text $needle "missing doctor audit contract: $needle"
         }
     }
+    Invoke-Scenario "flat artifact root drift contract is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "flat canonical roots",
+            "spec -> plan -> issue",
+            "docs/superpowers/specs",
+            "docs/superpowers/plans",
+            "docs/superpowers/issues",
+            "Milestone pages are index views",
+            "frontmatter plus milestone indexes",
+            "nested canonical milestone artifact folders are drift",
+            "generated index/view output"
+        )) {
+            Assert-Contains $text $needle "missing flat artifact root doctor contract: $needle"
+        }
+    }
     Invoke-Scenario "report-first and drift categories are present" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         foreach ($needle in @("report-first", "no mutation without user approval", "blocking", "repairable", "informational", "healthy", "migration report", "goal execution checks")) {
@@ -59,6 +75,8 @@ $scenarios = @(
         Assert-Contains $metadata "project-doctor:" "missing metadata key"
         Assert-Contains $metadata "docs/superpowers/PROJECT_CONTEXT.md" "missing metadata project context path"
         Assert-Contains $metadata "live plugin sync drift" "missing metadata live sync drift"
+        Assert-Contains $metadata "nested canonical milestone artifact folders are drift" "missing metadata nested artifact drift"
+        Assert-Contains $metadata "generated index/view output" "missing metadata generated view exception"
         foreach ($needle in @("summarize", "project_doctor_next_step", "Apply Repair", "Create Planning Spec", "Run Audit Again", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }

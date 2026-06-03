@@ -59,6 +59,10 @@ Publish issues in dependency order so blockers get real GitHub issue identifiers
 
 Write issue mirrors to `docs/superpowers/issues/<issue-number>-<slug>.md` after GitHub publication, or `docs/superpowers/issues/<slug>.md` before publication.
 
+Issue mirrors live in the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: specs stay loose, plans become milestone-aware execution design, and issue mirrors are the official implementation records. Do not create canonical issue mirrors under `docs/superpowers/milestones/<milestone>/issues`.
+
+Published issue mirrors include the GitHub issue number in the filename, using `docs/superpowers/issues/<issue-number>-<slug>.md`. Pre-publication drafts may omit the number until GitHub returns one. Milestone pages are index views: they link to flat canonical issues instead of owning copies, and milestone/category views are represented through frontmatter plus milestone indexes. Treat nested canonical milestone artifact folders are drift.
+
 Each mirror must include:
 
 - GitHub Issue

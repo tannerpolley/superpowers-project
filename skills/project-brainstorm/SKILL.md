@@ -56,7 +56,11 @@ Use the smallest supporting set:
 
 ## Output Contract
 
-Save approved specs to `docs/superpowers/specs/YYYY-MM-DD-<slug>-design.md` unless the user explicitly chooses a different repo-local destination.
+Save approved specs to `docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md` unless the user explicitly chooses a different repo-local Superpowers Project destination. A `-design`, `-prd`, or similar suffix is allowed when it clarifies the artifact type, but the date and slug are the required filename parts.
+
+Project Brainstorm writes loose specs in the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: brainstorming produces loose specs, `$project-plan` turns approved source material into milestone-aware execution design, and `$project-issue` creates official implementation records. For loose specs, milestone identity is optional and only used when naturally helpful; do not require GitHub issue metadata, source plans, implementation branches, proof oracles, or issue-ready execution metadata.
+
+Milestone pages are index views. They should link to flat canonical specs, plans, and issues rather than owning nested copies. Represent milestone/category views through frontmatter plus milestone indexes. If a brainstorm finds `docs/superpowers/milestones/<milestone>/specs`, `plans`, or `issues` being treated as canonical, report that nested canonical milestone artifact folders are drift and route to `$project-doctor` or `$project-plan` for migration guidance.
 
 A saved spec should include:
 
@@ -64,7 +68,7 @@ A saved spec should include:
 - user decisions and open questions
 - recommended approach with tradeoffs
 - non-goals
-- milestone linkage from `docs/superpowers/milestones`
+- optional milestone linkage from `docs/superpowers/milestones`
 - GitHub issue or PRD linkage when already known
 - proof oracle candidates for later planning
 
