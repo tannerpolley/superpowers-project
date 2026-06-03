@@ -125,6 +125,23 @@ $scenarios = @(
             Assert-Contains $text $needle "missing project-plan contract: $needle"
         }
     }
+    Invoke-Scenario "planning grill gate is mandatory" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "## Planning Grill Gate",
+            "Before saving any new plan",
+            "Interview me relentlessly about every aspect of this plan",
+            "native UI hard gate",
+            "Do not save the plan until material decisions have been answered",
+            "If the planning agent realizes it skipped the grill after drafting a plan",
+            "revise the saved plan before presenting it as ready",
+            "branch strategy",
+            "publish behavior",
+            "live mutation"
+        )) {
+            Assert-Contains $text $needle "missing planning grill gate contract: $needle"
+        }
+    }
     Invoke-Scenario "flat canonical plan root contract is present" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         foreach ($needle in @(
