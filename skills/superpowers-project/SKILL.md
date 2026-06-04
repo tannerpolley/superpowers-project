@@ -20,12 +20,15 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 - Implementation planning from a spec, issue mirror, or approved direct request: `$project-plan`
 - Quick Apply small-work escape hatch after an approved `$project-plan`: local-main execution on clean synced `main` only after `project_quick_apply_approval` and `validate-quick-apply.ps1`.
 - Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project-issue`
+- External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$project-issue`
 - One ready issue execution in the current thread with native `/goal` proof: `$project-resolve`
 - Worker-thread implementation of one ready issue: `$project-orchestrate`
 - PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project-merge`
 - Drift audit, migration, label review, milestone review, or live sync review: `$project-doctor`
 
 The issue-backed `$project-issue` plus `$project-resolve` or `$project-orchestrate` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed implementation, and anything expected to end in a PR.
+
+External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$project-issue` hydration first and block execution until mirror validation passes.
 
 When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route` with `Project Resolve`, `Project Orchestrate`, and `Review First` options. Route direct current-thread implementation to `$project-resolve`; route delegated worker worktree implementation to `$project-orchestrate`.
 

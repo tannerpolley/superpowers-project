@@ -8,6 +8,7 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $skillRoot "..\..")).Path
 $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
 $validatorFile = Join-Path $scriptRoot "validate-issue-mirror.ps1"
+$hydrationFile = Join-Path $scriptRoot "hydrate-external-issue.ps1"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -37,6 +38,68 @@ function Run-Validator {
     $output | ConvertFrom-Json
 }
 
+function Run-Hydration {
+    param(
+        [string]$RepoRoot,
+        [string]$IssueUrl,
+        [string]$IssueBodyPath
+    )
+    $output = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $hydrationFile -RepoRoot $RepoRoot -IssueUrl $IssueUrl -IssueBodyPath $IssueBodyPath
+    if ($LASTEXITCODE -ne 0) { throw ($output | Out-String) }
+    $output | ConvertFrom-Json
+}
+
+function New-ExternalIssueBody {
+    param([string]$Path, [string]$SourcePlan)
+    @"
+# External Hydration
+
+**GitHub Milestone:** M1 - Source Of Truth
+**Issue Type:** feature
+**Source Spec:** docs/superpowers/specs/external-hydration-design.md
+**Source Plan:** $SourcePlan
+**Classification:** AFK
+**Labels:** type:feature, status:ready
+**Goal Command:** /goal Hydrate external GitHub issue before worker execution.
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** Source plan packets
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
+
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
+## What To Build
+
+Hydrate an externally created GitHub issue into local Superpowers Project artifacts.
+
+## Acceptance Criteria
+
+- [ ] External issue body is preserved in a local mirror
+- [ ] Source plan exists before execution routing
+
+## Blocked by
+
+- None
+
+## Non-goals
+
+- Do not publish draft project items
+
+## Proof Oracle
+
+- ``pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1``
+"@ | Set-Content -LiteralPath $Path -Encoding utf8NoBOM
+}
+
 $scenarios = @(
     Invoke-Scenario "skill frontmatter is valid" {
         if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
@@ -60,7 +123,10 @@ $scenarios = @(
             "GitHub Milestone",
             "Goal Command",
             "docs/agents/triage-labels.md",
-            "configured tracker vocabulary"
+            "configured tracker vocabulary",
+            "External GitHub Issue Hydration",
+            "external GitHub issues are intake",
+            "hydrate-external-issue.ps1"
         )) {
             Assert-Contains $text $needle "missing project-issue contract: $needle"
         }
@@ -106,6 +172,9 @@ $scenarios = @(
         Assert-Contains $metadata "issue mirrors include the GitHub issue number" "missing metadata issue filename policy"
         foreach ($needle in @("summarize", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
+        }
+        foreach ($needle in @("external GitHub issue hydration", "hydrate-external-issue.ps1", "Source Plan: TBD", "local mirror and source plan")) {
+            Assert-Contains $metadata $needle "missing metadata hydration route: $needle"
         }
     }
     Invoke-Scenario "native continuation gate is present" {
@@ -205,6 +274,108 @@ $scenarios = @(
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
             if ($result.ok -or $result.reason -notmatch "repro|feedback") { throw "expected repro or feedback loop failure" }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "external GitHub issue with unresolved Source Plan is intake only" {
+        if (-not (Test-Path -LiteralPath $hydrationFile -PathType Leaf)) { throw "missing hydrate-external-issue.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("project-issue-hydration-intake-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path $root -Force | Out-Null
+            $bodyPath = Join-Path $root "issue-body.md"
+            New-ExternalIssueBody -Path $bodyPath -SourcePlan "TBD"
+            $result = Run-Hydration -RepoRoot $root -IssueUrl "https://github.com/example/repo/issues/31" -IssueBodyPath $bodyPath
+            if (-not $result.ok) { throw $result.reason }
+            if ($result.ready_for_execution -ne $false) { throw "unresolved external issue must be intake before validation" }
+            if (-not $result.created_source_plan) { throw "hydration must create a source plan for unresolved source plan input" }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "external GitHub issue body hydrates local mirror under docs/superpowers/issues" {
+        if (-not (Test-Path -LiteralPath $hydrationFile -PathType Leaf)) { throw "missing hydrate-external-issue.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("project-issue-hydration-mirror-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path $root -Force | Out-Null
+            $bodyPath = Join-Path $root "issue-body.md"
+            New-ExternalIssueBody -Path $bodyPath -SourcePlan "TBD"
+            $result = Run-Hydration -RepoRoot $root -IssueUrl "https://github.com/example/repo/issues/31" -IssueBodyPath $bodyPath
+            if (-not $result.ok) { throw $result.reason }
+            if ($result.issue_mirror -ne "docs/superpowers/issues/31-external-hydration.md") { throw "unexpected issue mirror path: $($result.issue_mirror)" }
+            if (-not (Test-Path -LiteralPath (Join-Path $root $result.issue_mirror) -PathType Leaf)) { throw "issue mirror was not written" }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "hydration preserves issue URL, milestone, labels, acceptance criteria, proof oracle, and goal command" {
+        if (-not (Test-Path -LiteralPath $hydrationFile -PathType Leaf)) { throw "missing hydrate-external-issue.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("project-issue-hydration-fields-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path $root -Force | Out-Null
+            $bodyPath = Join-Path $root "issue-body.md"
+            New-ExternalIssueBody -Path $bodyPath -SourcePlan "TBD"
+            $result = Run-Hydration -RepoRoot $root -IssueUrl "https://github.com/example/repo/issues/31" -IssueBodyPath $bodyPath
+            $mirror = Get-Content -LiteralPath (Join-Path $root $result.issue_mirror) -Raw
+            foreach ($needle in @(
+                "**GitHub Issue:** https://github.com/example/repo/issues/31",
+                "**GitHub Milestone:** M1 - Source Of Truth",
+                "**Labels:** type:feature, status:ready",
+                "**Goal Command:** /goal Hydrate external GitHub issue before worker execution.",
+                "- [ ] External issue body is preserved in a local mirror",
+                "- ``pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1``"
+            )) {
+                Assert-Contains $mirror $needle "hydrated mirror did not preserve: $needle"
+            }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "hydration creates or links a source plan before execution routing" {
+        if (-not (Test-Path -LiteralPath $hydrationFile -PathType Leaf)) { throw "missing hydrate-external-issue.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("project-issue-hydration-plan-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path $root -Force | Out-Null
+            $bodyPath = Join-Path $root "issue-body.md"
+            New-ExternalIssueBody -Path $bodyPath -SourcePlan "docs/superpowers/plans/custom-external-hydration-plan.md"
+            $result = Run-Hydration -RepoRoot $root -IssueUrl "https://github.com/example/repo/issues/31" -IssueBodyPath $bodyPath
+            if (-not $result.ok) { throw $result.reason }
+            if ($result.source_plan -ne "docs/superpowers/plans/custom-external-hydration-plan.md") { throw "source plan linkage was not preserved" }
+            if (-not (Test-Path -LiteralPath (Join-Path $root $result.source_plan) -PathType Leaf)) { throw "linked source plan was not created" }
+            $validation = Run-Validator -RepoRoot $root -IssuePath $result.issue_mirror -MilestoneRequired
+            if (-not $validation.ok) { throw $validation.reason }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "execution routing is blocked until local mirror and source plan exist" {
+        if (-not (Test-Path -LiteralPath $hydrationFile -PathType Leaf)) { throw "missing hydrate-external-issue.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("project-issue-hydration-block-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\issues") -Force | Out-Null
+            $unreadyIssue = Join-Path $root "docs\superpowers\issues\31-external-hydration.md"
+            @"
+# External Hydration
+
+**GitHub Issue:** https://github.com/example/repo/issues/31
+**GitHub Milestone:** M1 - Source Of Truth
+**Issue Type:** feature
+**Source Plan:** docs/superpowers/plans/missing-plan.md
+**Classification:** AFK
+**Goal Command:** /goal Hydrate external GitHub issue before worker execution.
+
+## Acceptance Criteria
+
+- [ ] Source plan exists before execution routing
+"@ | Set-Content -LiteralPath $unreadyIssue -Encoding utf8NoBOM
+            $validation = Run-Validator -RepoRoot $root -IssuePath $unreadyIssue -MilestoneRequired
+            if ($validation.ok -or $validation.reason -notmatch "source spec or source plan must exist") { throw "expected mirror validation to block execution routing" }
+
+            $bodyPath = Join-Path $root "issue-body.md"
+            New-ExternalIssueBody -Path $bodyPath -SourcePlan "TBD"
+            $result = Run-Hydration -RepoRoot $root -IssueUrl "https://github.com/example/repo/issues/31" -IssueBodyPath $bodyPath
+            $validation = Run-Validator -RepoRoot $root -IssuePath $result.issue_mirror -MilestoneRequired
+            if (-not $validation.ok) { throw $validation.reason }
         } finally {
             if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
         }

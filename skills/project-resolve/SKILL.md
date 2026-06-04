@@ -28,6 +28,7 @@ Before implementation, block or route to `$project-doctor` when an issue mirror,
 Stop immediately when any of these are true:
 
 - No single GitHub issue or issue mirror is named.
+- The target is only a raw GitHub issue URL, an external intake issue, or a mirror with `Source Plan: TBD`.
 - The issue mirror is outside `docs/superpowers/issues`.
 - The issue mirror has no linked source plan under `docs/superpowers/plans`.
 - The linked source plan does not exist.
@@ -58,6 +59,8 @@ Follow this order exactly:
 ## Route Check
 
 `$project-resolve` is the direct current-thread route. If the user wants a worker thread, use `$project-orchestrate`.
+
+If the user gives only a GitHub issue URL, no local mirror exists, or the mirror has an unresolved source plan, use `$project-issue` hydration first. `$project-resolve` starts only after the local mirror and source plan exist and mirror validation passes.
 
 When the requested route is ambiguous and `request_user_input` is callable, the router should ask native question `project_issue_resolution_route` before starting either skill. If `$project-resolve` receives an execution decision whose selected mode is `orchestrated-worker`, stop immediately with the reason: `orchestrated worker execution is owned by project-orchestrate; use project-resolve only for direct current-thread execution`.
 

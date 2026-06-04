@@ -21,6 +21,7 @@ Stop before creating a worker thread when any of these are true:
 
 - The issue mirror is missing or outside `docs/superpowers/issues`.
 - The source plan is missing.
+- The target is only a raw GitHub issue URL, an external intake issue, or a mirror with `Source Plan: TBD`.
 - The issue mirror is not ready for agent work.
 - Native goal activation proof is missing in the orchestrator thread when the run is goal-backed.
 - Worker identity cannot be derived from one canonical issue number and slug.
@@ -76,7 +77,7 @@ The worker must not merge the PR. The worker finishes by pushing the derived bra
 
 ## External GitHub Issue Hydration
 
-If the user gives only a GitHub issue URL and no local mirror exists, hydrate the issue through `$project-issue` before orchestration. Do not create a worker from raw GitHub issue text without a local mirror and source plan.
+If the user gives only a GitHub issue URL, no local mirror exists, or the local mirror still has an unresolved source plan, hydrate the issue through `$project-issue` before orchestration. Do not create a worker from raw GitHub issue text without a local mirror, source plan, and passing mirror validation.
 
 ## Native Continuation Gate
 

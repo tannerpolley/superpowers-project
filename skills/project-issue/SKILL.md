@@ -172,6 +172,27 @@ Validation must prove:
 - workflow metadata is present or reported as advisory migration drift
 - Project Merge metadata is present and valid
 
+## External GitHub Issue Hydration
+
+External GitHub issues are intake, not ready execution inputs, until they have local mirrors and source artifacts. In routing checks, external GitHub issues are intake until the local mirror and source plan validation passes. Use `scripts/hydrate-external-issue.ps1` when a GitHub issue exists before `docs/superpowers/issues/<issue-number>-<slug>.md` or when the issue body contains `Source Plan: TBD`.
+
+Protocol:
+
+1. Read the GitHub issue body from `IssueBodyPath` for fixture work or from `gh issue view <url>` for live tracker work.
+2. Create or update `docs/superpowers/issues/<issue-number>-<slug>.md`.
+3. Preserve the issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command.
+4. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
+5. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
+6. Only then route to `$project-resolve` or `$project-orchestrate`.
+
+Hydration may create a source plan and pass mirror validation in the same command, but the original GitHub issue remains intake until the local mirror and source plan exist and validation has passed. Do not hand raw GitHub issue text to execution skills.
+
+Script contract:
+
+```powershell
+scripts/hydrate-external-issue.ps1 -RepoRoot . -IssueUrl <github-issue-url> [-IssueBodyPath <body.md>] [-IssueTitle <title>] [-OutputPlanSlug <slug>]
+```
+
 ## Execution Boundary
 
 This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$project-resolve`.
