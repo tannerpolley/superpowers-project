@@ -37,7 +37,7 @@ try {
     Add-Check -Name "target skill set" -Ok $true -Reason "passed"
 
     $manifest = Get-Content -LiteralPath (Join-Path $repoRoot ".codex-plugin/plugin.json") -Raw | ConvertFrom-Json
-    if ([string]$manifest.name -ne "project") { throw "plugin manifest name must be project" }
+    if ([string]$manifest.name -ne "superpowers-project") { throw "plugin manifest name must be superpowers-project" }
     if ([string]$manifest.interface.displayName -ne "Superpowers Project") { throw "display name must remain Superpowers Project" }
     Add-Check -Name "plugin namespace" -Ok $true -Reason "passed"
 
@@ -49,7 +49,7 @@ try {
     Add-Check -Name "frontmatter names" -Ok $true -Reason "passed"
 
     $readme = Get-Content -LiteralPath (Join-Path $repoRoot "README.md") -Raw
-    foreach ($needle in @('$project:initiate-workflow', '$project:setup-project', '$project:write-plan', '$project:create-issues', '$project:resolve-issue', '$project:orchestrate-issues', '$project:merge-changes', '$project:audit-project')) {
+    foreach ($needle in @('$superpowers-project:initiate-workflow', '$superpowers-project:setup-project', '$superpowers-project:write-plan', '$superpowers-project:create-issues', '$superpowers-project:resolve-issue', '$superpowers-project:orchestrate-issues', '$superpowers-project:merge-changes', '$superpowers-project:audit-project')) {
         Assert-Contains -Text $readme -Needle $needle -Reason "README missing migrated prompt: $needle"
     }
     Add-Check -Name "README prompt surface" -Ok $true -Reason "passed"
@@ -68,5 +68,4 @@ try {
     [pscustomobject]@{ ok = $false; phase = "project-namespace-migration"; reason = $_.Exception.Message; checks = $checks } | ConvertTo-Json -Depth 8
     exit 1
 }
-
 

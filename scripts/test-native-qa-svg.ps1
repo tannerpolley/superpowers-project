@@ -104,7 +104,7 @@ $readme = Get-Content -LiteralPath $readmePath -Raw
 Add-Check $checks "README references SVG" ($readme.Contains("![Native Q&A main workflow flowchart]($svgRelativePath)")) "README must embed $svgRelativePath"
 Add-Check $checks "README references Mermaid companion" ($readme.Contains("[Native Q&A main flow Mermaid]($mermaidRelativePath)")) "README must link $mermaidRelativePath"
 Add-Check $checks "README archived Mermaid removed" (-not $readme.Contains("Archived full setup, Doctor, and router flow")) "README must not keep the archived full Mermaid flowchart"
-Add-Check $checks "README lists implement-plan skill" ($readme.Contains('$project:implement-plan')) "README must list the non-issue implement route"
+Add-Check $checks "README lists implement-plan skill" ($readme.Contains('$superpowers-project:implement-plan')) "README must list the non-issue implement route"
 Add-Check $checks "README omits removed Quick Apply path" (-not $readme.Contains("Quick Apply") -and -not $readme.Contains("project_quick_apply_approval")) "README must route direct plan execution through Implement Plan, not Quick Apply"
 Add-Check $checks "SVG exists" (Test-Path -LiteralPath $svgPath -PathType Leaf) "missing SVG: $svgPath"
 Add-Check $checks "Mermaid companion exists" (Test-Path -LiteralPath $mermaidPath -PathType Leaf) "missing Mermaid companion: $mermaidPath"

@@ -27,11 +27,11 @@ Require one of these inputs before planning:
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before planning. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before planning. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
 
 Auto Mode may choose the recommended planning route and record defaults for scope, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, and live mutation choices only when the source spec and repo evidence make the choice inside the ledger policy. Carry the Auto Mode authorization ledger into the plan intake/source evidence. If a required planning decision is outside the recorded defaults policy, proof is missing, validation fails, or the source spec is not under `docs/superpowers/specs`, stop outside policy and do not save a ready plan.
 
-If the request is still an idea, naming choice, product direction, architecture direction, scope boundary, or other unresolved brainstorming decision, route back to `$project:brainstorm-spec` before writing an implementation plan.
+If the request is still an idea, naming choice, product direction, architecture direction, scope boundary, or other unresolved brainstorming decision, route back to `$superpowers-project:brainstorm-spec` before writing an implementation plan.
 
 ## Planning Grill Gate
 
@@ -57,7 +57,7 @@ Save plans to `docs/superpowers/plans/YYYY-MM-DD-<slug>-plan.md` unless the user
 
 When an issue mirror already exists, include linkage to `docs/superpowers/issues` in the plan header or intake section and keep the plan aligned with the issue acceptance checklist.
 
-Plans are part of the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: plans link one or more loose specs or a raw approved idea, organize implementation-facing work, assign milestone/package ownership when that ownership matters, and prepare work for `$project:create-issues`. Keep canonical plans in `docs/superpowers/plans`; never place canonical plans under `docs/superpowers/milestones/<milestone>/plans`.
+Plans are part of the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: plans link one or more loose specs or a raw approved idea, organize implementation-facing work, assign milestone/package ownership when that ownership matters, and prepare work for `$superpowers-project:create-issues`. Keep canonical plans in `docs/superpowers/plans`; never place canonical plans under `docs/superpowers/milestones/<milestone>/plans`.
 
 Plan filenames must include creation date and slug. For implementation-facing work, plans include creation date and milestone identity where applicable, using a shape such as `docs/superpowers/plans/<yyyy-mm-dd>-<milestone-or-category>-<slug>-plan.md`. If no milestone identity is meaningful, use `docs/superpowers/plans/<yyyy-mm-dd>-<slug>-plan.md`.
 
@@ -157,8 +157,8 @@ Prompt: `Which work artifact should follow this plan?`
 
 Options:
 
-- Down: `Create Issue`: Project Issue First; continue to `$project:create-issues` using the saved plan path.
-- Left: `Plan Implementation`: Project Implement; continue to `$project:implement-plan` using the saved plan path without creating issue mirrors.
+- Down: `Create Issue`: Project Issue First; continue to `$superpowers-project:create-issues` using the saved plan path.
+- Left: `Plan Implementation`: Project Implement; continue to `$superpowers-project:implement-plan` using the saved plan path without creating issue mirrors.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Create Issue` or `Project Issue First`, ask:
@@ -195,7 +195,7 @@ Prompt: `Which plan implementation route should be prepared?`
 
 Options:
 
-- Down: `Implement Recent Plan`: Project Implement; continue to `$project:implement-plan` using the recently created plan path.
+- Down: `Implement Recent Plan`: Project Implement; continue to `$superpowers-project:implement-plan` using the recently created plan path.
 - Left: `Implement Different Plan`: ask for the exact plan path, then prepare that plan for implementation.
 - Right: `Stop`: break the continuation loop.
 
@@ -207,8 +207,8 @@ Prompt: `Which existing execution route should I use?`
 
 Options:
 
-- Down: `Resolve Issue`: start `$project:resolve-issue` for an existing ready issue mirror.
-- Left: `Orchestrate Issues`: start `$project:orchestrate-issues` for worker-thread execution.
+- Down: `Resolve Issue`: start `$superpowers-project:resolve-issue` for an existing ready issue mirror.
+- Left: `Orchestrate Issues`: start `$superpowers-project:orchestrate-issues` for worker-thread execution.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Revise / Review Plan`, immediately ask:
@@ -219,7 +219,7 @@ Prompt: `How should I revisit this plan?`
 
 Options:
 
-- Down: `Revise Plan`: continue `$project:write-plan` with follow-up questions to revise the saved plan.
+- Down: `Revise Plan`: continue `$superpowers-project:write-plan` with follow-up questions to revise the saved plan.
 - Left: `Review Or Grill`: choose whether to review the plan or re-run the planning grill.
 - Right: `Stop`: break the continuation loop.
 
@@ -239,8 +239,8 @@ Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issu
 
 Route summary:
 
-- `Project Implement`: continue to `$project:implement-plan` using the saved plan path.
-- `Project Issue First`: continue to `$project:create-issues` using the saved plan path.
+- `Project Implement`: continue to `$superpowers-project:implement-plan` using the saved plan path.
+- `Project Issue First`: continue to `$superpowers-project:create-issues` using the saved plan path.
 - Project Implement does not create issue mirrors.
 - Recommend `Project Implement` for branch-backed non-issue implementation.
 - Recommend `Project Issue First` when the GitHub issue backbone is desired.

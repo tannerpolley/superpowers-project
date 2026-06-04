@@ -16,7 +16,7 @@ Issue mirrors:
 
 GitHub Project board:
 
-- Optional dashboard evidence owned by `$project:setup-project`.
+- Optional dashboard evidence owned by `$superpowers-project:setup-project`.
 - Native approval is required before creating or mutating a board.
 - Configured board: [Superpowers Project](https://github.com/users/tannerpolley/projects/6).
 - Required board fields when configured: `Status`, `Milestone`, `Issue Type`, `Agent State`.

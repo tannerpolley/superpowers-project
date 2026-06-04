@@ -2,7 +2,7 @@
 
 Milestone pages explain how specs, plans, issue mirrors, and GitHub milestones fit into the larger project roadmap.
 
-`$project:setup-project` owns creation and repair of this roadmap surface. `$project:orchestrate-issues` owns worker-thread implementation routes when a milestone issue should be delegated to a Codex worktree worker.
+`$superpowers-project:setup-project` owns creation and repair of this roadmap surface. `$superpowers-project:orchestrate-issues` owns worker-thread implementation routes when a milestone issue should be delegated to a Codex worktree worker.
 
 Milestone pages are index views, not canonical artifact roots. Canonical specs, plans, and issues remain flat under:
 

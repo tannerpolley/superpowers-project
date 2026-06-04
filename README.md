@@ -12,22 +12,22 @@ This repository is the canonical source. The live Codex install is a deployment 
 
 ## Public Identity
 
-The public project identity is `codex-superpowers-project`. The plugin runtime identity is `project`, so the prompt surface is plugin-scoped as `project:*`.
+The canonical plugin identity is `superpowers-project`, and the prompt surface is plugin-scoped as `superpowers-project:*`.
 
 This checkout may still be hosted under the older `milestones-plugin` repository name until the GitHub repo is renamed. New public documentation, installation paths, and plugin metadata should use Superpowers Project naming.
 
 ## Current Skills
 
-- `$project:initiate-workflow`: routes extension workflows.
-- `$project:setup-project`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
-- `$project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
-- `$project:write-plan`: writes Superpowers implementation plans with project context.
-- `$project:implement-plan`: implements an approved plan on a development branch without creating GitHub issue mirrors.
-- `$project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
-- `$project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
-- `$project:orchestrate-issues`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
-- `$project:merge-changes`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
-- `$project:audit-project`: audits project, GitHub, migration, and live-sync drift.
+- `$superpowers-project:initiate-workflow`: routes extension workflows.
+- `$superpowers-project:setup-project`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
+- `$superpowers-project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
+- `$superpowers-project:write-plan`: writes Superpowers implementation plans with project context.
+- `$superpowers-project:implement-plan`: implements an approved plan on a development branch without creating GitHub issue mirrors.
+- `$superpowers-project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
+- `$superpowers-project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
+- `$superpowers-project:orchestrate-issues`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
+- `$superpowers-project:merge-changes`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
+- `$superpowers-project:audit-project`: audits project, GitHub, migration, and live-sync drift.
 
 ## Native Q&A Workflow
 
@@ -55,9 +55,9 @@ GitHub can also render the simplified Mermaid companion: [Native Q&A main flow M
 
 ## Implement Plan
 
-`$project:implement-plan` is the direct execution path after `$project:write-plan` when an approved plan without a GitHub issue should be implemented without GitHub issue mirrors.
+`$superpowers-project:implement-plan` is the direct execution path after `$superpowers-project:write-plan` when an approved plan without a GitHub issue should be implemented without GitHub issue mirrors.
 
-Implement Plan uses a development branch, native `/goal` where applicable, Superpowers execution discipline, focused verification, and `$project:merge-changes` for final integration. It does not create issue mirrors and must not claim GitHub issue closure. Use the issue-backed `$project:create-issues` route first for non-trivial work that should have GitHub issue and milestone backbone.
+Implement Plan uses a development branch, native `/goal` where applicable, Superpowers execution discipline, focused verification, and `$superpowers-project:merge-changes` for final integration. It does not create issue mirrors and must not claim GitHub issue closure. Use the issue-backed `$superpowers-project:create-issues` route first for non-trivial work that should have GitHub issue and milestone backbone.
 
 ## Canonical Layout
 
@@ -102,7 +102,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Valid
 
 The sync script deploys this repo's plugin manifest and full skill implementations to:
 
-- `C:\Users\Tanner\plugins\project`
+- `C:\Users\Tanner\plugins\superpowers-project`
 
 It also deploys only the shared helper skill to:
 
@@ -113,8 +113,8 @@ It also deploys only the shared helper skill to:
 From a local clone:
 
 ```powershell
-git clone https://github.com/tannerpolley/codex-superpowers-project.git
-cd codex-superpowers-project
+git clone https://github.com/tannerpolley/superpowers-project.git
+cd superpowers-project
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
@@ -124,4 +124,4 @@ If you are installing from the current pre-rename repository checkout, run the s
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
-After install, start with `$project:initiate-workflow` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.
+After install, start with `$superpowers-project:initiate-workflow` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.

@@ -47,7 +47,7 @@ Carry this grill-me wording verbatim into brainstorming and planning questions w
 
 `Interview me relentlessly about every aspect of this plan`
 
-Use the same grilling pressure as `$project:brainstorm-spec` plus `grill-me`. Do not settle for the first plausible interpretation when a term, boundary, owner, workflow, success criterion, or tradeoff can be sharpened.
+Use the same grilling pressure as `$superpowers-project:brainstorm-spec` plus `grill-me`. Do not settle for the first plausible interpretation when a term, boundary, owner, workflow, success criterion, or tradeoff can be sharpened.
 
 Treat `grill-with-docs` as source behavior for repo-aware challenge: compare the user's terms against context docs, ADRs, project context, milestones, and code reality. Surface contradictions directly and turn them into decisions.
 
@@ -64,9 +64,9 @@ Use the smallest supporting set:
 
 Save approved specs to `docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md` unless the user explicitly chooses a different repo-local Superpowers Project destination. A `-design`, `-prd`, or similar suffix is allowed when it clarifies the artifact type, but the date and slug are the required filename parts.
 
-Project Brainstorm writes loose specs in the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: brainstorming produces loose specs, `$project:write-plan` turns approved source material into milestone-aware execution design, and `$project:create-issues` creates official implementation records. For loose specs, milestone identity is optional and only used when naturally helpful; do not require GitHub issue metadata, source plans, implementation branches, proof oracles, or issue-ready execution metadata.
+Project Brainstorm writes loose specs in the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: brainstorming produces loose specs, `$superpowers-project:write-plan` turns approved source material into milestone-aware execution design, and `$superpowers-project:create-issues` creates official implementation records. For loose specs, milestone identity is optional and only used when naturally helpful; do not require GitHub issue metadata, source plans, implementation branches, proof oracles, or issue-ready execution metadata.
 
-Milestone pages are index views. They should link to flat canonical specs, plans, and issues rather than owning nested copies. Represent milestone/category views through frontmatter plus milestone indexes. If a brainstorm finds `docs/superpowers/milestones/<milestone>/specs`, `plans`, or `issues` being treated as canonical, report that nested canonical milestone artifact folders are drift and route to `$project:audit-project` or `$project:write-plan` for migration guidance.
+Milestone pages are index views. They should link to flat canonical specs, plans, and issues rather than owning nested copies. Represent milestone/category views through frontmatter plus milestone indexes. If a brainstorm finds `docs/superpowers/milestones/<milestone>/specs`, `plans`, or `issues` being treated as canonical, report that nested canonical milestone artifact folders are drift and route to `$superpowers-project:audit-project` or `$superpowers-project:write-plan` for migration guidance.
 
 A saved spec should include:
 
@@ -116,7 +116,7 @@ Prompt: `How should planning start from this brainstorm?`
 
 Options:
 
-- Down: `Create One Plan`: create one `$project:write-plan` from the recently generated spec.
+- Down: `Create One Plan`: create one `$superpowers-project:write-plan` from the recently generated spec.
 - Left: `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
 - Right: `Stop`: break the continuation loop.
 
@@ -148,7 +148,7 @@ Options:
 - `required_proof` containing `plan-proof-oracle`, `verification-receipts`, `cleanup-hook`, `premerge-proof`, and `closeout-proof`
 - `stop_conditions` containing `missing-proof`, `dirty-unsafe-state`, `failed-validation`, and `decision-outside-policy`
 
-Validate the ledger with `scripts/lib/auto-mode-contract.ps1`. If the ledger does not pass, do not continue into Auto Mode.
+Validate the ledger with `the repo-root Auto Mode contract helper`. If the ledger does not pass, do not continue into Auto Mode.
 
 If the user selects `Multi-Spec Planning`, ask:
 
@@ -158,7 +158,7 @@ Prompt: `How should multiple specs become plans?`
 
 Options:
 
-- Down: `Plan Multiple Specs`: create one `$project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
+- Down: `Plan Multiple Specs`: create one `$superpowers-project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
 - Left: `Create Multiple Plans`: create multiple related plans from multiple specs; prompt for spec-to-plan grouping if not already known.
 - Right: `Stop`: break the continuation loop.
 
@@ -170,7 +170,7 @@ Prompt: `How should I revisit this brainstorm output?`
 
 Options:
 
-- Down: `Revise Spec`: continue `$project:brainstorm-spec` with follow-up questions to revise the saved spec or decision summary.
+- Down: `Revise Spec`: continue `$superpowers-project:brainstorm-spec` with follow-up questions to revise the saved spec or decision summary.
 - Left: `Review Or Restart`: choose whether to review the current artifact or brainstorm another idea.
 - Right: `Stop`: break the continuation loop.
 
@@ -183,7 +183,7 @@ Prompt: `Should I review this brainstorm or start another one?`
 Options:
 
 - Down: `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_brainstorm_next_step`.
-- Left: `Re-run Brainstorm`: start another `$project:brainstorm-spec` cycle for a new feature, idea, or major alternative.
+- Left: `Re-run Brainstorm`: start another `$superpowers-project:brainstorm-spec` cycle for a new feature, idea, or major alternative.
 - Right: `Stop`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

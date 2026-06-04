@@ -69,7 +69,7 @@ $scenarios = @(
             'request_user_input',
             'Auto Mode authorization ledger',
             'project_auto_mode_authorization',
-            'scripts/lib/auto-mode-contract.ps1',
+            'the repo-root Auto Mode contract helper',
             'bounded-auto-merge',
             'recorded defaults',
             'preauthorized-after-clean-premerge',

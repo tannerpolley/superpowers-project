@@ -15,24 +15,24 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 
 ## Routing
 
-- Project setup, roadmap context, tracker board setup, or large-scope project map: `$project:setup-project`
-- Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$project:brainstorm-spec`
-- Implementation planning from a spec, issue mirror, or approved direct request: `$project:write-plan`
-- Branch-backed implementation of an approved plan without a GitHub issue: `$project:implement-plan`
-- Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project:create-issues`
-- External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$project:create-issues`
-- One ready issue execution in the current thread with native `/goal` proof: `$project:resolve-issue`
-- Worker-thread implementation of one ready issue: `$project:orchestrate-issues`
-- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project:merge-changes`
-- Drift audit, migration, label review, milestone review, or live sync review: `$project:audit-project`
+- Project setup, roadmap context, tracker board setup, or large-scope project map: `$superpowers-project:setup-project`
+- Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$superpowers-project:brainstorm-spec`
+- Implementation planning from a spec, issue mirror, or approved direct request: `$superpowers-project:write-plan`
+- Branch-backed implementation of an approved plan without a GitHub issue: `$superpowers-project:implement-plan`
+- Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$superpowers-project:create-issues`
+- External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$superpowers-project:create-issues`
+- One ready issue execution in the current thread with native `/goal` proof: `$superpowers-project:resolve-issue`
+- Worker-thread implementation of one ready issue: `$superpowers-project:orchestrate-issues`
+- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$superpowers-project:merge-changes`
+- Drift audit, migration, label review, milestone review, or live sync review: `$superpowers-project:audit-project`
 
-The issue-backed `$project:create-issues` plus `$project:resolve-issue` or `$project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
+The issue-backed `$superpowers-project:create-issues` plus `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$superpowers-project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
 
-After `$project:brainstorm-spec` saves a spec, Auto Mode may be authorized only through native question `project_auto_mode_authorization` with `Bounded Auto Merge`. That route records an Auto Mode authorization ledger validated by `scripts/lib/auto-mode-contract.ps1`; the agent then chooses between planning, issue-backed orchestration, direct plan implementation, verification, merge, and closeout proof within the recorded defaults. If proof is missing, validation fails, GitHub state is unsafe, or the needed decision falls outside the ledger policy, stop outside policy instead of inventing a new approval.
+After `$superpowers-project:brainstorm-spec` saves a spec, Auto Mode may be authorized only through native question `project_auto_mode_authorization` with `Bounded Auto Merge`. That route records an Auto Mode authorization ledger validated by `the repo-root Auto Mode contract helper`; the agent then chooses between planning, issue-backed orchestration, direct plan implementation, verification, merge, and closeout proof within the recorded defaults. If proof is missing, validation fails, GitHub state is unsafe, or the needed decision falls outside the ledger policy, stop outside policy instead of inventing a new approval.
 
-External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$project:create-issues` hydration first and block execution until mirror validation passes.
+External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$superpowers-project:create-issues` hydration first and block execution until mirror validation passes.
 
-When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route` with `Project Resolve`, `Project Orchestrate`, and `Review First` options. Route direct current-thread implementation to `$project:resolve-issue`; route delegated worker worktree implementation to `$project:orchestrate-issues`.
+When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route` with `Project Resolve`, `Project Orchestrate`, and `Review First` options. Route direct current-thread implementation to `$superpowers-project:resolve-issue`; route delegated worker worktree implementation to `$superpowers-project:orchestrate-issues`.
 
 ## Artifact Root
 
@@ -66,7 +66,7 @@ If routing cannot continue because tools, permissions, GitHub state, or user app
 
 When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for concise, decision-oriented questions. Batch independent questions together. Use more than three options only for nested branch menus, data-backed selections, or independent bulk gates where the larger menu preserves the real decision. Ask dependent questions one step at a time after the prior answer changes the branch.
 
-For `$project:brainstorm-spec`, use native UI more aggressively: if there is any unresolved idea, naming, scope, tradeoff, route, or assumption decision, inspect project context and relevant code first, then ask through `request_user_input` instead of resolving the decision in prose.
+For `$superpowers-project:brainstorm-spec`, use native UI more aggressively: if there is any unresolved idea, naming, scope, tradeoff, route, or assumption decision, inspect project context and relevant code first, then ask through `request_user_input` instead of resolving the decision in prose.
 
 ## Native Question Debug Mode
 
@@ -76,7 +76,7 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 ## Goal Routing
 
-Issue implementation must use `$project:resolve-issue` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$project:resolve-issue` creates PR-ready evidence, final integration must route to `$project:merge-changes`.
+Issue implementation must use `$superpowers-project:resolve-issue` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$superpowers-project:resolve-issue` creates PR-ready evidence, final integration must route to `$superpowers-project:merge-changes`.
 
 
 

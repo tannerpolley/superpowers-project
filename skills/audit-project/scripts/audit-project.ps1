@@ -402,7 +402,7 @@ function Invoke-LocalDocsAudit {
     $sourceSkill = Get-RepoFile -Root $Root -RelativePath "skills/audit-project/SKILL.md"
     if (Test-Path -LiteralPath $sourceSkill -PathType Leaf) {
         $liveTargets = @(
-            Join-Path $env:USERPROFILE "plugins/project/skills/audit-project/SKILL.md"
+            Join-Path $env:USERPROFILE "plugins/superpowers-project/skills/audit-project/SKILL.md"
             Join-Path $env:USERPROFILE ".agents/skills/audit-project/SKILL.md"
         )
         $liveChecks = @($liveTargets | ForEach-Object { Compare-LiveFile -SourcePath $sourceSkill -TargetPath $_ })
@@ -567,4 +567,3 @@ if ($Mode -eq "GitHubAware") {
         healthy = @($findings.healthy)
     }
 } | ConvertTo-Json -Depth 32
-

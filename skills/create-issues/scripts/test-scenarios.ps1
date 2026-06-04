@@ -124,7 +124,7 @@ $scenarios = @(
             "Goal Command",
             "Auto Mode authorization ledger",
             "project_auto_mode_authorization",
-            "scripts/lib/auto-mode-contract.ps1",
+            "the repo-root Auto Mode contract helper",
             "bounded-auto-merge",
             "recorded defaults",
             "issue-backed-orchestrate-only",

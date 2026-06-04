@@ -5,7 +5,7 @@ description: Use when a Superpowers Project spec, plan, PRD, or approved scope n
 
 # Project Issue
 
-Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$project:resolve-issue` to execute one issue at a time.
+Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$superpowers-project:resolve-issue` to execute one issue at a time.
 
 ## Native Continuation Loop
 
@@ -29,7 +29,7 @@ Use `request_user_input` when callable to approve granularity, dependencies, mil
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
 
 Auto Mode may create issue mirrors and GitHub issues only from the authorized source spec or a plan derived from that source spec. It may classify AFK/HITL, choose issue count, assign proof oracles, and choose resolve or orchestrate routing through recorded defaults when repo evidence supports the choice. Worker execution under Auto Mode is allowed only through issue-backed orchestration; do not create direct worker tasks outside issue mirrors. If issue boundaries, labels, milestone, dependencies, publication, GitHub auth, or proof policy require a decision outside the ledger, stop outside policy before publishing or handing issues to execution.
 
@@ -103,7 +103,7 @@ Each mirror must include:
 - Proof oracle
 - GitHub body text or a close mirror of it
 
-Workflow metadata guides `$project:resolve-issue`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
+Workflow metadata guides `$superpowers-project:resolve-issue`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -163,7 +163,7 @@ For HITL issues, use the configured triage or blocked status label until the mis
 
 ## Mirror Validation
 
-Use the bundled `scripts/validate-issue-mirror.ps1 -IssueFile <docs/superpowers/issues/file.md>` before publishing an issue mirror or handing it to `$project:resolve-issue`.
+Use the bundled `scripts/validate-issue-mirror.ps1 -IssueFile <docs/superpowers/issues/file.md>` before publishing an issue mirror or handing it to `$superpowers-project:resolve-issue`.
 
 Validation must prove:
 
@@ -189,7 +189,7 @@ Protocol:
 3. Preserve the issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command.
 4. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
 5. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
-6. Only then route to `$project:resolve-issue` or `$project:orchestrate-issues`.
+6. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
 
 Hydration may create a source plan and pass mirror validation in the same command, but the original GitHub issue remains intake until the local mirror and source plan exist and validation has passed. Do not hand raw GitHub issue text to execution skills.
 
@@ -201,7 +201,7 @@ scripts/hydrate-external-issue.ps1 -RepoRoot . -IssueUrl <github-issue-url> [-Is
 
 ## Execution Boundary
 
-This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$project:resolve-issue`.
+This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$superpowers-project:resolve-issue`.
 
 ## Native Continuation Gate
 
@@ -239,8 +239,8 @@ Prompt: `Which issue should be resolved directly?`
 
 Options:
 
-- Down: `Resolve First Ready`: start `$project:resolve-issue` on the first ready AFK issue.
-- Left: `Resolve Selected`: ask for or use a selected ready issue mirror, then start `$project:resolve-issue`.
+- Down: `Resolve First Ready`: start `$superpowers-project:resolve-issue` on the first ready AFK issue.
+- Left: `Resolve Selected`: ask for or use a selected ready issue mirror, then start `$superpowers-project:resolve-issue`.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Orchestrate Issues`, ask:
@@ -251,8 +251,8 @@ Prompt: `Which issue should be delegated to a worker?`
 
 Options:
 
-- Down: `Orchestrate First Ready`: start `$project:orchestrate-issues` on the first ready worker-suitable issue.
-- Left: `Orchestrate Selected`: ask for or use a selected ready issue mirror, then start `$project:orchestrate-issues`.
+- Down: `Orchestrate First Ready`: start `$superpowers-project:orchestrate-issues` on the first ready worker-suitable issue.
+- Left: `Orchestrate Selected`: ask for or use a selected ready issue mirror, then start `$superpowers-project:orchestrate-issues`.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Revise / Review Issues`, ask:

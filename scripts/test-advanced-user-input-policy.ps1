@@ -84,7 +84,7 @@ if ($metadataExists) {
     $metadata = Get-Content -LiteralPath $metadataPath -Raw
     foreach ($needle in @(
         'display_name: "Advanced User Input"',
-        'Use $project:advanced-user-input',
+        'Use $superpowers-project:advanced-user-input',
         'Use the smallest native question shape that preserves the real decision tree',
         'For project workflow closeout gates, always ask the three-way trajectory question first',
         'Use Stop for mid-loop exits',

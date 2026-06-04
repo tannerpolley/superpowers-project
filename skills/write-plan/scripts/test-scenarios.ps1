@@ -50,7 +50,7 @@ $scenarios = @(
             "request_user_input",
             "Auto Mode authorization ledger",
             "project_auto_mode_authorization",
-            "scripts/lib/auto-mode-contract.ps1",
+            "the repo-root Auto Mode contract helper",
             "bounded-auto-merge",
             "recorded defaults",
             "stop outside policy",
@@ -165,9 +165,9 @@ $scenarios = @(
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
         foreach ($needle in @(
             'Project Implement',
-            'continue to `$project:implement-plan` using the saved plan path',
+            'continue to `$superpowers-project:implement-plan` using the saved plan path',
             'Project Issue First',
-            'continue to `$project:create-issues` using the saved plan path',
+            'continue to `$superpowers-project:create-issues` using the saved plan path',
             'Recommend `Project Implement` for branch-backed non-issue implementation',
             'Recommend `Project Issue First` when the GitHub issue backbone is desired',
             'does not create issue mirrors'

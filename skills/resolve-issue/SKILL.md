@@ -5,15 +5,15 @@ description: Use when one ready GitHub issue mirror under docs/superpowers/issue
 
 # Project Resolve
 
-This skill owns direct current-thread implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence for the main thread orchestrator: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$project:merge-changes`.
+This skill owns direct current-thread implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence for the main thread orchestrator: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$superpowers-project:merge-changes`.
 
-If the user wants delegated worker-thread implementation, route to `$project:orchestrate-issues` before setup. `$project:resolve-issue` must not create worker threads or worker handoff ledgers.
+If the user wants delegated worker-thread implementation, route to `$superpowers-project:orchestrate-issues` before setup. `$superpowers-project:resolve-issue` must not create worker threads or worker handoff ledgers.
 
 GoalBuddy boards are outside the default execution model. Do not create `docs/goals`, GoalBuddy board files, GoalBuddy state, or local live boards from this skill unless the user explicitly requests separate GoalBuddy work outside this default issue-resolution path.
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
 
 Auto Mode may choose direct current-thread issue resolution, create or verify native goal proof, execute the source plan, run verification, push PR-ready work, and route to merge without additional user input when the ready issue mirror came from the authorized source spec or derived plan. Carry the Auto Mode authorization ledger into PR-ready handoff evidence. If the issue mirror is not ready, proof is missing, checks fail, branch state is unsafe, or implementation needs a decision outside recorded defaults, stop outside policy before pushing or handoff.
 
@@ -27,7 +27,7 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 
 Project Resolve executes the `spec -> plan -> issue` lifecycle from flat canonical roots. It accepts one issue mirror from `docs/superpowers/issues`, requires a source plan from `docs/superpowers/plans`, and may read upstream loose specs from `docs/superpowers/specs`. Milestone pages are index views: they link to the flat canonical artifacts and do not own nested implementation records.
 
-Before implementation, block or route to `$project:audit-project` when an issue mirror, source plan, or related spec is presented from `docs/superpowers/milestones/<milestone>/issues`, `docs/superpowers/milestones/<milestone>/plans`, or `docs/superpowers/milestones/<milestone>/specs`. Those nested canonical milestone artifact folders are drift unless explicitly marked as generated index/view output. Keep milestone identity in frontmatter plus milestone indexes, filenames where applicable, and GitHub milestone fields.
+Before implementation, block or route to `$superpowers-project:audit-project` when an issue mirror, source plan, or related spec is presented from `docs/superpowers/milestones/<milestone>/issues`, `docs/superpowers/milestones/<milestone>/plans`, or `docs/superpowers/milestones/<milestone>/specs`. Those nested canonical milestone artifact folders are drift unless explicitly marked as generated index/view output. Keep milestone identity in frontmatter plus milestone indexes, filenames where applicable, and GitHub milestone fields.
 
 ## Hard Failures
 
@@ -53,22 +53,22 @@ Follow this order exactly:
 2. `issue mirror validation`: inspect `docs/superpowers/issues/<issue>.md`.
 3. `source plan validation`: read the linked `docs/superpowers/plans/<plan>.md`.
 4. `preflight`: verify the repo is ready for one issue execution.
-5. `route check`: if worker-thread execution is requested, stop and route to `$project:orchestrate-issues`.
+5. `route check`: if worker-thread execution is requested, stop and route to `$superpowers-project:orchestrate-issues`.
 6. `native goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
 7. `setup validation`: write and validate the setup ledger for direct current-thread execution.
 8. `worktree and branch setup`: create or verify the current-thread worktree/branch.
 9. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
 10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
 11. `PR-ready validation`: validate branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
-12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$project:merge-changes`.
+12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$superpowers-project:merge-changes`.
 
 ## Route Check
 
-`$project:resolve-issue` is the direct current-thread route. If the user wants a worker thread, use `$project:orchestrate-issues`.
+`$superpowers-project:resolve-issue` is the direct current-thread route. If the user wants a worker thread, use `$superpowers-project:orchestrate-issues`.
 
-If the user gives only a GitHub issue URL, no local mirror exists, or the mirror has an unresolved source plan, use `$project:create-issues` hydration first. `$project:resolve-issue` starts only after the local mirror and source plan exist and mirror validation passes.
+If the user gives only a GitHub issue URL, no local mirror exists, or the mirror has an unresolved source plan, use `$superpowers-project:create-issues` hydration first. `$superpowers-project:resolve-issue` starts only after the local mirror and source plan exist and mirror validation passes.
 
-When the requested route is ambiguous and `request_user_input` is callable, the router should ask native question `project_issue_resolution_route` before starting either skill. If `$project:resolve-issue` receives an execution decision whose selected mode is `orchestrated-worker`, stop immediately with the reason: `orchestrated worker execution is owned by orchestrate-issues; use resolve-issue only for direct current-thread execution`.
+When the requested route is ambiguous and `request_user_input` is callable, the router should ask native question `project_issue_resolution_route` before starting either skill. If `$superpowers-project:resolve-issue` receives an execution decision whose selected mode is `orchestrated-worker`, stop immediately with the reason: `orchestrated worker execution is owned by orchestrate-issues; use resolve-issue only for direct current-thread execution`.
 
 ## Native Question Debug Mode
 
@@ -76,7 +76,7 @@ For explicit non-interactive smoke tests, use `debug_question_mode` instead of `
 
 ## Worker Route Boundary
 
-Worker-thread orchestration is owned by `$project:orchestrate-issues`. That skill derives the canonical worker thread title, branch name, evidence folder, and worker handoff, then routes PR-ready output to `$project:merge-changes`.
+Worker-thread orchestration is owned by `$superpowers-project:orchestrate-issues`. That skill derives the canonical worker thread title, branch name, evidence folder, and worker handoff, then routes PR-ready output to `$superpowers-project:merge-changes`.
 
 ## Scripted Gates
 
@@ -162,8 +162,8 @@ Use Superpowers for the engineering method inside this GitHub lifecycle:
 - `superpowers:using-git-worktrees` before implementation work begins.
 - `superpowers:test-driven-development` for feature or bug code unless the plan records an explicit opt-out.
 - `superpowers:systematic-debugging` or `diagnose` for bugs, regressions, failing tests, CI failures, performance work, or unclear failure modes.
-- `$project:orchestrate-issues` when the issue needs an orchestrator/worker split.
-- `codex-dynamic-workflows` only through `$project:orchestrate-issues` when the issue meets the heavier orchestration decision rule or the user explicitly requests it.
+- `$superpowers-project:orchestrate-issues` when the issue needs an orchestrator/worker split.
+- `codex-dynamic-workflows` only through `$superpowers-project:orchestrate-issues` when the issue meets the heavier orchestration decision rule or the user explicitly requests it.
 - `superpowers:dispatching-parallel-agents` only when independent packets can run in parallel and the selected route supports delegation.
 - `superpowers:verification-before-completion` before PR-ready claims.
 - `superpowers:finishing-a-development-branch` after verification and before PR creation.
@@ -194,7 +194,7 @@ Prompt: `What should happen with this PR-ready issue?`
 
 Options:
 
-- Down: `Merge`: start `$project:merge-changes` from the PR URL or worker handoff.
+- Down: `Merge`: start `$superpowers-project:merge-changes` from the PR URL or worker handoff.
 - Left: `Continue Another Issue`: choose direct resolve or worker orchestration for another issue.
 - Right: `Stop`: break the continuation loop.
 
@@ -206,8 +206,8 @@ Prompt: `How should the next issue be executed?`
 
 Options:
 
-- Down: `Resolve Another`: start `$project:resolve-issue` for another ready issue mirror.
-- Left: `Orchestrate Another`: start `$project:orchestrate-issues` for another worker-suitable issue.
+- Down: `Resolve Another`: start `$superpowers-project:resolve-issue` for another ready issue mirror.
+- Left: `Orchestrate Another`: start `$superpowers-project:orchestrate-issues` for another worker-suitable issue.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Review / Revise PR-Ready Work`, ask:
@@ -245,7 +245,7 @@ Do not send a success-style final response until PR-ready proof shows:
 - Branch is pushed.
 - PR is opened and closes the exact linked issue.
 - Native resolve goal is marked complete.
-- PR-ready handoff was sent or recorded for `$project:merge-changes`.
+- PR-ready handoff was sent or recorded for `$superpowers-project:merge-changes`.
 
 
 

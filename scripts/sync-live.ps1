@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [switch]$Validate,
-    [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\project"),
+    [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\superpowers-project"),
     [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills"),
     [string]$MarketplacePath = (Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json")
 )
@@ -16,11 +16,11 @@ $sourceAssetsRoot = Join-Path $repoRoot "assets"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
 $marketplacePathResolved = [IO.Path]::GetFullPath($MarketplacePath)
-$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\project"))
+$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
 $expectedMarketplacePath = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json"))
 $retiredLivePluginRoots = @(
     [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones")),
-    [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
+    [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\project"))
 )
 $expectedUserSkillsRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".agents\skills"))
 
@@ -122,10 +122,10 @@ function Sync-PersonalMarketplaceEntry {
     param([Parameter(Mandatory = $true)][string]$Path)
 
     $entry = [pscustomobject]@{
-        name = "project"
+        name = "superpowers-project"
         source = [pscustomobject]@{
             source = "local"
-            path = "./plugins/project"
+            path = "./plugins/superpowers-project"
         }
         policy = [pscustomobject]@{
             installation = "AVAILABLE"
@@ -163,9 +163,9 @@ function Sync-PersonalMarketplaceEntry {
         throw "marketplace.json plugins must be an array"
     }
 
-    $retiredMarketplaceNames = @("milestones", "superpowers-project")
+    $retiredMarketplaceNames = @("milestones", "project")
     $plugins = @($marketplace.plugins | Where-Object {
-        $_.name -ne "project" -and $retiredMarketplaceNames -notcontains $_.name
+        $_.name -ne "superpowers-project" -and $retiredMarketplaceNames -notcontains $_.name
     })
     Set-JsonProperty -Object $marketplace -Name "plugins" -Value @($plugins + $entry)
 
@@ -175,8 +175,8 @@ function Sync-PersonalMarketplaceEntry {
     [pscustomobject]@{
         marketplace_path = $Path
         marketplace_name = $marketplace.name
-        plugin_name = "project"
-        source_path = "./plugins/project"
+        plugin_name = "superpowers-project"
+        source_path = "./plugins/superpowers-project"
     }
 }
 

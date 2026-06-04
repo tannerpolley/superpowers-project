@@ -85,11 +85,11 @@ try {
     Add-Check -Name "required artifact paths" -Ok $true -Reason "passed"
 
     $manifest = Get-Content -LiteralPath (Join-Path $repoRoot ".codex-plugin/plugin.json") -Raw | ConvertFrom-Json
-    if ($manifest.name -ne "project") { throw "plugin manifest name must be project" }
+    if ($manifest.name -ne "superpowers-project") { throw "plugin manifest name must be superpowers-project" }
     if ($manifest.author.name -ne "Tanner Polley") { throw "plugin manifest author must use public author identity" }
     if ($manifest.interface.developerName -ne "Tanner Polley") { throw "plugin manifest developerName must use public author identity" }
-    if ($manifest.repository -ne "https://github.com/tannerpolley/codex-superpowers-project") { throw "plugin manifest repository must target codex-superpowers-project" }
-    if ($manifest.homepage -ne "https://github.com/tannerpolley/codex-superpowers-project") { throw "plugin manifest homepage must target codex-superpowers-project" }
+    if ($manifest.repository -ne "https://github.com/tannerpolley/superpowers-project") { throw "plugin manifest repository must target superpowers-project" }
+    if ($manifest.homepage -ne "https://github.com/tannerpolley/superpowers-project") { throw "plugin manifest homepage must target superpowers-project" }
     if ($manifest.license -ne "MIT") { throw "plugin manifest license must be MIT" }
     if ($manifest.keywords -notcontains "codex" -or $manifest.keywords -notcontains "superpowers") { throw "plugin manifest keywords must include codex and superpowers" }
     Add-Check -Name "public plugin manifest metadata" -Ok $true -Reason "passed"
@@ -121,9 +121,9 @@ try {
     Add-Check -Name "repo agent routing" -Ok $true -Reason "passed"
 
     Assert-TextContains -RelativePath "README.md" -Needles @(
-        "codex-superpowers-project",
-        "plugins\project",
-        'After install, start with `$project:initiate-workflow`'
+        "superpowers-project",
+        "plugins\superpowers-project",
+        'After install, start with `$superpowers-project:initiate-workflow`'
     )
     $publicTemplatePaths = @(
         ".github/ISSUE_TEMPLATE/bug.yml",
@@ -140,10 +140,10 @@ try {
     if ($workflowText.Contains("Validate Milestones plugin")) { throw "validate workflow still uses retired product name" }
     if (-not $workflowText.Contains("Validate Superpowers Project plugin")) { throw "validate workflow missing Superpowers Project job label" }
     $syncText = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/sync-live.ps1") -Raw
-    if (-not $syncText.Contains("plugins\project")) { throw "sync-live.ps1 must deploy to plugins/project" }
+    if (-not $syncText.Contains("plugins\superpowers-project")) { throw "sync-live.ps1 must deploy to plugins/superpowers-project" }
     if (-not $syncText.Contains("plugins\milestones")) { throw "sync-live.ps1 must clean up retired plugins/milestones path" }
     $doctorAuditText = Get-Content -LiteralPath (Join-Path $repoRoot "skills/audit-project/scripts/audit-project.ps1") -Raw
-    if (-not $doctorAuditText.Contains("plugins/project/skills/audit-project/SKILL.md")) { throw "audit-project audit must inspect plugins/project" }
+    if (-not $doctorAuditText.Contains("plugins/superpowers-project/skills/audit-project/SKILL.md")) { throw "audit-project audit must inspect plugins/superpowers-project" }
     Add-Check -Name "public readiness paths" -Ok $true -Reason "passed"
 
     $roadmap = Get-Content -LiteralPath (Join-Path $repoRoot "docs/agents/project-roadmap.json") -Raw | ConvertFrom-Json
@@ -255,5 +255,4 @@ try {
     Add-Check -Name "fatal" -Ok $false -Reason $_.Exception.Message
     Complete -Ok $false -Reason $_.Exception.Message
 }
-
 

@@ -17,13 +17,13 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 
 ## Required Inputs
 
-Require an approved plan path under `docs/superpowers/plans`. If the request names a loose idea, spec, issue mirror, or external document instead of an approved plan, route to `$project:write-plan` or `$project:create-issues` as appropriate before execution.
+Require an approved plan path under `docs/superpowers/plans`. If the request names a loose idea, spec, issue mirror, or external document instead of an approved plan, route to `$superpowers-project:write-plan` or `$superpowers-project:create-issues` as appropriate before execution.
 
 Require native `/goal` activation before code changes. The goal must name the approved plan path and the intended execution route. Record proof as structured evidence, not a prose claim.
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before execution. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before execution. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
 
 Auto Mode may select inline execution, create or verify native goal proof, use the approved plan proof oracle, run verification, run the cleanup hook, and prepare merge-ready output without additional user input when those actions stay inside the ledger policy. Auto Mode must still record the topology, verification receipts, cleanup evidence, and merge-ready proof. If the plan needs a decision outside the recorded defaults policy, verification fails, the repo is dirty in an unsafe way, or merge-ready proof is missing, stop outside policy before code changes, publish, or merge handoff.
 
@@ -31,7 +31,7 @@ Auto Mode may select inline execution, create or verify native goal proof, use t
 
 This route is for branch-backed plan implementation without a GitHub issue. Do not create issue mirrors, do not hydrate GitHub issues, and do not claim issue closure in commits, PR text, ledgers, or handoffs.
 
-Use the issue-backed `$project:create-issues` and `$project:resolve-issue` route when the work should close a GitHub issue, needs tracker ownership, or should be split into multiple issue mirrors.
+Use the issue-backed `$superpowers-project:create-issues` and `$superpowers-project:resolve-issue` route when the work should close a GitHub issue, needs tracker ownership, or should be split into multiple issue mirrors.
 
 ## Execution Gate
 
@@ -85,7 +85,7 @@ Produce a merge-ready handoff that includes:
 - PR URL when pushed
 - explicit statement that no issue mirror was created and no GitHub issue closure is claimed
 
-Route merge-ready output to `$project:merge-changes` or another approved merge route. Use non-issue merge mode such as `pr-no-issue` for PRs that came from this route.
+Route merge-ready output to `$superpowers-project:merge-changes` or another approved merge route. Use non-issue merge mode such as `pr-no-issue` for PRs that came from this route.
 
 ## Native Continuation Gate
 
@@ -99,7 +99,7 @@ Prompt: `How should I continue from this implemented plan?`
 
 Options:
 
-- Down: `Merge Implemented Plan`: start `$project:merge-changes` with the merge-ready proof.
+- Down: `Merge Implemented Plan`: start `$superpowers-project:merge-changes` with the merge-ready proof.
 - Left: `Revise / Review Branch`: review, fix, rerun verification, or update publish permission.
 - Right: `Stop`: break the continuation loop.
 

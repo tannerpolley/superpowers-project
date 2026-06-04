@@ -334,7 +334,7 @@ try {
 
     Invoke-Scenario "skill text declares native goal state machine" {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
-        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "PR-ready validation", "GoalBuddy boards are outside the default execution model", "Auto Mode authorization ledger", "project_auto_mode_authorization", "scripts/lib/auto-mode-contract.ps1", "bounded-auto-merge", "recorded defaults", "stop outside policy")) {
+        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "PR-ready validation", "GoalBuddy boards are outside the default execution model", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the repo-root Auto Mode contract helper", "bounded-auto-merge", "recorded defaults", "stop outside policy")) {
             Assert-True ($text.Contains($needle)) "missing skill text: $needle"
         }
         foreach ($needle in @(

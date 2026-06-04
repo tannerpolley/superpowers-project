@@ -5,9 +5,9 @@ description: Use when a ready Superpowers Project issue should be delegated to a
 
 # Project Orchestrate
 
-Use this skill when one ready GitHub issue mirror should be implemented by a separate Codex worker thread or worktree while the current thread owns orchestration, review, PR handoff intake, and routing to `$project:merge-changes`.
+Use this skill when one ready GitHub issue mirror should be implemented by a separate Codex worker thread or worktree while the current thread owns orchestration, review, PR handoff intake, and routing to `$superpowers-project:merge-changes`.
 
-`$project:orchestrate-issues` does not replace `$project:resolve-issue`. `$project:resolve-issue` is the direct current-thread route. `$project:orchestrate-issues` is the delegated worker-thread route.
+`$superpowers-project:orchestrate-issues` does not replace `$superpowers-project:resolve-issue`. `$superpowers-project:resolve-issue` is the direct current-thread route. `$superpowers-project:orchestrate-issues` is the delegated worker-thread route.
 
 ## Native Continuation Loop
 
@@ -27,7 +27,7 @@ Stop before creating a worker thread when any of these are true:
 - Worker identity cannot be derived from one canonical issue number and slug.
 - A branch, thread title, evidence folder, or PR title would not match the derived worker identity.
 - The user declines worker-thread execution, publication, recovery, or merge routing approval.
-- The worker asks the orchestrator to merge without `$project:merge-changes`.
+- The worker asks the orchestrator to merge without `$superpowers-project:merge-changes`.
 
 ## Runtime Order
 
@@ -39,12 +39,12 @@ Stop before creating a worker thread when any of these are true:
 6. `worker thread creation`: create the Codex worktree worker with the derived thread title and branch name.
 7. `worker instructions`: send the topology handoff and require Superpowers execution, TDD, verification, and branch finishing.
 8. `progress monitoring`: wait for worker handoff, bounded heartbeat, or user resume.
-9. `PR-ready intake`: validate worker PR-ready evidence and route the PR URL to `$project:merge-changes`.
+9. `PR-ready intake`: validate worker PR-ready evidence and route the PR URL to `$superpowers-project:merge-changes`.
 10. `closeout`: summarize the worker route and ask `project_orchestrate_next_step`.
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
 
 Auto Mode may delegate worker-thread execution only for a ready issue mirror derived from the authorized source spec or plan. It may choose the first ready worker-suitable issue, derive worker identity, prepare the handoff, monitor the worker, validate PR-ready evidence, and route to merge without additional user input when the route stays inside the ledger policy. Do not create direct Auto Mode workers outside issue-backed orchestration. If worker recovery, reassignment, GitHub auth, missing proof, failed validation, or scope expansion needs a decision outside recorded defaults, stop outside policy and report the resume target.
 
@@ -83,11 +83,11 @@ The worker must not merge the PR. The worker finishes by pushing the derived bra
 
 ## External GitHub Issue Hydration
 
-If the user gives only a GitHub issue URL, no local mirror exists, or the local mirror still has an unresolved source plan, hydrate the issue through `$project:create-issues` before orchestration. Do not create a worker from raw GitHub issue text without a local mirror, source plan, and passing mirror validation.
+If the user gives only a GitHub issue URL, no local mirror exists, or the local mirror still has an unresolved source plan, hydrate the issue through `$superpowers-project:create-issues` before orchestration. Do not create a worker from raw GitHub issue text without a local mirror, source plan, and passing mirror validation.
 
 ## Native Continuation Gate
 
-After PR-ready handoff intake, summarize the worker route before asking the continuation question. `$project:orchestrate-issues` can only close out when all owned worktrees have permission to push their commits to the open PR or the user explicitly routes to recovery. The summary must name the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, verification evidence status, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
+After PR-ready handoff intake, summarize the worker route before asking the continuation question. `$superpowers-project:orchestrate-issues` can only close out when all owned worktrees have permission to push their commits to the open PR or the user explicitly routes to recovery. The summary must name the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, verification evidence status, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
 Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
@@ -109,7 +109,7 @@ Prompt: `What should happen with the worker output?`
 
 Options:
 
-- Down: `Merge`: start `$project:merge-changes` for the PR-ready handoff.
+- Down: `Merge`: start `$superpowers-project:merge-changes` for the PR-ready handoff.
 - Left: `Start More Worker Work`: choose another worker-backed issue route.
 - Right: `Stop`: break the continuation loop.
 

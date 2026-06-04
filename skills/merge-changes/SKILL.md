@@ -5,7 +5,7 @@ description: Use when a Superpowers Project PR URL or worker handoff must be rev
 
 # Project Merge
 
-This skill owns integration after `$project:resolve-issue` creates PR-ready evidence or after approved plan work produces merge-ready local or PR evidence. It supports three closeout modes:
+This skill owns integration after `$superpowers-project:resolve-issue` creates PR-ready evidence or after approved plan work produces merge-ready local or PR evidence. It supports three closeout modes:
 
 - `pr-issue`: issue-backed PRs that must verify exact GitHub issue closure and issue mirror cleanup.
 - `pr-no-issue`: non-issue PRs linked to a source plan that must not claim GitHub issue closure.
@@ -13,11 +13,11 @@ This skill owns integration after `$project:resolve-issue` creates PR-ready evid
 
 It starts from a PR URL, local branch, or worker handoff, verifies the issue mirror when the mode is `pr-issue`, verifies the source plan, runs premerge checks, asks native UI merge approval, merges only after approval, cleans up the owned branch and worktree, runs `git fetch --prune`, runs the cleanup hook, and records final clean repo proof.
 
-`$project:merge-changes` is normally run by the main orchestrator thread. Workers do not merge their own PR by default.
+`$superpowers-project:merge-changes` is normally run by the main orchestrator thread. Workers do not merge their own PR by default.
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
 
 Auto Mode merge approval is satisfied only after premerge proof passes cleanly and the ledger includes `preauthorized-after-clean-premerge`. Record that ledger as the merge approval source, then merge, run branch/worktree cleanup, prune, cleanup hook, closeout proof, and final clean repo proof without additional user input. If premerge proof fails, checks are pending or missing, issue closure evidence is wrong, local branch proof is incomplete, cleanup proof is missing, or any merge decision falls outside recorded defaults, stop outside policy before merging or final Done.
 
@@ -91,8 +91,8 @@ Use `Merge` as the recommended option only after premerge proof is clean. Do not
 If merge approval is declined, ask native follow-up through `advanced-user-input` when callable:
 
 - `User Review`: stop with the PR or branch evidence.
-- `Reassess Plan`: route to `$project:write-plan` for strict execution, testing, acceptance, or branch strategy revision.
-- `Reassess Spec`: route to `$project:brainstorm-spec` for loose idea or scope reassessment.
+- `Reassess Plan`: route to `$superpowers-project:write-plan` for strict execution, testing, acceptance, or branch strategy revision.
+- `Reassess Spec`: route to `$superpowers-project:brainstorm-spec` for loose idea or scope reassessment.
 
 When this thread is a worker/subagent and the merge decision belongs to the orchestrator, use the `request_agent_input` protocol instead of native `request_user_input`.
 
@@ -150,8 +150,8 @@ Prompt: `How should the next issue be executed?`
 
 Options:
 
-- Down: `Resolve Another`: start `$project:resolve-issue` for another ready issue mirror.
-- Left: `Orchestrate Another`: start `$project:orchestrate-issues` for another worker-suitable issue.
+- Down: `Resolve Another`: start `$superpowers-project:resolve-issue` for another ready issue mirror.
+- Left: `Orchestrate Another`: start `$superpowers-project:orchestrate-issues` for another worker-suitable issue.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Start Planning`, ask:
@@ -162,8 +162,8 @@ Prompt: `How should the next work be shaped?`
 
 Options:
 
-- Down: `Plan Next`: start `$project:write-plan` from an approved spec or issue mirror.
-- Left: `Brainstorm Next`: start `$project:brainstorm-spec` for the next idea, spec, or architecture direction.
+- Down: `Plan Next`: start `$superpowers-project:write-plan` from an approved spec or issue mirror.
+- Left: `Brainstorm Next`: start `$superpowers-project:brainstorm-spec` for the next idea, spec, or architecture direction.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Review / Repair Closeout`, ask:
@@ -186,7 +186,7 @@ Prompt: `Which closeout repair route should run?`
 
 Options:
 
-- Down: `Run Doctor`: start `$project:audit-project` for post-merge drift audit or live sync review.
+- Down: `Run Doctor`: start `$superpowers-project:audit-project` for post-merge drift audit or live sync review.
 - Left: `Repair Or Cleanup`: choose drift repair or cleanup rerun.
 - Right: `Stop`: break the continuation loop.
 

@@ -987,7 +987,7 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
 ```
 
-Expected: exits `0` and reports the repo's plugin source can sync to `C:\Users\Tanner\plugins\project`.
+Expected: exits `0` and reports the repo's plugin source can sync to `C:\Users\Tanner\plugins\superpowers-project`.
 
 - [ ] **Step 4: Run cleanup hook**
 

@@ -92,7 +92,7 @@ Issue mirrors should match GitHub issue body and status closely enough that an a
 
 ## GitHub Project Board Setup
 
-When a repo is GitHub-linked, `$project:setup-project` can create or verify a GitHub Project board after native approval.
+When a repo is GitHub-linked, `$superpowers-project:setup-project` can create or verify a GitHub Project board after native approval.
 
 Board setup is optional project-management evidence. GitHub Projects must not become canonical storage for specs, plans, issue mirrors, or milestone pages. The canonical artifacts remain under `docs/superpowers`.
 
@@ -108,7 +108,7 @@ Before reporting setup or repair complete, verify:
 - `docs/superpowers/milestones` exists and contains a README or milestone pages.
 - GitHub tracker config names the repository when issue mirrors or milestones are used.
 - `/goal` execution criteria are present for issue work that can be assigned to an agent.
-- Superpowers Project skill names are listed where agents will discover them, including `$project:setup-project`.
+- Superpowers Project skill names are listed where agents will discover them, including `$superpowers-project:setup-project`.
 
 ## Native Continuation Gate
 
@@ -134,7 +134,7 @@ Prompt: `Which project workflow should start from setup?`
 
 Options:
 
-- Down: `Brainstorm`: start `$project:brainstorm-spec` for a spec, PRD, architecture idea, or product direction.
+- Down: `Brainstorm`: start `$superpowers-project:brainstorm-spec` for a spec, PRD, architecture idea, or product direction.
 - Left: `Use Existing Artifact`: choose whether to plan or create issues from existing approved work.
 - Right: `Stop`: break the continuation loop.
 
@@ -146,8 +146,8 @@ Prompt: `Which existing-artifact workflow should start?`
 
 Options:
 
-- Down: `Plan`: start `$project:write-plan` from an approved spec or issue mirror.
-- Left: `Create Issue`: start `$project:create-issues` for vertical slices and GitHub issue mirrors.
+- Down: `Plan`: start `$superpowers-project:write-plan` from an approved spec or issue mirror.
+- Left: `Create Issue`: start `$superpowers-project:create-issues` for vertical slices and GitHub issue mirrors.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Revise / Review Setup`, ask:
@@ -159,7 +159,7 @@ Prompt: `How should I revisit this setup work?`
 Options:
 
 - Down: `Review / Revise Setup`: choose a local review or revision route.
-- Left: `Run Doctor`: start `$project:audit-project` for drift audit or repair planning.
+- Left: `Run Doctor`: start `$superpowers-project:audit-project` for drift audit or repair planning.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Review / Revise Setup`, ask:

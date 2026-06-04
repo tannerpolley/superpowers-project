@@ -91,7 +91,7 @@ Run `scripts/audit-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` fo
 
 ## Goal Execution Checks
 
-For active issue work, verify that issue mirrors include source plan linkage, AFK/HITL classification, Goal Command for AFK work, acceptance criteria, proof oracle, and native goal setup expectations consumed by `$project:resolve-issue`.
+For active issue work, verify that issue mirrors include source plan linkage, AFK/HITL classification, Goal Command for AFK work, acceptance criteria, proof oracle, and native goal setup expectations consumed by `$superpowers-project:resolve-issue`.
 
 ## Repair Policy
 
@@ -153,7 +153,7 @@ Prompt: `Which repair artifact should be prepared?`
 
 Options:
 
-- Down: `Create Planning Spec`: start `$project:brainstorm-spec` for a larger repair design.
+- Down: `Create Planning Spec`: start `$superpowers-project:brainstorm-spec` for a larger repair design.
 - Left: `Plan Or Issue Repair`: choose whether to plan repair work or create an issue.
 - Right: `Stop`: break the continuation loop.
 
@@ -165,8 +165,8 @@ Prompt: `Should I plan the repair or create an issue?`
 
 Options:
 
-- Down: `Plan Repair`: start `$project:write-plan` from the audit findings.
-- Left: `Create Issue`: start `$project:create-issues` only when the repair is already issue-ready.
+- Down: `Plan Repair`: start `$superpowers-project:write-plan` from the audit findings.
+- Left: `Create Issue`: start `$superpowers-project:create-issues` only when the repair is already issue-ready.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Rerun / Review Audit`, ask:
@@ -177,7 +177,7 @@ Prompt: `How should I revisit this audit?`
 
 Options:
 
-- Down: `Run Audit Again`: rerun `$project:audit-project` after changes or new GitHub evidence.
+- Down: `Run Audit Again`: rerun `$superpowers-project:audit-project` after changes or new GitHub evidence.
 - Left: `Review Or Gather Evidence`: choose whether to review the audit or inspect more evidence.
 - Right: `Stop`: break the continuation loop.
 

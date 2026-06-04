@@ -1,12 +1,12 @@
 {
-  "name": "project",
+  "name": "superpowers-project",
   "version": "0.2.0+codex.20260604172859",
   "description": "Superpowers extension for durable project setup, GitHub issues and milestones, native user-input grilling, goal-backed execution, and worker-thread orchestration.",
   "author": {
     "name": "Tanner Polley"
   },
-  "homepage": "https://github.com/tannerpolley/codex-superpowers-project",
-  "repository": "https://github.com/tannerpolley/codex-superpowers-project",
+  "homepage": "https://github.com/tannerpolley/superpowers-project",
+  "repository": "https://github.com/tannerpolley/superpowers-project",
   "license": "MIT",
   "keywords": [
     "codex",
@@ -31,16 +31,16 @@
       "Workflow"
     ],
     "defaultPrompt": [
-      "Use project:initiate-workflow to choose the next Superpowers Project route.",
-      "Use project:setup-project to set up this repo's project context and tracker.",
-      "Use project:audit-project to audit Superpowers Project workflow drift.",
-      "Use project:brainstorm-spec to brainstorm a project idea with native grilling.",
-      "Use project:create-issues to convert a plan into GitHub issue mirrors.",
-      "Use project:write-plan to write the project implementation plan.",
-      "Use project:implement-plan to implement an approved plan on a development branch without creating issue mirrors.",
-      "Use project:resolve-issue to resolve one GitHub issue directly with a native goal.",
-      "Use project:orchestrate-issues to delegate issue work to a worker worktree thread.",
-      "Use project:merge-changes to merge PR-ready issue or branch work."
+      "Use superpowers-project:initiate-workflow to choose the next Superpowers Project route.",
+      "Use superpowers-project:setup-project to set up this repo's project context and tracker.",
+      "Use superpowers-project:audit-project to audit Superpowers Project workflow drift.",
+      "Use superpowers-project:brainstorm-spec to brainstorm a project idea with native grilling.",
+      "Use superpowers-project:create-issues to convert a plan into GitHub issue mirrors.",
+      "Use superpowers-project:write-plan to write the project implementation plan.",
+      "Use superpowers-project:implement-plan to implement an approved plan on a development branch without creating issue mirrors.",
+      "Use superpowers-project:resolve-issue to resolve one GitHub issue directly with a native goal.",
+      "Use superpowers-project:orchestrate-issues to delegate issue work to a worker worktree thread.",
+      "Use superpowers-project:merge-changes to merge PR-ready issue or branch work."
     ]
   }
 }
