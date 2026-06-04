@@ -29,8 +29,10 @@ if ($exists) {
     $text = Get-Content -LiteralPath $skillPath -Raw
 
     foreach ($needle in @(
-        "Use as many native questions and options as the decision requires",
-        "Use larger native prompts by default when they preserve real choices",
+        "Use the smallest native question shape that preserves the real decision tree",
+        "For project workflow closeout gates, always ask the three-way trajectory question first",
+        "Do not flatten closeout into a five-option or larger peer menu",
+        "Use larger native prompts only inside a selected branch",
         "Observed Codex Desktop behavior",
         "current runtime-permissive behavior",
         "Sequential Branching",
@@ -38,11 +40,16 @@ if ($exists) {
         "Large Option Sets",
         "request_agent_input",
         "Do not collapse real routes into fake categories",
-        "Do not pre-collapse to three choices",
-        "Left is non-terminal",
-        "the only Down terminal exception is an explicit final Healthy -> Done gate",
+        "Ask exactly three top-level options",
+        "Ask the top-level closeout as Continue?",
+        "Use Yes for the progress route",
+        "Use Revisit as the standard go-back route label",
+        "Use No for the stop route",
+        "Do not put Continue children beside Revisit and No in the same top-level question",
+        "Revisit is non-terminal",
+        "the only Yes terminal exception is an explicit final Healthy -> Done gate",
         "Review First is not a terminal answer",
-        "Only Right Stop / Done can end a continuation loop before that final Done gate",
+        "Only No / Stop / Done can end a continuation loop before that final Done gate",
         "reaches an explicit final Healthy -> Done gate",
         "If the active runtime rejects a large prompt, fail loudly"
     )) {
@@ -52,6 +59,10 @@ if ($exists) {
     foreach ($forbidden in @(
         "Do not ask 4+ native options",
         "Do not ask 4+ native questions",
+        "Do not pre-collapse to three choices",
+        "Prefer the full peer set over a nested Down / Left / Right pre-question",
+        "Show all peer options at once when that makes the workflow easier to understand",
+        "Forcing all prompts into three options",
         "One call may ask 1-3 questions.",
         "Each question must define 2-3 mutually exclusive options."
     )) {

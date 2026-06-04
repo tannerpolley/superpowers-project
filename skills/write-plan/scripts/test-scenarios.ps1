@@ -216,7 +216,8 @@ $scenarios = @(
             "project_plan_review_route",
             "Review First",
             "Revise Plan",
-            "Show four or more native options when they are real peer routes"
+            "Do not show Continue children as peer top-level options",
+            "Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires"
         )) {
             Assert-Contains $text $needle "missing nested continuation routing contract: $needle"
             Assert-Contains $metadata $needle "missing nested continuation routing metadata: $needle"
@@ -303,4 +304,3 @@ foreach ($fixtureRoot in $script:quickApplyFixtureRoots) {
 }
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

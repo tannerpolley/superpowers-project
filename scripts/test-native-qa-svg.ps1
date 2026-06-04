@@ -107,9 +107,9 @@ Add-Check $checks "SVG exists" (Test-Path -LiteralPath $svgPath -PathType Leaf) 
 if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
     [xml]$svg = Get-Content -LiteralPath $svgPath -Raw
     $svgText = Get-Content -LiteralPath $svgPath -Raw
-    Add-Check $checks "SVG uses expanded canvas" ([int]$svg.svg.width -eq 3000 -and [int]$svg.svg.height -eq 5340) "SVG must use the expanded 3000x5340 layout"
+    Add-Check $checks "SVG uses expanded canvas" ([int]$svg.svg.width -eq 3200 -and [int]$svg.svg.height -eq 5340) "SVG must use the expanded 3200x5340 layout"
 
-    foreach ($needle in @("--bg", "--line", "--label", "@media (prefers-color-scheme: dark)", ".canvas", ".arrow-head")) {
+    foreach ($needle in @("--bg", "--line", "--label", "@media (prefers-color-scheme: dark)", ".canvas", ".arrow-head", ".depth-line", "stroke-dasharray")) {
         Add-Check $checks "SVG contains $needle" ($svgText.Contains($needle)) "SVG must contain theme contract token: $needle"
     }
 
@@ -124,12 +124,28 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Orchestrate Issues",
         "Merge Changes",
         "Audit Project",
-        "Setup project",
-        "Review route",
-        "Stop here",
+        "Depth 0",
+        "Depth 1",
+        "Depth 2",
+        "Depth 3",
+        "Depth 4",
+        "Depth 5",
+        "Depth 6",
+        "Depth 7",
+        "Done",
+        "Yes",
+        "No",
+        "Revisit Route",
+        "Revisit Setup",
+        "Revisit Spec",
+        "Revisit Plan",
+        "Revisit Branch",
+        "Revisit Issues",
+        "Revisit Output",
+        "Revisit Merge",
+        "Revisit Audit",
         "Healthy can finish at Done",
-        "Healthy -> Done",
-        "Decline merge"
+        "Healthy -> Done"
     )) {
         Add-Check $checks "SVG contains label $needle" ($svgText.Contains($needle)) "SVG must show workflow label: $needle"
     }
@@ -140,9 +156,49 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Left: review",
         "Left: repair",
         "Right: Stop / Done",
-        "Final down: Done"
+        "Final down: Done",
+        "Choose Work Route",
+        "Branch Ready?",
+        "Execute Issues?",
+        "PR Ready?",
+        "Merge Now?",
+        "Stop here",
+        "Decline merge",
+        "Go back",
+        "Review Route",
+        "Review Setup",
+        "Revise Spec",
+        "Revise Plan",
+        "Review Branch",
+        "Revise Issues",
+        "Review Output",
+        "Review / Repair",
+        "Repair Drift",
+        "Revisit setup",
+        "Revise spec",
+        "Revise plan",
+        "Check branch",
+        "Revise issues",
+        "Check output",
+        "Check again",
+        "Repair drift",
+        "Setup project",
+        "Brainstorm spec",
+        "Write plan",
+        "Implement plan",
+        "Create issues",
+        "Orchestrate issues",
+        "Resolve issue",
+        "Merge changes",
+        "Audit project"
     )) {
         Add-Check $checks "SVG omits old directional label $forbiddenLabel" (-not $svgText.Contains($forbiddenLabel)) "SVG must use decision labels instead of directional shorthand: $forbiddenLabel"
+    }
+
+    $depthLines = @($svg.SelectNodes("//*[local-name()='line' and contains(concat(' ', normalize-space(@class), ' '), ' depth-line ')]"))
+    Add-Check $checks "depth guide lines exist" ($depthLines.Count -ge 8) "SVG must show soft dashed depth-level guide lines"
+    foreach ($line in $depthLines) {
+        Add-Check $checks "depth line spans workflow row $($line.id)" ([int]$line.x1 -le 360 -and [int]$line.x2 -ge 2640 -and [string]$line.'stroke-dasharray' -ne "") "depth lines must span the row and use a dash pattern"
     }
 
     $curvedPathValues = @($svg.SelectNodes("//*[local-name()='path']") | Where-Object { [string]$_.d -match "[CQ]" })
@@ -172,9 +228,30 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
     Add-Check $checks "peer skill boxes exist" ($peerSkillRects.Count -eq 4) "Implement/Create and Resolve/Orchestrate must be peer skill boxes"
     Add-Check $checks "implement and create issues share row" ([int]$svg.SelectSingleNode("//*[@id='skill-implement']").y -eq [int]$svg.SelectSingleNode("//*[@id='skill-create-issues']").y) "Implement Plan and Create Issues must sit on the same horizontal level"
     Add-Check $checks "resolve and orchestrate share row" ([int]$svg.SelectSingleNode("//*[@id='skill-resolve']").y -eq [int]$svg.SelectSingleNode("//*[@id='skill-orchestrate']").y) "Resolve Issue and Orchestrate Issues must sit on the same horizontal level"
-    Add-Check $checks "resolve stays under create issues" ([int]$svg.SelectSingleNode("//*[@id='skill-resolve']").x -eq [int]$svg.SelectSingleNode("//*[@id='skill-create-issues']").x) "Resolve Issue must sit under Create Issues as the default classic workflow"
-    Add-Check $checks "orchestrate is left worker peer" ([int]$svg.SelectSingleNode("//*[@id='skill-orchestrate']").x -eq [int]$svg.SelectSingleNode("//*[@id='skill-implement']").x -and [int]$svg.SelectSingleNode("//*[@id='skill-orchestrate']").x -lt [int]$svg.SelectSingleNode("//*[@id='skill-resolve']").x) "Orchestrate Issues must be the left worker peer after Create Issues"
+    $createIssuesRect = $svg.SelectSingleNode("//*[@id='skill-create-issues']")
+    $orchestrateRect = $svg.SelectSingleNode("//*[@id='skill-orchestrate']")
+    $resolveRect = $svg.SelectSingleNode("//*[@id='skill-resolve']")
+    $createIssuesCenterX = [int]$createIssuesRect.x + ([int]$createIssuesRect.width / 2)
+    $orchestrateCenterX = [int]$orchestrateRect.x + ([int]$orchestrateRect.width / 2)
+    $resolveCenterX = [int]$resolveRect.x + ([int]$resolveRect.width / 2)
+    Add-Check $checks "issue execution branch centered under create issues" ((($orchestrateCenterX + $resolveCenterX) / 2) -eq $createIssuesCenterX) "Orchestrate Issues and Resolve Issue must be balanced around the Create Issues center"
+    Add-Check $checks "orchestrate and resolve flank create issues" ($orchestrateCenterX -lt $createIssuesCenterX -and $resolveCenterX -gt $createIssuesCenterX) "Orchestrate must sit left of Create Issues center and Resolve must sit right of it"
+    $prReadyPoints = @(([string]$svg.SelectSingleNode("//*[@id='decision-pr-ready']").points).Trim() -split "\s+")
+    $prReadyTop = $prReadyPoints[0] -split ","
+    Add-Check $checks "resolved work decision centered under create issues" ([int]$prReadyTop[0] -eq $createIssuesCenterX) "Resolved-work decision diamond must be centered under the Create Issues fork"
+    foreach ($line in $depthLines) {
+        $lineY = [int]$line.y1
+        $crossesSkillBox = $false
+        foreach ($skillRect in $skillRects) {
+            if ($lineY -gt [int]$skillRect.y -and $lineY -lt ([int]$skillRect.y + [int]$skillRect.height)) {
+                $crossesSkillBox = $true
+            }
+        }
+        Add-Check $checks "depth line avoids skill boxes $($line.id)" (-not $crossesSkillBox) "Depth guide lines must sit on Yes transition bands, not through skill boxes"
+    }
     Add-Check $checks "stop nodes stay on right side of decisions" (@($stopRects | Where-Object { [int]$_.x -lt 580 }).Count -eq 0) "stop nodes must be right-side break nodes"
+    Add-Check $checks "stop nodes are pulled in from far edge" (@($stopRects | Where-Object { [int]$_.x -gt 2540 }).Count -eq 0) "right-side Stop / Done nodes must not sit too far to the edge"
+    Add-Check $checks "stop nodes have readable size" (@($stopRects | Where-Object { [int]$_.width -lt 260 -or [int]$_.height -lt 64 }).Count -eq 0) "Stop / Done nodes must be large enough to read"
     $stopSideOverlap = $false
     foreach ($stopRect in $stopRects) {
         foreach ($sideRect in $sideRects) {
@@ -225,6 +302,7 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         $side = $svg.SelectSingleNode("//*[@id='side-$suffix']")
         $sideExists = $null -ne $side
         Add-Check $checks "choice route has side box $($route.id)" $sideExists "choice route must map to a side box"
+        Add-Check $checks "choice route has arrowhead $($route.id)" ([string]$route.class -match "(^| )arrow( |$)") "choice routes must be arrows, not bare lines"
         if ($sideExists) {
             $rightX = [int]$side.x + [int]$side.width
             $centerY = [int]$side.y + ([int]$side.height / 2)
@@ -275,13 +353,15 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         $implementRouteText = [string]$implementRoute.points
         Add-Check $checks "implement route leaves center before issue row" (-not $implementRouteText.Contains($resolveTopCenter) -and -not $implementRouteText.Contains($orchestrateTopCenter)) "Implement Plan direct route must not visually continue into Resolve Issue or Orchestrate Issues"
         $implementRoutePoints = Convert-PolylinePoints -Points ([string]$implementRoute.points)
+        $usesMergeJoin = $implementRouteText.Trim().EndsWith("1500,3935") -and $svgText.Contains('id="route-merge-join"')
+        Add-Check $checks "implement route joins central merge path" $usesMergeJoin "Implement Plan direct route must meet the shared merge join before Merge Changes"
         $usesLeftBypassGutter = $false
         for ($i = 0; $i -lt ($implementRoutePoints.Count - 1); $i++) {
             if ($implementRoutePoints[$i].x -eq 80 -and $implementRoutePoints[$i + 1].x -eq 80 -and [Math]::Abs($implementRoutePoints[$i + 1].y - $implementRoutePoints[$i].y) -ge 500) {
                 $usesLeftBypassGutter = $true
             }
         }
-        Add-Check $checks "implement route uses left bypass gutter" $usesLeftBypassGutter "Implement Plan direct route must use the left bypass gutter into Merge Changes"
+        Add-Check $checks "implement route avoids old left bypass gutter" (-not $usesLeftBypassGutter) "Implement Plan direct route should meet the central merge join instead of using the old left bypass gutter"
         $issueExecutionRects = @(
             $svg.SelectSingleNode("//*[@id='skill-resolve']"),
             $svg.SelectSingleNode("//*[@id='skill-orchestrate']")

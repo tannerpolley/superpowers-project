@@ -9,11 +9,13 @@ Use the richest input shape that makes the decision clear. Native `request_user_
 
 ## Core Rule
 
-Use as many native questions and options as the decision requires.
+Use the smallest native question shape that preserves the real decision tree.
 
 Do not collapse real routes into fake categories just to fit old 1-3 question or 2-3 option guidance. Current Codex Desktop testing showed much larger native prompts work, including 20 questions and 20 options. Treat that as current runtime-permissive behavior, not a public guarantee.
 
-Use larger native prompts by default when they preserve real choices. Do not pre-collapse to three choices when a single native menu with four or more peer options is clearer, more honest, and directly executable.
+For project workflow closeout gates, always ask the three-way trajectory question first. Ask the top-level closeout as Continue? Use Yes for the progress route. Use Revisit as the standard go-back route label unless a more specific local label is materially clearer. Use No for the stop route. Do not flatten closeout into a five-option or larger peer menu. If Yes or Revisit needs more detail, ask the nested branch question after that answer.
+
+Use larger native prompts only inside a selected branch, in data-backed selection menus, or for independent bulk decisions that are all needed before one action.
 
 If the active runtime rejects a large prompt, fail loudly, explain the rejected shape, and retry with sequential branch prompts. Do not silently remove routes, merge distinct actions, or proceed on a fake default.
 
@@ -37,12 +39,13 @@ Before asking, inspect what the repo, files, logs, GitHub state, or thread conte
 
 Use native Q&A confidently for:
 
-- 4+ options when all options are real peer routes.
+- 3-option workflow closeout trajectory gates.
+- 4+ options inside a selected Yes or Revisit branch when all options are real peer routes.
 - 4+ questions when the answers are independent and all are needed at the same checkpoint.
 - formal workflow gates such as continue routes, publish approval, merge approval, branch strategy, verification level, cleanup choice, or orchestration topology.
 - strict state-machine routing where every option maps to a real next action.
 
-Keep prompts smaller when fewer choices are clearer. Small prompts are a usability preference, not a hard limit. Prefer the full peer set over a nested Down / Left / Right pre-question when the full peer set is what the user is actually deciding.
+Keep prompts smaller when fewer choices are clearer. Small prompts are a usability preference, not a hard runtime limit. For project workflow closeout, the top-level question is always the three-way Continue? gate, even when the Yes branch has several real next skills.
 
 Do not add an explicit `Other` option. The client provides free-form Other. When the user chooses Other, validate the custom answer before executing it. If it clearly means stop or done, stop. Otherwise ask the next best native follow-up or normal-chat clarification.
 
@@ -61,12 +64,12 @@ Use this when the first answer changes which questions matter.
 Example:
 
 ```text
-Question: How should this continue?
-Options: Plan, Issue, Implement, Resolve, Doctor, Stop
+Question: Continue?
+Options: Yes, Revisit, No / Stop / Done
 
-If Plan -> ask plan scope questions.
-If Resolve -> ask issue, branch, and verification questions.
-If Stop -> stop.
+If Yes -> ask Plan, Issue, Implement, Resolve, Doctor, or other valid progress route.
+If Revisit -> show evidence, ask the review/revision route, then return to the same closeout gate.
+If No / Stop / Done -> stop.
 ```
 
 ## Bulk Question Sets
@@ -91,11 +94,12 @@ Use stable question IDs because answer order may not be meaningful.
 
 ## Large Option Sets
 
-Show all peer options at once when that makes the workflow easier to understand.
+Show all peer options at once only after the top-level closeout trajectory is already selected, or when the prompt is not a workflow closeout gate.
 
 Good large menu:
 
 ```text
+Yes selected.
 Project Plan
 Project Issue
 Project Implement
@@ -122,15 +126,15 @@ Each option needs a short label, a concrete action, and a distinct consequence. 
 
 For workflow closeout, preserve the user's direction model:
 
-- Down means progress or default move-on.
-- Left means revise, review, repair, rerun, recover, or gather more evidence.
-- Right means stop or done.
+- Down is shown to the user as Yes and means progress or default move-on.
+- Left is shown to the user as Revisit and means revise, review, repair, rerun, recover, or gather more evidence.
+- Right is shown to the user as No / Stop / Done and means stop or done.
 
-Left is non-terminal. Down must start the selected progress route or ask the blocking child question; the only Down terminal exception is an explicit final Healthy -> Done gate. Left must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Right Stop / Done can end a continuation loop before that final Done gate.
+Revisit is non-terminal. Yes must start the selected progress route or ask the blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only No / Stop / Done can end a continuation loop before that final Done gate.
 
-This model is a visual and mental default. It does not require exactly three options. If there are more real forward routes, show them. If a top-level Down / Left / Right prompt would clarify the first decision, use it, then show the selected branch's full option set.
+This model is the first prompt for every project workflow closeout. Ask exactly three top-level options: Yes, Revisit, and No / Stop / Done. If Yes has multiple possible next skills, ask a nested route menu after Yes; for example, Write Plan -> Yes -> Create Issues or Implement Plan. If Revisit has multiple possible reiteration routes, ask a nested review menu after Revisit. Do not put Continue children beside Revisit and No in the same top-level question.
 
-Do not end a loop until the user chooses Right Stop / Done, reaches an explicit final Healthy -> Done gate, or provides a Custom answer that clearly means stop/done. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
+Do not end a loop until the user chooses No / Stop / Done, reaches an explicit final Healthy -> Done gate, or provides a Custom answer that clearly means stop/done. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
 
 ## Normal Chat For Exact Text
 
@@ -209,7 +213,7 @@ If a large native prompt fails because of runtime validation:
 
 | Mistake | Fix |
 |---|---|
-| Forcing all prompts into three options | Show all real peer routes when the UI supports it. |
+| Flattening a closeout gate into five or more options | Ask Continue? with Yes, Revisit, and No / Stop / Done first; ask peer routes only inside the selected branch. |
 | Asking dependent branch questions in one bulk prompt | Ask the route first, then only the selected follow-up. |
 | Using choices for exact text | Ask in normal chat. |
 | Treating Custom as executable without validation | Clarify or route it deliberately. |

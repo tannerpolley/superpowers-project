@@ -49,9 +49,9 @@ foreach ($skillName in $workflowSkillNames) {
         'ask another native continuation question',
         'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
         'Only a user-selected `Stop` or `Done` option is terminal',
-        'Left is non-terminal',
-        'the only Down terminal exception is an explicit final Healthy -> Done gate',
-        'Only Right `Stop / Done` can break the loop before that final Done gate',
+        'Revisit is non-terminal',
+        'the only Yes terminal exception is an explicit final Healthy -> Done gate',
+        'Only No / Stop / Done can break the loop before that final Done gate',
         'Review First is not a terminal answer'
     )) {
         Add-Check $checks "$skillName contains $needle" ($text.Contains($needle)) "$skillPath must contain continuation-loop contract: $needle"
@@ -59,12 +59,14 @@ foreach ($skillName in $workflowSkillNames) {
 
     foreach ($needle in @(
         '## Native Continuation Gate',
-        'Down',
-        'Left',
-        'Right',
+        'Continue?',
+        'Yes',
+        'No',
+        'Revisit',
         'Stop / Done',
-        'Use as many native questions and options as the decision requires',
-        'including more than three peer options or independent questions when useful',
+        'top-level closeout question must use exactly three trajectory options',
+        'Do not show Continue children as peer top-level options',
+        'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
         'Custom Other',
         'rendered Markdown artifacts',
         'return to the originating continuation gate'
@@ -82,16 +84,18 @@ foreach ($skillName in $workflowSkillNames) {
         'After every completed action, ask the next native continuation or permission question',
         'Do not end the workflow until the user selects Stop or Done through native continuation input',
         'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
-        'Left is non-terminal',
-        'the only Down terminal exception is an explicit final Healthy -> Done gate',
-        'Only Right `Stop / Done` can break the loop before that final Done gate',
+        'Revisit is non-terminal',
+        'the only Yes terminal exception is an explicit final Healthy -> Done gate',
+        'Only No / Stop / Done can break the loop before that final Done gate',
         'Review First is not a terminal answer',
-        'Down',
-        'Left',
-        'Right',
+        'Continue?',
+        'Yes',
+        'No',
+        'Revisit',
         'Stop / Done',
-        'Use as many native questions and options as the decision requires',
-        'including more than three peer options or independent questions when useful',
+        'top-level closeout question must use exactly three trajectory options',
+        'Do not show Continue children as peer top-level options',
+        'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
         'Custom Other',
         'rendered Markdown artifacts',
         'return to the originating continuation gate'
@@ -105,7 +109,10 @@ foreach ($skillName in $workflowSkillNames) {
         'Ask no more than three',
         'no more than three milestone choices',
         'One call may ask 1-3 questions',
-        'Each question must define 2-3 mutually exclusive options'
+        'Each question must define 2-3 mutually exclusive options',
+        'show all real peer routes when clearer',
+        'Show four or more native options when they are real peer routes',
+        'including more than three peer options or independent questions when useful'
     )) {
         Add-Check $checks "$skillName omits stale native limit $forbidden" (-not $text.Contains($forbidden) -and -not $agentText.Contains($forbidden)) "$skillName must not keep stale native UI limit wording: $forbidden"
     }
