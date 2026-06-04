@@ -2,16 +2,16 @@
 
 ## Purpose
 
-Migrate Superpowers Project from a mostly user-skill surface such as `$project-brainstorm` and `$superpowers-project` to a true plugin namespace surface under `$project`.
+Migrate Superpowers Project from a mostly user-skill surface such as `$project:brainstorm-spec` and `$project:workflow` to a true plugin namespace surface under `$project`.
 
 The target experience is that typing `$project` exposes the whole Superpowers Project skill family as plugin-scoped skills, the same way the Superpowers plugin exposes `superpowers:*` skills.
 
 ## Project Context Evidence
 
-- `.codex-plugin/plugin.json` currently uses `name: superpowers-project`, so the natural plugin namespace is `superpowers-project`, not `project`.
+- `.codex-plugin/plugin.json` currently uses `name: workflow`, so the natural plugin namespace is `superpowers-project`, not `project`.
 - `scripts/sync-live.ps1` currently deploys the source skills both to `C:\Users\Tanner\plugins\superpowers-project` and to `C:\Users\Tanner\.agents\skills`.
-- The global user-skill deployment creates unscoped prompt entries such as `$project-brainstorm`, which undermines a clean plugin namespace.
-- The repo's current source skills are `superpowers-project`, `project-setup`, `project-brainstorm`, `project-plan`, `project-issue`, `project-resolve`, `project-orchestrate`, `project-merge`, and `project-doctor`.
+- The global user-skill deployment creates unscoped prompt entries such as `$project:brainstorm-spec`, which undermines a clean plugin namespace.
+- The repo's current source skills are `superpowers-project`, `setup`, `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, and `audit-project`.
 - `docs/superpowers/PROJECT_CONTEXT.md` defines this repo as the durable source for Superpowers Project workflow skills, project context, roadmap mapping, GitHub issue linkage, native user-input grilling, and goal-backed execution.
 - Existing specs already cover behavior expansion for direct plan implementation. This spec only selects the public skill name `implement-plan`; it does not redefine that skill's execution contract.
 
@@ -31,7 +31,7 @@ The canonical prompt surface should be:
 
 - `project:workflow`: top-level router and continuation chooser, replacing `superpowers-project`.
 - `project:setup`: project setup, tracker configuration, roadmap, and milestone context.
-- `project:audit-project`: drift, tracker, sync, migration, and repair audit, replacing `project-doctor`.
+- `project:audit-project`: drift, tracker, sync, migration, and repair audit, replacing `audit-project`.
 - `project:brainstorm-spec`: repo-backed brainstorming, native grilling, and loose spec creation.
 - `project:write-plan`: approved spec or issue mirror to implementation plan.
 - `project:create-issues`: approved scope to vertical GitHub issue mirrors and GitHub issues.
@@ -62,7 +62,7 @@ Keeping the display brand as `Superpowers Project` preserves the package identit
 
 Removing global user-skill copies creates a cleaner prompt surface, but it means any old `$project-*` habits must be updated immediately. This is acceptable because compatibility wrappers would create the exact stale indirection this repo's rules reject.
 
-Renaming `project-doctor` to `audit-project` makes the skill clearer in autocomplete. The name is less terse than `doctor`, but it better describes read-only drift and tracker checks.
+Renaming `audit-project` to `audit-project` makes the skill clearer in autocomplete. The name is less terse than `doctor`, but it better describes read-only drift and tracker checks.
 
 `implement-plan` is preferred over `execute-plan` because it avoids confusion with `superpowers:executing-plans` while still signaling that the skill is the project-level direct implementation path.
 
@@ -94,10 +94,10 @@ Renaming `project-doctor` to `audit-project` makes the skill clearer in autocomp
 - `skills/audit-project/SKILL.md` exists and has `name: audit-project`.
 - `scripts/sync-live.ps1 -Validate` deploys to `C:\Users\Tanner\plugins\project`.
 - `scripts/sync-live.ps1 -Validate` no longer deploys active skills to `C:\Users\Tanner\.agents\skills`.
-- Old repo-owned user-skill directories such as `project-brainstorm`, `project-plan`, `project-issue`, `project-resolve`, `project-orchestrate`, `project-merge`, `project-doctor`, and `superpowers-project` are removed during sync.
+- Old repo-owned user-skill directories such as `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, `audit-project`, and `superpowers-project` are removed during sync.
 - Validation rejects missing source skill directories for the new canonical names.
 - `README.md` and skill continuation prompts use `project:*` names.
-- `rg -n "\$project-|project-brainstorm|project-plan|project-issue|project-resolve|project-orchestrate|project-merge|project-doctor|superpowers-project" .` returns only intentional migration-history references.
+- `rg -n "\$project-|brainstorm-spec|write-plan|create-issues|resolve-issue|orchestrate-issues|merge-changes|audit-project|superpowers-project" .` returns only intentional migration-history references.
 
 ## Open Questions For Planning
 
@@ -111,3 +111,4 @@ Renaming `project-doctor` to `audit-project` makes the skill clearer in autocomp
 - Consistency check: the spec treats `project` as runtime namespace and `Superpowers Project` as display brand throughout.
 - Scope check: the artifact is a migration contract, not an implementation plan.
 - Ambiguity check: old-name compatibility policy is explicit: remove old names without wrappers.
+

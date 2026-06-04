@@ -16,7 +16,7 @@
 
 - `docs/superpowers/specs/2026-06-03-project-implement-and-integration-workflow-design.md`
 - `docs/superpowers/specs/2026-06-03-project-plugin-namespace-skill-naming-design.md`
-- `docs/superpowers/specs/2026-06-03-project-setup-orchestration-design.md`
+- `docs/superpowers/specs/2026-06-03-setup-orchestration-design.md`
 - `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
 
 **Bundled Skill Source:**
@@ -39,15 +39,15 @@
 
 **Current Source Skill Set:**
 
-- `skills/superpowers-project`
-- `skills/project-setup`
-- `skills/project-orchestrate`
-- `skills/project-brainstorm`
-- `skills/project-plan`
-- `skills/project-issue`
-- `skills/project-resolve`
-- `skills/project-merge`
-- `skills/project-doctor`
+- `skills/workflow`
+- `skills/setup`
+- `skills/orchestrate-issues`
+- `skills/brainstorm-spec`
+- `skills/write-plan`
+- `skills/create-issues`
+- `skills/resolve-issue`
+- `skills/merge-changes`
+- `skills/audit-project`
 
 **Target Source Skill Set:**
 
@@ -77,7 +77,7 @@
 - Active source skills match the target source skill set exactly.
 - `advanced-user-input` is bundled under `skills/advanced-user-input` and validates as an official plugin skill.
 - The bundled `advanced-user-input` skill includes both `request_user_input` guidance and the `request_agent_input` worker-to-orchestrator protocol.
-- Current `project-plan` and future `write-plan` enforce planning grill plus native Q&A as hard gates before plan save when material decisions remain.
+- Current `write-plan` and future `write-plan` enforce planning grill plus native Q&A as hard gates before plan save when material decisions remain.
 - `scripts/sync-live.ps1 -Validate` deploys to `C:\Users\Tanner\plugins\project`.
 - `scripts/sync-live.ps1 -Validate` stops copying active plugin skills into `C:\Users\Tanner\.agents\skills`.
 - Sync removes repo-owned old user-skill copies and old live plugin roots after ownership checks.
@@ -119,9 +119,9 @@
 - Modify: `scripts/test-sync-live.ps1`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
 - Modify: `README.md`
-- Modify: `skills/project-plan/SKILL.md`
-- Modify: `skills/project-plan/agents/openai.yaml`
-- Modify: `skills/project-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/SKILL.md`
+- Modify: `skills/write-plan/agents/openai.yaml`
+- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
 - Modify/Rename: all existing `skills/<old-name>` directories into target `skills/<new-name>` directories.
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/agents/project-roadmap.json`
@@ -167,20 +167,20 @@ Expected final state:
 - `git status --short --branch` shows a clean branch after final commit.
 - `Test-Path "$env:USERPROFILE\plugins\project\.codex-plugin\plugin.json"` returns `True`.
 - `Test-Path "$env:USERPROFILE\plugins\superpowers-project"` returns `False` after ownership-checked cleanup, or is reported as a retired path if cleanup is deferred by an explicit user decision.
-- `Get-ChildItem "$env:USERPROFILE\.agents\skills"` does not include repo-owned old global copies such as `project-plan`, `project-resolve`, or `superpowers-project`.
+- `Get-ChildItem "$env:USERPROFILE\.agents\skills"` does not include repo-owned old global copies such as `write-plan`, `resolve-issue`, or `superpowers-project`.
 
 ### Task 1: Harden Current Plan-Writing Gate
 
 **Files:**
 
-- Modify: `skills/project-plan/SKILL.md`
-- Modify: `skills/project-plan/agents/openai.yaml`
-- Modify: `skills/project-plan/scripts/test-scenarios.ps1`
-- Test: `skills/project-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/SKILL.md`
+- Modify: `skills/write-plan/agents/openai.yaml`
+- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Test: `skills/write-plan/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add a failing scenario for the Planning Grill Gate**
 
-In `skills/project-plan/scripts/test-scenarios.ps1`, add a scenario that requires these phrases in `SKILL.md`:
+In `skills/write-plan/scripts/test-scenarios.ps1`, add a scenario that requires these phrases in `SKILL.md`:
 
 ```text
 ## Planning Grill Gate
@@ -197,7 +197,7 @@ live mutation
 
 - [ ] **Step 2: Make the Planning Grill Gate explicit**
 
-In `skills/project-plan/SKILL.md`, replace the optional short-grill wording with a hard gate:
+In `skills/write-plan/SKILL.md`, replace the optional short-grill wording with a hard gate:
 
 ```markdown
 ## Planning Grill Gate
@@ -215,7 +215,7 @@ If a question can be answered by inspecting the repo, inspect first instead of a
 
 - [ ] **Step 3: Mirror the gate in metadata**
 
-In `skills/project-plan/agents/openai.yaml`, include the same policy in the default prompt:
+In `skills/write-plan/agents/openai.yaml`, include the same policy in the default prompt:
 
 ```text
 Before saving a plan, use the Planning Grill Gate: apply grill-me behavior, inspect knowable context first, and use request_user_input in Default mode as a hard gate for material scope, acceptance criteria, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, or live mutation choices.
@@ -226,7 +226,7 @@ Before saving a plan, use the Planning Grill Gate: apply grill-me behavior, insp
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-plan\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
 ```
 
 Expected: all scenarios pass.
@@ -234,7 +234,7 @@ Expected: all scenarios pass.
 - [ ] **Step 5: Commit checkpoint**
 
 ```powershell
-git add skills/project-plan
+git add skills/write-plan
 git commit -m "fix: require planning grill native qa gate"
 ```
 
@@ -287,14 +287,14 @@ $expectedSkills = @(
 )
 $retiredSkills = @(
     "superpowers-project",
-    "project-setup",
-    "project-orchestrate",
-    "project-brainstorm",
-    "project-plan",
-    "project-issue",
-    "project-resolve",
-    "project-merge",
-    "project-doctor",
+    "setup",
+    "orchestrate-issues",
+    "brainstorm-spec",
+    "write-plan",
+    "create-issues",
+    "resolve-issue",
+    "merge-changes",
+    "audit-project",
     "project-context"
 )
 
@@ -322,7 +322,7 @@ $scanRoots = @(
     (Join-Path $RepoRoot ".codex-plugin"),
     (Join-Path $RepoRoot "skills")
 )
-$stale = @(rg -n "\$project-|project-brainstorm|project-plan|project-issue|project-resolve|project-orchestrate|project-merge|project-doctor|superpowers-project" @scanRoots 2>$null)
+$stale = @(rg -n "\$project-|brainstorm-spec|write-plan|create-issues|resolve-issue|orchestrate-issues|merge-changes|audit-project|superpowers-project" @scanRoots 2>$null)
 $allowed = @($stale | Where-Object { $_ -match "retired|migration|history|removed" })
 Add-Check $checks "no active stale prompt names" ($stale.Count -eq $allowed.Count) "active docs/prompts still contain retired skill names: $($stale -join '; ')"
 
@@ -531,15 +531,15 @@ git commit -m "feat: bundle advanced user input skill"
 **Files:**
 
 - Modify: `.codex-plugin/plugin.json`
-- Rename: `skills/superpowers-project` -> `skills/workflow`
-- Rename: `skills/project-setup` -> `skills/setup`
-- Rename: `skills/project-doctor` -> `skills/audit-project`
-- Rename: `skills/project-brainstorm` -> `skills/brainstorm-spec`
-- Rename: `skills/project-plan` -> `skills/write-plan`
-- Rename: `skills/project-issue` -> `skills/create-issues`
-- Rename: `skills/project-resolve` -> `skills/resolve-issue`
-- Rename: `skills/project-orchestrate` -> `skills/orchestrate-issues`
-- Rename: `skills/project-merge` -> `skills/merge-changes`
+- Rename: `skills/workflow` -> `skills/workflow`
+- Rename: `skills/setup` -> `skills/setup`
+- Rename: `skills/audit-project` -> `skills/audit-project`
+- Rename: `skills/brainstorm-spec` -> `skills/brainstorm-spec`
+- Rename: `skills/write-plan` -> `skills/write-plan`
+- Rename: `skills/create-issues` -> `skills/create-issues`
+- Rename: `skills/resolve-issue` -> `skills/resolve-issue`
+- Rename: `skills/orchestrate-issues` -> `skills/orchestrate-issues`
+- Rename: `skills/merge-changes` -> `skills/merge-changes`
 - Test: `scripts/test-project-namespace-migration.ps1`
 
 - [ ] **Step 1: Rename directories with Git**
@@ -548,14 +548,14 @@ Run:
 
 ```powershell
 git mv .\skills\superpowers-project .\skills\workflow
-git mv .\skills\project-setup .\skills\setup
-git mv .\skills\project-doctor .\skills\audit-project
-git mv .\skills\project-brainstorm .\skills\brainstorm-spec
-git mv .\skills\project-plan .\skills\write-plan
-git mv .\skills\project-issue .\skills\create-issues
-git mv .\skills\project-resolve .\skills\resolve-issue
-git mv .\skills\project-orchestrate .\skills\orchestrate-issues
-git mv .\skills\project-merge .\skills\merge-changes
+git mv .\skills\setup .\skills\setup
+git mv .\skills\audit-project .\skills\audit-project
+git mv .\skills\brainstorm-spec .\skills\brainstorm-spec
+git mv .\skills\write-plan .\skills\write-plan
+git mv .\skills\create-issues .\skills\create-issues
+git mv .\skills\resolve-issue .\skills\resolve-issue
+git mv .\skills\orchestrate-issues .\skills\orchestrate-issues
+git mv .\skills\merge-changes .\skills\merge-changes
 ```
 
 Expected: `git status --short` shows renames, not delete/add churn where Git can detect the move.
@@ -613,15 +613,15 @@ Update `interface.defaultPrompt` entries to use `project:*` language, for exampl
 Replace active prompt references:
 
 ```text
-$superpowers-project       -> project:workflow
-$project-setup             -> project:setup
-$project-doctor            -> project:audit-project
-$project-brainstorm        -> project:brainstorm-spec
-$project-plan              -> project:write-plan
-$project-issue             -> project:create-issues
-$project-resolve           -> project:resolve-issue
-$project-orchestrate       -> project:orchestrate-issues
-$project-merge             -> project:merge-changes
+$project:workflow       -> project:workflow
+$project:setup             -> project:setup
+$project:audit-project            -> project:audit-project
+$project:brainstorm-spec        -> project:brainstorm-spec
+$project:write-plan              -> project:write-plan
+$project:create-issues             -> project:create-issues
+$project:resolve-issue           -> project:resolve-issue
+$project:orchestrate-issues       -> project:orchestrate-issues
+$project:merge-changes             -> project:merge-changes
 ```
 
 Do not add wrappers for old names.
@@ -681,7 +681,7 @@ Add-Check "live plugin path is project" ($text.Contains('plugins\project')) "syn
 Add-Check "retired superpowers-project path tracked" ($text.Contains('plugins\superpowers-project')) "sync-live must remove or report retired superpowers-project path"
 Add-Check "retired milestones path tracked" ($text.Contains('plugins\milestones')) "sync-live must keep milestones cleanup"
 Add-Check "does not copy active skills to user skills" (-not $text.Contains('Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved')) "active plugin skills must not be copied to .agents\skills"
-Add-Check "removes old user skill names" ($text.Contains('Remove-StaleOwnedSkillDirectories') -and $text.Contains('project-plan')) "sync-live must remove old repo-owned global skill copies"
+Add-Check "removes old user skill names" ($text.Contains('Remove-StaleOwnedSkillDirectories') -and $text.Contains('write-plan')) "sync-live must remove old repo-owned global skill copies"
 
 $failed = @($checks | Where-Object { -not $_.ok })
 [pscustomobject]@{
@@ -717,14 +717,14 @@ In `scripts/sync-live.ps1`, include old names:
 ```powershell
 $retiredSkillNames = @(
     "superpowers-project",
-    "project-setup",
-    "project-orchestrate",
-    "project-brainstorm",
-    "project-plan",
-    "project-issue",
-    "project-resolve",
-    "project-merge",
-    "project-doctor",
+    "setup",
+    "orchestrate-issues",
+    "brainstorm-spec",
+    "write-plan",
+    "create-issues",
+    "resolve-issue",
+    "merge-changes",
+    "audit-project",
     "project-context",
     "using-milestones",
     "setup-project-milestones",
@@ -1087,7 +1087,7 @@ In `skills/orchestrate-issues/scripts/test-scenarios.ps1`, add checks for:
 derive-worker-identity creates issue-<number>-<slug>
 thread title uses Resolve #<number>: <title>
 branch uses codex/issue-<number>-<slug>
-evidence folder uses project-orchestrate-issue-<number>-<slug>
+evidence folder uses orchestrate-issues-issue-<number>-<slug>
 autonomous ready selection compares local and GitHub state
 local/GitHub readiness drift routes to project:audit-project
 request_agent_input is used only for worker-to-orchestrator blocking questions
@@ -1115,7 +1115,7 @@ Derived names:
 - app thread title: `Resolve #<number>: <issue title>`
 - branch: `codex/issue-<number>-<slug>`
 - worker handoff label: `issue-<number>-<slug>`
-- temp evidence folder: `project-orchestrate-issue-<number>-<slug>`
+- temp evidence folder: `orchestrate-issues-issue-<number>-<slug>`
 ```
 
 - [ ] **Step 5: Run focused tests**
@@ -1404,7 +1404,7 @@ Run:
 Test-Path "$env:USERPROFILE\plugins\project\.codex-plugin\plugin.json"
 Test-Path "$env:USERPROFILE\plugins\superpowers-project"
 Get-ChildItem "$env:USERPROFILE\.agents\skills" -Directory |
-    Where-Object Name -in @("superpowers-project","project-plan","project-resolve","project-merge","project-doctor","project-brainstorm","project-issue","project-orchestrate","project-setup") |
+    Where-Object Name -in @("superpowers-project","write-plan","resolve-issue","merge-changes","audit-project","brainstorm-spec","create-issues","orchestrate-issues","setup") |
     Select-Object -ExpandProperty FullName
 ```
 
@@ -1457,3 +1457,4 @@ Do not end with a prose-only pending push state when `request_user_input` is cal
 - TDD policy: every behavior task starts with scenario or contract tests before skill/script changes.
 - Debug policy: `request_agent_input` is treated as a written worker-to-orchestrator protocol, not as a runtime tool or normal user-facing prompt.
 - Verification policy: full repo validation, live sync validation, cleanup hook, and native publish continuation are mandatory before closeout.
+

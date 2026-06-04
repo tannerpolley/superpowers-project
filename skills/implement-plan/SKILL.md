@@ -11,7 +11,7 @@ Implement Plan is the non-issue execution route for an approved plan under `docs
 
 ## Required Inputs
 
-Require an approved plan path under `docs/superpowers/plans`. If the request names a loose idea, spec, issue mirror, or external document instead of an approved plan, route to `$project-plan` or `$project-issue` as appropriate before execution.
+Require an approved plan path under `docs/superpowers/plans`. If the request names a loose idea, spec, issue mirror, or external document instead of an approved plan, route to `$project:write-plan` or `$project:create-issues` as appropriate before execution.
 
 Require native `/goal` activation before code changes. The goal must name the approved plan path and the intended execution route. Record proof as structured evidence, not a prose claim.
 
@@ -19,7 +19,7 @@ Require native `/goal` activation before code changes. The goal must name the ap
 
 This route is for branch-backed plan implementation without a GitHub issue. Do not create issue mirrors, do not hydrate GitHub issues, and do not claim issue closure in commits, PR text, ledgers, or handoffs.
 
-Use the issue-backed `$project-issue` and `$project-resolve` route when the work should close a GitHub issue, needs tracker ownership, or should be split into multiple issue mirrors.
+Use the issue-backed `$project:create-issues` and `$project:resolve-issue` route when the work should close a GitHub issue, needs tracker ownership, or should be split into multiple issue mirrors.
 
 ## Execution Gate
 
@@ -73,8 +73,9 @@ Produce a merge-ready handoff that includes:
 - PR URL when pushed
 - explicit statement that no issue mirror was created and no GitHub issue closure is claimed
 
-Route merge-ready output to `$project-merge` or another approved merge route. Use non-issue merge mode such as `pr-no-issue` for PRs that came from this route.
+Route merge-ready output to `$project:merge-changes` or another approved merge route. Use non-issue merge mode such as `pr-no-issue` for PRs that came from this route.
 
 ## Contract Helper
 
 Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, native `/goal` activation, a development branch, topology selection, passed verification, native publish permission, merge-ready evidence, and no issue closure claim.
+

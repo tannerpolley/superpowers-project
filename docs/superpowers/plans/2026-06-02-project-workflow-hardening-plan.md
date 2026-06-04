@@ -4,7 +4,7 @@
 
 **Goal:** Harden Superpowers Project workflow contracts so native UI continuations, ledgers, GitHub checks, closed issue mirrors, ignored files, Doctor drift audits, and quick local-main work are reliable and validated.
 
-**Architecture:** Keep the existing skill split: `$project-brainstorm` designs, `$project-plan` plans and can route to Quick Apply, `$project-issue` publishes tracker work, `$project-resolve` implements one issue, `$project-merge` integrates PRs, and `$project-doctor` audits drift. Add small PowerShell gates and shared helpers where they prevent contract drift, while keeping existing gate scripts authoritative.
+**Architecture:** Keep the existing skill split: `$project:brainstorm-spec` designs, `$project:write-plan` plans and can route to Quick Apply, `$project:create-issues` publishes tracker work, `$project:resolve-issue` implements one issue, `$project:merge-changes` integrates PRs, and `$project:audit-project` audits drift. Add small PowerShell gates and shared helpers where they prevent contract drift, while keeping existing gate scripts authoritative.
 
 **Tech Stack:** Codex skill Markdown/YAML, PowerShell 7 validation scripts, JSON ledgers, Git/GitHub CLI evidence, native `request_user_input`, `docs/superpowers` artifacts, and existing repo validation through `scripts/validate.ps1` plus `scripts/sync-live.ps1 -Validate`.
 
@@ -28,14 +28,14 @@
 ## Acceptance Criteria
 
 - [ ] Every Superpowers Project skill documents a native closeout continuation gate with stop/review and relevant next routes.
-- [ ] `$project-brainstorm` requires an in-chat spec summary and native `Project Plan`, `Review First`, `Revise Spec` continuation question.
-- [ ] `$project-plan` includes `Quick Apply`, `Review First`, and `Revise Plan` in `project_plan_next_step`.
+- [ ] `$project:brainstorm-spec` requires an in-chat spec summary and native `Project Plan`, `Review First`, `Revise Spec` continuation question.
+- [ ] `$project:write-plan` includes `Quick Apply`, `Review First`, and `Revise Plan` in `project_plan_next_step`.
 - [ ] Quick Apply has a bundled gate script that blocks dirty, unsynced, non-main, missing approval, missing verification, or missing cleanup states.
 - [ ] Skill docs cannot drift from exposed PowerShell script parameters without `scripts/validate.ps1` failing.
 - [ ] Resolve and merge ledger helpers generate setup, PR-ready, premerge, and closeout evidence from local/GitHub inputs without hand-authored JSON.
 - [ ] GitHub check state normalization is shared and treats skipped checks consistently.
-- [ ] `$project-merge` closeout records mirror deletion or explicit retention evidence for closed issues.
-- [ ] `$project-doctor` has a scripted audit for milestone, mirror, GitHub tracker, label, live sync, native UI, and ignored-path drift.
+- [ ] `$project:merge-changes` closeout records mirror deletion or explicit retention evidence for closed issues.
+- [ ] `$project:audit-project` has a scripted audit for milestone, mirror, GitHub tracker, label, live sync, native UI, and ignored-path drift.
 - [ ] Local ignore traps are detected before structure files are assumed to be tracked.
 - [ ] Full repo validation and live sync validation pass.
 
@@ -48,46 +48,46 @@ Create:
 - `scripts/validate-skill-script-contract.ps1`: skill docs vs script parameter contract.
 - `scripts/test-github-checks.ps1`: shared check normalization scenarios.
 - `scripts/test-git-ignore-traps.ps1`: ignored-path scenarios.
-- `skills/project-plan/scripts/validate-quick-apply.ps1`: Quick Apply gate.
-- `skills/project-resolve/scripts/collect-pr-ready-ledger.ps1`: PR-ready ledger generator.
-- `skills/project-merge/scripts/collect-premerge-ledger.ps1`: premerge evidence generator.
-- `skills/project-merge/scripts/collect-closeout-ledger.ps1`: closeout ledger generator.
-- `skills/project-doctor/scripts/audit-project.ps1`: structured Doctor audit.
+- `skills/write-plan/scripts/validate-quick-apply.ps1`: Quick Apply gate.
+- `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`: PR-ready ledger generator.
+- `skills/merge-changes/scripts/collect-premerge-ledger.ps1`: premerge evidence generator.
+- `skills/merge-changes/scripts/collect-closeout-ledger.ps1`: closeout ledger generator.
+- `skills/audit-project/scripts/audit-project.ps1`: structured Doctor audit.
 
 Modify:
 
 - `scripts/validate.ps1`
 - `scripts/test-superpowers-project-dummy-repo.ps1`
 - `scripts/test-superpowers-project-repo-contract.ps1`
-- `skills/superpowers-project/SKILL.md`
-- `skills/superpowers-project/agents/openai.yaml`
-- `skills/superpowers-project/scripts/test-scenarios.ps1`
+- `skills/workflow/SKILL.md`
+- `skills/workflow/agents/openai.yaml`
+- `skills/workflow/scripts/test-scenarios.ps1`
 - `skills/project-context/SKILL.md`
 - `skills/project-context/agents/openai.yaml`
 - `skills/project-context/scripts/test-scenarios.ps1`
-- `skills/project-brainstorm/SKILL.md`
-- `skills/project-brainstorm/agents/openai.yaml`
-- `skills/project-brainstorm/scripts/test-scenarios.ps1`
-- `skills/project-plan/SKILL.md`
-- `skills/project-plan/agents/openai.yaml`
-- `skills/project-plan/scripts/test-scenarios.ps1`
-- `skills/project-issue/SKILL.md`
-- `skills/project-issue/agents/openai.yaml`
-- `skills/project-issue/scripts/test-scenarios.ps1`
-- `skills/project-resolve/SKILL.md`
-- `skills/project-resolve/agents/openai.yaml`
-- `skills/project-resolve/scripts/lib/contract.ps1`
-- `skills/project-resolve/scripts/test-scenarios.ps1`
-- `skills/project-resolve/scripts/validate-pr-ready.ps1`
-- `skills/project-merge/SKILL.md`
-- `skills/project-merge/agents/openai.yaml`
-- `skills/project-merge/scripts/lib/contract.ps1`
-- `skills/project-merge/scripts/premerge.ps1`
-- `skills/project-merge/scripts/closeout.ps1`
-- `skills/project-merge/scripts/test-scenarios.ps1`
-- `skills/project-doctor/SKILL.md`
-- `skills/project-doctor/agents/openai.yaml`
-- `skills/project-doctor/scripts/test-scenarios.ps1`
+- `skills/brainstorm-spec/SKILL.md`
+- `skills/brainstorm-spec/agents/openai.yaml`
+- `skills/brainstorm-spec/scripts/test-scenarios.ps1`
+- `skills/write-plan/SKILL.md`
+- `skills/write-plan/agents/openai.yaml`
+- `skills/write-plan/scripts/test-scenarios.ps1`
+- `skills/create-issues/SKILL.md`
+- `skills/create-issues/agents/openai.yaml`
+- `skills/create-issues/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/SKILL.md`
+- `skills/resolve-issue/agents/openai.yaml`
+- `skills/resolve-issue/scripts/lib/contract.ps1`
+- `skills/resolve-issue/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/scripts/validate-pr-ready.ps1`
+- `skills/merge-changes/SKILL.md`
+- `skills/merge-changes/agents/openai.yaml`
+- `skills/merge-changes/scripts/lib/contract.ps1`
+- `skills/merge-changes/scripts/premerge.ps1`
+- `skills/merge-changes/scripts/closeout.ps1`
+- `skills/merge-changes/scripts/test-scenarios.ps1`
+- `skills/audit-project/SKILL.md`
+- `skills/audit-project/agents/openai.yaml`
+- `skills/audit-project/scripts/test-scenarios.ps1`
 - `docs/superpowers/issues/README.md`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `README.md`
@@ -97,10 +97,10 @@ Test:
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-skill-script-contract.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-github-checks.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-git-ignore-traps.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-plan\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-doctor\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1`
@@ -111,40 +111,40 @@ Test:
 ## Non-Goals
 
 - Do not add GoalBuddy boards or `docs/goals`.
-- Do not replace `$project-issue`, `$project-resolve`, or `$project-merge`.
+- Do not replace `$project:create-issues`, `$project:resolve-issue`, or `$project:merge-changes`.
 - Do not skip native merge approval.
 - Do not make Quick Apply available for risky or multi-issue implementation work.
 - Do not write generated ledgers into the repo by default.
-- Do not let `$project-doctor` mutate docs or tracker state without native repair approval.
+- Do not let `$project:audit-project` mutate docs or tracker state without native repair approval.
 
 ## Task 1: Enforce Native Continuation Closeout Across Skills
 
 **Files:**
 
-- Modify: `skills/superpowers-project/SKILL.md`
-- Modify: `skills/superpowers-project/agents/openai.yaml`
-- Modify: `skills/superpowers-project/scripts/test-scenarios.ps1`
+- Modify: `skills/workflow/SKILL.md`
+- Modify: `skills/workflow/agents/openai.yaml`
+- Modify: `skills/workflow/scripts/test-scenarios.ps1`
 - Modify: `skills/project-context/SKILL.md`
 - Modify: `skills/project-context/agents/openai.yaml`
 - Modify: `skills/project-context/scripts/test-scenarios.ps1`
-- Modify: `skills/project-brainstorm/SKILL.md`
-- Modify: `skills/project-brainstorm/agents/openai.yaml`
-- Modify: `skills/project-brainstorm/scripts/test-scenarios.ps1`
-- Modify: `skills/project-plan/SKILL.md`
-- Modify: `skills/project-plan/agents/openai.yaml`
-- Modify: `skills/project-plan/scripts/test-scenarios.ps1`
-- Modify: `skills/project-issue/SKILL.md`
-- Modify: `skills/project-issue/agents/openai.yaml`
-- Modify: `skills/project-issue/scripts/test-scenarios.ps1`
-- Modify: `skills/project-resolve/SKILL.md`
-- Modify: `skills/project-resolve/agents/openai.yaml`
-- Modify: `skills/project-resolve/scripts/test-scenarios.ps1`
-- Modify: `skills/project-merge/SKILL.md`
-- Modify: `skills/project-merge/agents/openai.yaml`
-- Modify: `skills/project-merge/scripts/test-scenarios.ps1`
-- Modify: `skills/project-doctor/SKILL.md`
-- Modify: `skills/project-doctor/agents/openai.yaml`
-- Modify: `skills/project-doctor/scripts/test-scenarios.ps1`
+- Modify: `skills/brainstorm-spec/SKILL.md`
+- Modify: `skills/brainstorm-spec/agents/openai.yaml`
+- Modify: `skills/brainstorm-spec/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/SKILL.md`
+- Modify: `skills/write-plan/agents/openai.yaml`
+- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/SKILL.md`
+- Modify: `skills/create-issues/agents/openai.yaml`
+- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/SKILL.md`
+- Modify: `skills/resolve-issue/agents/openai.yaml`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/SKILL.md`
+- Modify: `skills/merge-changes/agents/openai.yaml`
+- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/audit-project/SKILL.md`
+- Modify: `skills/audit-project/agents/openai.yaml`
+- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add failing continuation-closeout scenario tests**
 
@@ -161,26 +161,26 @@ Add scenario assertions requiring each skill to contain:
 
 Add skill-specific question id and option needles:
 
-- `$project-brainstorm`: `project_brainstorm_next_step`, `Project Plan`, `Review First`, `Revise Spec`
+- `$project:brainstorm-spec`: `project_brainstorm_next_step`, `Project Plan`, `Review First`, `Revise Spec`
 - `$project-context`: `project_context_next_step`, `Project Brainstorm`, `Project Plan`, `Project Issue`, `Project Doctor`, `Stop`
-- `$project-plan`: `project_plan_next_step`, `Project Issue First`, `Quick Apply`, `Review First`, `Revise Plan`
-- `$project-issue`: `project_issue_next_step`, `Resolve First Ready`, `Resolve Selected`, `Review First`, `Stop`
-- `$project-resolve`: `project_resolve_next_step`, `Project Merge`, `Resolve Another`, `Review First`, `Stop`
-- `$project-merge`: `project_merge_next_step`, `Project Doctor`, `Resolve Another`, `Review First`, `Stop`
-- `$project-doctor`: `project_doctor_next_step`, `Apply Repair`, `Create Planning Spec`, `Run Audit Again`, `Stop`
+- `$project:write-plan`: `project_plan_next_step`, `Project Issue First`, `Quick Apply`, `Review First`, `Revise Plan`
+- `$project:create-issues`: `project_issue_next_step`, `Resolve First Ready`, `Resolve Selected`, `Review First`, `Stop`
+- `$project:resolve-issue`: `project_resolve_next_step`, `Project Merge`, `Resolve Another`, `Review First`, `Stop`
+- `$project:merge-changes`: `project_merge_next_step`, `Project Doctor`, `Resolve Another`, `Review First`, `Stop`
+- `$project:audit-project`: `project_doctor_next_step`, `Apply Repair`, `Create Planning Spec`, `Run Audit Again`, `Stop`
 
 - [ ] **Step 2: Run focused tests and verify red state**
 
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-brainstorm\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\brainstorm-spec\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-context\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-doctor\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
 ```
 
 Expected: FAIL until each skill contains the new closeout contract.
@@ -242,10 +242,10 @@ Expected: FAIL until real docs and script references satisfy the contract.
 
 Audit all `SKILL.md` files for script examples and align with actual script parameter names, especially:
 
-- `skills/project-resolve/scripts/prepare-execution.ps1 -IssueMirror`
-- `skills/project-issue/scripts/validate-issue-mirror.ps1 -IssueFile`
-- `skills/project-merge/scripts/premerge.ps1`
-- `skills/project-merge/scripts/closeout.ps1`
+- `skills/resolve-issue/scripts/prepare-execution.ps1 -IssueMirror`
+- `skills/create-issues/scripts/validate-issue-mirror.ps1 -IssueFile`
+- `skills/merge-changes/scripts/premerge.ps1`
+- `skills/merge-changes/scripts/closeout.ps1`
 
 - [ ] **Step 3: Add validation integration**
 
@@ -284,9 +284,9 @@ git commit -m "feat: validate skill script parameter contracts"
 
 - Create: `scripts/lib/github-checks.ps1`
 - Create: `scripts/test-github-checks.ps1`
-- Modify: `skills/project-merge/scripts/lib/contract.ps1`
-- Modify: `skills/project-merge/scripts/premerge.ps1`
-- Modify: `skills/project-merge/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/scripts/lib/contract.ps1`
+- Modify: `skills/merge-changes/scripts/premerge.ps1`
+- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
 - Modify: `scripts/validate.ps1`
 
 - [ ] **Step 1: Write failing check-state scenarios**
@@ -318,11 +318,11 @@ Create `scripts/lib/github-checks.ps1` with functions:
 
 Use string states from `gh pr view --json statusCheckRollup` and `gh pr checks`.
 
-- [ ] **Step 3: Use helper in `$project-merge`**
+- [ ] **Step 3: Use helper in `$project:merge-changes`**
 
-Dot-source `scripts/lib/github-checks.ps1` from `skills/project-merge/scripts/lib/contract.ps1` by resolving from repo root or by adding a local shim that can find the repo root passed to the gate.
+Dot-source `scripts/lib/github-checks.ps1` from `skills/merge-changes/scripts/lib/contract.ps1` by resolving from repo root or by adding a local shim that can find the repo root passed to the gate.
 
-Replace the loose `SUCCESS|PASS|COMPLETED` regex in `skills/project-merge/scripts/premerge.ps1` with the shared helper.
+Replace the loose `SUCCESS|PASS|COMPLETED` regex in `skills/merge-changes/scripts/premerge.ps1` with the shared helper.
 
 - [ ] **Step 4: Add validation integration and commit checkpoint**
 
@@ -332,7 +332,7 @@ Run:
 
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-github-checks.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
@@ -341,7 +341,7 @@ Expected: PASS.
 Commit:
 
 ```powershell
-git add scripts skills/project-merge
+git add scripts skills/merge-changes
 git commit -m "feat: normalize github check states"
 ```
 
@@ -349,15 +349,15 @@ git commit -m "feat: normalize github check states"
 
 **Files:**
 
-- Create: `skills/project-resolve/scripts/collect-pr-ready-ledger.ps1`
-- Create: `skills/project-merge/scripts/collect-premerge-ledger.ps1`
-- Create: `skills/project-merge/scripts/collect-closeout-ledger.ps1`
-- Modify: `skills/project-resolve/SKILL.md`
-- Modify: `skills/project-resolve/agents/openai.yaml`
-- Modify: `skills/project-resolve/scripts/test-scenarios.ps1`
-- Modify: `skills/project-merge/SKILL.md`
-- Modify: `skills/project-merge/agents/openai.yaml`
-- Modify: `skills/project-merge/scripts/test-scenarios.ps1`
+- Create: `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`
+- Create: `skills/merge-changes/scripts/collect-premerge-ledger.ps1`
+- Create: `skills/merge-changes/scripts/collect-closeout-ledger.ps1`
+- Modify: `skills/resolve-issue/SKILL.md`
+- Modify: `skills/resolve-issue/agents/openai.yaml`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/SKILL.md`
+- Modify: `skills/merge-changes/agents/openai.yaml`
+- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add failing ledger helper scenarios**
 
@@ -373,15 +373,15 @@ Extend resolver and merge scenario tests to require:
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 ```
 
 Expected: FAIL until helper scripts and docs exist.
 
 - [ ] **Step 2: Implement resolver PR-ready collector**
 
-Create `skills/project-resolve/scripts/collect-pr-ready-ledger.ps1` with parameters:
+Create `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1` with parameters:
 
 - `-RepoRoot`
 - `-SetupLedgerPath`
@@ -396,7 +396,7 @@ Emit JSON containing `ok`, `phase`, `ledger`, `ledger_json`, and optional `ledge
 
 - [ ] **Step 3: Implement merge collectors**
 
-Create `skills/project-merge/scripts/collect-premerge-ledger.ps1` with parameters:
+Create `skills/merge-changes/scripts/collect-premerge-ledger.ps1` with parameters:
 
 - `-RepoRoot`
 - `-SetupLedgerPath`
@@ -406,7 +406,7 @@ Create `skills/project-merge/scripts/collect-premerge-ledger.ps1` with parameter
 - `-ChangedFilesCovered`
 - `-OutputDir`
 
-Create `skills/project-merge/scripts/collect-closeout-ledger.ps1` with parameters:
+Create `skills/merge-changes/scripts/collect-closeout-ledger.ps1` with parameters:
 
 - `-RepoRoot`
 - `-SetupLedgerPath`
@@ -427,8 +427,8 @@ Update resolver and merge docs to tell agents to use collectors before gate scri
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
@@ -437,7 +437,7 @@ Expected: PASS.
 Commit:
 
 ```powershell
-git add skills/project-resolve skills/project-merge
+git add skills/resolve-issue skills/merge-changes
 git commit -m "feat: generate workflow evidence ledgers"
 ```
 
@@ -445,13 +445,13 @@ git commit -m "feat: generate workflow evidence ledgers"
 
 **Files:**
 
-- Modify: `skills/project-merge/SKILL.md`
-- Modify: `skills/project-merge/agents/openai.yaml`
-- Modify: `skills/project-merge/scripts/closeout.ps1`
-- Modify: `skills/project-merge/scripts/collect-closeout-ledger.ps1`
-- Modify: `skills/project-merge/scripts/test-scenarios.ps1`
-- Modify: `skills/project-doctor/SKILL.md`
-- Modify: `skills/project-doctor/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/SKILL.md`
+- Modify: `skills/merge-changes/agents/openai.yaml`
+- Modify: `skills/merge-changes/scripts/closeout.ps1`
+- Modify: `skills/merge-changes/scripts/collect-closeout-ledger.ps1`
+- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/audit-project/SKILL.md`
+- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
 - Modify: `docs/superpowers/issues/README.md`
 
 - [ ] **Step 1: Add failing mirror lifecycle scenarios**
@@ -465,7 +465,7 @@ Add a scenario that fails when a closed issue mirror remains without retention.
 
 - [ ] **Step 2: Implement closeout validation**
 
-Update `skills/project-merge/scripts/closeout.ps1` to require structured `mirror_cleanup_confirmation` with:
+Update `skills/merge-changes/scripts/closeout.ps1` to require structured `mirror_cleanup_confirmation` with:
 
 ```json
 {
@@ -503,8 +503,8 @@ Update `docs/superpowers/issues/README.md` with:
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-doctor\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
@@ -513,7 +513,7 @@ Expected: PASS.
 Commit:
 
 ```powershell
-git add skills/project-merge skills/project-doctor docs/superpowers/issues/README.md
+git add skills/merge-changes skills/audit-project docs/superpowers/issues/README.md
 git commit -m "feat: clean closed issue mirrors"
 ```
 
@@ -526,8 +526,8 @@ git commit -m "feat: clean closed issue mirrors"
 - Modify: `scripts/validate.ps1`
 - Modify: `skills/project-context/SKILL.md`
 - Modify: `skills/project-context/scripts/test-scenarios.ps1`
-- Modify: `skills/project-doctor/SKILL.md`
-- Modify: `skills/project-doctor/scripts/test-scenarios.ps1`
+- Modify: `skills/audit-project/SKILL.md`
+- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Write failing ignore-trap tests**
 
@@ -550,7 +550,7 @@ Use `git check-ignore -v -- <path>` and return structured evidence.
 
 - [ ] **Step 3: Document usage**
 
-Update `$project-context` for structure file creation and `$project-doctor` for drift audits. Mention `AGENTS.md`, `docs/agents/*.md`, skill files, issue mirrors, and milestone pages.
+Update `$project-context` for structure file creation and `$project:audit-project` for drift audits. Mention `AGENTS.md`, `docs/agents/*.md`, skill files, issue mirrors, and milestone pages.
 
 - [ ] **Step 4: Add validation integration and commit checkpoint**
 
@@ -559,7 +559,7 @@ Run:
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-git-ignore-traps.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-context\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-doctor\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
@@ -568,7 +568,7 @@ Expected: PASS.
 Commit:
 
 ```powershell
-git add scripts skills/project-context skills/project-doctor
+git add scripts skills/project-context skills/audit-project
 git commit -m "feat: detect ignored project files"
 ```
 
@@ -576,18 +576,18 @@ git commit -m "feat: detect ignored project files"
 
 **Files:**
 
-- Create: `skills/project-plan/scripts/validate-quick-apply.ps1`
-- Modify: `skills/project-plan/SKILL.md`
-- Modify: `skills/project-plan/agents/openai.yaml`
-- Modify: `skills/project-plan/scripts/test-scenarios.ps1`
-- Modify: `skills/superpowers-project/SKILL.md`
-- Modify: `skills/superpowers-project/agents/openai.yaml`
-- Modify: `skills/superpowers-project/scripts/test-scenarios.ps1`
+- Create: `skills/write-plan/scripts/validate-quick-apply.ps1`
+- Modify: `skills/write-plan/SKILL.md`
+- Modify: `skills/write-plan/agents/openai.yaml`
+- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/workflow/SKILL.md`
+- Modify: `skills/workflow/agents/openai.yaml`
+- Modify: `skills/workflow/scripts/test-scenarios.ps1`
 - Modify: `README.md`
 
 - [ ] **Step 1: Add failing Quick Apply tests**
 
-Extend project-plan scenarios to require:
+Extend write-plan scenarios to require:
 
 - `Quick Apply`
 - `Review First`
@@ -601,7 +601,7 @@ Extend project-plan scenarios to require:
 
 - [ ] **Step 2: Implement Quick Apply gate**
 
-Create `skills/project-plan/scripts/validate-quick-apply.ps1` with parameters:
+Create `skills/write-plan/scripts/validate-quick-apply.ps1` with parameters:
 
 - `-RepoRoot`
 - `-PlanPath`
@@ -623,7 +623,7 @@ The gate must block unless:
 
 - [ ] **Step 3: Update plan continuation docs**
 
-Update `$project-plan` continuation options:
+Update `$project:write-plan` continuation options:
 
 - `Project Issue First`
 - `Quick Apply`
@@ -644,14 +644,14 @@ Options:
 
 - [ ] **Step 4: Update router docs**
 
-Update `$superpowers-project` and `README.md` so small, low-risk post-plan work can route to Quick Apply, while non-trivial work stays issue-backed.
+Update `$project:workflow` and `README.md` so small, low-risk post-plan work can route to Quick Apply, while non-trivial work stays issue-backed.
 
 - [ ] **Step 5: Run tests and commit checkpoint**
 
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-plan\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
@@ -661,7 +661,7 @@ Expected: PASS.
 Commit:
 
 ```powershell
-git add skills/project-plan skills/superpowers-project README.md
+git add skills/write-plan skills/workflow README.md
 git commit -m "feat: add guarded quick apply path"
 ```
 
@@ -669,10 +669,10 @@ git commit -m "feat: add guarded quick apply path"
 
 **Files:**
 
-- Create: `skills/project-doctor/scripts/audit-project.ps1`
-- Modify: `skills/project-doctor/SKILL.md`
-- Modify: `skills/project-doctor/agents/openai.yaml`
-- Modify: `skills/project-doctor/scripts/test-scenarios.ps1`
+- Create: `skills/audit-project/scripts/audit-project.ps1`
+- Modify: `skills/audit-project/SKILL.md`
+- Modify: `skills/audit-project/agents/openai.yaml`
+- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
 
 - [ ] **Step 1: Add failing Doctor audit scenarios**
@@ -720,7 +720,7 @@ Update Doctor docs to require scripted audit before repair. Add repo contract ch
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-doctor\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
@@ -730,7 +730,7 @@ Expected: PASS.
 Commit:
 
 ```powershell
-git add skills/project-doctor scripts/test-superpowers-project-repo-contract.ps1
+git add skills/audit-project scripts/test-superpowers-project-repo-contract.ps1
 git commit -m "feat: add project doctor audit gate"
 ```
 
@@ -760,10 +760,10 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-skill-script-contract.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-github-checks.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-git-ignore-traps.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-doctor\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
 ```
 
@@ -813,4 +813,5 @@ git commit -m "docs: document hardened project workflow"
 
 ## Execution Handoff
 
-Plan complete when this file is saved and self-reviewed. The closeout question should summarize this plan and ask whether to continue to `$project-issue`, use Quick Apply, review first, or revise the plan.
+Plan complete when this file is saved and self-reviewed. The closeout question should summarize this plan and ask whether to continue to `$project:create-issues`, use Quick Apply, review first, or revise the plan.
+

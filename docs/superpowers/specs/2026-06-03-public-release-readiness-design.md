@@ -2,7 +2,7 @@
 
 ## Project Context Evidence
 
-Superpowers Project is now the active plugin identity in `.codex-plugin/plugin.json`, and the source skill set is already organized under `skills/` with `superpowers-project`, `project-setup`, `project-brainstorm`, `project-plan`, `project-issue`, `project-resolve`, `project-orchestrate`, `project-merge`, and `project-doctor`.
+Superpowers Project is now the active plugin identity in `.codex-plugin/plugin.json`, and the source skill set is already organized under `skills/` with `superpowers-project`, `setup`, `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, and `audit-project`.
 
 The repo is still named and hosted as `tannerpolley/milestones-plugin`, and GitHub reports it is private. The current quick implementation is explicitly limited to docs and scripts; it must not rename the GitHub repo, rename the local workspace folder, mutate GitHub visibility, or rewrite historical issue/PR links.
 
@@ -10,7 +10,7 @@ Current public-readiness gaps found during inspection:
 
 - `README.md` explains the workflow but lacks a public-facing install story and still describes the live target as `C:\Users\Tanner\plugins\milestones`.
 - `scripts/sync-live.ps1` still deploys the live plugin copy to `C:\Users\Tanner\plugins\milestones`.
-- `skills/project-doctor/scripts/audit-project.ps1` still treats `plugins/milestones` as the live plugin sync surface.
+- `skills/audit-project/scripts/audit-project.ps1` still treats `plugins/milestones` as the live plugin sync surface.
 - `.github/ISSUE_TEMPLATE/*.yml` still says "Milestones plugin" and points users to deleted `docs/milestones/...` paths.
 - `.codex-plugin/plugin.json` lacks public repository, homepage, license, and keyword metadata.
 - `docs/superpowers/PROJECT_CONTEXT.md`, `docs/agents/issue-tracker.md`, and `docs/agents/project-roadmap.json` still use the current private repo name as operational tracker state. Those should remain unchanged until the repo is actually renamed.
@@ -64,10 +64,11 @@ Changing the live plugin folder to `plugins\superpowers-project` makes the local
 - `Test-Path "$env:USERPROFILE\plugins\superpowers-project\.codex-plugin\plugin.json"`
 - `Test-Path "$env:USERPROFILE\plugins\milestones"`
 - `rg -n "Milestones plugin|docs/milestones|plugins\\milestones|plugins/milestones" README.md .github`
-- `Select-String -Path .\scripts\sync-live.ps1,.\skills\project-doctor\scripts\audit-project.ps1 -Pattern "plugins\\superpowers-project|plugins/superpowers-project"`
+- `Select-String -Path .\scripts\sync-live.ps1,.\skills\audit-project\scripts\audit-project.ps1 -Pattern "plugins\\project|plugins/project"`
 
 ## Open Questions
 
 - When ready for a real public release, decide whether to rename the GitHub repo to `codex-superpowers-project` and update `docs/agents/*` plus historical-forward links.
 - Decide whether to add screenshots or a short video/GIF before posting to Reddit.
 - Decide whether to publish a formal release tag after the public rename.
+

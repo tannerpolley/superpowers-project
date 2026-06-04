@@ -51,7 +51,7 @@ Then verify:
 Test-Path "$env:USERPROFILE\plugins\superpowers-project\.codex-plugin\plugin.json"
 Test-Path "$env:USERPROFILE\plugins\milestones"
 rg -n "Milestones plugin|docs/milestones|plugins\\milestones|plugins/milestones" README.md .github
-Select-String -Path .\scripts\sync-live.ps1,.\skills\project-doctor\scripts\audit-project.ps1 -Pattern "plugins\\superpowers-project|plugins/superpowers-project"
+Select-String -Path .\scripts\sync-live.ps1,.\skills\audit-project\scripts\audit-project.ps1 -Pattern "plugins\\project|plugins/project"
 ```
 
 ## TDD And Debug Policy
@@ -81,7 +81,7 @@ This plan is approved for Quick Apply on clean synced `main` by the user's reque
 
 **Files:**
 - Modify: `scripts/sync-live.ps1`
-- Modify: `skills/project-doctor/scripts/audit-project.ps1`
+- Modify: `skills/audit-project/scripts/audit-project.ps1`
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Change sync default**
@@ -89,7 +89,7 @@ This plan is approved for Quick Apply on clean synced `main` by the user's reque
 - [ ] **Step 2: Retire old live path**
   Add safe cleanup for the owned retired live plugin root `$env:USERPROFILE\plugins\milestones`.
 - [ ] **Step 3: Update Doctor live-sync target**
-  Make Doctor inspect `plugins/superpowers-project/skills/project-doctor/SKILL.md`.
+  Make Doctor inspect `plugins/project/skills/audit-project/SKILL.md`.
 - [ ] **Step 4: Update source/live policy text**
   Replace active references to `plugins\milestones` with `plugins\superpowers-project`.
 
@@ -122,3 +122,4 @@ This plan is approved for Quick Apply on clean synced `main` by the user's reque
   Confirm `plugins\superpowers-project` exists and `plugins\milestones` is gone or no longer contains this plugin.
 - [ ] **Step 4: Run cleanup hook**
   `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`
+

@@ -5,9 +5,9 @@
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-03-public-release-readiness-design.md
 **Source Plan:** docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md
-**Classification:** HITL
-**Labels:** type:task, status:triage
-**Goal Command:** None
+**Classification:** AFK
+**Labels:** type:task, status:ready
+**Goal Command:** /goal Make workflow skills plugin-scoped while keeping advanced-user-input synchronized as a shared user-level helper.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -24,6 +24,10 @@
 **Worktree Cleanup Policy:** Remove owned worktree after merge
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
+## Approval Decision
+
+Native approval selected `Plugin + AUI Global`: deploy workflow skills through the `project` plugin only, keep `advanced-user-input` bundled in the plugin and synchronized to the user-level skill folder, and remove repo-owned stale workflow skill copies after ownership checks.
+
 ## What To Build
 
 Reconcile the deployment policy with the latest decision that `advanced-user-input` should remain useful as both a plugin-owned skill and a user-level skill, while other project workflow skills may eventually become plugin-only.
@@ -39,7 +43,7 @@ Reconcile the deployment policy with the latest decision that `advanced-user-inp
 
 ## Blocked by
 
-- User decision on whether project workflow skills should remain user-level skills or become plugin-only after namespace migration.
+- None.
 
 ## Non-goals
 

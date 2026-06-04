@@ -32,7 +32,7 @@
 **Non-Goals:**
 - No `project-implement` skill changes.
 - No runtime native Q&A behavior changes.
-- No `project-merge`, `project-resolve`, `project-orchestrate`, or `advanced-user-input` changes.
+- No `merge-changes`, `resolve-issue`, `orchestrate-issues`, or `advanced-user-input` changes.
 
 **Proof Oracle:**
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1`
@@ -379,3 +379,4 @@ git commit -m "docs: finalize native qa svg flowchart"
 - TDD policy: Task 1 creates the failing contract before the implementation is finalized.
 - Verification: focused SVG contract, full repo validation, Playwright screenshots, and cleanup hook are specified.
 - Scope separation: no Project Implement, Merge, Orchestrate, or runtime native Q&A behavior changes are included.
+

@@ -58,21 +58,21 @@ Modify:
 - `skills/project-context/SKILL.md`
 - `skills/project-context/agents/openai.yaml`
 - `skills/project-context/scripts/test-scenarios.ps1`
-- `skills/project-brainstorm/SKILL.md`
-- `skills/project-brainstorm/agents/openai.yaml`
-- `skills/project-brainstorm/scripts/test-scenarios.ps1`
-- `skills/project-plan/SKILL.md`
-- `skills/project-plan/agents/openai.yaml`
-- `skills/project-plan/scripts/test-scenarios.ps1`
-- `skills/project-issue/SKILL.md`
-- `skills/project-issue/agents/openai.yaml`
-- `skills/project-issue/scripts/test-scenarios.ps1`
-- `skills/project-resolve/SKILL.md`
-- `skills/project-resolve/agents/openai.yaml`
-- `skills/project-resolve/scripts/test-scenarios.ps1`
-- `skills/project-doctor/SKILL.md`
-- `skills/project-doctor/agents/openai.yaml`
-- `skills/project-doctor/scripts/test-scenarios.ps1`
+- `skills/brainstorm-spec/SKILL.md`
+- `skills/brainstorm-spec/agents/openai.yaml`
+- `skills/brainstorm-spec/scripts/test-scenarios.ps1`
+- `skills/write-plan/SKILL.md`
+- `skills/write-plan/agents/openai.yaml`
+- `skills/write-plan/scripts/test-scenarios.ps1`
+- `skills/create-issues/SKILL.md`
+- `skills/create-issues/agents/openai.yaml`
+- `skills/create-issues/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/SKILL.md`
+- `skills/resolve-issue/agents/openai.yaml`
+- `skills/resolve-issue/scripts/test-scenarios.ps1`
+- `skills/audit-project/SKILL.md`
+- `skills/audit-project/agents/openai.yaml`
+- `skills/audit-project/scripts/test-scenarios.ps1`
 - `scripts/validate.ps1`
 
 Create only if existing scripts need a shared check:
@@ -82,9 +82,9 @@ Create only if existing scripts need a shared check:
 ## Proof Oracle
 
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-context\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-doctor\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
 
 ## Task 1: Add Flat-Root Scenario Coverage
@@ -115,7 +115,7 @@ Create only if existing scripts need a shared check:
 
 **Files:**
 
-- Modify `skills/project-doctor/scripts/test-scenarios.ps1`.
+- Modify `skills/audit-project/scripts/test-scenarios.ps1`.
 - Modify `scripts/validate.ps1`.
 - Create or modify a repo contract script for flat-root validation.
 
@@ -140,4 +140,5 @@ Create only if existing scripts need a shared check:
 - [ ] Commit the implementation branch.
 - [ ] Push `codex/flat-artifact-roots-milestone-indexes`.
 - [ ] Open a PR that closes https://github.com/tannerpolley/milestones-plugin/issues/15.
-- [ ] Record PR-ready handoff evidence for `$project-merge`.
+- [ ] Record PR-ready handoff evidence for `$project:merge-changes`.
+

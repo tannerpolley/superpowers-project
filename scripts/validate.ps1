@@ -119,16 +119,16 @@ function Assert-TextContains {
 function Get-ActiveSkillNames {
     @(
         "advanced-user-input",
-        "superpowers-project",
-        "project-setup",
-        "project-orchestrate",
-        "project-brainstorm",
-        "project-plan",
+        "workflow",
+        "setup",
+        "orchestrate-issues",
+        "brainstorm-spec",
+        "write-plan",
         "implement-plan",
-        "project-issue",
-        "project-resolve",
-        "project-merge",
-        "project-doctor"
+        "create-issues",
+        "resolve-issue",
+        "merge-changes",
+        "audit-project"
     )
 }
 function Test-SkillSourceContracts {
@@ -230,6 +230,16 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "sync-live helper tests failed" }
     }))
 
+    $results.Add((Invoke-Step "project namespace migration tests" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-project-namespace-migration.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "project namespace migration tests failed" }
+    }))
+
+    $results.Add((Invoke-Step "plugin-only live sync tests" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-plugin-only-live-sync.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "plugin-only live sync tests failed" }
+    }))
+
     $results.Add((Invoke-Step "superpowers project dummy repo" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-project-dummy-repo.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "superpowers project dummy repo failed" }
@@ -298,7 +308,7 @@ try {
         (Join-Path $repoRoot "AGENTS.md"),
         (Join-Path $repoRoot "CHANGELOG.md")
     )
-    $stale = @(rg -n "plan-goal-implement-merge|setup-project-roadmap|setup_project_roadmap_plan|grill-project-issue|issue-goal-execute-merge|docs/ideas/<YYYY|docs/ideas/20|cross-milestone.*docs/ideas|docs/ideas.*cross-milestone" @scanRoots 2>$null)
+    $stale = @(rg -n "plan-goal-implement-merge|setup-project-roadmap|setup_project_roadmap_plan|grill-create-issues|issue-goal-execute-merge|docs/ideas/<YYYY|docs/ideas/20|cross-milestone.*docs/ideas|docs/ideas.*cross-milestone" @scanRoots 2>$null)
     $allowedNegativeFixture = "skills\convert-idea-to-issue\scripts\test-scenarios.ps1"
     $unexpected = @($stale | Where-Object { $_ -notmatch [regex]::Escape($allowedNegativeFixture) })
     if ($unexpected.Count -gt 0) {
@@ -319,3 +329,4 @@ try {
     } | ConvertTo-Json -Depth 8
     exit 1
 }
+

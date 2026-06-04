@@ -102,12 +102,12 @@ Dummy repo proves Superpowers Project artifacts.
     & git -C $tempRoot commit -m "seed dummy superpowers project" | Out-Null
     Add-Check -Name "dummy repo seeded" -Ok $true -Reason "passed"
 
-    $mirrorValidator = Join-Path $repoRoot "skills\project-issue\scripts\validate-issue-mirror.ps1"
+    $mirrorValidator = Join-Path $repoRoot "skills\create-issues\scripts\validate-issue-mirror.ps1"
     $mirrorResult = Invoke-JsonScript -ScriptPath $mirrorValidator -Arguments @("-RepoRoot", $tempRoot, "-IssueFile", "docs/superpowers/issues/12-dummy.md", "-MilestoneRequired")
     if (-not $mirrorResult.ok) { throw "issue mirror validation failed: $($mirrorResult.reason)" }
     Add-Check -Name "issue mirror validator" -Ok $true -Reason "passed"
 
-    $prepareScript = Join-Path $repoRoot "skills\project-resolve\scripts\prepare-execution.ps1"
+    $prepareScript = Join-Path $repoRoot "skills\resolve-issue\scripts\prepare-execution.ps1"
     $inspect = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "Inspect", "-RepoRoot", $tempRoot, "-IssueMirror", "docs/superpowers/issues/12-dummy.md")
     if (-not $inspect.ok) { throw "resolve inspect failed: $($inspect.reason)" }
     Add-Check -Name "resolve inspect" -Ok $true -Reason "passed"
@@ -143,18 +143,18 @@ Dummy repo proves Superpowers Project artifacts.
     Add-Check -Name "structured native goal proof passes" -Ok $true -Reason "passed"
 
     $workerFinalize = Invoke-JsonScript -ScriptPath $prepareScript -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $tempRoot, "-HandoffJson", ($inspect.evidence.handoff_json), "-GoalProofJson", $goalProof, "-ExecutionDecisionJson", $workerDecision)
-    if ($workerFinalize.ok -or $workerFinalize.reason -notmatch "project-orchestrate") { throw "worker mode should route away from project-resolve" }
+    if ($workerFinalize.ok -or $workerFinalize.reason -notmatch "orchestrate-issues") { throw "worker mode should route away from resolve-issue" }
     Add-Check -Name "resolve rejects worker mode" -Ok $true -Reason "passed"
 
-    $orchestratePrepare = Join-Path $repoRoot "skills\project-orchestrate\scripts\prepare-worker-handoff.ps1"
-    $orchestrateValidate = Join-Path $repoRoot "skills\project-orchestrate\scripts\validate-worker-handoff.ps1"
+    $orchestratePrepare = Join-Path $repoRoot "skills\orchestrate-issues\scripts\prepare-worker-handoff.ps1"
+    $orchestrateValidate = Join-Path $repoRoot "skills\orchestrate-issues\scripts\validate-worker-handoff.ps1"
     $workerHandoff = Invoke-JsonScript -ScriptPath $orchestratePrepare -Arguments @("-RepoRoot", $tempRoot, "-IssueFile", "docs/superpowers/issues/12-dummy.md", "-OutputPath", "handoff/worker-handoff.json")
     if (-not $workerHandoff.ok) { throw "worker handoff preparation failed: $($workerHandoff.reason)" }
     $workerValidation = Invoke-JsonScript -ScriptPath $orchestrateValidate -Arguments @("-RepoRoot", $tempRoot, "-HandoffPath", "handoff/worker-handoff.json")
     if (-not $workerValidation.ok) { throw "worker handoff validation failed: $($workerValidation.reason)" }
-    Add-Check -Name "project-orchestrate worker handoff" -Ok $true -Reason "passed"
+    Add-Check -Name "orchestrate-issues worker handoff" -Ok $true -Reason "passed"
 
-    $setupValidator = Join-Path $repoRoot "skills\project-resolve\scripts\validate-setup.ps1"
+    $setupValidator = Join-Path $repoRoot "skills\resolve-issue\scripts\validate-setup.ps1"
     $setupResult = Invoke-JsonScript -ScriptPath $setupValidator -Arguments @("-RepoRoot", $tempRoot, "-SetupLedgerJson", ($finalize.setup_ledger_json))
     if (-not $setupResult.ok) { throw "setup validation failed: $($setupResult.reason)" }
     Add-Check -Name "setup validator" -Ok $true -Reason "passed"
@@ -176,3 +176,4 @@ Dummy repo proves Superpowers Project artifacts.
         }
     }
 }
+

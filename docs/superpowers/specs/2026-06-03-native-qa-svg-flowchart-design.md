@@ -51,7 +51,7 @@ In scope:
 Out of scope:
 
 - Adding `project-implement`.
-- Changing `project-plan`, `project-resolve`, `project-orchestrate`, or `project-merge`.
+- Changing `write-plan`, `resolve-issue`, `orchestrate-issues`, or `merge-changes`.
 - Bundling `advanced-user-input`.
 - Implementing Doctor tracker hygiene.
 - Changing runtime native Q&A behavior.
@@ -74,3 +74,4 @@ Out of scope:
 - Consistency check: this spec is visual/docs-only and does not carry plugin behavior changes.
 - Scope check: this can be planned and implemented independently from skill behavior.
 - Ambiguity check: the main unresolved visual judgment is exact final positioning, which belongs in the visual implementation task.
+

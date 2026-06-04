@@ -5,9 +5,9 @@
 **Issue Type:** feature
 **Source Spec:** docs/superpowers/specs/2026-06-03-project-plugin-namespace-skill-naming-design.md
 **Source Plan:** docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md
-**Classification:** HITL
-**Labels:** type:feature, status:triage
-**Goal Command:** None
+**Classification:** AFK
+**Labels:** type:feature, status:ready
+**Goal Command:** /goal Migrate Superpowers Project to the approved project:* plugin namespace without compatibility wrappers.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -24,6 +24,10 @@
 **Worktree Cleanup Policy:** Remove owned worktree after merge
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
+## Approval Decision
+
+Native approval selected `Adopt project:*`: migrate the runtime plugin namespace to `project`, keep the display brand `Superpowers Project`, rename source skills to plugin-scoped action names, and remove stale wrappers or durable old-name contracts.
+
 ## What To Build
 
 Migrate the public skill surface and plugin runtime namespace only after the final naming decision is confirmed. Keep the migration test-driven and remove stale names instead of preserving compatibility wrappers.
@@ -39,7 +43,7 @@ Migrate the public skill surface and plugin runtime namespace only after the fin
 
 ## Blocked by
 
-- User approval of final namespace and deployment policy.
+- None.
 
 ## Non-goals
 

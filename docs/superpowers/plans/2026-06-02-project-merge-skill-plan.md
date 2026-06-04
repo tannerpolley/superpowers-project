@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `$project-merge` and narrow `$project-resolve` so issue implementation ends at PR-ready handoff and merge, issue closure, cleanup, and clean-state proof happen in a separate skill.
+**Goal:** Add `$project:merge-changes` and narrow `$project:resolve-issue` so issue implementation ends at PR-ready handoff and merge, issue closure, cleanup, and clean-state proof happen in a separate skill.
 
-**Architecture:** Keep `$project-resolve` as the goal-backed implementation owner for one issue mirror and source plan. Add `$project-merge` as the main-orchestrator integration owner that starts from a PR URL or worker handoff, asks native UI merge approval after premerge proof, then merges and cleans up. Preserve the current PowerShell gate style, but move merge-specific gates into `skills/project-merge`.
+**Architecture:** Keep `$project:resolve-issue` as the goal-backed implementation owner for one issue mirror and source plan. Add `$project:merge-changes` as the main-orchestrator integration owner that starts from a PR URL or worker handoff, asks native UI merge approval after premerge proof, then merges and cleans up. Preserve the current PowerShell gate style, but move merge-specific gates into `skills/merge-changes`.
 
 **Tech Stack:** Codex skills in Markdown, skill metadata in YAML, PowerShell gate scripts and scenario tests, JSON ledgers, Git/GitHub evidence through `gh` or fixtures, native `request_user_input`, native goal tools, and Superpowers execution skills.
 
@@ -12,27 +12,27 @@
 
 ## Source And Decisions
 
-**Source spec:** `docs/superpowers/specs/2026-06-02-project-merge-skill-design.md`
+**Source spec:** `docs/superpowers/specs/2026-06-02-merge-changes-skill-design.md`
 
-**Planning approval:** User asked to use `$project-plan` to turn the approved `$project-merge` spec into this plan.
+**Planning approval:** User asked to use `$project:write-plan` to turn the approved `$project:merge-changes` spec into this plan.
 
 **Native UI planning decisions:**
 
-- Merge gate: `$project-merge` asks through native `request_user_input` before merging. The two options are `Merge` and `Decline`.
+- Merge gate: `$project:merge-changes` asks through native `request_user_input` before merging. The two options are `Merge` and `Decline`.
 - Fixture support: support both real GitHub PR workflows and local dummy fixtures.
 - Issue mirror shape: add a dedicated `## Project Merge` section instead of expanding only the existing workflow metadata block.
 
 ## Acceptance Criteria
 
-- [ ] `scripts/validate.ps1` treats `project-merge` as an active skill.
-- [ ] `skills/project-merge` exists with `SKILL.md`, `agents/openai.yaml`, and scenario tests.
-- [ ] `$project-merge` owns `premerge.ps1`, `closeout.ps1`, native merge approval validation, branch/worktree cleanup, prune evidence, and final clean repo proof.
-- [ ] `$project-resolve` no longer claims to merge PRs, close issues, or run final cleanup.
-- [ ] `$project-resolve` completes its native goal at PR-ready evidence.
-- [ ] Worker-mode `$project-resolve` records a lightweight Dynamic Work Packet Map in the setup ledger or worker handoff.
+- [ ] `scripts/validate.ps1` treats `merge-changes` as an active skill.
+- [ ] `skills/merge-changes` exists with `SKILL.md`, `agents/openai.yaml`, and scenario tests.
+- [ ] `$project:merge-changes` owns `premerge.ps1`, `closeout.ps1`, native merge approval validation, branch/worktree cleanup, prune evidence, and final clean repo proof.
+- [ ] `$project:resolve-issue` no longer claims to merge PRs, close issues, or run final cleanup.
+- [ ] `$project:resolve-issue` completes its native goal at PR-ready evidence.
+- [ ] Worker-mode `$project:resolve-issue` records a lightweight Dynamic Work Packet Map in the setup ledger or worker handoff.
 - [ ] Full `$codex-dynamic-workflows` artifacts are optional and only used when the issue meets the heavier orchestration decision rule or the user explicitly requests them.
 - [ ] Issue mirrors include a `## Project Merge` section with merge owner, merge gate, merge policy, cleanup policy, and wakeup policy.
-- [ ] `$project-merge` asks for native UI merge approval after clean premerge proof and before any merge command.
+- [ ] `$project:merge-changes` asks for native UI merge approval after clean premerge proof and before any merge command.
 - [ ] Major Superpowers Project handoffs use native continuation questions and immediately start the selected next skill when feasible.
 - [ ] Full repo validation and live sync validation pass.
 
@@ -40,52 +40,52 @@
 
 Create:
 
-- `skills/project-merge/SKILL.md`: project integration skill instructions.
-- `skills/project-merge/agents/openai.yaml`: skill metadata prompt.
-- `skills/project-merge/scripts/lib/contract.ps1`: merge-skill JSON, path, GitHub URL, branch cleanup, and decision helpers.
-- `skills/project-merge/scripts/premerge.ps1`: PR-to-issue and verification coverage gate.
-- `skills/project-merge/scripts/validate-merge-decision.ps1`: native merge approval ledger gate.
-- `skills/project-merge/scripts/closeout.ps1`: merged PR, issue close, branch/worktree cleanup, prune, cleanup hook, and clean repo proof gate.
-- `skills/project-merge/scripts/test-scenarios.ps1`: local fixtures for the new skill.
+- `skills/merge-changes/SKILL.md`: project integration skill instructions.
+- `skills/merge-changes/agents/openai.yaml`: skill metadata prompt.
+- `skills/merge-changes/scripts/lib/contract.ps1`: merge-skill JSON, path, GitHub URL, branch cleanup, and decision helpers.
+- `skills/merge-changes/scripts/premerge.ps1`: PR-to-issue and verification coverage gate.
+- `skills/merge-changes/scripts/validate-merge-decision.ps1`: native merge approval ledger gate.
+- `skills/merge-changes/scripts/closeout.ps1`: merged PR, issue close, branch/worktree cleanup, prune, cleanup hook, and clean repo proof gate.
+- `skills/merge-changes/scripts/test-scenarios.ps1`: local fixtures for the new skill.
 
 Modify:
 
-- `skills/project-resolve/SKILL.md`: end at PR-ready handoff and route to `$project-merge`.
-- `skills/project-resolve/agents/openai.yaml`: remove merge/issue-close/cleanup ownership from the prompt.
-- `skills/project-resolve/scripts/lib/contract.ps1`: add Dynamic Work Packet Map and PR-ready handoff helpers.
-- `skills/project-resolve/scripts/prepare-execution.ps1`: include packet map in worker setup ledger and worker handoff.
-- `skills/project-resolve/scripts/validate-setup.ps1`: require packet map for orchestrated worker mode.
-- `skills/project-resolve/scripts/test-scenarios.ps1`: replace merge closeout scenarios with PR-ready scenarios.
-- `skills/project-issue/SKILL.md`: document the `## Project Merge` section.
-- `skills/project-issue/agents/openai.yaml`: include merge section fields in issue creation guidance.
-- `skills/project-issue/scripts/validate-issue-mirror.ps1`: validate merge section fields.
-- `skills/project-issue/scripts/test-scenarios.ps1`: test happy issue mirrors with `## Project Merge`.
-- `skills/project-plan/SKILL.md`: replace vanilla execution-only handoff with native continuation routing.
-- `skills/project-plan/agents/openai.yaml`: include the continuation gate in project planning guidance.
-- `skills/project-plan/scripts/test-scenarios.ps1`: test continuation-gate text.
+- `skills/resolve-issue/SKILL.md`: end at PR-ready handoff and route to `$project:merge-changes`.
+- `skills/resolve-issue/agents/openai.yaml`: remove merge/issue-close/cleanup ownership from the prompt.
+- `skills/resolve-issue/scripts/lib/contract.ps1`: add Dynamic Work Packet Map and PR-ready handoff helpers.
+- `skills/resolve-issue/scripts/prepare-execution.ps1`: include packet map in worker setup ledger and worker handoff.
+- `skills/resolve-issue/scripts/validate-setup.ps1`: require packet map for orchestrated worker mode.
+- `skills/resolve-issue/scripts/test-scenarios.ps1`: replace merge closeout scenarios with PR-ready scenarios.
+- `skills/create-issues/SKILL.md`: document the `## Project Merge` section.
+- `skills/create-issues/agents/openai.yaml`: include merge section fields in issue creation guidance.
+- `skills/create-issues/scripts/validate-issue-mirror.ps1`: validate merge section fields.
+- `skills/create-issues/scripts/test-scenarios.ps1`: test happy issue mirrors with `## Project Merge`.
+- `skills/write-plan/SKILL.md`: replace vanilla execution-only handoff with native continuation routing.
+- `skills/write-plan/agents/openai.yaml`: include the continuation gate in project planning guidance.
+- `skills/write-plan/scripts/test-scenarios.ps1`: test continuation-gate text.
 - `docs/superpowers/issues/README.md`: document the merge section template.
 - `docs/superpowers/issues/smoke-test-workflow.md`: add the merge section.
-- `skills/superpowers-project/SKILL.md`: route PR/handoff integration to `$project-merge`.
-- `skills/superpowers-project/agents/openai.yaml`: include `$project-merge`.
-- `skills/superpowers-project/scripts/test-scenarios.ps1`: require router text for `$project-merge`.
-- `docs/superpowers/PROJECT_CONTEXT.md`: list `project-merge` in extension skills and execution model.
-- `README.md`: list `$project-merge`.
+- `skills/workflow/SKILL.md`: route PR/handoff integration to `$project:merge-changes`.
+- `skills/workflow/agents/openai.yaml`: include `$project:merge-changes`.
+- `skills/workflow/scripts/test-scenarios.ps1`: require router text for `$project:merge-changes`.
+- `docs/superpowers/PROJECT_CONTEXT.md`: list `merge-changes` in extension skills and execution model.
+- `README.md`: list `$project:merge-changes`.
 - `.codex-plugin/plugin.json`: add a default prompt for merge integration.
-- `scripts/validate.ps1`: add `project-merge` to active skill names.
+- `scripts/validate.ps1`: add `merge-changes` to active skill names.
 - `scripts/test-superpowers-project-dummy-repo.ps1`: seed merge metadata and test PR-ready setup.
-- `scripts/test-superpowers-project-repo-contract.ps1`: require `project-merge` and merge metadata.
+- `scripts/test-superpowers-project-repo-contract.ps1`: require `merge-changes` and merge metadata.
 
 Delete after successful move:
 
-- `skills/project-resolve/scripts/premerge.ps1`
-- `skills/project-resolve/scripts/closeout.ps1`
+- `skills/resolve-issue/scripts/premerge.ps1`
+- `skills/resolve-issue/scripts/closeout.ps1`
 
 Test:
 
-- `skills/project-resolve/scripts/test-scenarios.ps1`
-- `skills/project-merge/scripts/test-scenarios.ps1`
-- `skills/project-issue/scripts/test-scenarios.ps1`
-- `skills/superpowers-project/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/scripts/test-scenarios.ps1`
+- `skills/merge-changes/scripts/test-scenarios.ps1`
+- `skills/create-issues/scripts/test-scenarios.ps1`
+- `skills/workflow/scripts/test-scenarios.ps1`
 - `scripts/test-superpowers-project-dummy-repo.ps1`
 - `scripts/test-superpowers-project-repo-contract.ps1`
 - `scripts/validate.ps1`
@@ -93,11 +93,11 @@ Test:
 
 ## Non-Goals
 
-- Do not make `$project-merge` implement issue changes except for small review-requested fixes explicitly handled during integration.
+- Do not make `$project:merge-changes` implement issue changes except for small review-requested fixes explicitly handled during integration.
 - Do not let worker threads merge their own PRs by default.
 - Do not add GoalBuddy boards or `docs/goals`.
 - Do not create `.workflow/<slug>` folders for ordinary issue resolution.
-- Do not require a native `/goal` for `$project-merge` unless the user explicitly asks for a goal-backed integration run.
+- Do not require a native `/goal` for `$project:merge-changes` unless the user explicitly asks for a goal-backed integration run.
 
 ## Native Continuation Contract
 
@@ -110,20 +110,20 @@ Every major Superpowers Project handoff should treat the next-step native UI ans
 
 Default continuation gates:
 
-- `$project-brainstorm`: continue to `$project-plan`, `$project-issue` for direct issue creation, or stop.
-- `$project-plan`: continue to `$project-issue`, `superpowers:subagent-driven-development`, or `superpowers:executing-plans`.
-- `$project-issue`: resolve the first ready issue, resolve a selected issue, or stop after issue creation.
-- `$project-resolve`: start `$project-merge`, resolve another ready issue, or stop at PR-ready.
-- `$project-merge`: resolve the next ready issue, run `$project-doctor`, or stop.
+- `$project:brainstorm-spec`: continue to `$project:write-plan`, `$project:create-issues` for direct issue creation, or stop.
+- `$project:write-plan`: continue to `$project:create-issues`, `superpowers:subagent-driven-development`, or `superpowers:executing-plans`.
+- `$project:create-issues`: resolve the first ready issue, resolve a selected issue, or stop after issue creation.
+- `$project:resolve-issue`: start `$project:merge-changes`, resolve another ready issue, or stop at PR-ready.
+- `$project:merge-changes`: resolve the next ready issue, run `$project:audit-project`, or stop.
 
 ## Proof Oracle
 
 Run these from the repository root:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
@@ -138,10 +138,10 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 
 - Modify: `scripts/validate.ps1`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Modify: `skills/superpowers-project/scripts/test-scenarios.ps1`
+- Modify: `skills/workflow/scripts/test-scenarios.ps1`
 - Test: `scripts/validate.ps1`
 
-- [ ] **Step 1: Add `project-merge` to active skill validation**
+- [ ] **Step 1: Add `merge-changes` to active skill validation**
 
 In `scripts/validate.ps1`, replace `Get-ActiveSkillNames` with:
 
@@ -150,19 +150,19 @@ function Get-ActiveSkillNames {
     @(
         "superpowers-project",
         "project-context",
-        "project-brainstorm",
-        "project-plan",
-        "project-issue",
-        "project-resolve",
-        "project-merge",
-        "project-doctor"
+        "brainstorm-spec",
+        "write-plan",
+        "create-issues",
+        "resolve-issue",
+        "merge-changes",
+        "audit-project"
     )
 }
 ```
 
-- [ ] **Step 2: Add `project-merge` to repo contract skill checks**
+- [ ] **Step 2: Add `merge-changes` to repo contract skill checks**
 
-In `scripts/test-superpowers-project-repo-contract.ps1`, add `"project-merge"` to every active skill array that currently contains `"project-resolve"` and `"project-doctor"`.
+In `scripts/test-superpowers-project-repo-contract.ps1`, add `"merge-changes"` to every active skill array that currently contains `"resolve-issue"` and `"audit-project"`.
 
 The active skill array should read:
 
@@ -170,28 +170,28 @@ The active skill array should read:
 foreach ($skillName in @(
     "superpowers-project",
     "project-context",
-    "project-brainstorm",
-    "project-plan",
-    "project-issue",
-    "project-resolve",
-    "project-merge",
-    "project-doctor"
+    "brainstorm-spec",
+    "write-plan",
+    "create-issues",
+    "resolve-issue",
+    "merge-changes",
+    "audit-project"
 )) {
 ```
 
-- [ ] **Step 3: Add `project-merge` to router scenario tests**
+- [ ] **Step 3: Add `merge-changes` to router scenario tests**
 
-In `skills/superpowers-project/scripts/test-scenarios.ps1`, extend the router needle list so it includes `project-merge`:
+In `skills/workflow/scripts/test-scenarios.ps1`, extend the router needle list so it includes `merge-changes`:
 
 ```powershell
 foreach ($needle in @(
     'project-context',
-    'project-brainstorm',
-    'project-plan',
-    'project-issue',
-    'project-resolve',
-    'project-merge',
-    'project-doctor',
+    'brainstorm-spec',
+    'write-plan',
+    'create-issues',
+    'resolve-issue',
+    'merge-changes',
+    'audit-project',
     'superpowers:brainstorming',
     'superpowers:writing-plans',
     'superpowers:executing-plans',
@@ -209,18 +209,18 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
-Expected: FAIL because `skills/project-merge/SKILL.md` does not exist yet. The failure should mention `project-merge` or a missing active skill file.
+Expected: FAIL because `skills/merge-changes/SKILL.md` does not exist yet. The failure should mention `merge-changes` or a missing active skill file.
 
 Do not commit this red state.
 
-## Task 2: Create The `$project-merge` Skill Shell
+## Task 2: Create The `$project:merge-changes` Skill Shell
 
 **Files:**
 
-- Create: `skills/project-merge/SKILL.md`
-- Create: `skills/project-merge/agents/openai.yaml`
-- Create: `skills/project-merge/scripts/test-scenarios.ps1`
-- Test: `skills/project-merge/scripts/test-scenarios.ps1`
+- Create: `skills/merge-changes/SKILL.md`
+- Create: `skills/merge-changes/agents/openai.yaml`
+- Create: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
 - Test: `scripts/validate.ps1`
 
 - [ ] **Step 1: Create the skill directory**
@@ -228,13 +228,13 @@ Do not commit this red state.
 Run:
 
 ```powershell
-New-Item -ItemType Directory -Path .\skills\project-merge\agents -Force | Out-Null
-New-Item -ItemType Directory -Path .\skills\project-merge\scripts\lib -Force | Out-Null
+New-Item -ItemType Directory -Path .\skills\merge-changes\agents -Force | Out-Null
+New-Item -ItemType Directory -Path .\skills\merge-changes\scripts\lib -Force | Out-Null
 ```
 
-- [ ] **Step 2: Write the first `$project-merge` scenario tests**
+- [ ] **Step 2: Write the first `$project:merge-changes` scenario tests**
 
-Create `skills/project-merge/scripts/test-scenarios.ps1` with:
+Create `skills/merge-changes/scripts/test-scenarios.ps1` with:
 
 ```powershell
 [CmdletBinding()]
@@ -254,7 +254,7 @@ function Assert-Contains { param([string]$Text, [string]$Needle, [string]$Messag
 Invoke-Scenario "skill frontmatter is valid" {
     if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
     $text = Get-Content -LiteralPath $skillFile -Raw
-    Assert-Contains $text "name: project-merge" "missing skill name"
+    Assert-Contains $text "name: merge-changes" "missing skill name"
     Assert-Contains $text "description: Use when" "description must start with Use when"
     Assert-Contains $text "# Project Merge" "missing skill title"
 }
@@ -274,14 +274,14 @@ Invoke-Scenario "merge contract text is present" {
         "cleanup hook",
         "Do not merge without native UI approval"
     )) {
-        Assert-Contains $text $needle "missing project-merge contract: $needle"
+        Assert-Contains $text $needle "missing merge-changes contract: $needle"
     }
 }
 
 Invoke-Scenario "metadata is present" {
     if (-not (Test-Path -LiteralPath $metadataFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
-    Assert-Contains $metadata "project-merge:" "missing metadata key"
+    Assert-Contains $metadata "merge-changes:" "missing metadata key"
     Assert-Contains $metadata "PR URL or worker handoff" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
 }
@@ -296,26 +296,26 @@ if ($failed.Count -gt 0) { exit 1 }
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 ```
 
 Expected: FAIL with `missing SKILL.md`.
 
-- [ ] **Step 4: Create `skills/project-merge/SKILL.md`**
+- [ ] **Step 4: Create `skills/merge-changes/SKILL.md`**
 
-Create `skills/project-merge/SKILL.md` with:
+Create `skills/merge-changes/SKILL.md` with:
 
 ```markdown
 ---
-name: project-merge
+name: merge-changes
 description: Use when a Superpowers Project PR URL or worker handoff must be reviewed, approved, merged, linked issue closure verified, worktree and branch cleanup completed, and clean repo proof recorded.
 ---
 
 # Project Merge
 
-This skill owns integration after `$project-resolve` creates PR-ready evidence. It starts from a PR URL or worker handoff, verifies the issue mirror and source plan, runs premerge checks, asks native UI merge approval, merges only after approval, verifies linked issue closure, cleans up the owned branch and worktree, runs `git fetch --prune`, runs the cleanup hook, and records final clean repo proof.
+This skill owns integration after `$project:resolve-issue` creates PR-ready evidence. It starts from a PR URL or worker handoff, verifies the issue mirror and source plan, runs premerge checks, asks native UI merge approval, merges only after approval, verifies linked issue closure, cleans up the owned branch and worktree, runs `git fetch --prune`, runs the cleanup hook, and records final clean repo proof.
 
-`$project-merge` is normally run by the main orchestrator thread. Workers do not merge their own PR by default.
+`$project:merge-changes` is normally run by the main orchestrator thread. Workers do not merge their own PR by default.
 
 ## Hard Failures
 
@@ -398,13 +398,13 @@ Do not send a success-style final response until closeout proof shows:
 
 - [ ] **Step 5: Create metadata**
 
-Create `skills/project-merge/agents/openai.yaml` with:
+Create `skills/merge-changes/agents/openai.yaml` with:
 
 ```yaml
 version: 1
 skills:
-  project-merge:
-    default_prompt: "Use $project-merge when a Superpowers Project PR URL or worker handoff is ready for main-thread integration. Read the linked issue mirror, source plan, setup ledger, PR-ready handoff, and verification ledger; run premerge proof; ask native request_user_input question project_merge_approval with Merge and Decline options before merging; merge only after approval; verify the linked issue closed; sync default; delete only the owned branch; remove the owned worktree; run git fetch --prune and the repo cleanup hook; then record clean closeout proof."
+  merge-changes:
+    default_prompt: "Use $project:merge-changes when a Superpowers Project PR URL or worker handoff is ready for main-thread integration. Read the linked issue mirror, source plan, setup ledger, PR-ready handoff, and verification ledger; run premerge proof; ask native request_user_input question project_merge_approval with Merge and Decline options before merging; merge only after approval; verify the linked issue closed; sync default; delete only the owned branch; remove the owned worktree; run git fetch --prune and the repo cleanup hook; then record clean closeout proof."
 ```
 
 - [ ] **Step 6: Run the new skill tests**
@@ -412,7 +412,7 @@ skills:
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 ```
 
 Expected: PASS.
@@ -425,30 +425,30 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
-Expected: FAIL until project context, router text, and active repo contract files mention `project-merge`. Keep going to the routing and docs tasks before committing.
+Expected: FAIL until project context, router text, and active repo contract files mention `merge-changes`. Keep going to the routing and docs tasks before committing.
 
-## Task 3: Port Merge Gates Into `$project-merge`
+## Task 3: Port Merge Gates Into `$project:merge-changes`
 
 **Files:**
 
-- Create: `skills/project-merge/scripts/lib/contract.ps1`
-- Create: `skills/project-merge/scripts/premerge.ps1`
-- Create: `skills/project-merge/scripts/validate-merge-decision.ps1`
-- Create: `skills/project-merge/scripts/closeout.ps1`
-- Modify: `skills/project-merge/scripts/test-scenarios.ps1`
-- Test: `skills/project-merge/scripts/test-scenarios.ps1`
+- Create: `skills/merge-changes/scripts/lib/contract.ps1`
+- Create: `skills/merge-changes/scripts/premerge.ps1`
+- Create: `skills/merge-changes/scripts/validate-merge-decision.ps1`
+- Create: `skills/merge-changes/scripts/closeout.ps1`
+- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Copy the existing contract helpers**
 
 Run:
 
 ```powershell
-Copy-Item -LiteralPath .\skills\project-resolve\scripts\lib\contract.ps1 -Destination .\skills\project-merge\scripts\lib\contract.ps1 -Force
+Copy-Item -LiteralPath .\skills\resolve-issue\scripts\lib\contract.ps1 -Destination .\skills\merge-changes\scripts\lib\contract.ps1 -Force
 ```
 
 - [ ] **Step 2: Add merge-decision helpers to the copied contract**
 
-Append to `skills/project-merge/scripts/lib/contract.ps1`:
+Append to `skills/merge-changes/scripts/lib/contract.ps1`:
 
 ```powershell
 function Assert-MergeDecision {
@@ -482,7 +482,7 @@ function Assert-CleanRepoProof {
 
 - [ ] **Step 3: Create `premerge.ps1` with JSON and fixture inputs**
 
-Copy `skills/project-resolve/scripts/premerge.ps1` to `skills/project-merge/scripts/premerge.ps1`, then update the parameter block so it accepts real JSON or fixture paths:
+Copy `skills/resolve-issue/scripts/premerge.ps1` to `skills/merge-changes/scripts/premerge.ps1`, then update the parameter block so it accepts real JSON or fixture paths:
 
 ```powershell
 param(
@@ -509,7 +509,7 @@ Keep the existing checks for exact closing reference, required checks, acceptanc
 
 - [ ] **Step 4: Create `validate-merge-decision.ps1`**
 
-Create `skills/project-merge/scripts/validate-merge-decision.ps1` with:
+Create `skills/merge-changes/scripts/validate-merge-decision.ps1` with:
 
 ```powershell
 [CmdletBinding()]
@@ -539,7 +539,7 @@ try {
 
 - [ ] **Step 5: Create `closeout.ps1` for merge closeout**
 
-Copy `skills/project-resolve/scripts/closeout.ps1` to `skills/project-merge/scripts/closeout.ps1`, then change its parameter block to:
+Copy `skills/resolve-issue/scripts/closeout.ps1` to `skills/merge-changes/scripts/closeout.ps1`, then change its parameter block to:
 
 ```powershell
 param(
@@ -583,7 +583,7 @@ Assert-MergeDecision -Decision $completion.merge_decision
 Assert-CleanRepoProof -Proof $completion.clean_repo_proof
 ```
 
-Remove the old requirement that `$project-merge` must call `update_goal` by default. Instead, require `resolve_goal_completion_proof.status` to be `complete`:
+Remove the old requirement that `$project:merge-changes` must call `update_goal` by default. Instead, require `resolve_goal_completion_proof.status` to be `complete`:
 
 ```powershell
 $resolveGoal = $completion.resolve_goal_completion_proof
@@ -595,7 +595,7 @@ Keep the existing branch cleanup rule that only the setup branch may be deleted.
 
 - [ ] **Step 6: Add merge script scenarios**
 
-Extend `skills/project-merge/scripts/test-scenarios.ps1` with helpers equivalent to the resolver tests:
+Extend `skills/merge-changes/scripts/test-scenarios.ps1` with helpers equivalent to the resolver tests:
 
 ```powershell
 function Invoke-JsonScript {
@@ -692,29 +692,29 @@ $completion = @{
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 ```
 
 Expected: PASS.
 
-## Task 4: Narrow `$project-resolve` To PR-Ready Handoff
+## Task 4: Narrow `$project:resolve-issue` To PR-Ready Handoff
 
 **Files:**
 
-- Modify: `skills/project-resolve/SKILL.md`
-- Modify: `skills/project-resolve/agents/openai.yaml`
-- Modify: `skills/project-resolve/scripts/lib/contract.ps1`
-- Modify: `skills/project-resolve/scripts/prepare-execution.ps1`
-- Modify: `skills/project-resolve/scripts/validate-setup.ps1`
-- Create: `skills/project-resolve/scripts/validate-pr-ready.ps1`
-- Modify: `skills/project-resolve/scripts/test-scenarios.ps1`
-- Delete: `skills/project-resolve/scripts/premerge.ps1`
-- Delete: `skills/project-resolve/scripts/closeout.ps1`
-- Test: `skills/project-resolve/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/SKILL.md`
+- Modify: `skills/resolve-issue/agents/openai.yaml`
+- Modify: `skills/resolve-issue/scripts/lib/contract.ps1`
+- Modify: `skills/resolve-issue/scripts/prepare-execution.ps1`
+- Modify: `skills/resolve-issue/scripts/validate-setup.ps1`
+- Create: `skills/resolve-issue/scripts/validate-pr-ready.ps1`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Delete: `skills/resolve-issue/scripts/premerge.ps1`
+- Delete: `skills/resolve-issue/scripts/closeout.ps1`
+- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add failing resolver scenarios for packet map and PR-ready close**
 
-In `skills/project-resolve/scripts/test-scenarios.ps1`, replace the `"happy closeout marks goal complete after merge and issue close"` scenario with `"happy PR-ready handoff marks resolve goal complete"`.
+In `skills/resolve-issue/scripts/test-scenarios.ps1`, replace the `"happy closeout marks goal complete after merge and issue close"` scenario with `"happy PR-ready handoff marks resolve goal complete"`.
 
 Use this PR-ready ledger in the new scenario:
 
@@ -746,7 +746,7 @@ Add a scenario named `"worker setup includes dynamic work packet map"`:
 $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "orchestrated-worker"))
 Assert-True ($result.ok) $result.reason
 Assert-True ($result.setup_ledger.worker_handoff.dynamic_work_packet_map.worker_packet.objective -match "Implement") "worker packet objective missing"
-Assert-True ($result.setup_ledger.dynamic_work_packet_map.merge_owner -eq "project-merge") "merge owner must be project-merge"
+Assert-True ($result.setup_ledger.dynamic_work_packet_map.merge_owner -eq "merge-changes") "merge owner must be merge-changes"
 ```
 
 - [ ] **Step 2: Run resolver scenarios and verify red state**
@@ -754,14 +754,14 @@ Assert-True ($result.setup_ledger.dynamic_work_packet_map.merge_owner -eq "proje
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
 ```
 
 Expected: FAIL because `validate-pr-ready.ps1` and Dynamic Work Packet Map fields do not exist yet.
 
 - [ ] **Step 3: Add Dynamic Work Packet Map helpers**
 
-Append to `skills/project-resolve/scripts/lib/contract.ps1`:
+Append to `skills/resolve-issue/scripts/lib/contract.ps1`:
 
 ```powershell
 function New-DynamicWorkPacketMap {
@@ -782,7 +782,7 @@ function New-DynamicWorkPacketMap {
             branch = Normalize-RepoPath ([string]$Handoff.branch)
         }
         orchestrator_owner = "main-thread-orchestrator"
-        merge_owner = "project-merge"
+        merge_owner = "merge-changes"
         full_dynamic_workflow_policy = "Use only when scope, risk, independent packets, separate verification, reusable workflow value, or explicit user request justifies it."
         worker_packet = [ordered]@{
             objective = "Implement the linked issue to PR-ready evidence."
@@ -815,7 +815,7 @@ function Assert-DynamicWorkPacketMap {
     foreach ($field in @("goal", "success_criteria", "repo_context", "orchestrator_owner", "merge_owner", "worker_packet", "wakeup_policy")) {
         if (-not (Test-Property -Object $Map -Name $field)) { throw "dynamic_work_packet_map missing $field" }
     }
-    if ([string]$Map.merge_owner -ne "project-merge") { throw "dynamic_work_packet_map merge_owner must be project-merge" }
+    if ([string]$Map.merge_owner -ne "merge-changes") { throw "dynamic_work_packet_map merge_owner must be merge-changes" }
 }
 ```
 
@@ -830,7 +830,7 @@ dynamic_work_packet_map = New-DynamicWorkPacketMap -Handoff $Handoff -Decision $
 Change `closeout_owner` to:
 
 ```powershell
-integration_owner = "project-merge"
+integration_owner = "merge-changes"
 ```
 
 In `prepare-execution.ps1`, add this top-level setup ledger field:
@@ -841,7 +841,7 @@ dynamic_work_packet_map = if ([string]$executionDecision.selected_mode -eq "orch
 
 - [ ] **Step 5: Validate the map for worker mode**
 
-In `skills/project-resolve/scripts/validate-setup.ps1`, after the existing worker handoff check, add:
+In `skills/resolve-issue/scripts/validate-setup.ps1`, after the existing worker handoff check, add:
 
 ```powershell
 if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") {
@@ -852,7 +852,7 @@ if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") 
 
 - [ ] **Step 6: Create `validate-pr-ready.ps1`**
 
-Create `skills/project-resolve/scripts/validate-pr-ready.ps1` with:
+Create `skills/resolve-issue/scripts/validate-pr-ready.ps1` with:
 
 ```powershell
 [CmdletBinding()]
@@ -891,10 +891,10 @@ try {
 
 - [ ] **Step 7: Narrow resolver skill text**
 
-In `skills/project-resolve/SKILL.md`, update the opening paragraph to:
+In `skills/resolve-issue/SKILL.md`, update the opening paragraph to:
 
 ```markdown
-This skill owns implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$project-merge`.
+This skill owns implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$project:merge-changes`.
 ```
 
 Replace the state machine tail with:
@@ -902,7 +902,7 @@ Replace the state machine tail with:
 ```markdown
 10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
 11. `PR-ready validation`: validate branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
-12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$project-merge`.
+12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$project:merge-changes`.
 ```
 
 Replace the completion rule with:
@@ -915,20 +915,20 @@ Do not send a success-style final response until PR-ready proof shows:
 - Branch is pushed.
 - PR is opened and closes the exact linked issue.
 - Native resolve goal is marked complete.
-- PR-ready handoff was sent or recorded for `$project-merge`.
+- PR-ready handoff was sent or recorded for `$project:merge-changes`.
 ```
 
 Remove resolver claims that it merges, closes issues, syncs default, deletes branches, or runs final closeout.
 
 - [ ] **Step 8: Narrow resolver metadata**
 
-In `skills/project-resolve/agents/openai.yaml`, replace the default prompt with:
+In `skills/resolve-issue/agents/openai.yaml`, replace the default prompt with:
 
 ```yaml
 version: 1
 skills:
-  project-resolve:
-    default_prompt: "Use $project-resolve to implement one ready GitHub issue mirror under docs/superpowers/issues with a linked source plan under docs/superpowers/plans. Ask the native execution topology question before branch setup: open a worker worktree thread or resolve in the current thread. Activate native /goal proof, record the execution decision, create a Dynamic Work Packet Map for worker mode, execute with Superpowers TDD and verification, push the branch, open a PR that closes the exact issue, validate PR-ready evidence, complete the resolve goal at PR-ready, and hand off final integration to $project-merge. Do not merge, close issues, delete branches, or run final cleanup from this skill."
+  resolve-issue:
+    default_prompt: "Use $project:resolve-issue to implement one ready GitHub issue mirror under docs/superpowers/issues with a linked source plan under docs/superpowers/plans. Ask the native execution topology question before branch setup: open a worker worktree thread or resolve in the current thread. Activate native /goal proof, record the execution decision, create a Dynamic Work Packet Map for worker mode, execute with Superpowers TDD and verification, push the branch, open a PR that closes the exact issue, validate PR-ready evidence, complete the resolve goal at PR-ready, and hand off final integration to $project:merge-changes. Do not merge, close issues, delete branches, or run final cleanup from this skill."
 ```
 
 - [ ] **Step 9: Delete resolver merge scripts after the new merge scripts pass**
@@ -936,8 +936,8 @@ skills:
 Run:
 
 ```powershell
-Remove-Item -LiteralPath .\skills\project-resolve\scripts\premerge.ps1
-Remove-Item -LiteralPath .\skills\project-resolve\scripts\closeout.ps1
+Remove-Item -LiteralPath .\skills\resolve-issue\scripts\premerge.ps1
+Remove-Item -LiteralPath .\skills\resolve-issue\scripts\closeout.ps1
 ```
 
 - [ ] **Step 10: Run resolver scenario tests**
@@ -945,7 +945,7 @@ Remove-Item -LiteralPath .\skills\project-resolve\scripts\closeout.ps1
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
 ```
 
 Expected: PASS.
@@ -954,18 +954,18 @@ Expected: PASS.
 
 **Files:**
 
-- Modify: `skills/project-issue/SKILL.md`
-- Modify: `skills/project-issue/agents/openai.yaml`
-- Modify: `skills/project-issue/scripts/validate-issue-mirror.ps1`
-- Modify: `skills/project-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/SKILL.md`
+- Modify: `skills/create-issues/agents/openai.yaml`
+- Modify: `skills/create-issues/scripts/validate-issue-mirror.ps1`
+- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
 - Modify: `docs/superpowers/issues/README.md`
 - Modify: `docs/superpowers/issues/smoke-test-workflow.md`
-- Test: `skills/project-issue/scripts/test-scenarios.ps1`
+- Test: `skills/create-issues/scripts/test-scenarios.ps1`
 - Test: `scripts/test-superpowers-project-repo-contract.ps1`
 
 - [ ] **Step 1: Update issue mirror template text**
 
-In `skills/project-issue/SKILL.md`, add these required fields to the Issue Mirror Contract list:
+In `skills/create-issues/SKILL.md`, add these required fields to the Issue Mirror Contract list:
 
 ```markdown
 - Project Merge section
@@ -990,7 +990,7 @@ In the GitHub issue body shape, add this section after `**Script Gate Mode:** Sa
 
 - [ ] **Step 2: Update issue metadata prompt**
 
-In `skills/project-issue/agents/openai.yaml`, add this phrase to the default prompt:
+In `skills/create-issues/agents/openai.yaml`, add this phrase to the default prompt:
 
 ```text
 include a Project Merge section with Merge Owner, Merge Gate, Merge Policy, Worktree Cleanup Policy, and Orchestrator Wakeup Policy
@@ -998,7 +998,7 @@ include a Project Merge section with Merge Owner, Merge Gate, Merge Policy, Work
 
 - [ ] **Step 3: Add merge section validation**
 
-In `skills/project-issue/scripts/validate-issue-mirror.ps1`, after workflow metadata validation, add:
+In `skills/create-issues/scripts/validate-issue-mirror.ps1`, after workflow metadata validation, add:
 
 ```powershell
 $hasProjectMergeSection = [regex]::IsMatch($text, "(?im)^##\s*Project Merge\s*$")
@@ -1028,7 +1028,7 @@ foreach ($fieldName in $mergeFields.Keys) {
 
 - [ ] **Step 4: Update project issue scenarios**
 
-In `skills/project-issue/scripts/test-scenarios.ps1`, add the `## Project Merge` section to every happy issue mirror fixture:
+In `skills/create-issues/scripts/test-scenarios.ps1`, add the `## Project Merge` section to every happy issue mirror fixture:
 
 ```markdown
 ## Project Merge
@@ -1078,7 +1078,7 @@ In `docs/superpowers/issues/smoke-test-workflow.md`, add the same `## Project Me
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
 ```
 
 Expected: PASS.
@@ -1087,52 +1087,52 @@ Expected: PASS.
 
 **Files:**
 
-- Modify: `skills/superpowers-project/SKILL.md`
-- Modify: `skills/superpowers-project/agents/openai.yaml`
-- Modify: `skills/superpowers-project/scripts/test-scenarios.ps1`
+- Modify: `skills/workflow/SKILL.md`
+- Modify: `skills/workflow/agents/openai.yaml`
+- Modify: `skills/workflow/scripts/test-scenarios.ps1`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `README.md`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `scripts/test-superpowers-project-dummy-repo.ps1`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Test: `skills/superpowers-project/scripts/test-scenarios.ps1`
+- Test: `skills/workflow/scripts/test-scenarios.ps1`
 - Test: `scripts/test-superpowers-project-dummy-repo.ps1`
 - Test: `scripts/test-superpowers-project-repo-contract.ps1`
 
 - [ ] **Step 1: Update router text**
 
-In `skills/superpowers-project/SKILL.md`, add this route:
+In `skills/workflow/SKILL.md`, add this route:
 
 ```markdown
-- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project-merge`
+- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project:merge-changes`
 ```
 
 In the Goal Routing section, add:
 
 ```markdown
-After `$project-resolve` creates PR-ready evidence, final integration must route to `$project-merge`.
+After `$project:resolve-issue` creates PR-ready evidence, final integration must route to `$project:merge-changes`.
 ```
 
 - [ ] **Step 2: Update router metadata**
 
-In `skills/superpowers-project/agents/openai.yaml`, replace the default prompt with a prompt that includes:
+In `skills/workflow/agents/openai.yaml`, replace the default prompt with a prompt that includes:
 
 ```text
-PR or worker-handoff integration to $project-merge with native merge approval, issue close verification, branch/worktree cleanup, prune, cleanup hook, and clean repo proof
+PR or worker-handoff integration to $project:merge-changes with native merge approval, issue close verification, branch/worktree cleanup, prune, cleanup hook, and clean repo proof
 ```
 
 - [ ] **Step 3: Update project context**
 
-In `docs/superpowers/PROJECT_CONTEXT.md`, add `project-merge` under Extension Skills:
+In `docs/superpowers/PROJECT_CONTEXT.md`, add `merge-changes` under Extension Skills:
 
 ```markdown
-- `project-merge`
+- `merge-changes`
 ```
 
 Update Execution Model to:
 
 ```markdown
-Issue implementation uses native `/goal` or goal tools plus Superpowers execution skills through `$project-resolve`. PR integration, linked issue close verification, branch/worktree cleanup, pruning, and final clean repo proof are owned by `$project-merge`. GoalBuddy boards are outside the default execution model.
+Issue implementation uses native `/goal` or goal tools plus Superpowers execution skills through `$project:resolve-issue`. PR integration, linked issue close verification, branch/worktree cleanup, pruning, and final clean repo proof are owned by `$project:merge-changes`. GoalBuddy boards are outside the default execution model.
 ```
 
 - [ ] **Step 4: Update README**
@@ -1140,7 +1140,7 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 In `README.md`, add:
 
 ```markdown
-- `$project-merge`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
+- `$project:merge-changes`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
 ```
 
 - [ ] **Step 5: Update plugin manifest prompts**
@@ -1148,7 +1148,7 @@ In `README.md`, add:
 In `.codex-plugin/plugin.json`, add this default prompt entry:
 
 ```json
-"Merge a PR-ready issue handoff with project-merge."
+"Merge a PR-ready issue handoff with merge-changes."
 ```
 
 - [ ] **Step 6: Update dummy repo fixture**
@@ -1159,12 +1159,12 @@ After the worker setup decision check, assert the packet map:
 
 ```powershell
 if (-not $workerFinalize.setup_ledger.dynamic_work_packet_map) { throw "dynamic work packet map was not recorded" }
-if ($workerFinalize.setup_ledger.dynamic_work_packet_map.merge_owner -ne "project-merge") { throw "dynamic work packet map merge owner mismatch" }
+if ($workerFinalize.setup_ledger.dynamic_work_packet_map.merge_owner -ne "merge-changes") { throw "dynamic work packet map merge owner mismatch" }
 ```
 
 - [ ] **Step 7: Update repo contract checks**
 
-In `scripts/test-superpowers-project-repo-contract.ps1`, add `project-merge` to the active skill arrays and add these required issue mirror needles:
+In `scripts/test-superpowers-project-repo-contract.ps1`, add `merge-changes` to the active skill arrays and add these required issue mirror needles:
 
 ```powershell
 "Project Merge",
@@ -1191,22 +1191,22 @@ Expected: all PASS.
 
 **Files:**
 
-- Modify: `skills/project-plan/SKILL.md`
-- Modify: `skills/project-plan/agents/openai.yaml`
-- Modify: `skills/project-plan/scripts/test-scenarios.ps1`
-- Modify: `skills/project-issue/SKILL.md`
-- Modify: `skills/project-resolve/SKILL.md`
-- Modify: `skills/project-merge/SKILL.md`
-- Modify: `skills/superpowers-project/SKILL.md`
-- Test: `skills/project-plan/scripts/test-scenarios.ps1`
-- Test: `skills/project-issue/scripts/test-scenarios.ps1`
-- Test: `skills/project-resolve/scripts/test-scenarios.ps1`
-- Test: `skills/project-merge/scripts/test-scenarios.ps1`
-- Test: `skills/superpowers-project/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/SKILL.md`
+- Modify: `skills/write-plan/agents/openai.yaml`
+- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/SKILL.md`
+- Modify: `skills/resolve-issue/SKILL.md`
+- Modify: `skills/merge-changes/SKILL.md`
+- Modify: `skills/workflow/SKILL.md`
+- Test: `skills/write-plan/scripts/test-scenarios.ps1`
+- Test: `skills/create-issues/scripts/test-scenarios.ps1`
+- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Test: `skills/workflow/scripts/test-scenarios.ps1`
 
-- [ ] **Step 1: Add a failing `$project-plan` continuation test**
+- [ ] **Step 1: Add a failing `$project:write-plan` continuation test**
 
-In `skills/project-plan/scripts/test-scenarios.ps1`, add a scenario that requires the skill text to contain the executable continuation gate:
+In `skills/write-plan/scripts/test-scenarios.ps1`, add a scenario that requires the skill text to contain the executable continuation gate:
 
 ```powershell
 Invoke-Scenario "native continuation gate is present" {
@@ -1232,19 +1232,19 @@ Assert-Contains $metadata "project_plan_next_step" "missing continuation questio
 Assert-Contains $metadata "start the selected next skill" "missing executable routing guidance"
 ```
 
-- [ ] **Step 2: Run the `$project-plan` tests and verify red state**
+- [ ] **Step 2: Run the `$project:write-plan` tests and verify red state**
 
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-plan\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
 ```
 
 Expected: FAIL because the continuation-gate text is not present yet.
 
-- [ ] **Step 3: Add the `$project-plan` continuation gate**
+- [ ] **Step 3: Add the `$project:write-plan` continuation gate**
 
-In `skills/project-plan/SKILL.md`, add this section before `## Self-Review`:
+In `skills/write-plan/SKILL.md`, add this section before `## Self-Review`:
 
 ```markdown
 ## Native Continuation Gate
@@ -1257,7 +1257,7 @@ Prompt: `How should I continue from this project plan?`
 
 Options:
 
-- `Project Issue First`: continue to `$project-issue` using the saved plan path.
+- `Project Issue First`: continue to `$project:create-issues` using the saved plan path.
 - `Subagent Execute`: continue with `superpowers:subagent-driven-development` using the saved plan path.
 - `Inline Execute`: continue with `superpowers:executing-plans` using the saved plan path.
 
@@ -1268,9 +1268,9 @@ After the user selects an option, start the selected next skill in the same turn
 If the selected next skill needs its own material decision, ask that next skill's native UI question. If the route needs unavailable tools or an external write that still requires approval, stop with a clear pending state and exact resume target.
 ```
 
-- [ ] **Step 4: Update `$project-plan` metadata**
+- [ ] **Step 4: Update `$project:write-plan` metadata**
 
-In `skills/project-plan/agents/openai.yaml`, add this sentence to the default prompt:
+In `skills/write-plan/agents/openai.yaml`, add this sentence to the default prompt:
 
 ```text
 After saving and self-reviewing the plan, ask native question project_plan_next_step with Project Issue First, Subagent Execute, and Inline Execute options, then start the selected next skill in the same turn instead of only telling the user what to prompt next.
@@ -1278,33 +1278,33 @@ After saving and self-reviewing the plan, ask native question project_plan_next_
 
 - [ ] **Step 5: Add downstream continuation text**
 
-In `skills/project-issue/SKILL.md`, add:
+In `skills/create-issues/SKILL.md`, add:
 
 ```markdown
 ## Native Continuation Gate
 
-After approved issue mirrors or GitHub issues are created and validated, ask how to continue when `request_user_input` is callable. Options should include resolving the first ready issue with `$project-resolve`, resolving a selected issue with `$project-resolve`, or stopping after issue creation. Start the selected next skill in the same turn when tools and state allow it.
+After approved issue mirrors or GitHub issues are created and validated, ask how to continue when `request_user_input` is callable. Options should include resolving the first ready issue with `$project:resolve-issue`, resolving a selected issue with `$project:resolve-issue`, or stopping after issue creation. Start the selected next skill in the same turn when tools and state allow it.
 ```
 
-In `skills/project-resolve/SKILL.md`, add:
+In `skills/resolve-issue/SKILL.md`, add:
 
 ```markdown
 ## Native Continuation Gate
 
-After PR-ready handoff proof passes, ask how to continue when `request_user_input` is callable. Options should include starting `$project-merge`, resolving another ready issue, or stopping at PR-ready. Start the selected next skill in the same turn when tools and state allow it.
+After PR-ready handoff proof passes, ask how to continue when `request_user_input` is callable. Options should include starting `$project:merge-changes`, resolving another ready issue, or stopping at PR-ready. Start the selected next skill in the same turn when tools and state allow it.
 ```
 
-In the new `skills/project-merge/SKILL.md`, add:
+In the new `skills/merge-changes/SKILL.md`, add:
 
 ```markdown
 ## Native Continuation Gate
 
-After closeout proof passes, ask how to continue when `request_user_input` is callable. Options should include resolving the next ready issue with `$project-resolve`, running `$project-doctor`, or stopping after clean closeout. Start the selected next skill in the same turn when tools and state allow it.
+After closeout proof passes, ask how to continue when `request_user_input` is callable. Options should include resolving the next ready issue with `$project:resolve-issue`, running `$project:audit-project`, or stopping after clean closeout. Start the selected next skill in the same turn when tools and state allow it.
 ```
 
 - [ ] **Step 6: Update router text**
 
-In `skills/superpowers-project/SKILL.md`, add:
+In `skills/workflow/SKILL.md`, add:
 
 ```markdown
 ## Continuation Routing
@@ -1317,10 +1317,10 @@ At major handoffs, use native continuation questions and treat the selected answ
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
 ```
 
@@ -1330,9 +1330,9 @@ Expected: all PASS.
 
 **Files:**
 
-- Test: `skills/project-resolve/scripts/test-scenarios.ps1`
-- Test: `skills/project-merge/scripts/test-scenarios.ps1`
-- Test: `skills/project-issue/scripts/test-scenarios.ps1`
+- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Test: `skills/create-issues/scripts/test-scenarios.ps1`
 - Test: `scripts/validate.ps1`
 - Test: `scripts/sync-live.ps1`
 
@@ -1341,9 +1341,9 @@ Expected: all PASS.
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
 ```
 
@@ -1367,7 +1367,7 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
 ```
 
-Expected: PASS. Confirm the JSON output includes `project-merge` under both deployed plugin skills and deployed user skills.
+Expected: PASS. Confirm the JSON output includes `merge-changes` under both deployed plugin skills and deployed user skills.
 
 - [ ] **Step 4: Run cleanup hook**
 
@@ -1393,15 +1393,16 @@ Expected: commit succeeds after all proof commands pass.
 
 ## Self-Review Checklist
 
-- [ ] Source spec is named: `docs/superpowers/specs/2026-06-02-project-merge-skill-design.md`.
+- [ ] Source spec is named: `docs/superpowers/specs/2026-06-02-merge-changes-skill-design.md`.
 - [ ] Native UI planning decisions are recorded.
 - [ ] Every acceptance criterion maps to at least one task.
 - [ ] Every task names exact files and exact commands.
 - [ ] TDD is required through failing scenario tests before implementation changes.
-- [ ] `$project-resolve` ends at PR-ready evidence.
-- [ ] `$project-merge` owns premerge, native merge approval, merge closeout, cleanup, prune, and clean proof.
+- [ ] `$project:resolve-issue` ends at PR-ready evidence.
+- [ ] `$project:merge-changes` owns premerge, native merge approval, merge closeout, cleanup, prune, and clean proof.
 - [ ] Full completion requires `superpowers:verification-before-completion` before success claims.
 
 ## Execution Handoff
 
-Plan complete when this file is saved. The implemented `$project-plan` closeout should ask `project_plan_next_step` and then immediately route to `$project-issue`, `superpowers:subagent-driven-development`, or `superpowers:executing-plans` based on the selected native UI answer.
+Plan complete when this file is saved. The implemented `$project:write-plan` closeout should ask `project_plan_next_step` and then immediately route to `$project:create-issues`, `superpowers:subagent-driven-development`, or `superpowers:executing-plans` based on the selected native UI answer.
+

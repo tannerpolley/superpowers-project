@@ -1,5 +1,5 @@
 {
-  "name": "superpowers-project",
+  "name": "project",
   "version": "0.2.0",
   "description": "Superpowers extension for durable project setup, GitHub issues and milestones, native user-input grilling, goal-backed execution, and worker-thread orchestration.",
   "author": {
@@ -28,15 +28,16 @@
       "Workflow"
     ],
     "defaultPrompt": [
-      "Which Superpowers Project skill should I use for this workflow?",
-      "Set up this repo's Superpowers project setup and tracker context.",
-      "Audit this repo's Superpowers project workflow.",
-      "Brainstorm this project idea with native grilling.",
-      "Convert this plan into GitHub issue mirrors.",
-      "Write the project implementation plan.",
-      "Resolve this GitHub issue directly with a native goal.",
-      "Orchestrate this GitHub issue in a worker worktree thread.",
-      "Merge a PR-ready issue handoff with project-merge."
+      "Use project:workflow to choose the next Superpowers Project route.",
+      "Use project:setup to set up this repo's project context and tracker.",
+      "Use project:audit-project to audit Superpowers Project workflow drift.",
+      "Use project:brainstorm-spec to brainstorm a project idea with native grilling.",
+      "Use project:create-issues to convert a plan into GitHub issue mirrors.",
+      "Use project:write-plan to write the project implementation plan.",
+      "Use project:resolve-issue to resolve one GitHub issue directly with a native goal.",
+      "Use project:orchestrate-issues to delegate issue work to a worker worktree thread.",
+      "Use project:merge-changes to merge PR-ready issue or branch work."
     ]
   }
 }
+

@@ -16,8 +16,11 @@ Issue mirrors:
 
 GitHub Project board:
 
-- Optional dashboard evidence owned by `$project-setup`.
+- Optional dashboard evidence owned by `$project:setup`.
 - Native approval is required before creating or mutating a board.
-- Required board fields when configured: `Status`, `Milestone`.
+- Configured board: [Superpowers Project](https://github.com/users/tannerpolley/projects/6).
+- Required board fields when configured: `Status`, `Milestone`, `Issue Type`, `Agent State`.
+- Linked ready issues: #22, #23, #26, #28, #30, #32.
 
 Do not create canonical specs, plans, or issue mirrors under `docs/milestones`, `docs/plans`, or root-level `docs/issues`.
+

@@ -85,7 +85,7 @@ try {
     Add-Check -Name "required artifact paths" -Ok $true -Reason "passed"
 
     $manifest = Get-Content -LiteralPath (Join-Path $repoRoot ".codex-plugin/plugin.json") -Raw | ConvertFrom-Json
-    if ($manifest.name -ne "superpowers-project") { throw "plugin manifest name must remain superpowers-project" }
+    if ($manifest.name -ne "project") { throw "plugin manifest name must be project" }
     if ($manifest.author.name -ne "Tanner Polley") { throw "plugin manifest author must use public author identity" }
     if ($manifest.interface.developerName -ne "Tanner Polley") { throw "plugin manifest developerName must use public author identity" }
     if ($manifest.repository -ne "https://github.com/tannerpolley/codex-superpowers-project") { throw "plugin manifest repository must target codex-superpowers-project" }
@@ -122,8 +122,8 @@ try {
 
     Assert-TextContains -RelativePath "README.md" -Needles @(
         "codex-superpowers-project",
-        "plugins\superpowers-project",
-        'After install, start with `$superpowers-project`'
+        "plugins\project",
+        'After install, start with `$project:workflow`'
     )
     $publicTemplatePaths = @(
         ".github/ISSUE_TEMPLATE/bug.yml",
@@ -140,10 +140,10 @@ try {
     if ($workflowText.Contains("Validate Milestones plugin")) { throw "validate workflow still uses retired product name" }
     if (-not $workflowText.Contains("Validate Superpowers Project plugin")) { throw "validate workflow missing Superpowers Project job label" }
     $syncText = Get-Content -LiteralPath (Join-Path $repoRoot "scripts/sync-live.ps1") -Raw
-    if (-not $syncText.Contains("plugins\superpowers-project")) { throw "sync-live.ps1 must deploy to plugins/superpowers-project" }
+    if (-not $syncText.Contains("plugins\project")) { throw "sync-live.ps1 must deploy to plugins/project" }
     if (-not $syncText.Contains("plugins\milestones")) { throw "sync-live.ps1 must clean up retired plugins/milestones path" }
-    $doctorAuditText = Get-Content -LiteralPath (Join-Path $repoRoot "skills/project-doctor/scripts/audit-project.ps1") -Raw
-    if (-not $doctorAuditText.Contains("plugins/superpowers-project/skills/project-doctor/SKILL.md")) { throw "project-doctor audit must inspect plugins/superpowers-project" }
+    $doctorAuditText = Get-Content -LiteralPath (Join-Path $repoRoot "skills/audit-project/scripts/audit-project.ps1") -Raw
+    if (-not $doctorAuditText.Contains("plugins/project/skills/audit-project/SKILL.md")) { throw "audit-project audit must inspect plugins/project" }
     Add-Check -Name "public readiness paths" -Ok $true -Reason "passed"
 
     $roadmap = Get-Content -LiteralPath (Join-Path $repoRoot "docs/agents/project-roadmap.json") -Raw | ConvertFrom-Json
@@ -155,15 +155,15 @@ try {
     Add-Check -Name "tracker config" -Ok $true -Reason "passed"
 
     foreach ($skillName in @(
-        "superpowers-project",
-        "project-setup",
-        "project-orchestrate",
-        "project-brainstorm",
-        "project-plan",
-        "project-issue",
-        "project-resolve",
-        "project-merge",
-        "project-doctor"
+        "workflow",
+        "setup",
+        "orchestrate-issues",
+        "brainstorm-spec",
+        "write-plan",
+        "create-issues",
+        "resolve-issue",
+        "merge-changes",
+        "audit-project"
     )) {
         $skillPath = Join-Path $repoRoot "skills/$skillName/SKILL.md"
         $skillText = Get-Content -LiteralPath $skillPath -Raw
@@ -190,14 +190,14 @@ try {
     )
     Add-Check -Name "skill script parameter contract wiring" -Ok $true -Reason "passed"
 
-    Assert-RelativePathExists -RelativePath "skills/project-doctor/scripts/audit-project.ps1" -Kind File
-    Assert-TextContains -RelativePath "skills/project-doctor/SKILL.md" -Needles @(
+    Assert-RelativePathExists -RelativePath "skills/audit-project/scripts/audit-project.ps1" -Kind File
+    Assert-TextContains -RelativePath "skills/audit-project/SKILL.md" -Needles @(
         "audit-project.ps1",
         "-Mode LocalDocs",
         "-Mode GitHubAware",
         "native repair approval"
     )
-    Assert-TextContains -RelativePath "skills/project-doctor/agents/openai.yaml" -Needles @(
+    Assert-TextContains -RelativePath "skills/audit-project/agents/openai.yaml" -Needles @(
         "audit-project.ps1",
         "-Mode LocalDocs",
         "-Mode GitHubAware"
@@ -206,7 +206,7 @@ try {
 
     $issueFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs/superpowers/issues") -Filter "*.md" -File | Where-Object { $_.Name -ne "README.md" })
     if ($issueFiles.Count -lt 1) { throw "docs/superpowers/issues must contain at least one issue mirror for smoke validation" }
-    $validator = Join-Path $repoRoot "skills/project-issue/scripts/validate-issue-mirror.ps1"
+    $validator = Join-Path $repoRoot "skills/create-issues/scripts/validate-issue-mirror.ps1"
     foreach ($issueFile in $issueFiles) {
         $relative = [IO.Path]::GetRelativePath($repoRoot, $issueFile.FullName) -replace '\\', '/'
         $result = Invoke-JsonScript -ScriptPath $validator -Arguments @("-RepoRoot", $repoRoot, "-IssueFile", $relative, "-MilestoneRequired")
@@ -255,3 +255,4 @@ try {
     Add-Check -Name "fatal" -Ok $false -Reason $_.Exception.Message
     Complete -Ok $false -Reason $_.Exception.Message
 }
+
