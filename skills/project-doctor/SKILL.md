@@ -20,9 +20,13 @@ Run `skills/project-doctor/scripts/audit-project.ps1` before proposing or applyi
 Supported modes:
 
 - `-Mode LocalDocs`: inspect local project docs, issue mirrors, native UI contracts, ignored-path traps, closed mirror lifecycle policy, and live sync surfaces without network.
-- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, and `-LabelFixturePath` for deterministic smoke tests.
+- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, `-LabelFixturePath`, and `-ProjectFixturePath` for deterministic smoke tests.
+- `-TrackerHygiene`: inspect GitHub issue routing-label drift and canonical Project V2 state drift. Reports closed/open status mismatches, missing `status:*` routing labels on open issues, missing Project items, mirror-to-Project field drift, and remaining Project V2 draft items.
+- `-ApplyTrackerRepairs`: after native approval, emit a repair receipt for conservative tracker repairs: remove `status:*` labels from closed issues, mark closed Project items `Done`, add mirrored open issues back to the canonical Project, and sync valid Project fields from mirror metadata.
 
 The script reports JSON findings grouped as `blocking`, `repairable`, `informational`, and `healthy`. It is audit-only: repairs require native repair approval through `request_user_input` before mutation.
+
+Tracker hygiene policy is intentionally narrow. Open issues carry `status:*` routing labels. Closed issues use GitHub closed state plus Project `Done`; closed issues should not keep `status:*` routing labels. Project V2 draft items are reported separately and are not published, converted, or deleted automatically.
 
 ## Audit Scope
 
@@ -82,6 +86,8 @@ Check for drift across:
 - live plugin install vs source repo, including retired skill directories and active wrappers
 
 Run `scripts/audit-project.ps1 -RepoRoot . -Mode LocalDocs` for a local-docs audit, or `scripts/audit-project.ps1 -RepoRoot . -Mode GitHubAware` when GitHub or fixture evidence is available. The scripted audit reports stale closed issue mirrors as repairable drift unless the mirror is explicitly marked `**Mirror Retention:** Keep`.
+
+Run `scripts/audit-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` for tracker hygiene. Use `-ApplyTrackerRepairs` only after native approval and include the `repair_receipt` in the handoff or audit report.
 
 ## Goal Execution Checks
 
