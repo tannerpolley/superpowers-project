@@ -111,9 +111,9 @@ A useful report includes:
 
 ## Native Continuation Gate
 
-After the audit report or approved repair proof is ready, summarize the Doctor result in chat before asking the continuation question. The summary must name blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts, and recommended next route.
+After the audit report or approved repair proof is ready, summarize the Doctor result in chat before asking the continuation question. The summary must name blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask a native continuation question with `request_user_input` when callable.
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
 Question id: `project_doctor_next_step`
 
@@ -121,10 +121,68 @@ Prompt: `How should I continue from this project audit?`
 
 Options:
 
-- `Apply Repair`: apply an approved, exact repair plan.
-- `Create Planning Spec`: start `$project-brainstorm` or `$project-plan` for a larger repair design.
-- `Run Audit Again`: rerun `$project-doctor` after changes or new GitHub evidence.
-- `Review First`: stop for user review before mutation.
-- `Stop`: stop after the Doctor closeout.
+- Down: `Apply Or Prepare Repair`: apply an exact repair or create repair planning work.
+- Left: `Rerun / Review Audit`: rerun the audit, review findings, revise repair direction, or gather evidence.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Apply Or Prepare Repair`, ask:
+
+Question id: `project_doctor_repair_group`
+
+Prompt: `How should this audit turn into repair work?`
+
+Options:
+
+- Down: `Apply Repair`: apply an approved, exact repair plan.
+- Left: `Prepare Repair Work`: create a planning or issue route for larger repair work.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Prepare Repair Work`, ask:
+
+Question id: `project_doctor_prepare_route`
+
+Prompt: `Which repair artifact should be prepared?`
+
+Options:
+
+- Down: `Create Planning Spec`: start `$project-brainstorm` for a larger repair design.
+- Left: `Plan Or Issue Repair`: choose whether to plan repair work or create an issue.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Plan Or Issue Repair`, ask:
+
+Question id: `project_doctor_plan_issue_route`
+
+Prompt: `Should I plan the repair or create an issue?`
+
+Options:
+
+- Down: `Plan Repair`: start `$project-plan` from the audit findings.
+- Left: `Create Issue`: start `$project-issue` only when the repair is already issue-ready.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Rerun / Review Audit`, ask:
+
+Question id: `project_doctor_reiteration_route`
+
+Prompt: `How should I revisit this audit?`
+
+Options:
+
+- Down: `Run Audit Again`: rerun `$project-doctor` after changes or new GitHub evidence.
+- Left: `Review Or Gather Evidence`: choose whether to review the audit or inspect more evidence.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Review Or Gather Evidence`, ask:
+
+Question id: `project_doctor_review_evidence_route`
+
+Prompt: `Should I review the audit or gather more evidence?`
+
+Options:
+
+- Down: `Review First`: show the audit summary and rendered artifacts for user review, then return to `project_doctor_next_step`.
+- Left: `Gather More Evidence`: inspect the requested source, then return to `project_doctor_next_step`.
+- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

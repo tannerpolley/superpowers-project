@@ -80,13 +80,66 @@ If the user gives only a GitHub issue URL and no local mirror exists, hydrate th
 
 ## Native Continuation Gate
 
-After PR-ready handoff intake, summarize the worker route before asking the continuation question. The summary must name the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, verification evidence status, and the recommended next route.
+After PR-ready handoff intake, summarize the worker route before asking the continuation question. `$project-orchestrate` can only close out when all owned worktrees have permission to push their commits to the open PR or the user explicitly routes to recovery. The summary must name the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, verification evidence status, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native question `project_orchestrate_next_step` with these options:
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
-- `Project Merge`: start `$project-merge` for the PR-ready handoff.
-- `Review First`: stop for user review before merge routing.
-- `Recover Worker`: ask for approved recovery action if the worker is blocked or stale.
-- `Stop`: stop after the orchestration handoff.
+Question id: `project_orchestrate_next_step`
+
+Prompt: `How should I continue from this worker route?`
+
+Options:
+
+- Down: `Integrate Worker Output`: merge or continue worker-backed issue execution.
+- Left: `Recover / Review Worker Route`: recover, ask worker/orchestrator questions, or reassign work.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Integrate Worker Output`, ask:
+
+Question id: `project_orchestrate_integration_route`
+
+Prompt: `What should happen with the worker output?`
+
+Options:
+
+- Down: `Merge`: start `$project-merge` for the PR-ready handoff.
+- Left: `Start More Worker Work`: choose another worker-backed issue route.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Start More Worker Work`, ask:
+
+Question id: `project_orchestrate_more_worker_route`
+
+Prompt: `What worker-backed work should start next?`
+
+Options:
+
+- Down: `Resolve Another Worker Issue`: start another worker-backed issue route when one is ready.
+- Left: `Start Another Worker`: create another worker thread for a selected ready issue.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Recover / Review Worker Route`, ask:
+
+Question id: `project_orchestrate_reiteration_route`
+
+Prompt: `How should I revisit this worker route?`
+
+Options:
+
+- Down: `Recover Audit Workers`: audit and recover workers and worktrees.
+- Left: `Worker Communication`: ask the worker or reassign work.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Worker Communication`, ask:
+
+Question id: `project_orchestrate_worker_communication_route`
+
+Prompt: `How should worker communication continue?`
+
+Options:
+
+- Down: `Ask Worker`: use `request_agent_input` when the current thread is orchestrating a worker.
+- Left: `Reassign Work`: stop the current worker route and reassign the issue through an approved route.
+- Right: `Stop / Done`: break the continuation loop.
 
 Treat selected native answers as executable routing, not advisory text. Start the selected next skill in the same turn when tools and state allow it.

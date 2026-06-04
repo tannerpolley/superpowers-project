@@ -79,9 +79,9 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 ## Native Continuation Gate
 
-After closeout proof passes, summarize the merge closeout in chat before asking the continuation question. The summary must name the merged PR URL, closed issue, synced default branch, branch and worktree cleanup proof, prune proof, cleanup hook proof, and clean repo proof.
+After closeout proof passes, summarize the merge closeout in chat before asking the continuation question. The summary must name the merged PR URL, closed issue, synced default branch, branch and worktree cleanup proof, prune proof, cleanup hook proof, and clean repo proof. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask a native continuation question with `request_user_input` when callable.
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
 Question id: `project_merge_next_step`
 
@@ -89,10 +89,81 @@ Prompt: `How should I continue from this merge closeout?`
 
 Options:
 
-- `Project Doctor`: start `$project-doctor` for post-merge drift audit or live sync review.
-- `Resolve Another`: start `$project-resolve` for another ready issue mirror.
-- `Review First`: stop for user review after merge closeout.
-- `Stop`: stop after clean closeout.
+- Down: `Continue Project Execution`: continue issue execution or start planning the next work.
+- Left: `Review / Repair Closeout`: review evidence, audit drift, repair closeout, or rerun cleanup.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Continue Project Execution`, ask:
+
+Question id: `project_merge_continue_group`
+
+Prompt: `Which kind of work should continue after this merge?`
+
+Options:
+
+- Down: `Continue Issues`: resolve or orchestrate another ready issue.
+- Left: `Start Planning`: plan or brainstorm next work.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Continue Issues`, ask:
+
+Question id: `project_merge_issue_route`
+
+Prompt: `How should the next issue be executed?`
+
+Options:
+
+- Down: `Resolve Another`: start `$project-resolve` for another ready issue mirror.
+- Left: `Orchestrate Another`: start `$project-orchestrate` for another worker-suitable issue.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Start Planning`, ask:
+
+Question id: `project_merge_planning_route`
+
+Prompt: `How should the next work be shaped?`
+
+Options:
+
+- Down: `Plan Next`: start `$project-plan` from an approved spec or issue mirror.
+- Left: `Brainstorm Next`: start `$project-brainstorm` for the next idea, spec, or architecture direction.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Review / Repair Closeout`, ask:
+
+Question id: `project_merge_reiteration_group`
+
+Prompt: `How should I revisit this merge closeout?`
+
+Options:
+
+- Down: `Review Closeout`: show closeout evidence and rendered artifacts, then return to `project_merge_next_step`.
+- Left: `Repair / Audit Closeout`: choose a repair or audit route.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Repair / Audit Closeout`, ask:
+
+Question id: `project_merge_repair_route`
+
+Prompt: `Which closeout repair route should run?`
+
+Options:
+
+- Down: `Run Doctor`: start `$project-doctor` for post-merge drift audit or live sync review.
+- Left: `Repair Or Cleanup`: choose drift repair or cleanup rerun.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Repair Or Cleanup`, ask:
+
+Question id: `project_merge_repair_cleanup_route`
+
+Prompt: `Should I repair drift or rerun cleanup?`
+
+Options:
+
+- Down: `Repair Drift`: repair exact closeout drift after approval.
+- Left: `Re-run Cleanup`: rerun cleanup and closeout proof.
+- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 

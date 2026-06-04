@@ -11,14 +11,16 @@ Package, validate, sync, and release the Superpowers Project extension after dum
 ## Related Specs
 
 - `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
+- `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
 
 ## Related Plans
 
 - `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
+- `docs/superpowers/plans/2026-06-03-public-release-readiness-plan.md`
 
 ## Related Issues
 
-- None yet
+- `docs/superpowers/issues/32-public-repo-release-readiness.md`
 
 ## Release Policy
 

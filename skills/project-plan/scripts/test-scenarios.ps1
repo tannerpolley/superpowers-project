@@ -172,7 +172,7 @@ $scenarios = @(
         Assert-Contains $text "plans include creation date and milestone identity where applicable" "missing metadata plan filename policy"
         Assert-Contains $text "project_plan_next_step" "missing continuation question id"
         Assert-Contains $text "start the selected next skill" "missing executable routing guidance"
-        foreach ($needle in @("summarize", "Project Issue First", "Quick Apply", "Review First", "Revise Plan")) {
+        foreach ($needle in @("summarize", "Create Work Artifact", "Create Issue", "Plan Implementation", "Review First", "Revise Plan")) {
             Assert-Contains $text $needle "missing metadata continuation route: $needle"
         }
     }
@@ -185,7 +185,8 @@ $scenarios = @(
             "stop",
             "request_user_input",
             "project_plan_next_step",
-            "Project Issue First",
+            "Create Issue",
+            "Plan Implementation",
             "Quick Apply",
             "Revise Plan",
             "start the selected next skill",
@@ -193,6 +194,34 @@ $scenarios = @(
         )) {
             Assert-Contains $text $needle "missing continuation gate text: $needle"
         }
+    }
+    Invoke-Scenario "native continuation routing respects native UI option limits" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            "advanced-user-input",
+            "sequential branching",
+            "project_plan_next_step",
+            "Continue Into Work",
+            "Revise / Review Plan",
+            "Stop / Done",
+            "project_plan_work_route",
+            "Create Work Artifact",
+            "Execute Existing Work",
+            "project_plan_artifact_route",
+            "Create Issue",
+            "Plan Implementation",
+            "project_plan_implementation_route",
+            "implement-plan",
+            "project_plan_review_route",
+            "Review First",
+            "Revise Plan",
+            "Show four or more native options when they are real peer routes"
+        )) {
+            Assert-Contains $text $needle "missing nested continuation routing contract: $needle"
+            Assert-Contains $metadata $needle "missing nested continuation routing metadata: $needle"
+        }
+        Assert-NotContains $metadata "with Project Issue First, Quick Apply, Review First, Revise Plan, and Stop options" "metadata must not specify an impossible five-option native question"
     }
     Invoke-Scenario "quick apply approval gate is documented" {
         $text = Get-Content -LiteralPath $skillFile -Raw

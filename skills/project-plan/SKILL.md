@@ -117,9 +117,9 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 ## Native Continuation Gate
 
-After saving and self-reviewing the plan, summarize the plan in chat before asking the continuation question. The summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, and recommended next route.
+After saving and self-reviewing the plan, summarize the plan in chat before asking the continuation question. The summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask a native continuation question when `request_user_input` is callable. This question is executable routing, not advisory text.
+Ask native continuation questions when `request_user_input` is callable. These questions are executable routing, not advisory text. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Show four or more native options when they are real peer routes. Use `advanced-user-input` for large peer route menus, bulk independent gates, or sequential branching when one answer determines the next prompt. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
 Question id: `project_plan_next_step`
 
@@ -127,13 +127,109 @@ Prompt: `How should I continue from this project plan?`
 
 Options:
 
-- `Project Issue First`: continue to `$project-issue` using the saved plan path.
-- `Quick Apply`: apply a small, explicitly approved local-main change through the bundled Quick Apply gate.
-- `Review First`: stop for user review before issue creation or execution.
-- `Revise Plan`: continue `$project-plan` to revise the saved plan.
-- `Stop`: stop after the plan closeout.
+- Down: `Continue Into Work`: choose the issue-backed, plan-implementation, or later execution route.
+- Left: `Revise / Review Plan`: choose whether to revise, review, ask follow-up questions, or re-run the planning grill.
+- Right: `Stop / Done`: break the continuation loop.
 
-Recommend `Project Issue First` for repos using the Superpowers Project GitHub issue backbone. Recommend `Quick Apply` only for small, guarded, explicitly approved local-main work that passes its gate.
+If the user selects `Continue Into Work`, immediately ask:
+
+Question id: `project_plan_work_route`
+
+Prompt: `Which work route should follow this project plan?`
+
+Options:
+
+- Down: `Create Work Artifact`: create issues or prepare the upcoming plan implementation route.
+- Left: `Execute Existing Work`: choose an existing issue execution route.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Create Work Artifact`, ask:
+
+Question id: `project_plan_artifact_route`
+
+Prompt: `Which work artifact should follow this plan?`
+
+Options:
+
+- Down: `Create Issue`: continue to `$project-issue` using the saved plan path.
+- Left: `Plan Implementation`: prepare the route for the upcoming `$implement-plan` skill; until that skill exists, use the guarded Quick Apply path only when explicitly approved.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Create Issue`, ask:
+
+Question id: `project_plan_issue_count`
+
+Prompt: `How many issues should be created from this plan?`
+
+Options:
+
+- Down: `One Issue`: create one vertical-slice issue.
+- Left: `Multiple Issues`: choose whether to create two issues or three or more.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Multiple Issues`, ask:
+
+Question id: `project_plan_issue_count_multiple`
+
+Prompt: `How many multiple issues should this plan create?`
+
+Options:
+
+- Down: `Two Issues`: create two coordinated vertical-slice issues.
+- Left: `Three Or More`: create three or more issues, then use nested questions to group issue count and dependencies.
+- Right: `Stop / Done`: break the continuation loop.
+
+If milestone selection is still unresolved, inspect existing GitHub milestones and project roadmap first. Ask no more than three milestone choices in a native question; when exact milestone names or many milestones are possible, ask a focused normal-chat value prompt instead of inventing weak native categories.
+
+If the user selects `Plan Implementation`, ask:
+
+Question id: `project_plan_implementation_route`
+
+Prompt: `Which plan implementation route should be prepared?`
+
+Options:
+
+- Down: `Implement Recent Plan`: prepare the recently created plan for the upcoming `$implement-plan` skill or guarded Quick Apply.
+- Left: `Implement Different Plan`: ask for the exact plan path, then prepare that plan for implementation.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Execute Existing Work`, ask:
+
+Question id: `project_plan_execution_route`
+
+Prompt: `Which existing execution route should I use?`
+
+Options:
+
+- Down: `Resolve Issue`: start `$project-resolve` for an existing ready issue mirror.
+- Left: `Orchestrate Issues`: start `$project-orchestrate` for worker-thread execution.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Revise / Review Plan`, immediately ask:
+
+Question id: `project_plan_review_route`
+
+Prompt: `How should I revisit this plan?`
+
+Options:
+
+- Down: `Revise Plan`: continue `$project-plan` with follow-up questions to revise the saved plan.
+- Left: `Review Or Grill`: choose whether to review the plan or re-run the planning grill.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Review Or Grill`, ask:
+
+Question id: `project_plan_review_grill_route`
+
+Prompt: `Should I review this plan or re-run the planning grill?`
+
+Options:
+
+- Down: `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_plan_next_step`.
+- Left: `Re-run Planning Grill`: run the planning grill again for an existing spec with no ready plan.
+- Right: `Stop / Done`: break the continuation loop.
+
+Recommend `Continue Into Work`, then `Create Issue`, for repos using the Superpowers Project GitHub issue backbone. Recommend `Plan Implementation` only for small, guarded, explicitly approved implementation work or when the upcoming `$implement-plan` route is the selected path.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the saved plan path, source spec or issue mirror path, decisions, acceptance criteria, and proof oracle. Do not only tell the user what to prompt next.
 

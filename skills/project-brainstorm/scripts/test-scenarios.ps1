@@ -92,7 +92,19 @@ $scenarios = @(
         Assert-Contains $text "superpowers:brainstorming" "missing metadata Superpowers route"
         Assert-Contains $text "flat canonical roots" "missing metadata flat root policy"
         Assert-Contains $text "loose specs" "missing metadata loose spec policy"
-        foreach ($needle in @("summarize", "project_brainstorm_next_step", "Project Plan", "Review First", "Revise Spec", "start the selected next skill")) {
+        foreach ($needle in @(
+            "summarize",
+            "project_brainstorm_next_step",
+            "Continue From Spec",
+            "Revise / Review Brainstorm",
+            "Stop / Done",
+            "project_brainstorm_plan_route",
+            "Create One Plan",
+            "Multi-Spec Planning",
+            "project_brainstorm_reiteration_route",
+            "Revise Spec",
+            "start the selected next skill"
+        )) {
             Assert-Contains $text $needle "missing metadata continuation route: $needle"
         }
     }
@@ -106,7 +118,10 @@ $scenarios = @(
             "request_user_input",
             "start the selected next skill",
             "project_brainstorm_next_step",
-            "Project Plan",
+            "Continue From Spec",
+            "Revise / Review Brainstorm",
+            "project_brainstorm_plan_route",
+            "Create One Plan",
             "Revise Spec"
         )) {
             Assert-Contains $text $needle "missing continuation gate text: $needle"

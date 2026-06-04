@@ -52,6 +52,19 @@ foreach ($skillName in $workflowSkillNames) {
         Add-Check $checks "$skillName contains $needle" ($text.Contains($needle)) "$skillPath must contain continuation-loop contract: $needle"
     }
 
+    foreach ($needle in @(
+        '## Native Continuation Gate',
+        'Down',
+        'Left',
+        'Right',
+        'Stop / Done',
+        'Use as many native questions and options as the decision requires',
+        'Custom Other',
+        'rendered Markdown artifacts'
+    )) {
+        Add-Check $checks "$skillName contains flowchart contract $needle" ($text.Contains($needle)) "$skillPath must contain native flowchart contract: $needle"
+    }
+
     $agentPath = Join-Path $skillRoot "$skillName\agents\openai.yaml"
     $agentExists = Test-Path -LiteralPath $agentPath -PathType Leaf
     Add-Check $checks "$skillName agents/openai.yaml exists" $agentExists "missing $agentPath"
@@ -61,7 +74,14 @@ foreach ($skillName in $workflowSkillNames) {
     foreach ($needle in @(
         'After every completed action, ask the next native continuation or permission question',
         'Do not end the workflow until the user selects Stop or Done through native continuation input',
-        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal'
+        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
+        'Down',
+        'Left',
+        'Right',
+        'Stop / Done',
+        'Use as many native questions and options as the decision requires',
+        'Custom Other',
+        'rendered Markdown artifacts'
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
     }

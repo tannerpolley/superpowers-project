@@ -82,9 +82,9 @@ Before reporting the spec ready, self-review for placeholders, contradictions, a
 
 ## Native Continuation Gate
 
-After saving or revising the brainstorm artifact, summarize the spec, PRD, architecture decision, or unresolved decision set in chat before asking the continuation question. The summary must name the artifact path when one was saved, the key decisions made, remaining open questions, and the recommended next route.
+After saving or revising the brainstorm artifact, summarize the spec, PRD, architecture decision, or unresolved decision set in chat before asking the continuation question. The summary must name the artifact path when one was saved, the key decisions made, assumptions removed, remaining open questions, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask a native continuation question with `request_user_input` when callable.
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
 Question id: `project_brainstorm_next_step`
 
@@ -92,9 +92,56 @@ Prompt: `How should I continue from this brainstorm?`
 
 Options:
 
-- `Project Plan`: start `$project-plan` from the approved spec or decision summary.
-- `Review First`: stop for user review before planning or issue creation.
-- `Revise Spec`: continue `$project-brainstorm` to revise the saved spec or decision summary.
-- `Stop`: stop after the brainstorm closeout.
+- Down: `Continue From Spec`: choose how to turn the brainstorm artifact into planning work.
+- Left: `Revise / Review Brainstorm`: revise, review, ask follow-ups, or run another brainstorm loop.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Continue From Spec`, ask:
+
+Question id: `project_brainstorm_plan_route`
+
+Prompt: `How should planning start from this brainstorm?`
+
+Options:
+
+- Down: `Create One Plan`: create one `$project-plan` from the recently generated spec.
+- Left: `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Multi-Spec Planning`, ask:
+
+Question id: `project_brainstorm_multi_spec_route`
+
+Prompt: `How should multiple specs become plans?`
+
+Options:
+
+- Down: `Plan Multiple Specs`: create one `$project-plan` from multiple existing specs; prompt for spec selection if not already known.
+- Left: `Create Multiple Plans`: create multiple related plans from multiple specs; prompt for spec-to-plan grouping if not already known.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Revise / Review Brainstorm`, ask:
+
+Question id: `project_brainstorm_reiteration_route`
+
+Prompt: `How should I revisit this brainstorm output?`
+
+Options:
+
+- Down: `Revise Spec`: continue `$project-brainstorm` with follow-up questions to revise the saved spec or decision summary.
+- Left: `Review Or Restart`: choose whether to review the current artifact or brainstorm another idea.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Review Or Restart`, ask:
+
+Question id: `project_brainstorm_review_restart_route`
+
+Prompt: `Should I review this brainstorm or start another one?`
+
+Options:
+
+- Down: `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_brainstorm_next_step`.
+- Left: `Re-run Brainstorm`: start another `$project-brainstorm` cycle for a new feature, idea, or major alternative.
+- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

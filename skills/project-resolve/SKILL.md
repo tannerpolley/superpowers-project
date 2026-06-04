@@ -163,9 +163,9 @@ GitHub specialists can be used for CI or review-thread work, but bundled gate sc
 
 ## Native Continuation Gate
 
-After PR-ready handoff proof passes, summarize the resolved issue in chat before asking the continuation question. The summary must name the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
+After PR-ready handoff proof passes, summarize the resolved issue in chat before asking the continuation question. The summary must name the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask a native continuation question with `request_user_input` when callable.
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
 Question id: `project_resolve_next_step`
 
@@ -173,10 +173,57 @@ Prompt: `How should I continue from this PR-ready issue?`
 
 Options:
 
-- `Project Merge`: start `$project-merge` from the PR URL or worker handoff.
-- `Resolve Another`: start `$project-resolve` for another ready issue mirror.
-- `Review First`: stop for main-thread review before merge.
-- `Stop`: stop at PR-ready handoff.
+- Down: `Integrate Resolved Issue`: merge this work or continue issue execution.
+- Left: `Review / Revise PR-Ready Work`: review, revise, fix checks, or re-run verification.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Integrate Resolved Issue`, ask:
+
+Question id: `project_resolve_integration_route`
+
+Prompt: `What should happen with this PR-ready issue?`
+
+Options:
+
+- Down: `Merge`: start `$project-merge` from the PR URL or worker handoff.
+- Left: `Continue Another Issue`: choose direct resolve or worker orchestration for another issue.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Continue Another Issue`, ask:
+
+Question id: `project_resolve_another_issue_route`
+
+Prompt: `How should the next issue be executed?`
+
+Options:
+
+- Down: `Resolve Another`: start `$project-resolve` for another ready issue mirror.
+- Left: `Orchestrate Another`: start `$project-orchestrate` for another worker-suitable issue.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Review / Revise PR-Ready Work`, ask:
+
+Question id: `project_resolve_reiteration_route`
+
+Prompt: `How should I revisit this PR-ready work?`
+
+Options:
+
+- Down: `Review First`: show PR-ready evidence for main-thread review, then return to `project_resolve_next_step`.
+- Left: `Revise Or Fix Branch`: choose branch revision or CI/check repair.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Revise Or Fix Branch`, ask:
+
+Question id: `project_resolve_fix_route`
+
+Prompt: `Should I revise the branch or address checks?`
+
+Options:
+
+- Down: `Revise Branch`: continue implementation on the branch, then return to `project_resolve_next_step`.
+- Left: `Address CI / Checks`: inspect and fix checks, then return to `project_resolve_next_step`.
+- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 

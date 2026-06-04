@@ -14,15 +14,21 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 - `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
 - `docs/superpowers/specs/2026-06-03-project-setup-orchestration-design.md`
+- `docs/superpowers/specs/2026-06-03-project-plugin-namespace-skill-naming-design.md`
+- `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
 
 ## Related Plans
 
 - `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
 - `docs/superpowers/plans/2026-06-03-project-setup-orchestration-plan.md`
+- `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
 
 ## Related Issues
 
-- None currently
+- `docs/superpowers/issues/26-project-namespace-skill-surface-migration.md`
+- `docs/superpowers/issues/28-plugin-deployment-policy-and-live-sync.md`
+- `docs/superpowers/issues/30-setup-orchestration-board-and-worker-identity.md`
+- `docs/superpowers/issues/31-external-github-issue-hydration.md`
 
 ## Closed Issues
 

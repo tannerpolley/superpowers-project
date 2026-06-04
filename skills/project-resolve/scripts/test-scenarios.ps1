@@ -356,7 +356,7 @@ try {
             "## Native Continuation Gate",
             "summarize",
             "project_resolve_next_step",
-            "Project Merge",
+            "Merge",
             "Resolve Another",
             "Review First",
             "Stop",
@@ -368,7 +368,7 @@ try {
 
     Invoke-Scenario "metadata declares executable continuation routing" {
         $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
-        foreach ($needle in @("summarize", "project_resolve_next_step", "Project Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill")) {
+        foreach ($needle in @("summarize", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill")) {
             Assert-True ($metadata.Contains($needle)) "missing metadata continuation route: $needle"
         }
     }

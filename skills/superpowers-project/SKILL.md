@@ -49,11 +49,13 @@ At major handoffs, use native continuation questions and treat the selected answ
 
 ## Native Continuation Gate
 
-Every Superpowers Project skill must summarize its artifact or result in chat before a closeout continuation question. The summary should name created or changed artifacts, validation or proof status, unresolved decisions, and the recommended next route.
+Every Superpowers Project skill must summarize its artifact or result in chat before a closeout continuation question. The summary should name created or changed artifacts, validation or proof status, unresolved decisions, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when they were created or changed and are reasonably sized.
 
-When `request_user_input` is callable, ask the skill-specific native continuation question and include `Review First` or another review route plus a `Stop` option. Treat selected native answers as executable routing: start the selected next skill in the same turn when tools and state allow it.
+When `request_user_input` is callable, ask the skill-specific native continuation question using flowchart geometry. Down means default progress or move on. Left means reiteration: revise, review, repair, rerun, recover, or gather more evidence. Right means `Stop / Done`, and is the only normal break condition for the loop. Use as many native questions and options as the decision requires. Down / Left / Right remains the default mental model for generic continuation, but show all real peer routes in one native menu when that is clearer. Use `advanced-user-input` sequential branching when the first answer changes which follow-up questions matter.
 
-If routing cannot continue because tools, permissions, GitHub state, or user approval are missing, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests and never counts as live approval.
+Custom Other is not terminal unless it explicitly asks to stop or be done. Otherwise treat Custom Other as input for the next best follow-up question, a custom child question, or the baseline nested route tree. Treat selected native answers as executable routing: start the selected next skill in the same turn when tools and state allow it.
+
+If routing cannot continue because tools, permissions, GitHub state, or user approval are missing, ask the next native question when one can resolve it, or stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests and never counts as live approval.
 
 ## Native User Input
 

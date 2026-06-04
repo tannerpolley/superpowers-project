@@ -178,9 +178,9 @@ This skill creates and updates issue tracker artifacts only. It does not create 
 
 ## Native Continuation Gate
 
-After approved issue mirrors or GitHub issues are created and validated, summarize the issue set in chat before asking the continuation question. The summary must name the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, and recommended next route.
+After approved issue mirrors or GitHub issues are created and validated, summarize the issue set in chat before asking the continuation question. The summary must name the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, dependencies, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask a native continuation question with `request_user_input` when callable.
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
 Question id: `project_issue_next_step`
 
@@ -188,9 +188,68 @@ Prompt: `How should I continue from these project issues?`
 
 Options:
 
-- `Resolve First Ready`: start `$project-resolve` on the first ready AFK issue.
-- `Resolve Selected`: start `$project-resolve` on a user-selected ready issue.
-- `Review First`: stop for user review before execution.
-- `Stop`: stop after issue creation.
+- Down: `Continue Issue Execution`: choose direct resolve or worker orchestration.
+- Left: `Revise / Review Issues`: revise, reslice, review, or repair issue mirrors.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Continue Issue Execution`, ask:
+
+Question id: `project_issue_execution_route`
+
+Prompt: `How should these issues be executed?`
+
+Options:
+
+- Down: `Resolve Issues`: choose a direct current-thread issue resolution route.
+- Left: `Orchestrate Issues`: choose a worker-thread orchestration route.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Resolve Issues`, ask:
+
+Question id: `project_issue_resolve_route`
+
+Prompt: `Which issue should be resolved directly?`
+
+Options:
+
+- Down: `Resolve First Ready`: start `$project-resolve` on the first ready AFK issue.
+- Left: `Resolve Selected`: ask for or use a selected ready issue mirror, then start `$project-resolve`.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Orchestrate Issues`, ask:
+
+Question id: `project_issue_orchestrate_route`
+
+Prompt: `Which issue should be delegated to a worker?`
+
+Options:
+
+- Down: `Orchestrate First Ready`: start `$project-orchestrate` on the first ready worker-suitable issue.
+- Left: `Orchestrate Selected`: ask for or use a selected ready issue mirror, then start `$project-orchestrate`.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Revise / Review Issues`, ask:
+
+Question id: `project_issue_reiteration_route`
+
+Prompt: `How should I revisit this issue set?`
+
+Options:
+
+- Down: `Revise Or Reslice Issues`: revise issue boundaries or reslice the set, then return to `project_issue_next_step`.
+- Left: `Review Or Repair Issues`: choose whether to review the issue set or repair mirrors.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Review Or Repair Issues`, ask:
+
+Question id: `project_issue_review_repair_route`
+
+Prompt: `Should I review the issues or repair mirrors?`
+
+Options:
+
+- Down: `Review First`: show rendered issue mirrors and ask for follow-up confirmation, then return to `project_issue_next_step`.
+- Left: `Repair Issue Mirrors`: repair local mirror drift, then return to `project_issue_next_step`.
+- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

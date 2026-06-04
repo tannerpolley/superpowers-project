@@ -448,10 +448,10 @@ $scenarios = @(
     Invoke-Scenario "native request_user_input contract is present" {
         foreach ($needle in @(
             "request_user_input",
-            "One call may ask 1-3 questions.",
-            "Each question must define 2-3 mutually exclusive options.",
+            "Use as many native questions and options as the decision requires.",
+            "Observed Codex Desktop behavior",
             "Do not add an `Other` option",
-            "Native Q&A cannot ask a pure fill-in-the-blank question."
+            "Normal chat is for exact text."
         )) {
             Assert-Contains $text $needle "missing native UI contract: $needle"
         }

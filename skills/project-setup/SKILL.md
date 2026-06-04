@@ -112,9 +112,9 @@ Before reporting setup or repair complete, verify:
 
 ## Native Continuation Gate
 
-After creating, auditing, or repairing project setup, summarize the setup result in chat before asking the continuation question. The summary must name changed or verified artifacts, unresolved roadmap or tracker decisions, GitHub Project board status when relevant, and the recommended next workflow.
+After creating, auditing, or repairing project setup, summarize the setup result in chat before asking the continuation question. The summary must name changed or verified artifacts, unresolved roadmap or tracker decisions, GitHub Project board status when relevant, and the recommended next workflow. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask a native continuation question with `request_user_input` when callable.
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
 
 Question id: `project_setup_next_step`
 
@@ -122,11 +122,56 @@ Prompt: `How should I continue from this project setup work?`
 
 Options:
 
-- `Project Brainstorm`: start `$project-brainstorm` for a spec, PRD, architecture idea, or product direction.
-- `Project Plan`: start `$project-plan` from an approved spec or issue mirror.
-- `Project Issue`: start `$project-issue` for vertical slices and GitHub issue mirrors.
-- `Project Doctor`: start `$project-doctor` for drift audit or repair planning.
-- `Review First`: stop for user review before routing.
-- `Stop`: stop after the project context closeout.
+- Down: `Continue Project Work`: choose the next project workflow.
+- Left: `Revise / Review Setup`: revisit setup, review output, or audit drift.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Continue Project Work`, ask:
+
+Question id: `project_setup_work_route`
+
+Prompt: `Which project workflow should start from setup?`
+
+Options:
+
+- Down: `Brainstorm`: start `$project-brainstorm` for a spec, PRD, architecture idea, or product direction.
+- Left: `Use Existing Artifact`: choose whether to plan or create issues from existing approved work.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Use Existing Artifact`, ask:
+
+Question id: `project_setup_existing_artifact_route`
+
+Prompt: `Which existing-artifact workflow should start?`
+
+Options:
+
+- Down: `Plan`: start `$project-plan` from an approved spec or issue mirror.
+- Left: `Create Issue`: start `$project-issue` for vertical slices and GitHub issue mirrors.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Revise / Review Setup`, ask:
+
+Question id: `project_setup_reiteration_group`
+
+Prompt: `How should I revisit this setup work?`
+
+Options:
+
+- Down: `Review / Revise Setup`: choose a local review or revision route.
+- Left: `Run Doctor`: start `$project-doctor` for drift audit or repair planning.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Review / Revise Setup`, ask:
+
+Question id: `project_setup_reiteration_route`
+
+Prompt: `Should I review or revise setup?`
+
+Options:
+
+- Down: `Review Setup`: show the setup summary and rendered artifacts for user review, then return to `project_setup_next_step`.
+- Left: `Revise Setup`: update setup artifacts from follow-up answers, then return to `project_setup_next_step`.
+- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.

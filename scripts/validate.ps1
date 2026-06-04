@@ -118,6 +118,7 @@ function Assert-TextContains {
 
 function Get-ActiveSkillNames {
     @(
+        "advanced-user-input",
         "superpowers-project",
         "project-setup",
         "project-orchestrate",
@@ -204,6 +205,11 @@ try {
     $results.Add((Invoke-Step "Native continuation loop contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-native-continuation-loop.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Native continuation loop contract failed" }
+    }))
+
+    $results.Add((Invoke-Step "Advanced user input policy contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-advanced-user-input-policy.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Advanced user input policy contract failed" }
     }))
 
     $results.Add((Invoke-Step "PowerShell parser check" {

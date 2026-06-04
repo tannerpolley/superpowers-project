@@ -117,7 +117,7 @@ Project skills should reference it for nested decision trees where native UI has
 - `project-orchestrate`: issue-set selection, worker count, recovery, and publish approval.
 - `project-merge`: merge approval, decline/reassess routing, and post-merge continuation.
 
-The native UI limit remains 1-3 questions and 2-3 options per question. Larger decision trees must be decomposed into nested branches.
+Native UI prompts should use as many questions and options as the decision requires when the active Codex Desktop runtime supports it. Larger decision trees should be decomposed into sequential branches only when the first answer changes which follow-up questions matter.
 
 ## Non-Goals
 
