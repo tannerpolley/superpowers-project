@@ -18,8 +18,35 @@ $phase = "closeout"
 try {
     $root = Resolve-RepoRoot -RepoRoot $RepoRoot
     $setup = Read-JsonInput -Json $SetupLedgerJson -Path $SetupLedgerPath -Name "setup ledger"
+    $mode = Get-MergeMode -Setup $setup
+    Assert-SourcePlanLinkage -Setup $setup
+    Assert-BranchLinkage -Setup $setup
     $completion = Read-JsonInput -Json $CompletionLedgerJson -Path $CompletionLedgerPath -Name "completion ledger"
+
+    if ($mode -eq "local-branch") {
+        foreach ($field in @("local_merge_confirmation", "validation_proof")) {
+            if (-not (Test-Property -Object $completion -Name $field) -or $completion.$field -is [string]) { throw "completion ledger $field must be structured" }
+        }
+        Assert-CommonCloseoutProof -Completion $completion -Setup $setup -RequireRemoteDelete $false
+        Assert-ValidationProof -Proof $completion.validation_proof
+        if ([int]$completion.local_merge_confirmation.exit_code -ne 0) { throw "local branch merge must pass" }
+        if ((Normalize-RepoPath ([string]$completion.local_merge_confirmation.merged_branch)) -ne (Normalize-RepoPath ([string]$setup.branch))) { throw "local branch merge confirmation must match setup branch" }
+        Complete-Contract -Phase $phase -Reason "closeout checks passed" -Evidence @{ mode = $mode; branch_deleted = Normalize-RepoPath ([string]$setup.branch); repo_clean = $true }
+    }
+
     $pr = Read-JsonInput -Json $PrJson -Path $PrFixturePath -Name "PR evidence"
+
+    if ($mode -eq "pr-no-issue") {
+        if (Test-AnyIssueClosureClaim -Pr $pr) { throw "non-issue PR must not claim issue closure" }
+        if ((Test-Property -Object $completion -Name "issue_url") -and -not [string]::IsNullOrWhiteSpace([string]$completion.issue_url)) { throw "non-issue PR completion must not claim issue closure" }
+        foreach ($field in @("merge_confirmation")) {
+            if (-not (Test-Property -Object $completion -Name $field) -or $completion.$field -is [string]) { throw "completion ledger $field must be structured" }
+        }
+        if ([string]$pr.state -ne "MERGED" -and [string]$completion.merge_confirmation.state -ne "MERGED") { throw "PR is not merged" }
+        Assert-CommonCloseoutProof -Completion $completion -Setup $setup -RequireRemoteDelete $true
+        Complete-Contract -Phase $phase -Reason "closeout checks passed" -Evidence @{ mode = $mode; pr_url = [string]$completion.pr_url; branch_deleted = Normalize-RepoPath ([string]$setup.branch); repo_clean = $true }
+    }
+
     $issue = Read-JsonInput -Json $IssueJson -Path $IssueFixturePath -Name "issue evidence"
     if ([string]$completion.issue_url -ne [string]$setup.issue_url) { throw "completion issue_url must match setup ledger" }
     if ([string]$pr.state -ne "MERGED" -and [string]$completion.merge_confirmation.state -ne "MERGED") { throw "PR is not merged" }
@@ -38,18 +65,8 @@ try {
     )) {
         if (-not (Test-Property -Object $completion -Name $field) -or $completion.$field -is [string]) { throw "completion ledger $field must be structured" }
     }
-    Assert-MergeDecision -Decision $completion.merge_decision
-    Assert-CleanRepoProof -Proof $completion.clean_repo_proof
-    if ([int]$completion.default_branch_sync.exit_code -ne 0) { throw "default branch sync must pass" }
-    if ([int]$completion.fetch_prune_result.exit_code -ne 0) { throw "git fetch --prune must pass" }
-    if ([int]$completion.cleanup_hook_result.exit_code -ne 0) { throw "cleanup hook must pass" }
-    $cleanup = $completion.branch_cleanup_confirmation
+    Assert-CommonCloseoutProof -Completion $completion -Setup $setup -RequireRemoteDelete $true
     $branch = Normalize-RepoPath ([string]$setup.branch)
-    if ($cleanup.deleted_local -ne $true -or $cleanup.deleted_remote -ne $true -or $cleanup.only_goal_owned_removed -ne $true) { throw "branch cleanup must delete only the goal branch" }
-    if ((Normalize-RepoPath ([string]$cleanup.local_delete_target)) -ne $branch -or (Normalize-RepoPath ([string]$cleanup.remote_delete_target)) -ne $branch) { throw "branch cleanup target must match setup branch" }
-    foreach ($deleted in (Get-StringArray $cleanup.remote_deleted_branches)) {
-        if ((Normalize-RepoPath $deleted) -ne $branch) { throw "remote cleanup includes non-goal branch" }
-    }
     $resolveGoal = $completion.resolve_goal_completion_proof
     if ($resolveGoal -is [string]) { throw "resolve goal completion proof must be structured" }
     if ([string]$resolveGoal.status -ne "complete") { throw "resolve goal completion proof must mark status complete" }
@@ -84,7 +101,7 @@ try {
         if ([string]$summary.issue_url -ne [string]$completion.issue_url) { throw "milestone summary issue_url must match completion issue_url" }
         if ([string]$summary.pr_url -ne [string]$completion.pr_url) { throw "milestone summary pr_url must match completion pr_url" }
     }
-    Complete-Contract -Phase $phase -Reason "closeout checks passed" -Evidence @{ pr_url = [string]$completion.pr_url; issue_url = [string]$completion.issue_url; branch_deleted = $branch; repo_clean = $true; mirror_cleanup = $true }
+    Complete-Contract -Phase $phase -Reason "closeout checks passed" -Evidence @{ mode = $mode; pr_url = [string]$completion.pr_url; issue_url = [string]$completion.issue_url; branch_deleted = $branch; repo_clean = $true; mirror_cleanup = $true }
 } catch {
     Stop-Contract -Phase $phase -Reason $_.Exception.Message -Evidence @{}
 }
