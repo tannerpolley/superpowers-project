@@ -609,3 +609,4 @@ $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
+

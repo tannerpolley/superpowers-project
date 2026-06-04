@@ -9,9 +9,9 @@ Project Doctor audits Superpowers Project structure and reports drift before any
 
 ## Native Continuation Loop
 
-Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or reaches a verified final `Done` gate. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only No / Stop / Done can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` option or verified final `Done` gate is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can break an intermediate loop before a verified final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Scripted Audit Gate
 
@@ -119,7 +119,9 @@ A useful report includes:
 
 After the audit report or approved repair proof is ready, summarize the Doctor result in chat before asking the continuation question. The summary must name blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Done is valid only at a verified final Done gate. For `audit-project`, that means a healthy audit result with no blocking or repairable findings and no remaining repair route. Stop remains the terminal option when findings remain.
+
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_doctor_next_step`
 
@@ -129,7 +131,7 @@ Options:
 
 - Down: `Apply Or Prepare Repair`: apply an exact repair or create repair planning work.
 - Left: `Rerun / Review Audit`: rerun the audit, review findings, revise repair direction, or gather evidence.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Apply Or Prepare Repair`, ask:
 
@@ -141,7 +143,7 @@ Options:
 
 - Down: `Apply Repair`: apply an approved, exact repair plan.
 - Left: `Prepare Repair Work`: create a planning or issue route for larger repair work.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Prepare Repair Work`, ask:
 
@@ -153,7 +155,7 @@ Options:
 
 - Down: `Create Planning Spec`: start `$project:brainstorm-spec` for a larger repair design.
 - Left: `Plan Or Issue Repair`: choose whether to plan repair work or create an issue.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Plan Or Issue Repair`, ask:
 
@@ -165,7 +167,7 @@ Options:
 
 - Down: `Plan Repair`: start `$project:write-plan` from the audit findings.
 - Left: `Create Issue`: start `$project:create-issues` only when the repair is already issue-ready.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Rerun / Review Audit`, ask:
 
@@ -177,7 +179,7 @@ Options:
 
 - Down: `Run Audit Again`: rerun `$project:audit-project` after changes or new GitHub evidence.
 - Left: `Review Or Gather Evidence`: choose whether to review the audit or inspect more evidence.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Review Or Gather Evidence`, ask:
 
@@ -189,9 +191,10 @@ Options:
 
 - Down: `Review First`: show the audit summary and rendered artifacts for user review, then return to `project_doctor_next_step`.
 - Left: `Gather More Evidence`: inspect the requested source, then return to `project_doctor_next_step`.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
+
 
 
 

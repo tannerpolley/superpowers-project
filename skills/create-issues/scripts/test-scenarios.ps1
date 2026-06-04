@@ -385,3 +385,4 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
+

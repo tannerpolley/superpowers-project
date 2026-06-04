@@ -97,7 +97,7 @@ $scenarios = @(
             "project_brainstorm_next_step",
             "Continue From Spec",
             "Revise / Review Brainstorm",
-            "Stop / Done",
+            "Stop",
             "project_brainstorm_plan_route",
             "Create One Plan",
             "Multi-Spec Planning",
@@ -132,3 +132,4 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
+

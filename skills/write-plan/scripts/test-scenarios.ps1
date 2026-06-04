@@ -134,7 +134,7 @@ $scenarios = @(
             "project_plan_next_step",
             "Continue Into Work",
             "Revise / Review Plan",
-            "Stop / Done",
+            "Stop",
             "project_plan_work_route",
             "Create Work Artifact",
             "Execute Existing Work",
@@ -191,3 +191,4 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
+

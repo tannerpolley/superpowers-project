@@ -62,3 +62,4 @@ try {
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
+
