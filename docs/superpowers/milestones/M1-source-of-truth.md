@@ -25,14 +25,14 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Related Issues
 
-- `docs/superpowers/issues/21-add-project-doctor-tracker-hygiene-audit-and-repair-mode.md`
 - `docs/superpowers/issues/26-project-namespace-skill-surface-migration.md`
 - `docs/superpowers/issues/28-plugin-deployment-policy-and-live-sync.md`
 - `docs/superpowers/issues/30-setup-orchestration-board-and-worker-identity.md`
-- `docs/superpowers/issues/31-external-github-issue-hydration.md`
 
 ## Closed Issues
 
+- [#21 Add Project Doctor tracker hygiene audit and repair mode](https://github.com/tannerpolley/milestones-plugin/issues/21) closed by [PR #33](https://github.com/tannerpolley/milestones-plugin/pull/33).
+- [#31 External GitHub Issue Hydration](https://github.com/tannerpolley/milestones-plugin/issues/31) closed by [PR #34](https://github.com/tannerpolley/milestones-plugin/pull/34).
 - [https://github.com/tannerpolley/milestones-plugin/issues/15](https://github.com/tannerpolley/milestones-plugin/issues/15) closed by [https://github.com/tannerpolley/milestones-plugin/pull/19](https://github.com/tannerpolley/milestones-plugin/pull/19) on 06/03/2026 03:35:55
 - [https://github.com/tannerpolley/milestones-plugin/issues/10](https://github.com/tannerpolley/milestones-plugin/issues/10) closed by [https://github.com/tannerpolley/milestones-plugin/pull/18](https://github.com/tannerpolley/milestones-plugin/pull/18) on 06/03/2026 03:27:31
 - [https://github.com/tannerpolley/milestones-plugin/issues/9](https://github.com/tannerpolley/milestones-plugin/issues/9) closed by [https://github.com/tannerpolley/milestones-plugin/pull/17](https://github.com/tannerpolley/milestones-plugin/pull/17) on 06/03/2026 03:14:09
