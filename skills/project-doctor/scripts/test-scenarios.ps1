@@ -238,6 +238,52 @@ $scenarios = @(
             if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
         }
     }
+    Invoke-Scenario "tracker hygiene audit and repair covers issue labels and Project V2 drift" {
+        if (-not (Test-Path -LiteralPath $auditScript -PathType Leaf)) { throw "missing audit-project.ps1" }
+        $repo = New-TestRepo
+        try {
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/13-open.md") -Value "# Open Issue`n`n**GitHub Issue:** https://github.com/example/repo/issues/13`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:feature, status:ready`n**Project Status:** Ready`n**Project Priority:** High`n`n## Acceptance Criteria`n`n- [ ] Open issue stays routed.`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/14-missing-project.md") -Value "# Missing Project Item`n`n**GitHub Issue:** https://github.com/example/repo/issues/14`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:task, status:triage`n**Project Status:** Triage`n`n## Acceptance Criteria`n`n- [ ] Missing Project item is reported.`n" -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            $projectFixture = Join-Path $repo "project-fixture.json"
+            @{
+                issues = @(
+                    @{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "CLOSED"; title = "Sample"; labels = @("type:feature", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" }; node_id = "ISSUE_12" },
+                    @{ number = 13; url = "https://github.com/example/repo/issues/13"; state = "OPEN"; title = "Open Issue"; labels = @("type:feature"); milestone = @{ title = "M1 - Source Of Truth" }; node_id = "ISSUE_13" },
+                    @{ number = 14; url = "https://github.com/example/repo/issues/14"; state = "OPEN"; title = "Missing Project Item"; labels = @("type:task", "status:triage"); milestone = @{ title = "M1 - Source Of Truth" }; node_id = "ISSUE_14" }
+                )
+            } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $issueFixture -Encoding utf8NoBOM
+            @{
+                project = @{ number = 7; owner = "example"; title = "Canonical Project"; id = "PROJECT_7" }
+                status_field = @{ id = "FIELD_STATUS"; name = "Status"; options = @(@{ id = "OPT_TRIAGE"; name = "Triage" }, @{ id = "OPT_READY"; name = "Ready" }, @{ id = "OPT_DONE"; name = "Done" }) }
+                fields = @(@{ id = "FIELD_PRIORITY"; name = "Priority"; options = @(@{ id = "OPT_HIGH"; name = "High" }) })
+                items = @(
+                    @{ id = "ITEM_12"; type = "Issue"; issue_number = 12; content_id = "ISSUE_12"; status = "Ready"; fields = @{ Priority = "High" } },
+                    @{ id = "ITEM_13"; type = "Issue"; issue_number = 13; content_id = "ISSUE_13"; status = "Done"; fields = @{ Priority = "Low" } },
+                    @{ id = "DRAFT_1"; type = "DraftIssue"; title = "Unpublished cleanup note"; status = "Triage"; fields = @{} }
+                )
+            } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $projectFixture -Encoding utf8NoBOM
+
+            $audit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-TrackerHygiene", "-IssueFixturePath", $issueFixture, "-ProjectFixturePath", $projectFixture)
+            if (-not $audit.ok) { throw $audit.reason }
+            if ($audit.mutation_allowed -ne $false) { throw "tracker hygiene audit mutated by default" }
+            $findingText = $audit.findings | ConvertTo-Json -Depth 20 -Compress
+            foreach ($needle in @("closed-status-label-drift", "missing-routing-label", "open-project-done-mismatch", "missing-project-item", "project-field-drift", "project-draft-item")) {
+                Assert-Contains $findingText $needle "missing tracker hygiene finding: $needle"
+            }
+
+            $repair = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-TrackerHygiene", "-ApplyTrackerRepairs", "-IssueFixturePath", $issueFixture, "-ProjectFixturePath", $projectFixture)
+            if (-not $repair.ok) { throw $repair.reason }
+            if ($repair.mutation_allowed -ne $true) { throw "repair mode did not mark mutation_allowed true" }
+            $receiptText = $repair.repair_receipt | ConvertTo-Json -Depth 20 -Compress
+            foreach ($needle in @("remove-label", "set-project-status", "add-project-item", "set-project-field", "ISSUE_12", "ITEM_12", "ISSUE_14", "FIELD_PRIORITY")) {
+                Assert-Contains $receiptText $needle "missing repair receipt entry: $needle"
+            }
+            if ($receiptText.Contains("DRAFT_1") -and $receiptText.Contains("delete")) { throw "draft Project item must not be deleted automatically" }
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
 )
 
 $failed = @($scenarios | Where-Object { -not $_.ok })

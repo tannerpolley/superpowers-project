@@ -4,7 +4,10 @@ param(
     [ValidateSet("LocalDocs", "GitHubAware")][string]$Mode = "LocalDocs",
     [string]$IssueFixturePath,
     [string]$MilestoneFixturePath,
-    [string]$LabelFixturePath
+    [string]$LabelFixturePath,
+    [string]$ProjectFixturePath,
+    [switch]$TrackerHygiene,
+    [switch]$ApplyTrackerRepairs
 )
 
 $ErrorActionPreference = "Stop"
@@ -128,6 +131,8 @@ function Get-IssueMirrors {
                 milestone = Get-FieldValue -Text $text -Name "GitHub Milestone"
                 labels = $labels
                 mirror_retention = Get-FieldValue -Text $text -Name "Mirror Retention"
+                project_status = Get-FieldValue -Text $text -Name "Project Status"
+                project_priority = Get-FieldValue -Text $text -Name "Project Priority"
             }
         })
 }
@@ -208,6 +213,145 @@ function Read-GitHubIssues {
     @($raw | ConvertFrom-Json)
 }
 
+function Read-ProjectFixture {
+    param([string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path)) { return $null }
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "project fixture does not exist: $Path" }
+    Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+}
+
+function Get-ProjectItems {
+    param($Project)
+    if ($null -eq $Project -or $Project.PSObject.Properties.Name -notcontains "items") { return @() }
+    @($Project.items)
+}
+
+function Get-ProjectItemFieldValue {
+    param($Item, [string]$Name)
+    if ($null -eq $Item -or $null -eq $Item.fields) { return "" }
+    if ($Item.fields -is [hashtable] -and $Item.fields.ContainsKey($Name)) { return [string]$Item.fields[$Name] }
+    if ($Item.fields.PSObject.Properties.Name -contains $Name) { return [string]$Item.fields.$Name }
+    ""
+}
+
+function Get-MirrorProjectFieldMap {
+    param($Mirror)
+    $fields = [ordered]@{}
+    if (-not [string]::IsNullOrWhiteSpace([string]$Mirror.project_priority)) {
+        $fields["Priority"] = [string]$Mirror.project_priority
+    }
+    $fields
+}
+
+function Find-ProjectItemForIssue {
+    param([object[]]$Items, [int]$IssueNumber)
+    @($Items | Where-Object {
+        [string]$_.type -eq "Issue" -and $null -ne $_.issue_number -and [int]$_.issue_number -eq $IssueNumber
+    } | Select-Object -First 1)
+}
+
+function Add-RepairReceiptEntry {
+    param(
+        [System.Collections.Generic.List[object]]$Receipt,
+        [string]$Action,
+        [string]$ObjectType,
+        [string]$ObjectId,
+        [string]$Field = "",
+        [string]$From = "",
+        [string]$To = "",
+        [hashtable]$Evidence = @{}
+    )
+    $Receipt.Add([ordered]@{
+        action = $Action
+        object_type = $ObjectType
+        object_id = $ObjectId
+        field = $Field
+        from = $From
+        to = $To
+        evidence = $Evidence
+    }) | Out-Null
+}
+
+function Invoke-TrackerHygieneAudit {
+    param(
+        [hashtable]$Findings,
+        [object[]]$Mirrors,
+        [object[]]$GitHubIssues,
+        $ProjectFixture,
+        [bool]$ApplyRepairs,
+        [System.Collections.Generic.List[object]]$RepairReceipt
+    )
+
+    $issuesByNumber = @{}
+    foreach ($issue in $GitHubIssues) {
+        if ($null -ne $issue.number) { $issuesByNumber[[int]$issue.number] = $issue }
+    }
+
+    $projectItems = @(Get-ProjectItems -Project $ProjectFixture)
+    foreach ($item in @($projectItems | Where-Object { [string]$_.type -eq "DraftIssue" })) {
+        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "project-draft-item" -Severity "informational" -Dimension "tracker-hygiene" -Message "Project V2 draft item remains unpublished and must be handled manually." -Artifact ([string]$item.id) -Evidence @{ title = [string]$item.title; status = [string]$item.status })
+    }
+
+    foreach ($mirror in $Mirrors) {
+        if ($null -eq $mirror.number -or -not $issuesByNumber.ContainsKey([int]$mirror.number)) { continue }
+        $issue = $issuesByNumber[[int]$mirror.number]
+        $issueLabels = @(Get-StringArray (@($issue.labels | ForEach-Object { if ($_.PSObject.Properties.Name -contains "name") { $_.name } else { $_ } })))
+        $statusLabels = @($issueLabels | Where-Object { $_ -match '^status:' })
+        $issueObjectId = if (-not [string]::IsNullOrWhiteSpace([string]$issue.node_id)) { [string]$issue.node_id } else { "issue:$($issue.number)" }
+        $item = @(Find-ProjectItemForIssue -Items $projectItems -IssueNumber ([int]$mirror.number) | Select-Object -First 1)
+        $hasProjectItem = $item.Count -gt 0
+
+        if ([string]$issue.state -eq "CLOSED") {
+            if ($statusLabels.Count -gt 0) {
+                Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "closed-status-label-drift" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Closed GitHub issue still has status routing labels." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url; labels = $statusLabels })
+                if ($ApplyRepairs) {
+                    foreach ($label in $statusLabels) {
+                        Add-RepairReceiptEntry -Receipt $RepairReceipt -Action "remove-label" -ObjectType "github-issue" -ObjectId $issueObjectId -Field "labels" -From $label -To "" -Evidence @{ issue_number = [int]$issue.number; url = [string]$issue.url }
+                    }
+                }
+            }
+            if ($hasProjectItem -and [string]$item[0].status -ne "Done") {
+                Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "closed-project-not-done" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Closed GitHub issue Project item is not Done." -Artifact ([string]$item[0].id) -Evidence @{ issue_number = [int]$issue.number; from = [string]$item[0].status; to = "Done" })
+                if ($ApplyRepairs) {
+                    Add-RepairReceiptEntry -Receipt $RepairReceipt -Action "set-project-status" -ObjectType "project-item" -ObjectId ([string]$item[0].id) -Field "Status" -From ([string]$item[0].status) -To "Done" -Evidence @{ issue_number = [int]$issue.number; content_id = $issueObjectId }
+                }
+            }
+            continue
+        }
+
+        if ($statusLabels.Count -eq 0) {
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "missing-routing-label" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Open GitHub issue has no status routing label." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url })
+        }
+
+        if (-not $hasProjectItem) {
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "missing-project-item" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Mirrored open issue is missing from the canonical Project V2 board." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url; content_id = $issueObjectId })
+            if ($ApplyRepairs) {
+                Add-RepairReceiptEntry -Receipt $RepairReceipt -Action "add-project-item" -ObjectType "project" -ObjectId ([string]$ProjectFixture.project.id) -Field "items" -From "" -To $issueObjectId -Evidence @{ issue_number = [int]$issue.number; url = [string]$issue.url }
+            }
+            continue
+        }
+
+        if ([string]$item[0].status -eq "Done") {
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "open-project-done-mismatch" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Open GitHub issue Project item is marked Done." -Artifact ([string]$item[0].id) -Evidence @{ issue_number = [int]$issue.number; status = [string]$item[0].status })
+            if ($ApplyRepairs -and -not [string]::IsNullOrWhiteSpace([string]$mirror.project_status)) {
+                Add-RepairReceiptEntry -Receipt $RepairReceipt -Action "set-project-status" -ObjectType "project-item" -ObjectId ([string]$item[0].id) -Field "Status" -From ([string]$item[0].status) -To ([string]$mirror.project_status) -Evidence @{ issue_number = [int]$issue.number; content_id = $issueObjectId }
+            }
+        }
+
+        $mirrorProjectFields = Get-MirrorProjectFieldMap -Mirror $mirror
+        foreach ($fieldName in $mirrorProjectFields.Keys) {
+            $expected = [string]$mirrorProjectFields[$fieldName]
+            $actual = Get-ProjectItemFieldValue -Item $item[0] -Name $fieldName
+            if ($actual -ne $expected) {
+                Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "project-field-drift" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Project V2 item field differs from mirror metadata." -Artifact ([string]$item[0].id) -Evidence @{ issue_number = [int]$issue.number; field = $fieldName; from = $actual; to = $expected })
+                if ($ApplyRepairs) {
+                    Add-RepairReceiptEntry -Receipt $RepairReceipt -Action "set-project-field" -ObjectType "project-item" -ObjectId ([string]$item[0].id) -Field $fieldName -From $actual -To $expected -Evidence @{ issue_number = [int]$issue.number; field_id = "FIELD_$($fieldName.ToUpperInvariant())" }
+                }
+            }
+        }
+    }
+}
+
 function Invoke-LocalDocsAudit {
     param([string]$Root, [hashtable]$Findings)
     $required = @(
@@ -286,6 +430,7 @@ function Invoke-GitHubAwareAudit {
         [string[]]$LabelVocabulary
     )
     $githubIssues = @(Read-GitHubIssues -Root $Root -FixturePath $IssueFixturePath)
+    $projectFixture = Read-ProjectFixture -Path $ProjectFixturePath
     $githubMilestones = @(Read-JsonArray -Path $MilestoneFixturePath -Name "milestone")
     $githubLabels = @(Read-JsonArray -Path $LabelFixturePath -Name "label")
     $issuesByNumber = @{}
@@ -360,6 +505,14 @@ function Invoke-GitHubAwareAudit {
     } else {
         Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "label-drift" -Severity "informational" -Dimension "label-vocabulary" -Message "GitHub label evidence was not inspected." -Artifact "docs/agents/triage-labels.md")
     }
+
+    if ($TrackerHygiene) {
+        if ($null -eq $projectFixture) {
+            Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "project-v2-state" -Severity "informational" -Dimension "tracker-hygiene" -Message "Project V2 state evidence was not inspected." -Artifact "GitHub Project V2")
+        } else {
+            Invoke-TrackerHygieneAudit -Findings $Findings -Mirrors $Mirrors -GitHubIssues $githubIssues -ProjectFixture $projectFixture -ApplyRepairs:$ApplyTrackerRepairs.IsPresent -RepairReceipt $script:repairReceipt
+        }
+    }
 }
 
 $root = Resolve-RepoRoot -Path $RepoRoot
@@ -369,6 +522,7 @@ $findings = @{
     informational = [System.Collections.Generic.List[object]]::new()
     healthy = [System.Collections.Generic.List[object]]::new()
 }
+$script:repairReceipt = [System.Collections.Generic.List[object]]::new()
 
 $mirrors = @(Get-IssueMirrors -Root $root)
 $milestonePages = @(Get-MilestonePages -Root $root)
@@ -389,12 +543,14 @@ if ($Mode -eq "GitHubAware") {
     mode = $Mode
     repo_root = $root
     target_repo = Get-RepoSlug -Root $root
-    mutation_allowed = $false
+    tracker_hygiene = $TrackerHygiene.IsPresent
+    mutation_allowed = $ApplyTrackerRepairs.IsPresent
+    repair_receipt = @($script:repairReceipt)
     repair_policy = [ordered]@{
         report_first = $true
         native_repair_approval = "request_user_input"
-        allowed_after_approval = @("project docs", "issue mirrors", "labels", "milestone metadata", "wrappers", "live sync cleanup owned by this plugin")
-        blocked_mutations = @("product code", "implementation tests", "runtime config", "branches", "PR merges", "issue close state", "native goals")
+        allowed_after_approval = @("project docs", "issue mirrors", "labels", "milestone metadata", "wrappers", "live sync cleanup owned by this plugin", "status labels on closed GitHub issues", "canonical Project V2 item fields")
+        blocked_mutations = @("product code", "implementation tests", "runtime config", "branches", "PR merges", "issue close state", "native goals", "Project V2 draft publication or deletion")
     }
     checked_artifacts = [ordered]@{
         issue_mirrors = @($mirrors.path)
