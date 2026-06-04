@@ -25,12 +25,14 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Related Issues
 
-- `docs/superpowers/issues/26-project-namespace-skill-surface-migration.md`
-- `docs/superpowers/issues/28-plugin-deployment-policy-and-live-sync.md`
-- `docs/superpowers/issues/30-setup-orchestration-board-and-worker-identity.md`
+- None.
 
 ## Closed Issues
 
+- [#23 Project Doctor flags absent source skill file as repairable in product repos](https://github.com/tannerpolley/milestones-plugin/issues/23) closed by [PR #37](https://github.com/tannerpolley/milestones-plugin/pull/37).
+- [#26 Project Namespace And Skill Surface Migration](https://github.com/tannerpolley/milestones-plugin/issues/26) closed by [PR #37](https://github.com/tannerpolley/milestones-plugin/pull/37).
+- [#28 Plugin Deployment Policy And Live Sync](https://github.com/tannerpolley/milestones-plugin/issues/28) closed by [PR #37](https://github.com/tannerpolley/milestones-plugin/pull/37).
+- [#30 Setup Orchestration Board And Worker Identity](https://github.com/tannerpolley/milestones-plugin/issues/30) closed by [PR #37](https://github.com/tannerpolley/milestones-plugin/pull/37).
 - [#21 Add Project Doctor tracker hygiene audit and repair mode](https://github.com/tannerpolley/milestones-plugin/issues/21) closed by [PR #33](https://github.com/tannerpolley/milestones-plugin/pull/33).
 - [#31 External GitHub Issue Hydration](https://github.com/tannerpolley/milestones-plugin/issues/31) closed by [PR #34](https://github.com/tannerpolley/milestones-plugin/pull/34).
 - [https://github.com/tannerpolley/milestones-plugin/issues/15](https://github.com/tannerpolley/milestones-plugin/issues/15) closed by [https://github.com/tannerpolley/milestones-plugin/pull/19](https://github.com/tannerpolley/milestones-plugin/pull/19) on 06/03/2026 03:35:55
@@ -41,4 +43,3 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - [#5 Validate skill docs against script parameters](https://github.com/tannerpolley/milestones-plugin/issues/5) closed by [PR #11](https://github.com/tannerpolley/milestones-plugin/pull/11).
 - [#6 Normalize GitHub check states consistently](https://github.com/tannerpolley/milestones-plugin/issues/6) closed by [PR #12](https://github.com/tannerpolley/milestones-plugin/pull/12).
 - [#7 Generate resolve and merge evidence ledgers](https://github.com/tannerpolley/milestones-plugin/issues/7) closed by [PR #14](https://github.com/tannerpolley/milestones-plugin/pull/14).
-

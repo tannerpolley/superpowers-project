@@ -20,8 +20,12 @@ Package, validate, sync, and release the Superpowers Project extension after dum
 
 ## Related Issues
 
-- `docs/superpowers/issues/32-public-repo-release-readiness.md`
+- None.
 
 ## Release Policy
 
 - `docs/superpowers/RELEASE_POLICY.md`
+
+## Closed Issues
+
+- [#32 Public Repo Release Readiness](https://github.com/tannerpolley/milestones-plugin/issues/32) closed by [PR #37](https://github.com/tannerpolley/milestones-plugin/pull/37).
