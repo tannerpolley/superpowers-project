@@ -58,7 +58,6 @@ foreach ($skillName in $workflowSkillNames) {
         'until a native continuation question returns `Stop` or reaches a verified final `Done` gate',
         'After every completed action',
         'ask another native continuation question',
-        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
         'Only a user-selected `Stop` option or verified final `Done` gate is terminal',
         'Revisit is non-terminal',
         'Only Stop can break an intermediate loop before a verified final Done gate',
@@ -66,6 +65,12 @@ foreach ($skillName in $workflowSkillNames) {
     )) {
         Add-Check $checks "$skillName contains $needle" ($text.Contains($needle)) "$skillPath must contain continuation-loop contract: $needle"
     }
+    $terminalPhrases = @(
+        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
+        'A local merge, created issue, saved plan, completed audit, or synced live plugin is not terminal',
+        'A pushed issue-backed commit, merged issue-backed PR, local branch merge, created issue, saved plan, completed audit, or synced live plugin is not terminal'
+    )
+    Add-Check $checks "$skillName contains non-terminal artifact contract" (@($terminalPhrases | Where-Object { $text.Contains($_) }).Count -gt 0) "$skillPath must contain a non-terminal artifact contract"
 
     foreach ($needle in @(
         '## Native Continuation Gate',
@@ -93,7 +98,6 @@ foreach ($skillName in $workflowSkillNames) {
     foreach ($needle in @(
         'After every completed action, ask the next native continuation or permission question',
         'Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate',
-        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
         'Revisit is non-terminal',
         'Only Stop can break an intermediate loop before a verified final Done gate',
         'Review First is not a terminal answer',
@@ -111,6 +115,7 @@ foreach ($skillName in $workflowSkillNames) {
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
     }
+    Add-Check $checks "$skillName metadata contains non-terminal artifact contract" (@($terminalPhrases | Where-Object { $agentText.Contains($_) }).Count -gt 0) "$agentPath must contain a non-terminal artifact contract"
 
     if ($intermediateSkillNames -contains $skillName) {
         Add-Check $checks "$skillName omits combined Stop Done label" (-not $text.Contains("Stop / Done") -and -not $agentText.Contains("Stop / Done")) "$skillName must use Stop for intermediate terminal routes"

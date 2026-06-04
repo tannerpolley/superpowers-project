@@ -36,18 +36,6 @@ try {
 
     $pr = Read-JsonInput -Json $PrJson -Path $PrFixturePath -Name "PR evidence"
 
-    if ($mode -eq "pr-no-issue") {
-        if (Test-AnyIssueClosureClaim -Pr $pr) { throw "non-issue PR must not claim issue closure" }
-        if ((Test-Property -Object $completion -Name "issue_url") -and -not [string]::IsNullOrWhiteSpace([string]$completion.issue_url)) { throw "non-issue PR completion must not claim issue closure" }
-        foreach ($field in @("merge_confirmation")) {
-            if (-not (Test-Property -Object $completion -Name $field) -or $completion.$field -is [string]) { throw "completion ledger $field must be structured" }
-        }
-        if ([string]$pr.state -ne "MERGED" -and [string]$completion.merge_confirmation.state -ne "MERGED") { throw "PR is not merged" }
-        Assert-CommonCloseoutProof -Completion $completion -Setup $setup -RequireRemoteDelete $true
-        Assert-OrchestratedWorkerCloseout -Completion $completion -Setup $setup
-        Complete-Contract -Phase $phase -Reason "closeout checks passed" -Evidence @{ mode = $mode; pr_url = [string]$completion.pr_url; branch_deleted = Normalize-RepoPath ([string]$setup.branch); repo_clean = $true }
-    }
-
     $issue = Read-JsonInput -Json $IssueJson -Path $IssueFixturePath -Name "issue evidence"
     if ([string]$completion.issue_url -ne [string]$setup.issue_url) { throw "completion issue_url must match setup ledger" }
     if ([string]$pr.state -ne "MERGED" -and [string]$completion.merge_confirmation.state -ne "MERGED") { throw "PR is not merged" }

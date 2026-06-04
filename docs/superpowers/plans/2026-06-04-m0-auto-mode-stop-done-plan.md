@@ -563,7 +563,7 @@ Prompt: `Authorize Auto Mode for this saved spec?`
 Options:
 
 - Down: `Bounded Auto Merge`: authorize bounded auto-merge with recorded defaults, agent route choice, and merge only after clean premerge proof.
-- Left: `Auto To PR`: authorize unattended planning and implementation through PR-ready proof, but require live merge approval.
+- Left: `Auto To Local Merge`: authorize unattended planning and implementation through local-branch merge-ready proof, but require clean premerge proof before local merge.
 - Right: `Stop`: do not start Auto Mode.
 
 For the first implementation, only `Bounded Auto Merge` produces a valid Auto Mode ledger. The ledger must use `worker_route: issue-backed-orchestrate-only`. Direct `implement-plan` worker mode is outside first-pass scope.

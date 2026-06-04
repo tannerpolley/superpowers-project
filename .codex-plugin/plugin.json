@@ -40,7 +40,7 @@
       "Use superpowers-project:implement-plan to implement an approved plan on a development branch without creating issue mirrors.",
       "Use superpowers-project:resolve-issue to resolve one GitHub issue directly with a native goal.",
       "Use superpowers-project:orchestrate-issues to delegate issue work to a worker worktree thread.",
-      "Use superpowers-project:merge-changes to merge PR-ready issue or branch work."
+      "Use superpowers-project:merge-changes to merge issue-backed PR work or approved local branch work."
     ]
   }
 }

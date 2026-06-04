@@ -12,7 +12,7 @@ Add an Auto Mode option after a Superpowers Project spec is created so an agent 
 - `skills/write-plan/SKILL.md` requires planning grills and native user input when material decisions remain before a plan is saved.
 - `skills/implement-plan/SKILL.md` provides non-issue execution from an approved plan, requires native `/goal`, development branch execution, publish permission, and merge-ready proof.
 - `skills/create-issues/SKILL.md`, `skills/resolve-issue/SKILL.md`, and `skills/orchestrate-issues/SKILL.md` own the issue-backed path for tracked, risky, or multi-slice work.
-- `skills/merge-changes/SKILL.md` supports `pr-issue`, `pr-no-issue`, and `local-branch` closeout modes, and requires clean premerge and closeout proof before success.
+- `skills/merge-changes/SKILL.md` supports `pr-issue` for issue-backed PR work and `local-branch` for non-issue Implement Plan work, and requires clean premerge and closeout proof before success.
 - Recent history includes `b9b3d29 Remove quick apply route`, so Auto Mode should not recreate a direct-to-main shortcut or weaken the current evidence gates.
 
 ## User Decisions

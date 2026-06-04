@@ -26,7 +26,7 @@ This checkout may still be hosted under the older `milestones-plugin` repository
 - `$superpowers-project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
 - `$superpowers-project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
 - `$superpowers-project:orchestrate-issues`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
-- `$superpowers-project:merge-changes`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
+- `$superpowers-project:merge-changes`: reviews and merges issue-backed PR work or approved local branch work, cleans owned branches and worktrees, prunes, and records clean repo proof.
 - `$superpowers-project:audit-project`: audits project, GitHub, migration, and live-sync drift.
 
 ## Native Q&A Workflow
@@ -57,7 +57,7 @@ GitHub can also render the simplified Mermaid companion: [Native Q&A main flow M
 
 `$superpowers-project:implement-plan` is the direct execution path after `$superpowers-project:write-plan` when an approved plan without a GitHub issue should be implemented without GitHub issue mirrors.
 
-Implement Plan uses a development branch, native `/goal` where applicable, Superpowers execution discipline, focused verification, and `$superpowers-project:merge-changes` for final integration. It does not create issue mirrors and must not claim GitHub issue closure. Use the issue-backed `$superpowers-project:create-issues` route first for non-trivial work that should have GitHub issue and milestone backbone.
+Implement Plan uses a development branch, native `/goal` where applicable, Superpowers execution discipline, focused verification, and `$superpowers-project:merge-changes` in local-branch mode for final integration. It does not create issue mirrors, does not open pull requests, and must not claim GitHub issue closure. Use the issue-backed `$superpowers-project:create-issues` route first for non-trivial work that should have GitHub issue and milestone backbone.
 
 ## Canonical Layout
 
