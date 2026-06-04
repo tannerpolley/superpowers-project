@@ -22,15 +22,15 @@ function Add-Check {
 $checks = [System.Collections.Generic.List[object]]::new()
 $skillRoot = Join-Path $RepoRoot "skills"
 $workflowSkillNames = @(
-    "superpowers-project",
-    "project-setup",
-    "project-orchestrate",
-    "project-brainstorm",
-    "project-plan",
-    "project-issue",
-    "project-resolve",
-    "project-merge",
-    "project-doctor"
+    "workflow",
+    "setup",
+    "orchestrate-issues",
+    "brainstorm-spec",
+    "write-plan",
+    "create-issues",
+    "resolve-issue",
+    "merge-changes",
+    "audit-project"
 )
 
 foreach ($skillName in $workflowSkillNames) {
@@ -95,3 +95,4 @@ $failed = @($checks | Where-Object { -not $_.ok })
 } | ConvertTo-Json -Depth 8
 
 if ($failed.Count -gt 0) { exit 1 }
+

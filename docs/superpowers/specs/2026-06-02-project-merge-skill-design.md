@@ -2,63 +2,63 @@
 
 ## Summary
 
-Add a new `$project-merge` skill that owns the integration half of issue execution after `$project-resolve` produces a PR-ready handoff.
+Add a new `$project:merge-changes` skill that owns the integration half of issue execution after `$project:resolve-issue` produces a PR-ready handoff.
 
-`$project-resolve` should keep the issue-specific implementation lifecycle: issue mirror intake, source plan validation, native goal setup, branch/worktree setup, implementation, verification, commit, push, PR creation, and PR-ready evidence. `$project-merge` should own everything after that: orchestrator review, CI and review feedback, merge, linked issue closure verification, cleanup, pruning, and final clean repo proof.
+`$project:resolve-issue` should keep the issue-specific implementation lifecycle: issue mirror intake, source plan validation, native goal setup, branch/worktree setup, implementation, verification, commit, push, PR creation, and PR-ready evidence. `$project:merge-changes` should own everything after that: orchestrator review, CI and review feedback, merge, linked issue closure verification, cleanup, pruning, and final clean repo proof.
 
 ## Context Evidence
 
 - `docs/superpowers/PROJECT_CONTEXT.md` defines Superpowers Project as the durable project context, roadmap, GitHub issue linkage, native user-input grilling, and native `/goal` issue execution layer.
-- `skills/project-resolve/SKILL.md` currently owns the full lifecycle from issue mirror through merge, issue close, goal completion, branch cleanup, and cleanup hook proof.
-- `skills/project-resolve/scripts/premerge.ps1` already models merge-readiness checks: PR closes the linked issue, required checks pass, issue acceptance state is covered, changed files have verification receipts, and proof commands exist.
-- `skills/project-resolve/scripts/closeout.ps1` already models final integration closeout: PR merged, linked issue closed, branch cleanup structured, cleanup hook passed, and goal completion proof present.
-- `skills/project-resolve/scripts/test-scenarios.ps1` currently tests happy closeout inside the resolver. That test belongs under `$project-merge` after the split.
-- `codex-dynamic-workflows` supports explicit orchestration, work packets, goal mode for sustained execution, bounded subagent/thread delegation, integration, and verification. `$project-resolve` should borrow the parts that strengthen issue execution, but it should not run the whole dynamic-workflow lifecycle by default because `$project-resolve` already owns native goals, GitHub issue linkage, branch/worktree setup, PR handoff, and script gates.
+- `skills/resolve-issue/SKILL.md` currently owns the full lifecycle from issue mirror through merge, issue close, goal completion, branch cleanup, and cleanup hook proof.
+- `skills/resolve-issue/scripts/premerge.ps1` already models merge-readiness checks: PR closes the linked issue, required checks pass, issue acceptance state is covered, changed files have verification receipts, and proof commands exist.
+- `skills/resolve-issue/scripts/closeout.ps1` already models final integration closeout: PR merged, linked issue closed, branch cleanup structured, cleanup hook passed, and goal completion proof present.
+- `skills/resolve-issue/scripts/test-scenarios.ps1` currently tests happy closeout inside the resolver. That test belongs under `$project:merge-changes` after the split.
+- `codex-dynamic-workflows` supports explicit orchestration, work packets, goal mode for sustained execution, bounded subagent/thread delegation, integration, and verification. `$project:resolve-issue` should borrow the parts that strengthen issue execution, but it should not run the whole dynamic-workflow lifecycle by default because `$project:resolve-issue` already owns native goals, GitHub issue linkage, branch/worktree setup, PR handoff, and script gates.
 - Codex app thread tools can create and message background threads, and automation tools can create heartbeat wakeups. The spec should use these to avoid long-running busy waits.
 
 ## User Decisions
 
 These decisions were made through native UI during brainstorming:
 
-- Handoff boundary: `$project-resolve` hands off when a branch is pushed and a PR is opened with PR-ready evidence.
-- Merge owner: `$project-merge` is normally run by the main orchestrator thread, not by the worker that implemented the change.
-- Goal completion: `$project-resolve` completes its native goal at PR-ready evidence, not after merge.
+- Handoff boundary: `$project:resolve-issue` hands off when a branch is pushed and a PR is opened with PR-ready evidence.
+- Merge owner: `$project:merge-changes` is normally run by the main orchestrator thread, not by the worker that implemented the change.
+- Goal completion: `$project:resolve-issue` completes its native goal at PR-ready evidence, not after merge.
 - Waiting model: use worker handoff plus heartbeat or worker signal. Do not keep the main orchestrator idly waiting for a long-running worker.
-- Spec scope: include the `$project-merge` skill split and automation/heartbeat behavior for worker readiness.
-- Resolve topology: `$project-resolve` must always ask whether to resolve in the current thread or open a new worktree agent.
-- Worker orchestration: when worker mode is selected, `$project-resolve` must create a lightweight dynamic work packet map adapted from `codex-dynamic-workflows`. It should invoke the full `codex-dynamic-workflows` skill only when the issue actually meets its own decision rule: broad work, independent tracks, elevated risk, reusable workflow value, separate verification needs, or explicit user request.
+- Spec scope: include the `$project:merge-changes` skill split and automation/heartbeat behavior for worker readiness.
+- Resolve topology: `$project:resolve-issue` must always ask whether to resolve in the current thread or open a new worktree agent.
+- Worker orchestration: when worker mode is selected, `$project:resolve-issue` must create a lightweight dynamic work packet map adapted from `codex-dynamic-workflows`. It should invoke the full `codex-dynamic-workflows` skill only when the issue actually meets its own decision rule: broad work, independent tracks, elevated risk, reusable workflow value, separate verification needs, or explicit user request.
 
 ## Problem
 
-`$project-resolve` has become too broad. It owns implementation, PR finishing, review, merge, issue closeout, native goal completion, branch cleanup, and final clean repo proof.
+`$project:resolve-issue` has become too broad. It owns implementation, PR finishing, review, merge, issue closeout, native goal completion, branch cleanup, and final clean repo proof.
 
 That creates two problems:
 
 1. The worker/orchestrator split is blurred. A worker can implement an issue, but the main thread should own review and integration.
-2. Native goal semantics are overloaded. The worker's goal should be concrete and finishable: implement the issue, prove the checkboxes, push the branch, and open a PR. The issue is not fully integrated until `$project-merge` finishes.
+2. Native goal semantics are overloaded. The worker's goal should be concrete and finishable: implement the issue, prove the checkboxes, push the branch, and open a PR. The issue is not fully integrated until `$project:merge-changes` finishes.
 
 ## Goals
 
-- Add `$project-merge` as the integration and cleanup skill for one PR created from a Superpowers Project issue workflow.
-- Make `$project-resolve` end at PR-ready handoff evidence.
-- Keep native `/goal` required for `$project-resolve` issue implementation.
-- Mark the `$project-resolve` goal complete only when PR-ready evidence exists:
+- Add `$project:merge-changes` as the integration and cleanup skill for one PR created from a Superpowers Project issue workflow.
+- Make `$project:resolve-issue` end at PR-ready handoff evidence.
+- Keep native `/goal` required for `$project:resolve-issue` issue implementation.
+- Mark the `$project:resolve-issue` goal complete only when PR-ready evidence exists:
   - issue acceptance checkboxes are covered by implementation evidence;
   - verification commands have passed;
   - branch is pushed;
   - PR is opened and references/closes the linked issue;
   - worker notifies or hands off to the orchestrator.
-- Make `$project-merge` run from the main orchestrator thread by default.
-- Move `premerge.ps1` and `closeout.ps1` responsibilities from `$project-resolve` into `$project-merge`.
+- Make `$project:merge-changes` run from the main orchestrator thread by default.
+- Move `premerge.ps1` and `closeout.ps1` responsibilities from `$project:resolve-issue` into `$project:merge-changes`.
 - Add automation guidance so the orchestrator does not busy-wait for a worker thread.
 - Add native continuation gates across Superpowers Project handoffs so the agent asks how to continue and then immediately starts the selected next skill instead of only telling the user what to prompt next.
 
 ## Non-Goals
 
-- Do not make `$project-merge` implement product/code changes directly except for review-requested fixes explicitly delegated back to a worker or handled as a small follow-up.
+- Do not make `$project:merge-changes` implement product/code changes directly except for review-requested fixes explicitly delegated back to a worker or handled as a small follow-up.
 - Do not let workers merge their own PR by default.
 - Do not require GoalBuddy boards.
-- Do not start a native `/goal` at `$project-brainstorm` or `$project-plan` by default.
+- Do not start a native `/goal` at `$project:brainstorm-spec` or `$project:write-plan` by default.
 - Do not make the main orchestrator poll indefinitely.
 - Do not require GitHub Projects as an execution surface.
 
@@ -72,19 +72,19 @@ After the current skill completes its required artifact and validation, it shoul
 
 Default handoff gates:
 
-- `$project-brainstorm` after saving a spec: ask whether to continue to `$project-plan`, `$project-issue` for a direct issue, or stop.
-- `$project-plan` after saving a plan: ask whether to continue to `$project-issue`, execute with `superpowers:subagent-driven-development`, or execute inline with `superpowers:executing-plans`.
-- `$project-issue` after creating issue mirrors or GitHub issues: ask whether to resolve the first ready issue, resolve a selected issue, or stop after issue creation.
-- `$project-resolve` after PR-ready handoff: ask whether to start `$project-merge`, resolve another ready issue, or stop at PR-ready.
-- `$project-merge` after clean closeout: ask whether to resolve the next ready issue, run `$project-doctor`, or stop.
+- `$project:brainstorm-spec` after saving a spec: ask whether to continue to `$project:write-plan`, `$project:create-issues` for a direct issue, or stop.
+- `$project:write-plan` after saving a plan: ask whether to continue to `$project:create-issues`, execute with `superpowers:subagent-driven-development`, or execute inline with `superpowers:executing-plans`.
+- `$project:create-issues` after creating issue mirrors or GitHub issues: ask whether to resolve the first ready issue, resolve a selected issue, or stop after issue creation.
+- `$project:resolve-issue` after PR-ready handoff: ask whether to start `$project:merge-changes`, resolve another ready issue, or stop at PR-ready.
+- `$project:merge-changes` after clean closeout: ask whether to resolve the next ready issue, run `$project:audit-project`, or stop.
 
-The selected route must be honored immediately. Do not end with "run `$project-issue` next" when the user selected that option. Start `$project-issue` and carry over the source artifact path, decisions, and proof summary.
+The selected route must be honored immediately. Do not end with "run `$project:create-issues` next" when the user selected that option. Start `$project:create-issues` and carry over the source artifact path, decisions, and proof summary.
 
 If the selected next skill requires its own material decision, that next skill may ask its own native UI question. If a required tool is unavailable or the route would perform an external write that still needs approval, stop with a clear pending state and exact resume target.
 
-### Phase 1: `$project-resolve`
+### Phase 1: `$project:resolve-issue`
 
-`$project-resolve` remains issue-specific and goal-backed.
+`$project:resolve-issue` remains issue-specific and goal-backed.
 
 It should:
 
@@ -107,11 +107,11 @@ It should:
 10. Complete the native goal with structured proof that the implementation goal is finished.
 11. Notify or wake the main orchestrator.
 
-`$project-resolve` must not claim the issue is fully integrated. Its final state is `PR-ready handoff created`.
+`$project:resolve-issue` must not claim the issue is fully integrated. Its final state is `PR-ready handoff created`.
 
 ### Resolve Topology Question
 
-`$project-resolve` must ask this question in every normal run after issue/source-plan validation and before branch or worktree setup:
+`$project:resolve-issue` must ask this question in every normal run after issue/source-plan validation and before branch or worktree setup:
 
 ```text
 How should this issue be resolved?
@@ -128,7 +128,7 @@ Do not skip this question because the answer seems obvious. The point is to forc
 
 ### Dynamic Workflow Compatibility Requirement
 
-When `Open worktree agent` is selected, `$project-resolve` must use a small Project Resolve-native packet contract before launching or instructing the worker. This keeps worker orchestration concrete without duplicating the full `codex-dynamic-workflows` skill.
+When `Open worktree agent` is selected, `$project:resolve-issue` must use a small Project Resolve-native packet contract before launching or instructing the worker. This keeps worker orchestration concrete without duplicating the full `codex-dynamic-workflows` skill.
 
 The Dynamic Work Packet Map should define:
 
@@ -139,10 +139,10 @@ The Dynamic Work Packet Map should define:
 - worker do/do-not boundaries;
 - PR-ready handoff requirements;
 - verification commands;
-- merge owner and `$project-merge` handoff;
+- merge owner and `$project:merge-changes` handoff;
 - wakeup or heartbeat policy.
 
-This map belongs in the `$project-resolve` setup ledger or worker handoff. Do not create `.workflow/<slug>` directories, `state.json`, `orchestration.md`, reusable recipes, or dynamic-workflow helper-script output for ordinary issue resolution.
+This map belongs in the `$project:resolve-issue` setup ledger or worker handoff. Do not create `.workflow/<slug>` directories, `state.json`, `orchestration.md`, reusable recipes, or dynamic-workflow helper-script output for ordinary issue resolution.
 
 The worker packet must be self-contained and must tell the worker:
 
@@ -152,7 +152,7 @@ The worker packet must be self-contained and must tell the worker:
 - use `superpowers:verification-before-completion`;
 - use `superpowers:finishing-a-development-branch`;
 - open a PR that closes the exact linked issue;
-- complete the `$project-resolve` native goal only after PR-ready evidence exists;
+- complete the `$project:resolve-issue` native goal only after PR-ready evidence exists;
 - wake or notify the main orchestrator as the final action.
 
 Use the full `codex-dynamic-workflows` skill only when at least two of these are true:
@@ -164,13 +164,13 @@ Use the full `codex-dynamic-workflows` skill only when at least two of these are
 - the workflow is likely to become a reusable recipe;
 - the user explicitly asks for dynamic workflows, swarm, subagents, parallel agents, or Claude Code-style orchestration.
 
-Even when the full skill is used, `$project-resolve` remains the lifecycle owner. It owns the issue mirror, source plan, native goal proof, topology question, setup ledger, worktree/branch setup, PR-ready evidence, and worker handoff. `codex-dynamic-workflows` supplies packet discipline, risk gates, and integration notes only.
+Even when the full skill is used, `$project:resolve-issue` remains the lifecycle owner. It owns the issue mirror, source plan, native goal proof, topology question, setup ledger, worktree/branch setup, PR-ready evidence, and worker handoff. `codex-dynamic-workflows` supplies packet discipline, risk gates, and integration notes only.
 
-Do not import these `codex-dynamic-workflows` behaviors into the default `$project-resolve` path:
+Do not import these `codex-dynamic-workflows` behaviors into the default `$project:resolve-issue` path:
 
 - creating `.workflow/<slug>` folders for every issue;
 - running `new_workflow.py`, `collect_results.py`, or `verify_workflow.py` as required gates;
-- activating a second goal mode separate from `$project-resolve`'s native goal;
+- activating a second goal mode separate from `$project:resolve-issue`'s native goal;
 - saving reusable recipes by default;
 - simulating subagents when the user selected current-thread execution;
 - asking a second approval question for non-risky steps already covered by the issue mirror, topology question, and GitHub PR flow;
@@ -178,7 +178,7 @@ Do not import these `codex-dynamic-workflows` behaviors into the default `$proje
 
 ### Phase 2: Worker Handoff And Wakeup
 
-When `$project-resolve` runs in a worker worktree/thread, the final worker step must send the orchestrator a handoff message when thread tools are callable.
+When `$project:resolve-issue` runs in a worker worktree/thread, the final worker step must send the orchestrator a handoff message when thread tools are callable.
 
 The handoff should include:
 
@@ -206,9 +206,9 @@ The main orchestrator should not wait in a tight loop. If the worker is still ru
 
 Heartbeat automation should be used for "check back later" behavior. It should inspect the worker thread or PR state, not rerun implementation.
 
-### Phase 3: `$project-merge`
+### Phase 3: `$project:merge-changes`
 
-`$project-merge` starts from a PR URL or worker handoff.
+`$project:merge-changes` starts from a PR URL or worker handoff.
 
 It should:
 
@@ -234,7 +234,7 @@ It should:
 15. Verify clean repo state.
 16. Write final closeout proof.
 
-`$project-merge` is the only phase allowed to claim the issue is fully integrated.
+`$project:merge-changes` is the only phase allowed to claim the issue is fully integrated.
 
 ## Goal Model
 
@@ -242,7 +242,7 @@ Use native `/goal` as the issue implementation contract, not as the entire brain
 
 ### Required Goal
 
-`$project-resolve` must activate a native goal when executing a ready issue.
+`$project:resolve-issue` must activate a native goal when executing a ready issue.
 
 The goal objective should be framed as implementation-to-PR-ready, for example:
 
@@ -250,27 +250,27 @@ The goal objective should be framed as implementation-to-PR-ready, for example:
 Implement <GitHub issue URL> from <issue mirror> using <source plan>. Complete when acceptance checkboxes are covered, verification passes, branch is pushed, PR is opened, and PR-ready handoff is sent to the orchestrator.
 ```
 
-The `$project-resolve` goal is complete when PR-ready evidence exists. It does not wait for merge.
+The `$project:resolve-issue` goal is complete when PR-ready evidence exists. It does not wait for merge.
 
 ### Optional Merge Goal
 
-`$project-merge` does not require a native goal by default. It can use a native goal only when the user explicitly asks for a goal-backed integration run.
+`$project:merge-changes` does not require a native goal by default. It can use a native goal only when the user explicitly asks for a goal-backed integration run.
 
-The final issue state is still not complete until `$project-merge` merges the PR, verifies issue closure, cleans up, prunes, and proves a clean repo.
+The final issue state is still not complete until `$project:merge-changes` merges the PR, verifies issue closure, cleans up, prunes, and proves a clean repo.
 
 ## Skill Boundary Changes
 
-### Add `$project-merge`
+### Add `$project:merge-changes`
 
 Create:
 
 ```text
-skills/project-merge/SKILL.md
-skills/project-merge/agents/openai.yaml
-skills/project-merge/scripts/test-scenarios.ps1
-skills/project-merge/scripts/premerge.ps1
-skills/project-merge/scripts/closeout.ps1
-skills/project-merge/scripts/lib/contract.ps1
+skills/merge-changes/SKILL.md
+skills/merge-changes/agents/openai.yaml
+skills/merge-changes/scripts/test-scenarios.ps1
+skills/merge-changes/scripts/premerge.ps1
+skills/merge-changes/scripts/closeout.ps1
+skills/merge-changes/scripts/lib/contract.ps1
 ```
 
 The new skill should include:
@@ -286,9 +286,9 @@ The new skill should include:
 - `git fetch --prune` policy;
 - final clean repo proof.
 
-### Narrow `$project-resolve`
+### Narrow `$project:resolve-issue`
 
-Update `$project-resolve` so it:
+Update `$project:resolve-issue` so it:
 
 - no longer says it merges PRs or closes issues;
 - no longer owns `premerge.ps1` or `closeout.ps1`;
@@ -297,15 +297,15 @@ Update `$project-resolve` so it:
 - invokes the full `codex-dynamic-workflows` skill only when the issue meets the full orchestration decision rule or the user explicitly requests it;
 - emits a PR-ready handoff ledger;
 - marks the native goal complete at PR-ready evidence;
-- routes final integration to `$project-merge`;
+- routes final integration to `$project:merge-changes`;
 - blocks if asked to merge directly unless the user explicitly bypasses the split.
 
 ### Update Router And Metadata
 
 Update:
 
-- `skills/superpowers-project/SKILL.md`
-- `skills/superpowers-project/agents/openai.yaml`
+- `skills/workflow/SKILL.md`
+- `skills/workflow/agents/openai.yaml`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `README.md`
 - validation active skill lists
@@ -313,11 +313,11 @@ Update:
 The route should read:
 
 ```text
-project-resolve: ready issue -> implementation -> pushed branch -> PR-ready handoff
-project-merge: PR/handoff -> review -> merge -> issue close -> cleanup -> clean repo proof
+resolve-issue: ready issue -> implementation -> pushed branch -> PR-ready handoff
+merge-changes: PR/handoff -> review -> merge -> issue close -> cleanup -> clean repo proof
 ```
 
-### Update `$project-issue`
+### Update `$project:create-issues`
 
 Issue mirrors should include fields that support the split:
 
@@ -327,18 +327,18 @@ Issue mirrors should include fields that support the split:
 - `Worktree Cleanup Policy`
 - `Orchestrator Wakeup Policy`
 
-Existing fields can remain, but `Integration Policy` should point to `$project-merge` as the owner of integration.
+Existing fields can remain, but `Integration Policy` should point to `$project:merge-changes` as the owner of integration.
 
 ## Automation Contract
 
-When a worker thread is not ready, `$project-merge` should not run active long waits.
+When a worker thread is not ready, `$project:merge-changes` should not run active long waits.
 
-If automation tools are callable and the user wants the orchestrator to check back, `$project-merge` may create a heartbeat automation attached to the orchestrator thread.
+If automation tools are callable and the user wants the orchestrator to check back, `$project:merge-changes` may create a heartbeat automation attached to the orchestrator thread.
 
 The heartbeat prompt should be self-contained:
 
 ```text
-Check whether worker thread <id/title> or PR <url> has reached PR-ready state for <issue URL>. If PR-ready evidence exists, continue $project-merge. If not ready, report current state and either schedule the next bounded check or ask the user.
+Check whether worker thread <id/title> or PR <url> has reached PR-ready state for <issue URL>. If PR-ready evidence exists, continue $project:merge-changes. If not ready, report current state and either schedule the next bounded check or ask the user.
 ```
 
 Heartbeat checks should be bounded and evidence-based. They must not rerun implementation or silently merge.
@@ -349,17 +349,17 @@ If automation tools are absent, the skill should stop with a clear pending hando
 
 Implementation should add or update tests that prove:
 
-- validation active skill list includes `project-merge`;
-- `$project-resolve` always asks the inline-vs-worktree-agent topology question before branch/worktree setup;
-- worker-mode `$project-resolve` requires a Dynamic Work Packet Map in the setup ledger or worker handoff;
+- validation active skill list includes `merge-changes`;
+- `$project:resolve-issue` always asks the inline-vs-worktree-agent topology question before branch/worktree setup;
+- worker-mode `$project:resolve-issue` requires a Dynamic Work Packet Map in the setup ledger or worker handoff;
 - full `codex-dynamic-workflows` artifacts are optional and appear only when the issue meets the full orchestration decision rule or the user explicitly requested them;
-- `$project-resolve` scenario tests end at PR-ready handoff;
-- `$project-merge` scenario tests own previous `premerge` and `closeout` cases;
-- `$project-plan` asks a native continuation question after saving a plan and starts `$project-issue` when selected;
-- `$project-issue`, `$project-resolve`, and `$project-merge` document the same executable continuation-gate pattern for their handoffs;
+- `$project:resolve-issue` scenario tests end at PR-ready handoff;
+- `$project:merge-changes` scenario tests own previous `premerge` and `closeout` cases;
+- `$project:write-plan` asks a native continuation question after saving a plan and starts `$project:create-issues` when selected;
+- `$project:create-issues`, `$project:resolve-issue`, and `$project:merge-changes` document the same executable continuation-gate pattern for their handoffs;
 - closeout rejects unstructured goal or cleanup proof;
 - closeout rejects deletion of non-goal branches;
-- router text includes `project-merge`;
+- router text includes `merge-changes`;
 - sync deploys the new skill to plugin and user skill roots;
 - full `scripts/validate.ps1` passes;
 - `scripts/sync-live.ps1 -Validate` passes.
@@ -367,8 +367,8 @@ Implementation should add or update tests that prove:
 Proof oracle candidates:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-resolve\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-merge\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
@@ -388,15 +388,16 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 
 - Adds another skill to the router and validation surface.
 - Requires handoff ledgers to be precise.
-- Requires careful docs updates so agents do not think `$project-resolve` fully closes the issue.
+- Requires careful docs updates so agents do not think `$project:resolve-issue` fully closes the issue.
 - Heartbeat automation behavior must be bounded so it does not become silent background merge automation.
 
 ## Open Questions
 
-- Should `$project-merge` always ask before merge, or may it merge automatically when PR evidence and repo policy are clean?
-- Should `$project-merge` support both real GitHub PRs and local-only PR fixtures for repos without GitHub remotes?
+- Should `$project:merge-changes` always ask before merge, or may it merge automatically when PR evidence and repo policy are clean?
+- Should `$project:merge-changes` support both real GitHub PRs and local-only PR fixtures for repos without GitHub remotes?
 - Should issue mirrors get a new `Project Merge` section, or should the existing workflow metadata fields be extended in place?
 
 ## Recommended Next Step
 
-Run `$project-plan` on this spec to create the implementation plan. The plan should start with failing tests for the new skill route and the narrowed `$project-resolve` completion state before moving scripts.
+Run `$project:write-plan` on this spec to create the implementation plan. The plan should start with failing tests for the new skill route and the narrowed `$project:resolve-issue` completion state before moving scripts.
+

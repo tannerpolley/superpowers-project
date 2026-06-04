@@ -34,7 +34,7 @@ function Test-ImplementPlanLedger {
     if ([string]$Ledger.publish_permission.question_id -ne "implement_plan_publish_permission") { throw "publish permission question_id is invalid" }
     if ([string]$Ledger.publish_permission.selected_action -notin @("push", "local-merge-ready", "hold")) { throw "publish permission selected_action is invalid" }
     if (-not (Test-Property $Ledger "merge_ready") -or $Ledger.merge_ready.ready -ne $true) { throw "merge-ready evidence is required" }
-    if ([string]$Ledger.merge_ready.route -notin @("project-merge", "approved-merge-route")) { throw "merge-ready route is invalid" }
+    if ([string]$Ledger.merge_ready.route -notin @("merge-changes", "approved-merge-route")) { throw "merge-ready route is invalid" }
     if (Test-Property $Ledger "issue_closure_claim" -and $Ledger.issue_closure_claim -eq $true) { throw "implement-plan must not claim issue closure" }
 
     [pscustomobject]@{
@@ -46,3 +46,4 @@ function Test-ImplementPlanLedger {
         publish_action = [string]$Ledger.publish_permission.selected_action
     }
 }
+

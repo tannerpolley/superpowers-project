@@ -26,27 +26,28 @@ Milestone pages under `docs/superpowers/milestones/` are the durable project map
 - Repository: `tannerpolley/milestones-plugin`
 - Issue tracker: GitHub Issues plus local mirrors under `docs/superpowers/issues/`
 - GitHub milestone policy: mirrors the roadmap pages under `docs/superpowers/milestones/`
-- GitHub Projects policy: optional dashboard evidence created or verified by `$project-setup` only after native approval
+- GitHub Projects policy: optional dashboard evidence created or verified by `$project:setup` only after native approval
 - Label vocabulary: `docs/agents/triage-labels.md`
 - Tracker config: `docs/agents/issue-tracker.md` and `docs/agents/project-roadmap.json`
 
 ## Execution Model
 
-Issue implementation uses native `/goal` or goal tools plus Superpowers execution skills. `$project-resolve` is the direct current-thread route for one ready issue. `$project-orchestrate` is the worker-thread route when the current thread should manage a dedicated worktree worker. PR integration, linked issue close verification, branch/worktree cleanup, pruning, and final clean repo proof are owned by `$project-merge`. GoalBuddy boards are outside the default execution model.
+Issue implementation uses native `/goal` or goal tools plus Superpowers execution skills. `$project:resolve-issue` is the direct current-thread route for one ready issue. `$project:orchestrate-issues` is the worker-thread route when the current thread should manage a dedicated worktree worker. PR integration, linked issue close verification, branch/worktree cleanup, pruning, and final clean repo proof are owned by `$project:merge-changes`. GoalBuddy boards are outside the default execution model.
 
 ## Extension Skills
 
-- `superpowers-project`
-- `project-setup`
-- `project-brainstorm`
-- `project-plan`
-- `project-issue`
-- `project-resolve`
-- `project-orchestrate`
-- `project-merge`
-- `project-doctor`
+- `workflow`
+- `setup`
+- `brainstorm-spec`
+- `write-plan`
+- `create-issues`
+- `resolve-issue`
+- `orchestrate-issues`
+- `merge-changes`
+- `audit-project`
 
 ## Current Open Questions
 
 - Decide whether smoke-test issue mirrors should remain pre-publication fixtures or be published as real GitHub issues.
 - Decide whether GitHub Projects should stay dashboard-only or become a required project-management surface.
+

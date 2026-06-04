@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [switch]$Validate,
-    [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\superpowers-project"),
+    [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\project"),
     [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills")
 )
 
@@ -13,8 +13,11 @@ $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
 $sourceSkillsRoot = Join-Path $repoRoot "skills"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
-$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
-$retiredLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones"))
+$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\project"))
+$retiredLivePluginRoots = @(
+    [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones")),
+    [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
+)
 $expectedUserSkillsRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".agents\skills"))
 
 if ($livePluginRootResolved -ne $expectedLivePluginRoot) {
@@ -31,6 +34,7 @@ if (-not (Test-Path -LiteralPath $sourceSkillsRoot -PathType Container)) {
 }
 
 $activeSkillNames = @(Get-SkillDirectoryNames -Root $sourceSkillsRoot)
+$userSkillNames = @("advanced-user-input")
 $retiredSkillNames = @(
     "using-milestones",
     "setup-project-milestones",
@@ -41,7 +45,26 @@ $retiredSkillNames = @(
     "plan-to-issue",
     "resolve-issue-with-goal",
     "milestones-doctor",
-    "project-context"
+    "project-context",
+    "superpowers-project",
+    "project-setup",
+    "project-orchestrate",
+    "project-brainstorm",
+    "project-plan",
+    "project-issue",
+    "project-resolve",
+    "project-merge",
+    "project-doctor",
+    "workflow",
+    "setup",
+    "orchestrate-issues",
+    "brainstorm-spec",
+    "write-plan",
+    "implement-plan",
+    "create-issues",
+    "resolve-issue",
+    "merge-changes",
+    "audit-project"
 )
 
 function Remove-RetiredLivePluginRoot {
@@ -51,7 +74,7 @@ function Remove-RetiredLivePluginRoot {
 
     $pluginsRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins"))
     $resolved = [IO.Path]::GetFullPath($Path)
-    if ($resolved -ne $retiredLivePluginRoot) {
+    if ($retiredLivePluginRoots -notcontains $resolved) {
         throw "refusing to remove unexpected retired live plugin path: $resolved"
     }
     if (-not $resolved.StartsWith($pluginsRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
@@ -64,8 +87,8 @@ function Remove-RetiredLivePluginRoot {
     }
 
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ($manifest.name -ne "superpowers-project") {
-        throw "retired live plugin path is not owned by superpowers-project: $resolved"
+    if ($manifest.name -notin @("superpowers-project", "project")) {
+        throw "retired live plugin path is not owned by Superpowers Project: $resolved"
     }
 
     Remove-Item -LiteralPath $resolved -Recurse -Force
@@ -88,18 +111,18 @@ Copy-Item -LiteralPath $sourcePluginManifest -Destination (Join-Path $livePlugin
 Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $livePluginSkillsRoot
 $removedPluginSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $livePluginSkillsRoot -ActiveSkillNames $activeSkillNames -RetiredSkillNames $retiredSkillNames)
 
-Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved
-$removedUserSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $userSkillsRootResolved -ActiveSkillNames $activeSkillNames -RetiredSkillNames $retiredSkillNames)
+Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved -SkillNames $userSkillNames
+$removedUserSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $userSkillsRootResolved -ActiveSkillNames $userSkillNames -RetiredSkillNames $retiredSkillNames)
 
 Assert-NoTreeDrift -SourceRoot (Split-Path $sourcePluginManifest -Parent) -TargetRoot $livePluginManifestDir -Label "plugin manifest"
 foreach ($skillName in $activeSkillNames) {
     Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $livePluginSkillsRoot $skillName) -Label "plugin skill $skillName"
 }
-foreach ($skillName in $activeSkillNames) {
+foreach ($skillName in $userSkillNames) {
     Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $userSkillsRootResolved $skillName) -Label "user skill $skillName"
 }
 
-$removedRetiredLivePluginRoot = Remove-RetiredLivePluginRoot -Path $retiredLivePluginRoot
+$removedRetiredLivePluginRoots = @($retiredLivePluginRoots | ForEach-Object { Remove-RetiredLivePluginRoot -Path $_ })
 
 $deployedPluginSkills = @($activeSkillNames | ForEach-Object {
     [pscustomobject]@{
@@ -107,7 +130,7 @@ $deployedPluginSkills = @($activeSkillNames | ForEach-Object {
         plugin_target = Join-Path $livePluginSkillsRoot $_
     }
 })
-$deployedUserSkills = @($activeSkillNames | ForEach-Object {
+$deployedUserSkills = @($userSkillNames | ForEach-Object {
     [pscustomobject]@{
         skill = $_
         user_skill_target = Join-Path $userSkillsRootResolved $_
@@ -123,6 +146,7 @@ $deployedUserSkills = @($activeSkillNames | ForEach-Object {
     deployed_user_skills = $deployedUserSkills
     removed_plugin_skills = $removedPluginSkills
     removed_user_skills = $removedUserSkills
-    retired_live_plugin_root = $retiredLivePluginRoot
-    removed_retired_live_plugin_root = $removedRetiredLivePluginRoot
+    retired_live_plugin_roots = $retiredLivePluginRoots
+    removed_retired_live_plugin_roots = $removedRetiredLivePluginRoots
 } | ConvertTo-Json -Depth 8
+

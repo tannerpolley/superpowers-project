@@ -27,11 +27,11 @@
 
 ## What To Build
 
-Use this repository as a smoke-test fixture for the Superpowers Project extension workflow: project context, brainstorming/spec output, writing-plan output, issue mirror validation, native-goal setup gates, and project-doctor drift checks.
+Use this repository as a smoke-test fixture for the Superpowers Project extension workflow: project context, brainstorming/spec output, writing-plan output, issue mirror validation, native-goal setup gates, and audit-project drift checks.
 
 ## Acceptance Criteria
 
-- [ ] `docs/superpowers/PROJECT_CONTEXT.md` contains the project context sections required by `$project-setup`.
+- [ ] `docs/superpowers/PROJECT_CONTEXT.md` contains the project context sections required by `$project:setup`.
 - [ ] `docs/superpowers/issues/` exists and contains at least one valid issue mirror.
 - [ ] The issue mirror validator accepts this pre-publication mirror with milestone enforcement.
 - [ ] The resolve-issue setup gate accepts structured native goal proof and rejects missing proof in the dummy repo validation.
@@ -61,3 +61,4 @@ Use this repository as a smoke-test fixture for the Superpowers Project extensio
 
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
+

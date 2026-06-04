@@ -12,21 +12,21 @@ This repository is the canonical source. The live Codex install is a deployment 
 
 ## Public Identity
 
-The public project identity is `codex-superpowers-project`. The plugin runtime identity remains `superpowers-project` so the router skill stays stable.
+The public project identity is `codex-superpowers-project`. The plugin runtime identity is `project`, so the prompt surface is plugin-scoped as `project:*`.
 
 This checkout may still be hosted under the older `milestones-plugin` repository name until the GitHub repo is renamed. New public documentation, installation paths, and plugin metadata should use Superpowers Project naming.
 
 ## Current Skills
 
-- `$superpowers-project`: routes extension workflows.
-- `$project-setup`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
-- `$project-brainstorm`: runs Superpowers brainstorming with native grilling.
-- `$project-plan`: writes Superpowers implementation plans with project context.
-- `$project-issue`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
-- `$project-resolve`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
-- `$project-orchestrate`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
-- `$project-merge`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
-- `$project-doctor`: audits project, GitHub, migration, and live-sync drift.
+- `$project:workflow`: routes extension workflows.
+- `$project:setup`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
+- `$project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
+- `$project:write-plan`: writes Superpowers implementation plans with project context.
+- `$project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
+- `$project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
+- `$project:orchestrate-issues`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
+- `$project:merge-changes`: reviews and merges PR-ready issue work, verifies linked issue closure, cleans owned branches and worktrees, prunes, and records clean repo proof.
+- `$project:audit-project`: audits project, GitHub, migration, and live-sync drift.
 
 ## Native Q&A Workflow
 
@@ -50,9 +50,9 @@ The main workflow is a chain of small native Codex questions. Each skill summari
 
 ## Quick Apply
 
-Quick Apply is the small-work escape hatch after `$project-plan`: it can apply a narrow, low-risk plan directly on local clean synced `main` only after the native `project_quick_apply_approval` question selects `Apply on Main`.
+Quick Apply is the small-work escape hatch after `$project:write-plan`: it can apply a narrow, low-risk plan directly on local clean synced `main` only after the native `project_quick_apply_approval` question selects `Apply on Main`.
 
-Use the bundled `skills/project-plan/scripts/validate-quick-apply.ps1` gate to require approval, focused verification commands, and cleanup hook evidence. Publishing after Quick Apply is handled by the normal native continuation question when `request_user_input` is callable. The issue-backed `$project-issue` and `$project-resolve` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed work, and PR-bound implementation.
+Use the bundled `skills/write-plan/scripts/validate-quick-apply.ps1` gate to require approval, focused verification commands, and cleanup hook evidence. Publishing after Quick Apply is handled by the normal native continuation question when `request_user_input` is callable. The issue-backed `$project:create-issues` and `$project:resolve-issue` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed work, and PR-bound implementation.
 
 ## Canonical Layout
 
@@ -97,11 +97,11 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Valid
 
 The sync script deploys this repo's plugin manifest and full skill implementations to:
 
-- `C:\Users\Tanner\plugins\superpowers-project`
+- `C:\Users\Tanner\plugins\project`
 
-It also deploys the same skill implementations to:
+It also deploys only the shared helper skill to:
 
-- `C:\Users\Tanner\.agents\skills`
+- `C:\Users\Tanner\.agents\skills\advanced-user-input`
 
 ## Install
 
@@ -119,4 +119,5 @@ If you are installing from the current pre-rename repository checkout, run the s
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
-After install, start with `$superpowers-project` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.
+After install, start with `$project:workflow` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.
+

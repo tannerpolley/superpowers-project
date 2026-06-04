@@ -269,23 +269,23 @@ Router for project extension workflows. It decides whether the user needs setup,
 
 Creates and maintains `docs/superpowers/PROJECT_CONTEXT.md` and `docs/superpowers/milestones`. It owns the large-scope explanation of why specs, plans, and issues exist.
 
-### `project-brainstorm`
+### `brainstorm-spec`
 
 Runs Superpowers brainstorming with Matt-style grilling, native UI questions, project context, and milestone awareness. Writes specs under `docs/superpowers/specs`.
 
-### `project-plan`
+### `write-plan`
 
 Runs Superpowers writing-plans with project context, source spec/PRD linkage, issue linkage when present, native UI questions, and grilling. Writes plans under `docs/superpowers/plans`.
 
-### `project-issue`
+### `create-issues`
 
 Converts approved specs or plans into vertical-slice issue mirrors and GitHub issues. It owns AFK/HITL classification, blocked-by relationships, acceptance checkboxes, GitHub labels, and milestone assignment.
 
-### `project-resolve`
+### `resolve-issue`
 
 Executes one issue through native `/goal` and Superpowers methods. It reads the issue mirror and source plan, verifies GitHub linkage, starts or verifies the goal, executes, validates, merges, closes, syncs, and records cleanup evidence.
 
-### `project-doctor`
+### `audit-project`
 
 Audits drift between project context, milestone pages, specs, plans, issue mirrors, GitHub issues, GitHub milestones, labels, ADRs, and live plugin deployment.
 
@@ -326,7 +326,7 @@ Validation should include:
 - dummy repo project context creation;
 - dummy repo brainstorm/spec creation using native UI contract checks where testable;
 - dummy repo plan creation;
-- dummy repo project-issue mirror generation;
+- dummy repo create-issues mirror generation;
 - dummy GitHub issue creation path through fixtures or a dry-run mode;
 - dummy issue resolution setup proving `/goal` is required and GoalBuddy boards are not created;
 - final sync-live validation.
@@ -342,3 +342,4 @@ Validation should include:
 - GoalBuddy boards are not part of default issue resolution.
 - Native `/goal` is required for issue execution.
 - Dummy repo validation is required before considering the extension ready.
+

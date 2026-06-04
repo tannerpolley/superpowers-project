@@ -21,10 +21,17 @@ function Assert-ChildDirectory {
 function Copy-SkillDirectories {
     param(
         [Parameter(Mandatory = $true)][string]$SourceRoot,
-        [Parameter(Mandatory = $true)][string]$TargetRoot
+        [Parameter(Mandatory = $true)][string]$TargetRoot,
+        [string[]]$SkillNames = @()
     )
     New-Item -ItemType Directory -Path $TargetRoot -Force | Out-Null
-    foreach ($sourceSkill in (Get-ChildItem -LiteralPath $SourceRoot -Directory | Sort-Object Name)) {
+    $sourceSkills = @(Get-ChildItem -LiteralPath $SourceRoot -Directory | Sort-Object Name)
+    if ($SkillNames.Count -gt 0) {
+        $sourceSkills = @($sourceSkills | Where-Object { $SkillNames -contains $_.Name })
+        $missing = @($SkillNames | Where-Object { -not (Test-Path -LiteralPath (Join-Path $SourceRoot $_) -PathType Container) })
+        if ($missing.Count -gt 0) { throw "missing selected skill source(s): $($missing -join ', ')" }
+    }
+    foreach ($sourceSkill in $sourceSkills) {
         $target = Join-Path $TargetRoot $sourceSkill.Name
         Assert-ChildDirectory -Parent $TargetRoot -Child $target
         if (Test-Path -LiteralPath $target) {

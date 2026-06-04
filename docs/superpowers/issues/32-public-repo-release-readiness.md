@@ -5,9 +5,9 @@
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-03-public-release-readiness-design.md
 **Source Plan:** docs/superpowers/plans/2026-06-03-public-release-readiness-plan.md
-**Classification:** HITL
-**Labels:** type:task, status:triage
-**Goal Command:** None
+**Classification:** AFK
+**Labels:** type:task, status:ready
+**Goal Command:** /goal Make Superpowers Project docs and install instructions public-ready without renaming or publishing the remote repository.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -24,6 +24,10 @@
 **Worktree Cleanup Policy:** Remove owned worktree after merge
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
+## Approval Decision
+
+Native approval selected `Docs/Install Ready`: make the repo documentation, install instructions, and manifest surface public-ready. Do not rename the GitHub repository or change repository visibility in this issue.
+
 ## What To Build
 
 Prepare the repo for public sharing, including public-facing docs and install instructions. Keep remote rename and public visibility changes behind explicit native approval.
@@ -35,11 +39,11 @@ Prepare the repo for public sharing, including public-facing docs and install in
 - [ ] Manifest metadata includes repository, homepage, license, and keywords.
 - [ ] Issue templates and active docs use Superpowers Project naming and `docs/superpowers/issues` paths.
 - [ ] Validation and live sync pass before any public release claim.
-- [ ] GitHub repo rename or visibility changes require explicit user approval and are recorded.
+- [ ] The docs/install readiness decision records that remote repo rename and visibility mutation are out of scope for this pass.
 
 ## Blocked by
 
-- User approval for remote GitHub rename and public visibility changes.
+- None.
 
 ## Non-goals
 

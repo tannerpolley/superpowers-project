@@ -43,7 +43,7 @@ function New-HappyLedger {
         topology = [pscustomobject]@{ question_id = "implement_plan_topology"; selected_mode = "inline" }
         verification = [pscustomobject]@{ passed = $true; commands = @("pwsh test") }
         publish_permission = [pscustomobject]@{ question_id = "implement_plan_publish_permission"; selected_action = "push" }
-        merge_ready = [pscustomobject]@{ ready = $true; route = "project-merge"; mode = "pr-no-issue" }
+        merge_ready = [pscustomobject]@{ ready = $true; route = "merge-changes"; mode = "pr-no-issue" }
     }
 }
 
@@ -73,7 +73,7 @@ $scenarios = @(
             'superpowers:verification-before-completion',
             'implement_plan_publish_permission',
             'merge-ready',
-            'project-merge'
+            'merge-changes'
         )) {
             Assert-Contains $text $needle "missing implement-plan contract: $needle"
             Assert-Contains $metadata $needle "missing implement-plan metadata: $needle"
@@ -125,3 +125,4 @@ $scenarios | ConvertTo-Json -Depth 6
 if ($failedScenarios.Count -gt 0) {
     throw "implement-plan scenario tests failed: $($failedScenarios.name -join ', ')"
 }
+

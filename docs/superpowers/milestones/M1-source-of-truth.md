@@ -13,14 +13,14 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 ## Related Specs
 
 - `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
-- `docs/superpowers/specs/2026-06-03-project-setup-orchestration-design.md`
+- `docs/superpowers/specs/2026-06-03-setup-orchestration-design.md`
 - `docs/superpowers/specs/2026-06-03-project-plugin-namespace-skill-naming-design.md`
 - `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
 
 ## Related Plans
 
 - `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
-- `docs/superpowers/plans/2026-06-03-project-setup-orchestration-plan.md`
+- `docs/superpowers/plans/2026-06-03-setup-orchestration-plan.md`
 - `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
 
 ## Related Issues
@@ -41,3 +41,4 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - [#5 Validate skill docs against script parameters](https://github.com/tannerpolley/milestones-plugin/issues/5) closed by [PR #11](https://github.com/tannerpolley/milestones-plugin/pull/11).
 - [#6 Normalize GitHub check states consistently](https://github.com/tannerpolley/milestones-plugin/issues/6) closed by [PR #12](https://github.com/tannerpolley/milestones-plugin/pull/12).
 - [#7 Generate resolve and merge evidence ledgers](https://github.com/tannerpolley/milestones-plugin/issues/7) closed by [PR #14](https://github.com/tannerpolley/milestones-plugin/pull/14).
+

@@ -28,8 +28,8 @@ Invoke-Scenario "shared helper exists" {
 }
 
 Invoke-Scenario "project merge premerge uses shared helper" {
-    $premergePath = Join-Path $repoRoot "skills\project-merge\scripts\premerge.ps1"
-    $contractPath = Join-Path $repoRoot "skills\project-merge\scripts\lib\contract.ps1"
+    $premergePath = Join-Path $repoRoot "skills\merge-changes\scripts\premerge.ps1"
+    $contractPath = Join-Path $repoRoot "skills\merge-changes\scripts\lib\contract.ps1"
     $premerge = Get-Content -LiteralPath $premergePath -Raw
     $contract = Get-Content -LiteralPath $contractPath -Raw
     if (-not ($premerge.Contains("Test-GitHubRequiredChecks") -or $contract.Contains("Test-GitHubRequiredChecks"))) {
@@ -86,3 +86,4 @@ Invoke-Scenario "cancelled and timed-out required checks block" {
 $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
+

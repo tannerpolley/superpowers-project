@@ -19,11 +19,11 @@
 - Plugin identity and README describe the extension as **Superpowers Project**, not a separate Milestones artifact system.
 - Canonical project artifacts use `docs/superpowers/PROJECT_CONTEXT.md`, `docs/superpowers/specs`, `docs/superpowers/plans`, `docs/superpowers/issues`, and `docs/superpowers/milestones`.
 - New canonical skills do not instruct agents to write active specs, plans, or issue mirrors under `docs/milestones`.
-- `project-brainstorm` preserves Superpowers brainstorming and Matt-style grilling, including native `request_user_input` in Default mode when callable.
-- `project-plan` preserves Superpowers writing-plans structure and writes to `docs/superpowers/plans`.
-- `project-issue` uses vertical-slice issue decomposition, AFK/HITL classification, blocked-by relationships, GitHub issue mirrors, labels, and milestones.
-- `project-resolve` requires native `/goal` or goal-tool proof before issue execution and does not create GoalBuddy boards.
-- `project-doctor` audits drift across project context, milestones, specs, plans, issue mirrors, GitHub issues, labels, and live plugin sync.
+- `brainstorm-spec` preserves Superpowers brainstorming and Matt-style grilling, including native `request_user_input` in Default mode when callable.
+- `write-plan` preserves Superpowers writing-plans structure and writes to `docs/superpowers/plans`.
+- `create-issues` uses vertical-slice issue decomposition, AFK/HITL classification, blocked-by relationships, GitHub issue mirrors, labels, and milestones.
+- `resolve-issue` requires native `/goal` or goal-tool proof before issue execution and does not create GoalBuddy boards.
+- `audit-project` audits drift across project context, milestones, specs, plans, issue mirrors, GitHub issues, labels, and live plugin sync.
 - `scripts/sync-live.ps1 -Validate` removes retired Milestones-owned skill directories from live deploy paths.
 - A dummy repo scenario proves setup, spec, plan, issue mirror, GitHub fixture, and goal-required execution gates.
 
@@ -40,13 +40,13 @@
 - Create: `docs/superpowers/milestones/M0-governance.md`
 - Create: `docs/superpowers/milestones/M1-source-of-truth.md`
 - Create: `docs/superpowers/milestones/M2-distribution.md`
-- Create: `canonical-skills/superpowers-project/`
+- Create: `canonical-skills/workflow/`
 - Create: `canonical-skills/project-context/`
-- Create: `canonical-skills/project-brainstorm/`
-- Create: `canonical-skills/project-plan/`
-- Create: `canonical-skills/project-issue/`
-- Modify: `canonical-skills/project-resolve/`
-- Create: `canonical-skills/project-doctor/`
+- Create: `canonical-skills/brainstorm-spec/`
+- Create: `canonical-skills/write-plan/`
+- Create: `canonical-skills/create-issues/`
+- Modify: `canonical-skills/resolve-issue/`
+- Create: `canonical-skills/audit-project/`
 - Create matching plugin wrappers under `skills/<skill-name>/`
 - Modify: `scripts/sync-live.ps1`
 - Modify: `scripts/validate.ps1`
@@ -60,11 +60,11 @@ Active skills after migration:
 
 - `superpowers-project`
 - `project-context`
-- `project-brainstorm`
-- `project-plan`
-- `project-issue`
-- `project-resolve`
-- `project-doctor`
+- `brainstorm-spec`
+- `write-plan`
+- `create-issues`
+- `resolve-issue`
+- `audit-project`
 
 Retired skill names after migration:
 
@@ -75,7 +75,7 @@ Retired skill names after migration:
 - `convert-idea-to-issue`
 - `milestones-doctor`
 
-`project-resolve` remains because the name now matches the desired native goal-backed execution role.
+`resolve-issue` remains because the name now matches the desired native goal-backed execution role.
 
 ## Task 1: Establish The Superpowers Project Artifact Contract
 
@@ -117,11 +117,11 @@ Issue execution uses native `/goal` or goal tools plus Superpowers execution ski
 
 - `superpowers-project`
 - `project-context`
-- `project-brainstorm`
-- `project-plan`
-- `project-issue`
-- `project-resolve`
-- `project-doctor`
+- `brainstorm-spec`
+- `write-plan`
+- `create-issues`
+- `resolve-issue`
+- `audit-project`
 ```
 
 - [ ] **Step 2: Write milestone pages under `docs/superpowers/milestones`**
@@ -271,7 +271,7 @@ $retiredPluginSkillNames = @(
 )
 ```
 
-Do not include `project-resolve` in the retired list.
+Do not include `resolve-issue` in the retired list.
 
 - [ ] **Step 3: Update validation to reject active old canonical paths**
 
@@ -308,27 +308,27 @@ git commit -m "feat: rename plugin to superpowers project"
 ## Task 3: Add The Project Router And Project Context Skill
 
 **Files:**
-- Create: `canonical-skills/superpowers-project/SKILL.md`
-- Create: `canonical-skills/superpowers-project/agents/openai.yaml`
-- Create: `canonical-skills/superpowers-project/scripts/test-scenarios.ps1`
+- Create: `canonical-skills/workflow/SKILL.md`
+- Create: `canonical-skills/workflow/agents/openai.yaml`
+- Create: `canonical-skills/workflow/scripts/test-scenarios.ps1`
 - Create: `canonical-skills/project-context/SKILL.md`
 - Create: `canonical-skills/project-context/agents/openai.yaml`
 - Create: `canonical-skills/project-context/scripts/test-scenarios.ps1`
-- Create: `skills/superpowers-project/SKILL.md`
+- Create: `skills/workflow/SKILL.md`
 - Create: `skills/project-context/SKILL.md`
 - Test: targeted scenario scripts
 
 - [ ] **Step 1: Write failing router scenario tests**
 
-Create `canonical-skills/superpowers-project/scripts/test-scenarios.ps1` with assertions that `SKILL.md` contains:
+Create `canonical-skills/workflow/scripts/test-scenarios.ps1` with assertions that `SKILL.md` contains:
 
 ```text
 project-context
-project-brainstorm
-project-plan
-project-issue
-project-resolve
-project-doctor
+brainstorm-spec
+write-plan
+create-issues
+resolve-issue
+audit-project
 superpowers:brainstorming
 superpowers:writing-plans
 superpowers:executing-plans
@@ -347,11 +347,11 @@ Expected: fails because the skill does not exist yet.
 
 - [ ] **Step 2: Create `superpowers-project` skill**
 
-Create `canonical-skills/superpowers-project/SKILL.md` with this contract:
+Create `canonical-skills/workflow/SKILL.md` with this contract:
 
 ```markdown
 ---
-name: superpowers-project
+name: workflow
 description: Route Superpowers Project extension requests to project context, brainstorming, planning, issue creation, issue triage, doctor, or goal-backed resolution workflows.
 ---
 
@@ -362,11 +362,11 @@ This skill is the router for the Superpowers Project extension. It does not repl
 ## Routing
 
 - Project setup or roadmap context: `$project-context`
-- Brainstorming, specs, PRDs, or broad product/architecture design: `$project-brainstorm`
-- Implementation planning: `$project-plan`
-- Issue decomposition or GitHub issue creation: `$project-issue`
-- One issue execution: `$project-resolve`
-- Drift audit or migration: `$project-doctor`
+- Brainstorming, specs, PRDs, or broad product/architecture design: `$project:brainstorm-spec`
+- Implementation planning: `$project:write-plan`
+- Issue decomposition or GitHub issue creation: `$project:create-issues`
+- One issue execution: `$project:resolve-issue`
+- Drift audit or migration: `$project:audit-project`
 
 ## Artifact Root
 
@@ -424,24 +424,24 @@ Expected: both exit zero.
 Run:
 
 ```powershell
-git add canonical-skills/superpowers-project canonical-skills/project-context skills/superpowers-project skills/project-context
+git add canonical-skills/workflow canonical-skills/project-context skills/workflow skills/project-context
 git commit -m "feat: add superpowers project routing skills"
 ```
 
 ## Task 4: Replace Brainstorming And Planning Adapters
 
 **Files:**
-- Create: `canonical-skills/project-brainstorm/`
-- Create: `canonical-skills/project-plan/`
-- Create: `skills/project-brainstorm/`
-- Create: `skills/project-plan/`
+- Create: `canonical-skills/brainstorm-spec/`
+- Create: `canonical-skills/write-plan/`
+- Create: `skills/brainstorm-spec/`
+- Create: `skills/write-plan/`
 - Delete: `canonical-skills/explore-ideas/`
 - Delete: `canonical-skills/milestone-writing-issue-plan/`
 - Delete: `skills/explore-ideas/`
 - Delete: `skills/milestone-writing-issue-plan/`
 - Test: targeted scenario scripts
 
-- [ ] **Step 1: Write `project-brainstorm` scenario tests**
+- [ ] **Step 1: Write `brainstorm-spec` scenario tests**
 
 The test must assert the skill text contains:
 
@@ -460,9 +460,9 @@ improve-codebase-architecture
 
 The test must assert the skill text does not present `docs/milestones/<milestone-folder>/ideas` as an active write target.
 
-- [ ] **Step 2: Create `project-brainstorm` skill**
+- [ ] **Step 2: Create `brainstorm-spec` skill**
 
-Create `canonical-skills/project-brainstorm/SKILL.md` as a Superpowers brainstorming adapter:
+Create `canonical-skills/brainstorm-spec/SKILL.md` as a Superpowers brainstorming adapter:
 
 - announce that it uses Superpowers brainstorming;
 - inspect project context first;
@@ -475,7 +475,7 @@ Create `canonical-skills/project-brainstorm/SKILL.md` as a Superpowers brainstor
 - use architecture opportunity language when architecture work dominates;
 - save specs to `docs/superpowers/specs`.
 
-- [ ] **Step 3: Write `project-plan` scenario tests**
+- [ ] **Step 3: Write `write-plan` scenario tests**
 
 The test must assert the skill text contains:
 
@@ -493,9 +493,9 @@ superpowers:verification-before-completion
 
 The test must assert the skill text does not present `docs/milestones/<milestone-folder>/issues` as an active write target.
 
-- [ ] **Step 4: Create `project-plan` skill**
+- [ ] **Step 4: Create `write-plan` skill**
 
-Create `canonical-skills/project-plan/SKILL.md` as a Superpowers writing-plans adapter:
+Create `canonical-skills/write-plan/SKILL.md` as a Superpowers writing-plans adapter:
 
 - preserve the Superpowers plan header exactly;
 - write plans to `docs/superpowers/plans`;
@@ -524,8 +524,8 @@ Use git removal so deletions are tracked.
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-brainstorm\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-plan\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\brainstorm-spec\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\write-plan\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
 ```
 
@@ -536,7 +536,7 @@ Expected: all exit zero.
 Run:
 
 ```powershell
-git add canonical-skills/project-brainstorm canonical-skills/project-plan skills/project-brainstorm skills/project-plan
+git add canonical-skills/brainstorm-spec canonical-skills/write-plan skills/brainstorm-spec skills/write-plan
 git add -u canonical-skills/explore-ideas canonical-skills/milestone-writing-issue-plan skills/explore-ideas skills/milestone-writing-issue-plan
 git commit -m "feat: add superpowers brainstorming and planning adapters"
 ```
@@ -544,13 +544,13 @@ git commit -m "feat: add superpowers brainstorming and planning adapters"
 ## Task 5: Replace Issue Creation With Plan-To-Issue
 
 **Files:**
-- Create: `canonical-skills/project-issue/`
-- Create: `skills/project-issue/`
+- Create: `canonical-skills/create-issues/`
+- Create: `skills/create-issues/`
 - Delete: `canonical-skills/convert-idea-to-issue/`
 - Delete: `skills/convert-idea-to-issue/`
-- Test: `canonical-skills/project-issue/scripts/test-scenarios.ps1`
+- Test: `canonical-skills/create-issues/scripts/test-scenarios.ps1`
 
-- [ ] **Step 1: Write failing `project-issue` tests**
+- [ ] **Step 1: Write failing `create-issues` tests**
 
 The scenario script must test that the skill requires:
 
@@ -573,9 +573,9 @@ status:blocked
 
 It must also test that bug issues require a feedback-loop or repro section.
 
-- [ ] **Step 2: Create `project-issue` skill**
+- [ ] **Step 2: Create `create-issues` skill**
 
-Create `canonical-skills/project-issue/SKILL.md` that borrows `to-issues` behavior:
+Create `canonical-skills/create-issues/SKILL.md` that borrows `to-issues` behavior:
 
 - read source spec or plan;
 - inspect project context and milestone pages;
@@ -591,7 +591,7 @@ Create `canonical-skills/project-issue/SKILL.md` that borrows `to-issues` behavi
 
 - [ ] **Step 3: Create issue mirror validation script**
 
-Create `canonical-skills/project-issue/scripts/validate-issue-mirror.ps1` that validates:
+Create `canonical-skills/create-issues/scripts/validate-issue-mirror.ps1` that validates:
 
 - file path is under `docs/superpowers/issues`;
 - source spec or source plan exists;
@@ -615,18 +615,18 @@ skills/convert-idea-to-issue
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-issue\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\create-issues\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
 ```
 
 Expected: both exit zero.
 
-- [ ] **Step 6: Commit project-issue**
+- [ ] **Step 6: Commit create-issues**
 
 Run:
 
 ```powershell
-git add canonical-skills/project-issue skills/project-issue
+git add canonical-skills/create-issues skills/create-issues
 git add -u canonical-skills/convert-idea-to-issue skills/convert-idea-to-issue
 git commit -m "feat: add superpowers issue mirror generation"
 ```
@@ -634,15 +634,15 @@ git commit -m "feat: add superpowers issue mirror generation"
 ## Task 6: Rebuild Issue Resolution Around Native Goal
 
 **Files:**
-- Modify: `canonical-skills/project-resolve/SKILL.md`
-- Modify: `canonical-skills/project-resolve/agents/openai.yaml`
-- Modify: `canonical-skills/project-resolve/scripts/prepare-execution.ps1`
-- Modify: `canonical-skills/project-resolve/scripts/validate-setup.ps1`
-- Modify: `canonical-skills/project-resolve/scripts/preflight.ps1`
-- Modify: `canonical-skills/project-resolve/scripts/premerge.ps1`
-- Modify: `canonical-skills/project-resolve/scripts/closeout.ps1`
-- Delete: `canonical-skills/project-resolve/scripts/validate-goalbuddy-contract.mjs`
-- Test: `canonical-skills/project-resolve/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/resolve-issue/SKILL.md`
+- Modify: `canonical-skills/resolve-issue/agents/openai.yaml`
+- Modify: `canonical-skills/resolve-issue/scripts/prepare-execution.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/validate-setup.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/preflight.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/premerge.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/closeout.ps1`
+- Delete: `canonical-skills/resolve-issue/scripts/validate-goalbuddy-contract.mjs`
+- Test: `canonical-skills/resolve-issue/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Write failing native-goal scenario tests**
 
@@ -735,7 +735,7 @@ Closeout must:
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-resolve\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
 ```
 
@@ -746,15 +746,15 @@ Expected: both exit zero.
 Run:
 
 ```powershell
-git add canonical-skills/project-resolve
+git add canonical-skills/resolve-issue
 git commit -m "feat: resolve issues with native goals"
 ```
 
 ## Task 7: Add Project Doctor And Remove Old Milestones Workflow
 
 **Files:**
-- Create: `canonical-skills/project-doctor/`
-- Create: `skills/project-doctor/`
+- Create: `canonical-skills/audit-project/`
+- Create: `skills/audit-project/`
 - Delete: `canonical-skills/milestones-doctor/`
 - Delete: `canonical-skills/setup-project-milestones/`
 - Delete: `canonical-skills/using-milestones/`
@@ -764,7 +764,7 @@ git commit -m "feat: resolve issues with native goals"
 - Modify: `scripts/validate.ps1`
 - Test: targeted scenario scripts
 
-- [ ] **Step 1: Write `project-doctor` tests**
+- [ ] **Step 1: Write `audit-project` tests**
 
 The scenario script must prove the doctor audits:
 
@@ -779,9 +779,9 @@ The scenario script must prove the doctor audits:
 - retired `docs/milestones` canonical usage;
 - live plugin sync drift.
 
-- [ ] **Step 2: Create `project-doctor` skill**
+- [ ] **Step 2: Create `audit-project` skill**
 
-Create `canonical-skills/project-doctor/SKILL.md` with:
+Create `canonical-skills/audit-project/SKILL.md` with:
 
 - report-first behavior;
 - no mutation without user approval;
@@ -810,11 +810,11 @@ Ensure `scripts/validate.ps1` now expects wrappers exactly for:
 ```text
 superpowers-project
 project-context
-project-brainstorm
-project-plan
-project-issue
-project-resolve
-project-doctor
+brainstorm-spec
+write-plan
+create-issues
+resolve-issue
+audit-project
 ```
 
 - [ ] **Step 5: Run validation**
@@ -822,7 +822,7 @@ project-doctor
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-doctor\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\audit-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
 ```
 
@@ -833,7 +833,7 @@ Expected: both exit zero.
 Run:
 
 ```powershell
-git add canonical-skills/project-doctor skills/project-doctor scripts/validate.ps1
+git add canonical-skills/audit-project skills/audit-project scripts/validate.ps1
 git add -u canonical-skills/milestones-doctor canonical-skills/setup-project-milestones canonical-skills/using-milestones
 git add -u skills/milestones-doctor skills/setup-project-milestones skills/using-milestones
 git commit -m "feat: add project doctor and retire milestones skills"
@@ -972,3 +972,4 @@ Before claiming this plan is complete, verify:
 - GoalBuddy board creation is absent from default execution scripts.
 - Dummy repo validation proves the full extension loop.
 - Full validation and sync-live validation exit zero.
+

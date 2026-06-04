@@ -9,11 +9,11 @@ This spec covers skill behavior only. The public SVG flowchart is covered by `do
 ## Project Context Evidence
 
 - `docs/superpowers/PROJECT_CONTEXT.md` defines the project as a Superpowers extension with durable context, roadmap mapping, GitHub issue linkage, native user-input grilling, and `/goal` issue execution.
-- Existing repo skills are `superpowers-project`, `project-setup`, `project-brainstorm`, `project-plan`, `project-issue`, `project-resolve`, `project-orchestrate`, `project-merge`, and `project-doctor`.
+- Existing repo skills are `superpowers-project`, `setup`, `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, and `audit-project`.
 - There is no repo skill named `project-implement` yet.
-- `project-resolve` is issue-bound and requires an issue mirror, linked source plan, native goal proof, branch setup, Superpowers execution, verification, push, PR creation, and PR-ready handoff.
-- `project-orchestrate` currently derives worker identity from one canonical issue and manages worker-thread issue execution.
-- `project-merge` is currently PR-bound and issue-close-aware.
+- `resolve-issue` is issue-bound and requires an issue mirror, linked source plan, native goal proof, branch setup, Superpowers execution, verification, push, PR creation, and PR-ready handoff.
+- `orchestrate-issues` currently derives worker identity from one canonical issue and manages worker-thread issue execution.
+- `merge-changes` is currently PR-bound and issue-close-aware.
 - `advanced-user-input` exists as a user-level skill and defines nested bounded native choice patterns.
 - Superpowers `executing-plans` requires loading a written plan, critically reviewing it, executing tasks exactly, verifying each task, stopping on blockers, and finishing through `finishing-a-development-branch`.
 - GitHub issue #21 already tracks Doctor tracker hygiene and repair: <https://github.com/tannerpolley/milestones-plugin/issues/21>.
@@ -29,10 +29,10 @@ This spec covers skill behavior only. The public SVG flowchart is covered by `do
 - `project-implement` does not create GitHub issue mirrors and must not claim issue closure.
 - Do not create a canonical `docs/superpowers/implementations` folder by default. The plan plus branch, goal, verification, native publish permission, and merge proof are sufficient.
 - Push approval happens before PR-ready or merge-ready handoff.
-- `project-merge` should integrate issue-backed PRs, non-issue PRs, and local branch merges.
+- `merge-changes` should integrate issue-backed PRs, non-issue PRs, and local branch merges.
 - Local branch merges are allowed only from clean synced `main` with validation and cleanup proof.
 - Merge decline/no should route to user review. If reassessment is chosen, use nested native Q&A to choose Plan for strict test/execution revision or Brainstorm for loose idea/spec reassessment.
-- `project-orchestrate` can start from a broad request to choose ready issues. It should inspect local mirrors and GitHub state together, recommend unblocked high-priority work, and ask how many issues/worktrees to manage.
+- `orchestrate-issues` can start from a broad request to choose ready issues. It should inspect local mirrors and GitHub state together, recommend unblocked high-priority work, and ask how many issues/worktrees to manage.
 - If local and GitHub issue state disagree about readiness, blockers, closed/open state, or project status, Orchestrate should stop and route to Doctor rather than guessing.
 - Doctor tracker hygiene repair itself belongs to issue #21 unless a later plan explicitly chooses to implement that issue.
 - Bundle `advanced-user-input` into the plugin as a first-class skill dependency.
@@ -44,9 +44,9 @@ Implement this as a skill-system expansion:
 
 1. Bundle `advanced-user-input` under `skills/advanced-user-input`.
 2. Add `skills/project-implement`.
-3. Update `superpowers-project` and `project-plan` routing so Implement is a first-class path after Plan.
-4. Update `project-merge` to classify integration mode: `pr-issue`, `pr-no-issue`, or `local-branch`.
-5. Update `project-orchestrate` to support autonomous ready-issue selection and to block on local/GitHub tracker drift.
+3. Update `superpowers-project` and `write-plan` routing so Implement is a first-class path after Plan.
+4. Update `merge-changes` to classify integration mode: `pr-issue`, `pr-no-issue`, or `local-branch`.
+5. Update `orchestrate-issues` to support autonomous ready-issue selection and to block on local/GitHub tracker drift.
 6. Add validation and scenario tests for the new skill and routing contracts.
 
 ## Project Implement Contract
@@ -65,18 +65,18 @@ Implement this as a skill-system expansion:
 - Use `superpowers:finishing-a-development-branch` before integration.
 - Ask a native publish permission question before pushing or marking work merge-ready.
 - Produce merge-ready proof from the plan, branch, native goal, verification output, native publish permission, and finishing-branch result.
-- Route to `project-merge`.
+- Route to `merge-changes`.
 
 `project-implement` should not:
 
 - Create GitHub issue mirrors.
 - Claim to close a GitHub issue.
 - Skip branch, verification, native goal, or finishing discipline.
-- Replace `project-resolve` for issue-backed work.
+- Replace `resolve-issue` for issue-backed work.
 
 ## Merge Contract Changes
 
-`project-merge` should classify intake as:
+`merge-changes` should classify intake as:
 
 - `pr-issue`: PR closes a GitHub issue. Existing issue closure and mirror cleanup rules apply.
 - `pr-no-issue`: PR is linked to a plan but does not close an issue. Require plan linkage, verification coverage, branch push proof, PR merge proof, cleanup proof, and no issue-closure expectation.
@@ -95,7 +95,7 @@ If Reassess is selected, ask the child branch:
 
 ## Orchestrate Contract Changes
 
-`project-orchestrate` should support:
+`orchestrate-issues` should support:
 
 - explicit issue mode for named issue mirrors;
 - autonomous selection mode when the user asks it to pick ready work.
@@ -110,12 +110,12 @@ Bundle `advanced-user-input` into `skills/advanced-user-input`.
 
 Project skills should reference it for nested decision trees where native UI has too many branches for one question:
 
-- `project-brainstorm`: scope, naming, route, and design tradeoffs.
-- `project-plan`: Issue, Implement, review, revise, or stop continuation.
+- `brainstorm-spec`: scope, naming, route, and design tradeoffs.
+- `write-plan`: Issue, Implement, review, revise, or stop continuation.
 - `project-implement`: topology, publish permission, and merge route.
-- `project-resolve`: publish permission and PR-ready routing.
-- `project-orchestrate`: issue-set selection, worker count, recovery, and publish approval.
-- `project-merge`: merge approval, decline/reassess routing, and post-merge continuation.
+- `resolve-issue`: publish permission and PR-ready routing.
+- `orchestrate-issues`: issue-set selection, worker count, recovery, and publish approval.
+- `merge-changes`: merge approval, decline/reassess routing, and post-merge continuation.
 
 Native UI prompts should use as many questions and options as the decision requires when the active Codex Desktop runtime supports it. Larger decision trees should be decomposed into sequential branches only when the first answer changes which follow-up questions matter.
 
@@ -141,10 +141,10 @@ Native UI prompts should use as many questions and options as the decision requi
 - `skills/project-implement/SKILL.md` exists and validates.
 - `scripts/validate.ps1` active skill list includes `advanced-user-input` and `project-implement`.
 - `superpowers-project` routes to Implement.
-- `project-plan` continuation includes Project Implement and no longer treats branch-backed non-issue work as Quick Apply.
+- `write-plan` continuation includes Project Implement and no longer treats branch-backed non-issue work as Quick Apply.
 - `project-implement` scenario tests cover missing plan, missing goal proof, inline topology, worktree topology, native publish permission, and merge-ready proof.
-- `project-merge` scenario tests cover `pr-issue`, `pr-no-issue`, and `local-branch`.
-- `project-orchestrate` scenario tests cover autonomous ready issue selection and local/GitHub drift reroute to Doctor.
+- `merge-changes` scenario tests cover `pr-issue`, `pr-no-issue`, and `local-branch`.
+- `orchestrate-issues` scenario tests cover autonomous ready issue selection and local/GitHub drift reroute to Doctor.
 - Validation rejects non-issue work that claims issue closure.
 - Validation rejects merge-ready work without native publish permission proof.
 
@@ -159,3 +159,4 @@ Native UI prompts should use as many questions and options as the decision requi
 - Consistency check: this spec excludes SVG work and focuses on skill behavior.
 - Scope check: this should become one implementation plan with multiple tasks, or be split further if the plan becomes too large.
 - Ambiguity check: remaining helper and Doctor-scope questions are planning questions, not hidden assumptions.
+
