@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Native Q&amp;A Flow Preview</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --page: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #374151;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      gap: 16px;
+      align-items: baseline;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--page);
+    }
+
+    strong {
+      font-size: 16px;
+    }
+
+    span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main {
+      padding: 24px;
+    }
+
+    .preview {
+      width: min(100%, 3000px);
+      background: #fff;
+      box-shadow: 0 12px 40px rgb(0 0 0 / 35%);
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Native Q&amp;A Flow Preview</strong>
+    <span>Fit-to-screen preview of the 3000px SVG; browser zoom can inspect details</span>
+  </header>
+  <main>
+    <div class="preview">
+      <img src="native-qa-main-flow.svg" alt="Native Q&amp;A workflow flowchart">
+    </div>
+  </main>
+</body>
+</html>

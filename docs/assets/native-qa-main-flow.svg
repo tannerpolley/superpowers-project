@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1960" viewBox="0 0 1400 1960" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="3000" height="5340" viewBox="0 0 3000 5340" role="img" aria-labelledby="title desc">
   <title id="title">Native Q&amp;A main workflow flowchart</title>
-  <desc id="desc">A fixed-layout flowchart with Brainstorm, Plan, Issue, Resolve, and Merge aligned in one centered column. Gray side actions branch left. Stop nodes branch right. Revise routes return to the side of the originating skill box.</desc>
+  <desc id="desc">A fixed-layout flowchart for Superpowers Project. Main workflow boxes are stacked on a centered rail. Implement Plan and Create Issues are peer routes. Resolve Issue sits under Create Issues as the classic route while Orchestrate Issues sits beside it as the worker route. Review choices loop back to their originating skill. Stop / Done choices break the loop, while the final Healthy gate can finish at Done.</desc>
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L0,6 L9,3 z" class="arrow-head" />
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,7 L10,3.5 z" class="arrow-head" />
     </marker>
     <style>
       :root {
@@ -11,6 +11,7 @@
         --line: #111827;
         --label: #111827;
         --title: #111827;
+        --muted: #4b5563;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -18,162 +19,258 @@
           --line: #f8fafc;
           --label: #f8fafc;
           --title: #f8fafc;
+          --muted: #cbd5e1;
         }
       }
-      .title { font: 700 28px Arial, sans-serif; fill: var(--title); }
-      .node-title { font: 700 18px Arial, sans-serif; fill: #111827; text-anchor: middle; }
-      .node-text { font: 14px Arial, sans-serif; fill: #111827; text-anchor: middle; }
-      .label { font: 700 13px Arial, sans-serif; fill: var(--label); }
-      .small-label { font: 700 12px Arial, sans-serif; fill: var(--label); }
-      .start-text { font: 700 16px Arial, sans-serif; fill: #ffffff; text-anchor: middle; dominant-baseline: middle; }
-      .done-text { font: 700 15px Arial, sans-serif; fill: #166534; text-anchor: middle; dominant-baseline: middle; }
-      .stop-text { font: 700 15px Arial, sans-serif; fill: #991b1b; text-anchor: middle; dominant-baseline: middle; }
-      .skill { fill: #dbeafe; stroke: #2563eb; stroke-width: 3; }
-      .decision { fill: #fef3c7; stroke: #d97706; stroke-width: 3; }
-      .side { fill: #f3f4f6; stroke: #6b7280; stroke-width: 3; }
-      .start { fill: #0f172a; stroke: #020617; stroke-width: 3; }
-      .done { fill: #dcfce7; stroke: #16a34a; stroke-width: 3; }
-      .stop { fill: #fee2e2; stroke: #dc2626; stroke-width: 3; }
-      .arrow { fill: none; stroke: var(--line); stroke-width: 2.5; marker-end: url(#arrow); }
-      .line { fill: none; stroke: var(--line); stroke-width: 2.5; }
-      .arrow-head { fill: var(--line); }
       .canvas { fill: var(--bg); }
+      .title { font: 700 38px Arial, sans-serif; fill: var(--title); text-anchor: middle; }
+      .subtitle { font: 20px Arial, sans-serif; fill: var(--muted); text-anchor: middle; }
+      .node-title { font: 700 23px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .node-text { font: 17px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .decision-title { font: 700 21px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .decision-text { font: 16px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .label { font: 700 25px Arial, sans-serif; fill: var(--label); stroke: var(--bg); stroke-width: 7px; stroke-linejoin: round; paint-order: stroke fill; text-anchor: middle; }
+      .small-label { font: 700 22px Arial, sans-serif; fill: var(--label); stroke: var(--bg); stroke-width: 6px; stroke-linejoin: round; paint-order: stroke fill; text-anchor: middle; }
+      .start-text { font: 700 18px Arial, sans-serif; fill: #ffffff; text-anchor: middle; dominant-baseline: middle; }
+      .done-text { font: 700 17px Arial, sans-serif; fill: #166534; text-anchor: middle; dominant-baseline: middle; }
+      .stop-text { font: 700 16px Arial, sans-serif; fill: #991b1b; text-anchor: middle; dominant-baseline: middle; }
+      .skill { fill: #dbeafe; stroke: #2563eb; stroke-width: 4; }
+      .decision { fill: #fef3c7; stroke: #d97706; stroke-width: 4; }
+      .side { fill: #f3f4f6; stroke: #6b7280; stroke-width: 3.5; }
+      .note { fill: #f3f4f6; stroke: #6b7280; stroke-width: 3.5; }
+      .start { fill: #0f172a; stroke: #020617; stroke-width: 3.5; }
+      .done { fill: #dcfce7; stroke: #16a34a; stroke-width: 3.5; }
+      .stop { fill: #fee2e2; stroke: #dc2626; stroke-width: 3.5; }
+      .arrow { fill: none; stroke: var(--line); stroke-width: 3.25; marker-end: url(#arrow); }
+      .line { fill: none; stroke: var(--line); stroke-width: 3.25; }
+      .arrow-head { fill: var(--line); }
     </style>
   </defs>
 
-  <rect x="0" y="0" width="1400" height="1960" class="canvas" />
+  <rect x="0" y="0" width="3000" height="5340" class="canvas" />
+  <text x="1500" y="56" class="title">Native Q&amp;A Workflow</text>
+  <text x="1500" y="92" class="subtitle">Progress choices continue to the next skill. Review choices loop back. Stop choices break the loop. Healthy can finish at Done.</text>
 
-  <text x="700" y="32" class="title" text-anchor="middle">Native Q&amp;A Workflow</text>
+  <rect x="110" y="120" width="520" height="90" rx="5" class="side" />
+  <text x="370" y="154" class="node-title">Native Menu Rule</text>
+  <text x="370" y="181" class="node-text">Use more than three questions or options</text>
+  <text x="370" y="204" class="node-text">when that preserves real choices.</text>
 
-  <rect x="625" y="55" width="150" height="50" rx="25" class="start" />
-  <text x="700" y="80" class="start-text">Start</text>
+  <rect x="2370" y="120" width="500" height="90" rx="5" class="note" />
+  <text x="2620" y="154" class="node-title">Break Rule</text>
+  <text x="2620" y="181" class="node-text">Stop / Done breaks the loop.</text>
+  <text x="2620" y="204" class="node-text">Healthy -> Done is explicit.</text>
 
-  <rect x="520" y="150" width="360" height="90" rx="4" class="skill" />
-  <text x="700" y="178" class="node-title">Brainstorm</text>
-  <text x="700" y="202" class="node-text">define the idea, pressure-test assumptions,</text>
-  <text x="700" y="222" class="node-text">write the spec</text>
+  <rect x="1405" y="140" width="190" height="58" rx="29" class="start" />
+  <text x="1500" y="169" class="start-text">Start</text>
+  <line id="down-start-initiate" x1="1500" y1="198" x2="1500" y2="250" class="arrow down-route" />
 
-  <polygon points="700,275 820,335 700,395 580,335" class="decision" />
-  <text x="700" y="326" class="node-title">Continue</text>
-  <text x="700" y="348" class="node-text">from Brainstorm?</text>
+  <rect id="skill-initiate" x="1240" y="250" width="520" height="100" rx="5" class="skill main-skill" />
+  <text x="1500" y="286" class="node-title">Initiate Workflow</text>
+  <text x="1500" y="314" class="node-text">route setup, spec, plan, issue,</text>
+  <text x="1500" y="337" class="node-text">implementation, merge, or Doctor work</text>
+  <line id="down-initiate-d1" x1="1500" y1="350" x2="1500" y2="420" class="arrow down-route" />
+  <polygon id="decision-initiate" points="1500,420 1650,480 1500,540 1350,480" class="decision" />
+  <text x="1500" y="474" class="decision-title">Continue?</text>
+  <text x="1500" y="498" class="decision-text">from router</text>
+  <rect id="side-initiate" x="140" y="445" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="474" class="node-title">Review Route</text>
+  <text x="375" y="501" class="node-text">inspect intent again</text>
+  <polyline id="choice-initiate" points="1350,480 610,480" class="line revise-choice" />
+  <polyline id="return-initiate" points="375,445 375,300 1240,300" class="arrow revise-return" />
+  <text x="980" y="456" class="small-label">Review route</text>
+  <rect x="2560" y="455" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="480" class="stop-text">Stop / Done</text>
+  <polyline id="stop-initiate" points="1650,480 2560,480" class="arrow stop-route" />
+  <text x="2100" y="456" class="label">Stop here</text>
+  <line id="down-d1-setup" x1="1500" y1="540" x2="1500" y2="730" class="arrow down-route" />
+  <text x="1645" y="650" class="label">Setup project</text>
 
-  <rect x="520" y="465" width="360" height="90" rx="4" class="skill" />
-  <text x="700" y="493" class="node-title">Plan</text>
-  <text x="700" y="517" class="node-text">turn the approved spec</text>
-  <text x="700" y="537" class="node-text">into implementation steps</text>
+  <rect id="skill-setup" x="1240" y="730" width="520" height="100" rx="5" class="skill main-skill" />
+  <text x="1500" y="766" class="node-title">Setup Project</text>
+  <text x="1500" y="794" class="node-text">project context, roadmap, milestones,</text>
+  <text x="1500" y="817" class="node-text">GitHub tracker, and board setup</text>
+  <line id="down-setup-d2" x1="1500" y1="830" x2="1500" y2="900" class="arrow down-route" />
+  <polygon id="decision-setup" points="1500,900 1650,960 1500,1020 1350,960" class="decision" />
+  <text x="1500" y="954" class="decision-title">Continue?</text>
+  <text x="1500" y="978" class="decision-text">from setup</text>
+  <rect id="side-setup" x="140" y="925" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="954" class="node-title">Review Setup</text>
+  <text x="375" y="981" class="node-text">repair context or board drift</text>
+  <polyline id="choice-setup" points="1350,960 610,960" class="line revise-choice" />
+  <polyline id="return-setup" points="375,925 375,780 1240,780" class="arrow revise-return" />
+  <text x="980" y="936" class="small-label">Review setup</text>
+  <rect x="2560" y="935" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="960" class="stop-text">Stop / Done</text>
+  <polyline id="stop-setup" points="1650,960 2560,960" class="arrow stop-route" />
+  <text x="2100" y="936" class="label">Stop here</text>
+  <line id="down-d2-brainstorm" x1="1500" y1="1020" x2="1500" y2="1210" class="arrow down-route" />
+  <text x="1660" y="1130" class="label">Brainstorm spec</text>
 
-  <polygon points="700,590 820,650 700,710 580,650" class="decision" />
-  <text x="700" y="641" class="node-title">Continue</text>
-  <text x="700" y="663" class="node-text">from Plan?</text>
+  <rect id="skill-brainstorm" x="1240" y="1210" width="520" height="100" rx="5" class="skill main-skill" />
+  <text x="1500" y="1246" class="node-title">Brainstorm Spec</text>
+  <text x="1500" y="1274" class="node-text">inspect context, grill assumptions,</text>
+  <text x="1500" y="1297" class="node-text">save a durable spec</text>
+  <line id="down-brainstorm-d3" x1="1500" y1="1310" x2="1500" y2="1380" class="arrow down-route" />
+  <polygon id="decision-brainstorm" points="1500,1380 1650,1440 1500,1500 1350,1440" class="decision" />
+  <text x="1500" y="1434" class="decision-title">Continue?</text>
+  <text x="1500" y="1458" class="decision-text">from brainstorm</text>
+  <rect id="side-brainstorm" x="140" y="1405" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="1434" class="node-title">Revise Spec</text>
+  <text x="375" y="1461" class="node-text">review, rerun, or split</text>
+  <polyline id="choice-brainstorm" points="1350,1440 610,1440" class="line revise-choice" />
+  <polyline id="return-brainstorm" points="375,1405 375,1260 1240,1260" class="arrow revise-return" />
+  <text x="980" y="1416" class="small-label">Revise spec</text>
+  <rect x="2560" y="1415" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="1440" class="stop-text">Stop / Done</text>
+  <polyline id="stop-brainstorm" points="1650,1440 2560,1440" class="arrow stop-route" />
+  <text x="2100" y="1416" class="label">Stop here</text>
+  <line id="down-d3-plan" x1="1500" y1="1500" x2="1500" y2="1690" class="arrow down-route" />
+  <text x="1645" y="1610" class="label">Write plan</text>
 
-  <rect x="520" y="780" width="360" height="90" rx="4" class="skill" />
-  <text x="700" y="808" class="node-title">Issue</text>
-  <text x="700" y="832" class="node-text">create the GitHub issue</text>
-  <text x="700" y="852" class="node-text">and local issue mirror</text>
+  <rect id="skill-plan" x="1240" y="1690" width="520" height="100" rx="5" class="skill main-skill" />
+  <text x="1500" y="1726" class="node-title">Write Plan</text>
+  <text x="1500" y="1754" class="node-text">write the implementation plan</text>
+  <text x="1500" y="1777" class="node-text">and proof oracle</text>
+  <line id="down-plan-d4" x1="1500" y1="1790" x2="1500" y2="1860" class="arrow down-route" />
+  <polygon id="decision-plan" points="1500,1860 1650,1920 1500,1980 1350,1920" class="decision" />
+  <text x="1500" y="1914" class="decision-title">Choose Work Route</text>
+  <text x="1500" y="1938" class="decision-text">native peer menu</text>
+  <rect id="side-plan" x="140" y="1885" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="1914" class="node-title">Revise Plan</text>
+  <text x="375" y="1941" class="node-text">review, grill, or rescope</text>
+  <polyline id="choice-plan" points="1350,1920 610,1920" class="line revise-choice" />
+  <polyline id="return-plan" points="375,1885 375,1740 1240,1740" class="arrow revise-return" />
+  <text x="980" y="1896" class="small-label">Revise plan</text>
+  <rect x="2560" y="1895" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="1920" class="stop-text">Stop / Done</text>
+  <polyline id="stop-plan" points="1650,1920 2560,1920" class="arrow stop-route" />
+  <text x="2100" y="1896" class="label">Stop here</text>
 
-  <polygon points="700,905 820,965 700,1025 580,965" class="decision" />
-  <text x="700" y="956" class="node-title">Continue</text>
-  <text x="700" y="978" class="node-text">from Issue?</text>
+  <polyline id="down-plan-split" points="1500,1980 1500,2305" class="line down-route" />
+  <polyline id="route-plan-implement" points="1500,2305 790,2305 790,2380" class="arrow down-route peer-route" />
+  <polyline id="route-plan-create" points="1500,2305 2210,2305 2210,2380" class="arrow down-route peer-route" />
+  <text x="1145" y="2275" class="label">Implement plan</text>
+  <text x="1855" y="2275" class="label">Create issues</text>
 
-  <polygon points="700,1060 820,1120 700,1180 580,1120" class="decision" />
-  <text x="700" y="1111" class="node-title">Resolve</text>
-  <text x="700" y="1133" class="node-text">where?</text>
+  <rect id="skill-implement" x="520" y="2380" width="540" height="105" rx="5" class="skill peer-skill" />
+  <text x="790" y="2418" class="node-title">Implement Plan</text>
+  <text x="790" y="2447" class="node-text">non-issue branch with /goal,</text>
+  <text x="790" y="2471" class="node-text">tests, verification, and merge proof</text>
 
-  <rect x="520" y="1245" width="360" height="90" rx="4" class="skill" />
-  <text x="700" y="1273" class="node-title">Resolve</text>
-  <text x="700" y="1297" class="node-text">current thread implements,</text>
-  <text x="700" y="1317" class="node-text">tests, commits, opens PR</text>
+  <rect id="skill-create-issues" x="1940" y="2380" width="540" height="105" rx="5" class="skill peer-skill" />
+  <text x="2210" y="2418" class="node-title">Create Issues</text>
+  <text x="2210" y="2447" class="node-text">publish GitHub issues and</text>
+  <text x="2210" y="2471" class="node-text">sync local issue mirrors</text>
 
-  <polygon points="700,1370 820,1430 700,1490 580,1430" class="decision" />
-  <text x="700" y="1421" class="node-title">PR ready</text>
-  <text x="700" y="1443" class="node-text">for Merge?</text>
+  <line id="down-implement-d5" x1="790" y1="2485" x2="790" y2="2555" class="arrow down-route" />
+  <polygon id="decision-implement" points="790,2555 940,2615 790,2675 640,2615" class="decision" />
+  <text x="790" y="2609" class="decision-title">Branch Ready?</text>
+  <text x="790" y="2633" class="decision-text">non-issue route</text>
+  <rect id="side-implement" x="140" y="2580" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="2609" class="node-title">Review Branch</text>
+  <text x="375" y="2636" class="node-text">fix tests or proof</text>
+  <polyline id="choice-implement" points="640,2615 610,2615" class="line revise-choice" />
+  <polyline id="return-implement" points="375,2580 375,2432 520,2432" class="arrow revise-return" />
+  <text x="624" y="2588" class="small-label">Review branch</text>
+  <rect x="1110" y="2590" width="210" height="50" rx="25" class="stop" />
+  <text x="1215" y="2615" class="stop-text">Stop / Done</text>
+  <polyline id="stop-implement" points="940,2615 1110,2615" class="arrow stop-route" />
+  <text x="1025" y="2588" class="small-label">Stop here</text>
 
-  <rect x="520" y="1560" width="360" height="90" rx="4" class="skill" />
-  <text x="700" y="1588" class="node-title">Merge</text>
-  <text x="700" y="1612" class="node-text">review, verify checks, merge,</text>
-  <text x="700" y="1632" class="node-text">clean branch/worktree</text>
+  <line id="down-create-d6" x1="2210" y1="2485" x2="2210" y2="2555" class="arrow down-route" />
+  <polygon id="decision-create" points="2210,2555 2360,2615 2210,2675 2060,2615" class="decision" />
+  <text x="2210" y="2609" class="decision-title">Execute Issues?</text>
+  <text x="2210" y="2633" class="decision-text">classic or worker</text>
+  <rect id="side-create" x="1430" y="2580" width="470" height="70" rx="5" class="side" />
+  <text x="1665" y="2609" class="node-title">Revise Issues</text>
+  <text x="1665" y="2636" class="node-text">reslice or repair mirrors</text>
+  <polyline id="choice-create" points="2060,2615 1900,2615" class="line revise-choice" />
+  <polyline id="return-create" points="1665,2580 1665,2432 1940,2432" class="arrow revise-return" />
+  <text x="1980" y="2588" class="small-label">Revise issues</text>
+  <rect x="2560" y="2590" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="2615" class="stop-text">Stop / Done</text>
+  <polyline id="stop-create" points="2360,2615 2560,2615" class="arrow stop-route" />
+  <text x="2460" y="2588" class="small-label">Stop here</text>
 
-  <polygon points="700,1685 820,1745 700,1805 580,1745" class="decision" />
-  <text x="700" y="1736" class="node-title">Merge</text>
-  <text x="700" y="1758" class="node-text">now?</text>
+  <polyline id="route-implement-merge" points="790,2675 790,2850 80,2850 80,3935 1500,3935 1500,4270" class="arrow down-route direct-merge-route" />
+  <text x="260" y="3400" class="label">Merge changes</text>
 
-  <rect x="635" y="1860" width="130" height="46" rx="23" class="done" />
-  <text x="700" y="1883" class="done-text">Done</text>
+  <polyline id="route-create-split" points="2210,2675 2210,2995" class="line down-route" />
+  <polyline id="route-create-orchestrate" points="2210,2995 790,2995 790,3080" class="arrow down-route peer-route" />
+  <polyline id="route-create-resolve" points="2210,2995 2210,3080" class="arrow down-route peer-route classic-route" />
+  <text x="1500" y="2966" class="label">Orchestrate issues</text>
+  <text x="2350" y="3028" class="label">Resolve issue</text>
 
-  <rect x="155" y="610" width="290" height="82" rx="4" class="side" />
-  <text x="300" y="638" class="node-title">Quick Implement</text>
-  <text x="300" y="662" class="node-text">small local-main change,</text>
-  <text x="300" y="682" class="node-text">verify, cleanup</text>
-  <rect x="235" y="735" width="130" height="46" rx="23" class="done" />
-  <text x="300" y="758" class="done-text">Done</text>
+  <rect id="skill-orchestrate" x="520" y="3080" width="540" height="105" rx="5" class="skill peer-skill" />
+  <text x="790" y="3118" class="node-title">Orchestrate Issues</text>
+  <text x="790" y="3147" class="node-text">worker worktree route with aligned</text>
+  <text x="790" y="3171" class="node-text">thread, branch, and PR handoff</text>
 
-  <rect x="155" y="1245" width="290" height="90" rx="4" class="side" />
-  <text x="300" y="1273" class="node-title">Orchestrate</text>
-  <text x="300" y="1297" class="node-text">worker worktree implements,</text>
-  <text x="300" y="1317" class="node-text">main thread reviews PR</text>
+  <rect id="skill-resolve" x="1940" y="3080" width="540" height="105" rx="5" class="skill peer-skill" />
+  <text x="2210" y="3118" class="node-title">Resolve Issue</text>
+  <text x="2210" y="3147" class="node-text">current thread uses /goal, TDD,</text>
+  <text x="2210" y="3171" class="node-text">verification, branch, and PR</text>
 
-  <rect x="1005" y="315" width="100" height="40" rx="20" class="stop" />
-  <text x="1055" y="335" class="stop-text">Stop</text>
-  <rect x="1005" y="630" width="100" height="40" rx="20" class="stop" />
-  <text x="1055" y="650" class="stop-text">Stop</text>
-  <rect x="1005" y="945" width="100" height="40" rx="20" class="stop" />
-  <text x="1055" y="965" class="stop-text">Stop</text>
-  <rect x="1005" y="1100" width="100" height="40" rx="20" class="stop" />
-  <text x="1055" y="1120" class="stop-text">Stop</text>
-  <rect x="1005" y="1410" width="100" height="40" rx="20" class="stop" />
-  <text x="1055" y="1430" class="stop-text">Stop</text>
-  <rect x="1005" y="1725" width="100" height="40" rx="20" class="stop" />
-  <text x="1055" y="1745" class="stop-text">Stop</text>
+  <polyline id="route-orchestrate-ready" points="790,3185 790,3255 1500,3255 1500,3580" class="arrow down-route" />
+  <polyline id="route-resolve-ready" points="2210,3185 2210,3255 1500,3255 1500,3580" class="arrow down-route" />
+  <polygon id="decision-pr-ready" points="1500,3580 1650,3640 1500,3700 1350,3640" class="decision" />
+  <text x="1500" y="3634" class="decision-title">PR Ready?</text>
+  <text x="1500" y="3658" class="decision-text">direct or worker output</text>
+  <rect id="side-pr-ready" x="140" y="3605" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="3634" class="node-title">Review Output</text>
+  <text x="375" y="3661" class="node-text">fix CI, worker, or branch</text>
+  <polyline id="choice-pr-ready" points="1350,3640 610,3640" class="line revise-choice" />
+  <polyline id="return-pr-ready" points="375,3605 375,3132 520,3132" class="arrow revise-return" />
+  <text x="980" y="3616" class="small-label">Review output</text>
+  <rect x="2560" y="3615" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="3640" class="stop-text">Stop / Done</text>
+  <polyline id="stop-pr-ready" points="1650,3640 2560,3640" class="arrow stop-route" />
+  <text x="2100" y="3616" class="label">Stop here</text>
+  <polyline id="down-pr-ready-merge" points="1500,3700 1500,3935 1500,4270" class="arrow down-route" />
+  <text x="1645" y="3990" class="label">Merge changes</text>
 
-  <!-- Main default path -->
-  <line x1="700" y1="105" x2="700" y2="150" class="arrow" />
-  <line x1="700" y1="240" x2="700" y2="275" class="arrow" />
-  <line x1="700" y1="395" x2="700" y2="465" class="arrow" />
-  <text x="714" y="430" class="label">Plan</text>
-  <line x1="700" y1="555" x2="700" y2="590" class="arrow" />
-  <line x1="700" y1="710" x2="700" y2="780" class="arrow" />
-  <text x="714" y="746" class="label">Issue flow</text>
-  <line x1="700" y1="870" x2="700" y2="905" class="arrow" />
-  <line x1="700" y1="1025" x2="700" y2="1060" class="arrow" />
-  <text x="714" y="1048" class="label">Resolve</text>
-  <line x1="700" y1="1180" x2="700" y2="1245" class="arrow" />
-  <text x="714" y="1215" class="label">This thread</text>
-  <line x1="700" y1="1335" x2="700" y2="1370" class="arrow" />
-  <line x1="700" y1="1490" x2="700" y2="1560" class="arrow" />
-  <text x="714" y="1528" class="label">Merge</text>
-  <line x1="700" y1="1650" x2="700" y2="1685" class="arrow" />
-  <line x1="700" y1="1805" x2="700" y2="1860" class="arrow" />
-  <text x="714" y="1840" class="label">Yes</text>
+  <rect id="skill-merge" x="1240" y="4270" width="520" height="100" rx="5" class="skill main-skill" />
+  <text x="1500" y="4306" class="node-title">Merge Changes</text>
+  <text x="1500" y="4334" class="node-text">approval, checks, merge, issue close,</text>
+  <text x="1500" y="4357" class="node-text">branch/worktree cleanup</text>
+  <line id="down-merge-d9" x1="1500" y1="4370" x2="1500" y2="4435" class="arrow down-route" />
+  <polygon id="decision-merge" points="1500,4435 1650,4495 1500,4555 1350,4495" class="decision" />
+  <text x="1500" y="4489" class="decision-title">Merge Now?</text>
+  <text x="1500" y="4513" class="decision-text">approval gate</text>
+  <rect id="side-merge" x="140" y="4460" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="4489" class="node-title">Review / Repair</text>
+  <text x="375" y="4516" class="node-text">reassess or rerun cleanup</text>
+  <polyline id="choice-merge" points="1350,4495 610,4495" class="line revise-choice" />
+  <polyline id="return-merge" points="375,4460 375,4320 1240,4320" class="arrow revise-return" />
+  <text x="980" y="4471" class="small-label">Review / repair</text>
+  <rect x="2560" y="4470" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="4495" class="stop-text">Stop / Done</text>
+  <polyline id="stop-merge" points="1650,4495 2560,4495" class="arrow stop-route" />
+  <text x="2100" y="4471" class="label">Decline merge</text>
+  <line id="down-d9-audit" x1="1500" y1="4555" x2="1500" y2="4885" class="arrow down-route" />
+  <text x="1635" y="4720" class="label">Audit project</text>
 
-  <!-- Revise paths leave below the decision and return to the source skill side. -->
-  <polyline points="700,410 455,410 455,195 520,195" class="arrow" />
-  <text x="460" y="393" class="small-label">Revise</text>
-  <polyline points="700,725 455,725 455,510 520,510" class="arrow" />
-  <text x="460" y="708" class="small-label">Revise</text>
-  <polyline points="700,1040 455,1040 455,825 520,825" class="arrow" />
-  <text x="460" y="1023" class="small-label">Revise issue</text>
-  <polyline points="700,1505 455,1505 455,1290 520,1290" class="arrow" />
-  <text x="460" y="1488" class="small-label">Continue work</text>
-
-  <!-- Local stop paths. -->
-  <polyline points="820,335 1005,335" class="arrow" />
-  <text x="900" y="320" class="label">Stop</text>
-  <polyline points="820,650 1005,650" class="arrow" />
-  <text x="900" y="635" class="label">Stop</text>
-  <polyline points="820,965 1005,965" class="arrow" />
-  <text x="900" y="950" class="label">Stop</text>
-  <polyline points="820,1120 1005,1120" class="arrow" />
-  <text x="900" y="1105" class="label">Stop</text>
-  <polyline points="820,1430 1005,1430" class="arrow" />
-  <text x="900" y="1415" class="label">Stop</text>
-  <polyline points="820,1745 1005,1745" class="arrow" />
-  <text x="900" y="1730" class="label">No</text>
-
-  <!-- Side alternatives. -->
-  <polyline points="580,650 445,650" class="arrow" />
-  <text x="455" y="635" class="label">Quick implement</text>
-  <line x1="300" y1="692" x2="300" y2="735" class="arrow" />
-  <polyline points="580,1120 300,1120 300,1245" class="arrow" />
-  <text x="330" y="1105" class="label">Worker worktree</text>
-  <polyline points="300,1335 300,1350 640,1350 640,1370" class="arrow" />
+  <rect id="skill-audit" x="1240" y="4885" width="520" height="100" rx="5" class="skill main-skill" />
+  <text x="1500" y="4921" class="node-title">Audit Project</text>
+  <text x="1500" y="4949" class="node-text">optional Doctor check for drift,</text>
+  <text x="1500" y="4972" class="node-text">sync, trackers, and artifacts</text>
+  <line id="down-audit-d10" x1="1500" y1="4985" x2="1500" y2="5045" class="arrow down-route" />
+  <polygon id="decision-audit" points="1500,5045 1650,5105 1500,5165 1350,5105" class="decision" />
+  <text x="1500" y="5099" class="decision-title">Healthy?</text>
+  <text x="1500" y="5123" class="decision-text">close or repair</text>
+  <rect id="side-audit" x="140" y="5070" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="5099" class="node-title">Repair Drift</text>
+  <text x="375" y="5126" class="node-text">repair or create new plan</text>
+  <polyline id="choice-audit" points="1350,5105 610,5105" class="line revise-choice" />
+  <polyline id="return-audit" points="375,5070 375,4935 1240,4935" class="arrow revise-return" />
+  <text x="980" y="5081" class="small-label">Repair drift</text>
+  <rect x="2560" y="5080" width="210" height="50" rx="25" class="stop" />
+  <text x="2665" y="5105" class="stop-text">Stop / Done</text>
+  <polyline id="stop-audit" points="1650,5105 2560,5105" class="arrow stop-route" />
+  <text x="2100" y="5081" class="label">Stop here</text>
+  <line id="down-d10-done" x1="1500" y1="5165" x2="1500" y2="5205" class="arrow down-route final-done-route" />
+  <text x="1625" y="5190" class="label">Done</text>
+  <rect x="1415" y="5205" width="170" height="50" rx="25" class="done" />
+  <text x="1500" y="5230" class="done-text">Done</text>
 </svg>

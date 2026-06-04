@@ -13,7 +13,7 @@ Project Plan is the Superpowers Project adapter for `superpowers:writing-plans`.
 
 Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Left is non-terminal. Down must start the selected progress route or ask its blocking child question; the only Down terminal exception is an explicit final Healthy -> Done gate. Left must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Right `Stop / Done` can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Required Method
 
@@ -119,7 +119,7 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 After saving and self-reviewing the plan, summarize the plan in chat before asking the continuation question. The summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions when `request_user_input` is callable. These questions are executable routing, not advisory text. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Show four or more native options when they are real peer routes. Use `advanced-user-input` for large peer route menus, bulk independent gates, or sequential branching when one answer determines the next prompt. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
+Ask native continuation questions when `request_user_input` is callable. These questions are executable routing, not advisory text. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires, including more than three peer options or independent questions when useful. Show four or more native options when they are real peer routes. Use `advanced-user-input` for large peer route menus, bulk independent gates, or sequential branching when one answer determines the next prompt. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_plan_next_step`
 
@@ -179,7 +179,7 @@ Options:
 - Left: `Three Or More`: create three or more issues, then use nested questions to group issue count and dependencies.
 - Right: `Stop / Done`: break the continuation loop.
 
-If milestone selection is still unresolved, inspect existing GitHub milestones and project roadmap first. Ask no more than three milestone choices in a native question; when exact milestone names or many milestones are possible, ask a focused normal-chat value prompt instead of inventing weak native categories.
+If milestone selection is still unresolved, inspect existing GitHub milestones and project roadmap first. Show the real milestone choices in native UI when that is clearer, including more than three options when useful. When exact milestone names, free-form grouping, or a long data-backed list would be clearer as text, ask a focused normal-chat value prompt instead of inventing weak native categories.
 
 If the user selects `Plan Implementation` or `Project Implement`, ask:
 

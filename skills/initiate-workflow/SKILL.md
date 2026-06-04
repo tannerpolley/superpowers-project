@@ -11,13 +11,14 @@ This skill is the router for the Superpowers Project extension. It does not repl
 
 Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Left is non-terminal. Down must start the selected progress route or ask its blocking child question; the only Down terminal exception is an explicit final Healthy -> Done gate. Left must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Right `Stop / Done` can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Routing
 
 - Project setup, roadmap context, tracker board setup, or large-scope project map: `$project:setup-project`
 - Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$project:brainstorm-spec`
 - Implementation planning from a spec, issue mirror, or approved direct request: `$project:write-plan`
+- Branch-backed implementation of an approved plan without a GitHub issue: `$project:implement-plan`
 - Quick Apply small-work escape hatch after an approved `$project:write-plan`: local-main execution on clean synced `main` only after `project_quick_apply_approval` and `validate-quick-apply.ps1`.
 - Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project:create-issues`
 - External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$project:create-issues`
@@ -54,15 +55,15 @@ At major handoffs, use native continuation questions and treat the selected answ
 
 Every Superpowers Project skill must summarize its artifact or result in chat before a closeout continuation question. The summary should name created or changed artifacts, validation or proof status, unresolved decisions, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when they were created or changed and are reasonably sized.
 
-When `request_user_input` is callable, ask the skill-specific native continuation question using flowchart geometry. Down means default progress or move on. Left means reiteration: revise, review, repair, rerun, recover, or gather more evidence. Right means `Stop / Done`, and is the only normal break condition for the loop. Use as many native questions and options as the decision requires. Down / Left / Right remains the default mental model for generic continuation, but show all real peer routes in one native menu when that is clearer. Use `advanced-user-input` sequential branching when the first answer changes which follow-up questions matter.
+When `request_user_input` is callable, ask the skill-specific native continuation question using flowchart geometry. Down means default progress or move on. Left means reiteration: revise, review, repair, rerun, recover, or gather more evidence. Right means `Stop / Done`, and is the only normal break condition for the loop. Use as many native questions and options as the decision requires, including more than three peer options or independent questions when useful. Down / Left / Right remains the default mental model for generic continuation, but show all real peer routes in one native menu when that is clearer. Use `advanced-user-input` sequential branching when the first answer changes which follow-up questions matter.
 
-Custom Other is not terminal unless it explicitly asks to stop or be done. Otherwise treat Custom Other as input for the next best follow-up question, a custom child question, or the baseline nested route tree. Treat selected native answers as executable routing: start the selected next skill in the same turn when tools and state allow it.
+Custom Other is not terminal unless it explicitly asks to stop or be done. Otherwise treat Custom Other as input for the next best follow-up question, a custom child question, or the baseline nested route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate. Treat selected native answers as executable routing: start the selected next skill in the same turn when tools and state allow it.
 
 If routing cannot continue because tools, permissions, GitHub state, or user approval are missing, ask the next native question when one can resolve it, or stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests and never counts as live approval.
 
 ## Native User Input
 
-When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for one to three short, decision-oriented questions. Batch independent questions together. Ask dependent questions one step at a time after the prior answer changes the branch.
+When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for concise, decision-oriented questions. Batch independent questions together. Use more than three peer options or independent questions when that is the clearest honest menu. Ask dependent questions one step at a time after the prior answer changes the branch.
 
 For `$project:brainstorm-spec`, use native UI more aggressively: if there is any unresolved idea, naming, scope, tradeoff, route, or assumption decision, inspect project context and relevant code first, then ask through `request_user_input` instead of resolving the decision in prose.
 
@@ -75,6 +76,8 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 ## Goal Routing
 
 Issue implementation must use `$project:resolve-issue` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$project:resolve-issue` creates PR-ready evidence, final integration must route to `$project:merge-changes`.
+
+
 
 
 

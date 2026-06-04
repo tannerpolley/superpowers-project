@@ -15,7 +15,7 @@ GoalBuddy boards are outside the default execution model. Do not create `docs/go
 
 Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Left is non-terminal. Down must start the selected progress route or ask its blocking child question; the only Down terminal exception is an explicit final Healthy -> Done gate. Left must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Right `Stop / Done` can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Artifact Source Of Truth
 
@@ -168,7 +168,7 @@ GitHub specialists can be used for CI or review-thread work, but bundled gate sc
 
 After PR-ready handoff proof passes, summarize the resolved issue in chat before asking the continuation question. The summary must name the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree.
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires, including more than three peer options or independent questions when useful. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_resolve_next_step`
 
@@ -240,4 +240,6 @@ Do not send a success-style final response until PR-ready proof shows:
 - PR is opened and closes the exact linked issue.
 - Native resolve goal is marked complete.
 - PR-ready handoff was sent or recorded for `$project:merge-changes`.
+
+
 

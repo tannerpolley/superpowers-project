@@ -34,6 +34,7 @@
       "Use project:brainstorm-spec to brainstorm a project idea with native grilling.",
       "Use project:create-issues to convert a plan into GitHub issue mirrors.",
       "Use project:write-plan to write the project implementation plan.",
+      "Use project:implement-plan to implement an approved plan on a development branch without creating issue mirrors.",
       "Use project:resolve-issue to resolve one GitHub issue directly with a native goal.",
       "Use project:orchestrate-issues to delegate issue work to a worker worktree thread.",
       "Use project:merge-changes to merge PR-ready issue or branch work."

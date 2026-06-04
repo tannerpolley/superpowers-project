@@ -30,6 +30,7 @@ if ($exists) {
 
     foreach ($needle in @(
         "Use as many native questions and options as the decision requires",
+        "Use larger native prompts by default when they preserve real choices",
         "Observed Codex Desktop behavior",
         "current runtime-permissive behavior",
         "Sequential Branching",
@@ -37,6 +38,12 @@ if ($exists) {
         "Large Option Sets",
         "request_agent_input",
         "Do not collapse real routes into fake categories",
+        "Do not pre-collapse to three choices",
+        "Left is non-terminal",
+        "the only Down terminal exception is an explicit final Healthy -> Done gate",
+        "Review First is not a terminal answer",
+        "Only Right Stop / Done can end a continuation loop before that final Done gate",
+        "reaches an explicit final Healthy -> Done gate",
         "If the active runtime rejects a large prompt, fail loudly"
     )) {
         Add-Check $checks "advanced-user-input contains $needle" ($text.Contains($needle)) "$skillPath must contain policy: $needle"

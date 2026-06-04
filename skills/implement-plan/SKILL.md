@@ -9,6 +9,12 @@ Implement Plan is the non-issue execution route for an approved plan under `docs
 
 **Announce at start:** "I'm using the implement-plan skill to execute this approved plan without creating a GitHub issue."
 
+## Native Continuation Loop
+
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Left is non-terminal. Down must start the selected progress route or ask its blocking child question; the only Down terminal exception is an explicit final Healthy -> Done gate. Left must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Right `Stop / Done` can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+
 ## Required Inputs
 
 Require an approved plan path under `docs/superpowers/plans`. If the request names a loose idea, spec, issue mirror, or external document instead of an approved plan, route to `$project:write-plan` or `$project:create-issues` as appropriate before execution.
@@ -74,6 +80,36 @@ Produce a merge-ready handoff that includes:
 - explicit statement that no issue mirror was created and no GitHub issue closure is claimed
 
 Route merge-ready output to `$project:merge-changes` or another approved merge route. Use non-issue merge mode such as `pr-no-issue` for PRs that came from this route.
+
+## Native Continuation Gate
+
+After focused verification, cleanup, publish permission, and merge-ready proof exist, summarize the branch result in chat before asking the continuation question. The summary must name the approved plan path, branch, commit list, verification status, cleanup hook status, publish decision, PR URL when present, merge mode, and the fact that no issue mirror was created. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
+
+Ask native continuation questions with `request_user_input` when callable. Use flowchart geometry: Down is default progress, Left is revise/review/repair/rerun/recover, and Right is `Stop / Done`. Use as many native questions and options as the decision requires, including more than three peer options or independent questions when useful. Prefer the simple Down / Left / Right shape for generic continuation gates, but show all real peer routes when that is clearer. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+
+Question id: `project_implement_next_step`
+
+Prompt: `How should I continue from this implemented plan?`
+
+Options:
+
+- Down: `Merge Implemented Plan`: start `$project:merge-changes` with the merge-ready proof.
+- Left: `Revise / Review Branch`: review, fix, rerun verification, or update publish permission.
+- Right: `Stop / Done`: break the continuation loop.
+
+If the user selects `Revise / Review Branch`, ask:
+
+Question id: `project_implement_reiteration_route`
+
+Prompt: `How should I revisit this implemented plan?`
+
+Options:
+
+- Down: `Revise Branch`: continue implementation on the current development branch.
+- Left: `Review Evidence`: show the rendered handoff and verification evidence, then return to `project_implement_next_step`.
+- Right: `Stop / Done`: break the continuation loop.
+
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the approved plan path, branch, verification evidence, publish permission ledger, PR URL when present, and merge-ready proof. Do not only tell the user what to prompt next.
 
 ## Contract Helper
 

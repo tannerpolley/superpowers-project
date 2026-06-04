@@ -22,6 +22,7 @@ This checkout may still be hosted under the older `milestones-plugin` repository
 - `$project:setup-project`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
 - `$project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
 - `$project:write-plan`: writes Superpowers implementation plans with project context.
+- `$project:implement-plan`: implements an approved plan on a development branch without creating GitHub issue mirrors.
 - `$project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
 - `$project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
 - `$project:orchestrate-issues`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
@@ -34,11 +35,14 @@ The main workflow is a chain of small native Codex questions. Each skill summari
 
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
+Only `Stop / Done` or the explicit final `Healthy?` -> `Done` route ends the continuation loop. Progress choices start the next skill. Review choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
+
 | Native question | Where it appears | Main choices |
 | --- | --- | --- |
-| `project_setup_next_step` | After Setup | Brainstorm, Plan, Issue, Doctor, Review First, Stop |
-| `project_brainstorm_next_step` | After Brainstorm | Plan, Review First, Revise Spec, Stop |
-| `project_plan_next_step` | After Plan | Issue First, Quick Apply, Review First, Revise Plan, Stop |
+| `project_setup_next_step` | After Setup Project | Brainstorm Spec, Write Plan, Issue, Doctor, Review First, Stop |
+| `project_brainstorm_next_step` | After Brainstorm Spec | Write Plan, Review First, Revise Spec, Stop |
+| `project_plan_next_step` | After Write Plan | Issue First, Implement Plan, Quick Apply, Doctor, Review First, Revise Plan, Stop |
+| `project_implement_next_step` | After Implement Plan | Merge Implemented Plan, Review Evidence, Revise Branch, Stop |
 | `project_quick_apply_approval` | Before a small local-main change | Apply on Main, Use Issue Flow, Stop |
 | `project_issue_next_step` | After Issue | Resolve First Ready, Resolve Selected, Review First, Stop |
 | `project_issue_resolution_route` | Before issue implementation when route is ambiguous | Resolve, Orchestrate, Review First |

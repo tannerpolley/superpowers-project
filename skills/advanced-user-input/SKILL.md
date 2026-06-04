@@ -13,6 +13,8 @@ Use as many native questions and options as the decision requires.
 
 Do not collapse real routes into fake categories just to fit old 1-3 question or 2-3 option guidance. Current Codex Desktop testing showed much larger native prompts work, including 20 questions and 20 options. Treat that as current runtime-permissive behavior, not a public guarantee.
 
+Use larger native prompts by default when they preserve real choices. Do not pre-collapse to three choices when a single native menu with four or more peer options is clearer, more honest, and directly executable.
+
 If the active runtime rejects a large prompt, fail loudly, explain the rejected shape, and retry with sequential branch prompts. Do not silently remove routes, merge distinct actions, or proceed on a fake default.
 
 ## Observed Codex Desktop Behavior
@@ -40,7 +42,7 @@ Use native Q&A confidently for:
 - formal workflow gates such as continue routes, publish approval, merge approval, branch strategy, verification level, cleanup choice, or orchestration topology.
 - strict state-machine routing where every option maps to a real next action.
 
-Keep prompts smaller when fewer choices are clearer. Small prompts are a usability preference, not a hard limit.
+Keep prompts smaller when fewer choices are clearer. Small prompts are a usability preference, not a hard limit. Prefer the full peer set over a nested Down / Left / Right pre-question when the full peer set is what the user is actually deciding.
 
 Do not add an explicit `Other` option. The client provides free-form Other. When the user chooses Other, validate the custom answer before executing it. If it clearly means stop or done, stop. Otherwise ask the next best native follow-up or normal-chat clarification.
 
@@ -124,9 +126,11 @@ For workflow closeout, preserve the user's direction model:
 - Left means revise, review, repair, rerun, recover, or gather more evidence.
 - Right means stop or done.
 
+Left is non-terminal. Down must start the selected progress route or ask the blocking child question; the only Down terminal exception is an explicit final Healthy -> Done gate. Left must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Right Stop / Done can end a continuation loop before that final Done gate.
+
 This model is a visual and mental default. It does not require exactly three options. If there are more real forward routes, show them. If a top-level Down / Left / Right prompt would clarify the first decision, use it, then show the selected branch's full option set.
 
-Do not end a loop until the user chooses an executable route, explicit stop/done, or provides a Custom answer that clearly means stop/done.
+Do not end a loop until the user chooses Right Stop / Done, reaches an explicit final Healthy -> Done gate, or provides a Custom answer that clearly means stop/done. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
 
 ## Normal Chat For Exact Text
 
@@ -209,5 +213,6 @@ If a large native prompt fails because of runtime validation:
 | Asking dependent branch questions in one bulk prompt | Ask the route first, then only the selected follow-up. |
 | Using choices for exact text | Ask in normal chat. |
 | Treating Custom as executable without validation | Clarify or route it deliberately. |
+| Treating Review First as a stopping point | Show evidence, ask follow-up questions, then return to the originating continuation gate. |
 | Hiding stop/done | Always make stop/done available at formal workflow gates. |
 | Proceeding after a rejected native prompt | Fail loudly, then retry sequentially without losing routes. |

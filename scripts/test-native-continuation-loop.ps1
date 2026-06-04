@@ -27,6 +27,7 @@ $workflowSkillNames = @(
     "orchestrate-issues",
     "brainstorm-spec",
     "write-plan",
+    "implement-plan",
     "create-issues",
     "resolve-issue",
     "merge-changes",
@@ -47,7 +48,11 @@ foreach ($skillName in $workflowSkillNames) {
         'After every completed action',
         'ask another native continuation question',
         'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
-        'Only a user-selected `Stop` or `Done` option is terminal'
+        'Only a user-selected `Stop` or `Done` option is terminal',
+        'Left is non-terminal',
+        'the only Down terminal exception is an explicit final Healthy -> Done gate',
+        'Only Right `Stop / Done` can break the loop before that final Done gate',
+        'Review First is not a terminal answer'
     )) {
         Add-Check $checks "$skillName contains $needle" ($text.Contains($needle)) "$skillPath must contain continuation-loop contract: $needle"
     }
@@ -59,8 +64,10 @@ foreach ($skillName in $workflowSkillNames) {
         'Right',
         'Stop / Done',
         'Use as many native questions and options as the decision requires',
+        'including more than three peer options or independent questions when useful',
         'Custom Other',
-        'rendered Markdown artifacts'
+        'rendered Markdown artifacts',
+        'return to the originating continuation gate'
     )) {
         Add-Check $checks "$skillName contains flowchart contract $needle" ($text.Contains($needle)) "$skillPath must contain native flowchart contract: $needle"
     }
@@ -75,15 +82,32 @@ foreach ($skillName in $workflowSkillNames) {
         'After every completed action, ask the next native continuation or permission question',
         'Do not end the workflow until the user selects Stop or Done through native continuation input',
         'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
+        'Left is non-terminal',
+        'the only Down terminal exception is an explicit final Healthy -> Done gate',
+        'Only Right `Stop / Done` can break the loop before that final Done gate',
+        'Review First is not a terminal answer',
         'Down',
         'Left',
         'Right',
         'Stop / Done',
         'Use as many native questions and options as the decision requires',
+        'including more than three peer options or independent questions when useful',
         'Custom Other',
-        'rendered Markdown artifacts'
+        'rendered Markdown artifacts',
+        'return to the originating continuation gate'
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
+    }
+
+    foreach ($forbidden in @(
+        'Ask one to three short questions',
+        'for one to three short',
+        'Ask no more than three',
+        'no more than three milestone choices',
+        'One call may ask 1-3 questions',
+        'Each question must define 2-3 mutually exclusive options'
+    )) {
+        Add-Check $checks "$skillName omits stale native limit $forbidden" (-not $text.Contains($forbidden) -and -not $agentText.Contains($forbidden)) "$skillName must not keep stale native UI limit wording: $forbidden"
     }
 }
 
