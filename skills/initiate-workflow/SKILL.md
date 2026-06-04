@@ -28,6 +28,8 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 
 The issue-backed `$project:create-issues` plus `$project:resolve-issue` or `$project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
 
+After `$project:brainstorm-spec` saves a spec, Auto Mode may be authorized only through native question `project_auto_mode_authorization` with `Bounded Auto Merge`. That route records an Auto Mode authorization ledger validated by `scripts/lib/auto-mode-contract.ps1`; the agent then chooses between planning, issue-backed orchestration, direct plan implementation, verification, merge, and closeout proof within the recorded defaults. If proof is missing, validation fails, GitHub state is unsafe, or the needed decision falls outside the ledger policy, stop outside policy instead of inventing a new approval.
+
 External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$project:create-issues` hydration first and block execution until mirror validation passes.
 
 When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route` with `Project Resolve`, `Project Orchestrate`, and `Review First` options. Route direct current-thread implementation to `$project:resolve-issue`; route delegated worker worktree implementation to `$project:orchestrate-issues`.

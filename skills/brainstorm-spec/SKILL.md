@@ -98,6 +98,18 @@ Options:
 
 If the user selects `Continue From Spec`, ask:
 
+Question id: `project_brainstorm_start_route`
+
+Prompt: `Should I continue manually or authorize Auto Mode?`
+
+Options:
+
+- Down: `Manual Planning`: choose the next planning route yourself.
+- Left: `Auto Mode`: authorize the agent to choose the route, plan, implement, verify, and merge within the bounded policy.
+- Right: `Stop`: break the continuation loop.
+
+If the user selects `Manual Planning`, ask:
+
 Question id: `project_brainstorm_plan_route`
 
 Prompt: `How should planning start from this brainstorm?`
@@ -107,6 +119,36 @@ Options:
 - Down: `Create One Plan`: create one `$project:write-plan` from the recently generated spec.
 - Left: `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
 - Right: `Stop`: break the continuation loop.
+
+If the user selects `Auto Mode`, ask:
+
+Question id: `project_auto_mode_authorization`
+
+Prompt: `Authorize bounded Auto Mode for this saved spec?`
+
+Options:
+
+- Down: `Bounded Auto Merge`: create an Auto Mode authorization ledger and continue without more user input through planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
+- Left: `Manual Planning`: return to `project_brainstorm_plan_route`.
+- Right: `Stop`: break the continuation loop.
+
+`Bounded Auto Merge` is the only valid Auto Mode approval. It must record an Auto Mode authorization ledger before the next skill starts. The ledger must include:
+
+- `question_id: project_auto_mode_authorization`
+- `source: request_user_input`
+- `selected_authority: bounded-auto-merge`
+- `source_spec: docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md`
+- `route_policy.selected_mode: agent-chooses`
+- `route_policy.worker_route: issue-backed-orchestrate-only`
+- `decision_policy.selected_mode: recorded-defaults`
+- `decision_policy.stop_outside_policy: true`
+- `merge_permission.selected_mode: preauthorized-after-clean-premerge`
+- `merge_permission.require_clean_premerge: true`
+- `mutation_scope` containing `current-repo` and `development-branch`
+- `required_proof` containing `plan-proof-oracle`, `verification-receipts`, `cleanup-hook`, `premerge-proof`, and `closeout-proof`
+- `stop_conditions` containing `missing-proof`, `dirty-unsafe-state`, `failed-validation`, and `decision-outside-policy`
+
+Validate the ledger with `scripts/lib/auto-mode-contract.ps1`. If the ledger does not pass, do not continue into Auto Mode.
 
 If the user selects `Multi-Spec Planning`, ask:
 
