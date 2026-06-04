@@ -35,6 +35,8 @@ The main workflow is a chain of small native Codex questions. Each skill summari
 
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
+GitHub can also render the simplified Mermaid companion: [Native Q&A main flow Mermaid](docs/assets/native-qa-main-flow-mermaid.md).
+
 Only `No / Stop / Done` or the explicit final `Healthy?` -> `Done` route ends the continuation loop. `Yes` choices enter the next workflow depth and either start the next skill or ask the next route question. Revisit choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
 
 | Native question | Where it appears | Top-level choices | Nested examples |

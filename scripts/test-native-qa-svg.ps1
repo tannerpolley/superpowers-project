@@ -96,13 +96,63 @@ function Test-RectsOverlap {
 $checks = [System.Collections.Generic.List[object]]::new()
 $readmePath = Join-Path $RepoRoot "README.md"
 $svgRelativePath = "docs/assets/native-qa-main-flow.svg"
+$mermaidRelativePath = "docs/assets/native-qa-main-flow-mermaid.md"
 $svgPath = Join-Path $RepoRoot $svgRelativePath
+$mermaidPath = Join-Path $RepoRoot $mermaidRelativePath
 
 $readme = Get-Content -LiteralPath $readmePath -Raw
 Add-Check $checks "README references SVG" ($readme.Contains("![Native Q&A main workflow flowchart]($svgRelativePath)")) "README must embed $svgRelativePath"
+Add-Check $checks "README references Mermaid companion" ($readme.Contains("[Native Q&A main flow Mermaid]($mermaidRelativePath)")) "README must link $mermaidRelativePath"
 Add-Check $checks "README archived Mermaid removed" (-not $readme.Contains("Archived full setup, Doctor, and router flow")) "README must not keep the archived full Mermaid flowchart"
 Add-Check $checks "README lists implement-plan skill" ($readme.Contains('$project:implement-plan')) "README must list the non-issue implement route"
 Add-Check $checks "SVG exists" (Test-Path -LiteralPath $svgPath -PathType Leaf) "missing SVG: $svgPath"
+Add-Check $checks "Mermaid companion exists" (Test-Path -LiteralPath $mermaidPath -PathType Leaf) "missing Mermaid companion: $mermaidPath"
+
+if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
+    $mermaidText = Get-Content -LiteralPath $mermaidPath -Raw
+    foreach ($needle in @(
+        '```mermaid',
+        'flowchart TB',
+        'curve": "linear"',
+        'Initiate Workflow',
+        'Setup Project',
+        'Brainstorm Spec',
+        'Write Plan',
+        'Implement Plan',
+        'Create Issues',
+        'Orchestrate Issues',
+        'Resolve Issue',
+        'Merge Changes',
+        'Audit Project',
+        'Choose work route?',
+        'Choose issue route?',
+        'select the next blue skill',
+        'First-level gate rule',
+        'Yes / Revisit / No',
+        'Nested routes:',
+        'Nested revisit routes:',
+        '-->|Yes|',
+        'Revisit loops back to the same skill',
+        'No stops',
+        'classDef skill fill:#dbeafe',
+        'classDef decision fill:#fef3c7'
+    )) {
+        Add-Check $checks "Mermaid companion contains $needle" ($mermaidText.Contains($needle)) "Mermaid companion must contain: $needle"
+    }
+
+    foreach ($forbidden in @(
+        'project_setup_next_step',
+        'project_brainstorm_next_step',
+        'project_plan_next_step',
+        'project_issue_next_step',
+        'project_merge_next_step',
+        'Review First',
+        'Apply on Main',
+        'Use Issue Flow'
+    )) {
+        Add-Check $checks "Mermaid companion omits nested option $forbidden" (-not $mermaidText.Contains($forbidden)) "Mermaid companion must keep nested options inside skill boxes, not as separate labels: $forbidden"
+    }
+}
 
 if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
     [xml]$svg = Get-Content -LiteralPath $svgPath -Raw
