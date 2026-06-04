@@ -151,11 +151,11 @@ Prompt: `Which work artifact should follow this plan?`
 
 Options:
 
-- Down: `Create Issue`: continue to `$project-issue` using the saved plan path.
-- Left: `Plan Implementation`: prepare the route for the upcoming `$implement-plan` skill; until that skill exists, use the guarded Quick Apply path only when explicitly approved.
+- Down: `Create Issue`: Project Issue First; continue to `$project-issue` using the saved plan path.
+- Left: `Plan Implementation`: Project Implement; continue to `$implement-plan` using the saved plan path without creating issue mirrors.
 - Right: `Stop / Done`: break the continuation loop.
 
-If the user selects `Create Issue`, ask:
+If the user selects `Create Issue` or `Project Issue First`, ask:
 
 Question id: `project_plan_issue_count`
 
@@ -181,7 +181,7 @@ Options:
 
 If milestone selection is still unresolved, inspect existing GitHub milestones and project roadmap first. Ask no more than three milestone choices in a native question; when exact milestone names or many milestones are possible, ask a focused normal-chat value prompt instead of inventing weak native categories.
 
-If the user selects `Plan Implementation`, ask:
+If the user selects `Plan Implementation` or `Project Implement`, ask:
 
 Question id: `project_plan_implementation_route`
 
@@ -189,7 +189,7 @@ Prompt: `Which plan implementation route should be prepared?`
 
 Options:
 
-- Down: `Implement Recent Plan`: prepare the recently created plan for the upcoming `$implement-plan` skill or guarded Quick Apply.
+- Down: `Implement Recent Plan`: Project Implement; continue to `$implement-plan` using the recently created plan path.
 - Left: `Implement Different Plan`: ask for the exact plan path, then prepare that plan for implementation.
 - Right: `Stop / Done`: break the continuation loop.
 
@@ -229,7 +229,15 @@ Options:
 - Left: `Re-run Planning Grill`: run the planning grill again for an existing spec with no ready plan.
 - Right: `Stop / Done`: break the continuation loop.
 
-Recommend `Continue Into Work`, then `Create Issue`, for repos using the Superpowers Project GitHub issue backbone. Recommend `Plan Implementation` only for small, guarded, explicitly approved implementation work or when the upcoming `$implement-plan` route is the selected path.
+Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation. Quick Apply remains only for small, guarded, explicitly approved implementation work on clean synced `main`.
+
+Route summary:
+
+- `Project Implement`: continue to `$implement-plan` using the saved plan path.
+- `Project Issue First`: continue to `$project-issue` using the saved plan path.
+- Project Implement does not create issue mirrors.
+- Recommend `Project Implement` for branch-backed non-issue implementation.
+- Recommend `Project Issue First` when the GitHub issue backbone is desired.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the saved plan path, source spec or issue mirror path, decisions, acceptance criteria, and proof oracle. Do not only tell the user what to prompt next.
 

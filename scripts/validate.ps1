@@ -124,6 +124,7 @@ function Get-ActiveSkillNames {
         "project-orchestrate",
         "project-brainstorm",
         "project-plan",
+        "implement-plan",
         "project-issue",
         "project-resolve",
         "project-merge",

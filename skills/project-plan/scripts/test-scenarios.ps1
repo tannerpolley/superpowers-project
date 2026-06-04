@@ -223,6 +223,22 @@ $scenarios = @(
         }
         Assert-NotContains $metadata "with Project Issue First, Quick Apply, Review First, Revise Plan, and Stop options" "metadata must not specify an impossible five-option native question"
     }
+    Invoke-Scenario "plan implementation route targets implement-plan directly" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            'Project Implement',
+            'continue to `$implement-plan` using the saved plan path',
+            'Project Issue First',
+            'continue to `$project-issue` using the saved plan path',
+            'Recommend `Project Implement` for branch-backed non-issue implementation',
+            'Recommend `Project Issue First` when the GitHub issue backbone is desired',
+            'does not create issue mirrors'
+        )) {
+            Assert-Contains $text $needle "missing direct implement route contract: $needle"
+            Assert-Contains $metadata $needle "missing direct implement route metadata: $needle"
+        }
+    }
     Invoke-Scenario "quick apply approval gate is documented" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         $metadata = Get-Content -LiteralPath $yamlFile -Raw

@@ -1,0 +1,127 @@
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = "Stop"
+$scriptRoot = $PSScriptRoot
+$skillRoot = Split-Path $scriptRoot -Parent
+$skillFile = Join-Path $skillRoot "SKILL.md"
+$yamlFile = Join-Path $skillRoot "agents\openai.yaml"
+. (Join-Path $scriptRoot "lib\contract.ps1")
+
+function Invoke-Scenario {
+    param([string]$Name, [scriptblock]$Body)
+    try {
+        & $Body
+        [pscustomobject]@{ name = $Name; ok = $true; reason = "passed" }
+    } catch {
+        [pscustomobject]@{ name = $Name; ok = $false; reason = $_.Exception.Message }
+    }
+}
+
+function Assert-Contains {
+    param([string]$Text, [string]$Needle, [string]$Message)
+    if (-not $Text.Contains($Needle)) { throw $Message }
+}
+
+function Assert-True {
+    param([bool]$Condition, [string]$Message)
+    if (-not $Condition) { throw $Message }
+}
+
+function New-FixtureRepo {
+    $root = Join-Path ([IO.Path]::GetTempPath()) "implement-plan-$([guid]::NewGuid().ToString('N'))"
+    New-Item -ItemType Directory -Force -Path (Join-Path $root "docs/superpowers/plans") | Out-Null
+    Set-Content -LiteralPath (Join-Path $root "docs/superpowers/plans/plan.md") -Value "# Approved Plan" -Encoding utf8NoBOM
+    $root
+}
+
+function New-HappyLedger {
+    [pscustomobject]@{
+        plan_path = "docs/superpowers/plans/plan.md"
+        native_goal = [pscustomobject]@{ activated = $true; command = "/goal Implement the approved plan." }
+        branch = "codex/implement-approved-plan"
+        topology = [pscustomobject]@{ question_id = "implement_plan_topology"; selected_mode = "inline" }
+        verification = [pscustomobject]@{ passed = $true; commands = @("pwsh test") }
+        publish_permission = [pscustomobject]@{ question_id = "implement_plan_publish_permission"; selected_action = "push" }
+        merge_ready = [pscustomobject]@{ ready = $true; route = "project-merge"; mode = "pr-no-issue" }
+    }
+}
+
+$scenarios = @(
+    Invoke-Scenario "skill frontmatter and metadata are valid" {
+        if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
+        if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        Assert-Contains $text "name: implement-plan" "missing skill name"
+        Assert-Contains $text "# Implement Plan" "missing title"
+        Assert-Contains $metadata "implement-plan:" "missing metadata key"
+    }
+    Invoke-Scenario "non-issue execution contract is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            'approved plan under `docs/superpowers/plans`',
+            'does not create issue mirrors',
+            'must not claim GitHub issue closure',
+            'native `/goal` activation',
+            'development branch',
+            'request_user_input',
+            'implement_plan_topology',
+            'superpowers:test-driven-development',
+            'superpowers:executing-plans',
+            'superpowers:verification-before-completion',
+            'implement_plan_publish_permission',
+            'merge-ready',
+            'project-merge'
+        )) {
+            Assert-Contains $text $needle "missing implement-plan contract: $needle"
+            Assert-Contains $metadata $needle "missing implement-plan metadata: $needle"
+        }
+    }
+    Invoke-Scenario "contract accepts happy ledger" {
+        $repo = New-FixtureRepo
+        $result = Test-ImplementPlanLedger -RepoRoot $repo -Ledger (New-HappyLedger)
+        Assert-True ($result.ok -eq $true) "happy ledger should pass"
+    }
+    Invoke-Scenario "contract rejects issue mirror and closure claims" {
+        $repo = New-FixtureRepo
+        $ledger = New-HappyLedger
+        $ledger | Add-Member -NotePropertyName issue_mirror_path -NotePropertyValue "docs/superpowers/issues/1.md"
+        $failed = $false
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "issue mirrors" }
+        Assert-True $failed "issue mirror path should fail"
+
+        $ledger = New-HappyLedger
+        $ledger | Add-Member -NotePropertyName issue_closure_claim -NotePropertyValue $true
+        $failed = $false
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "issue closure" }
+        Assert-True $failed "issue closure claim should fail"
+    }
+    Invoke-Scenario "contract rejects missing gates" {
+        $repo = New-FixtureRepo
+        $ledger = New-HappyLedger
+        $ledger.native_goal.activated = $false
+        $failed = $false
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "/goal" }
+        Assert-True $failed "missing native goal proof should fail"
+
+        $ledger = New-HappyLedger
+        $ledger.branch = "main"
+        $failed = $false
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "development branch" }
+        Assert-True $failed "main branch should fail"
+
+        $ledger = New-HappyLedger
+        $ledger.verification.passed = $false
+        $failed = $false
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "verification" }
+        Assert-True $failed "failed verification should fail"
+    }
+)
+
+$failedScenarios = @($scenarios | Where-Object { -not $_.ok })
+$scenarios | ConvertTo-Json -Depth 6
+if ($failedScenarios.Count -gt 0) {
+    throw "implement-plan scenario tests failed: $($failedScenarios.name -join ', ')"
+}
