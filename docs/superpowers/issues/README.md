@@ -12,6 +12,14 @@ Before GitHub publication, use a slug-only file with `Pre-Publication: true`. Af
 
 Issue mirrors are flat canonical artifacts. Do not create canonical mirrors under `docs/superpowers/milestones/<milestone>/issues`. Milestone pages are index views that link back to this directory.
 
+## GitHub Intake Issues
+
+GitHub issues created outside the local Superpowers Project workflow are intake records until a local mirror and source plan exist. A GitHub issue URL, raw issue body, or `Source Plan: TBD` field is not a ready execution mirror.
+
+Hydrate external intake through `$project-issue` with `skills/project-issue/scripts/hydrate-external-issue.ps1`. Hydration preserves the GitHub issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command, then creates or links a source plan under `docs/superpowers/plans`.
+
+`$project-resolve` and `$project-orchestrate` must wait until the hydrated mirror passes `skills/project-issue/scripts/validate-issue-mirror.ps1`.
+
 ## Workflow Metadata
 
 New issue mirrors should include:
