@@ -48,6 +48,12 @@ $scenarios = @(
             "docs/superpowers/specs",
             "docs/superpowers/issues",
             "request_user_input",
+            "Auto Mode authorization ledger",
+            "project_auto_mode_authorization",
+            "the repo-root Auto Mode contract helper",
+            "bounded-auto-merge",
+            "recorded defaults",
+            "stop outside policy",
             "Interview me relentlessly about every aspect of this plan",
             "superpowers:test-driven-development",
             "superpowers:systematic-debugging",
@@ -134,7 +140,7 @@ $scenarios = @(
             "project_plan_next_step",
             "Continue Into Work",
             "Revise / Review Plan",
-            "Stop / Done",
+            "Stop",
             "project_plan_work_route",
             "Create Work Artifact",
             "Execute Existing Work",
@@ -159,9 +165,9 @@ $scenarios = @(
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
         foreach ($needle in @(
             'Project Implement',
-            'continue to `$project:implement-plan` using the saved plan path',
+            'continue to `$superpowers-project:implement-plan` using the saved plan path',
             'Project Issue First',
-            'continue to `$project:create-issues` using the saved plan path',
+            'continue to `$superpowers-project:create-issues` using the saved plan path',
             'Recommend `Project Implement` for branch-backed non-issue implementation',
             'Recommend `Project Issue First` when the GitHub issue backbone is desired',
             'does not create issue mirrors'

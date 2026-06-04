@@ -34,12 +34,6 @@ try {
 
     $pr = Read-JsonInput -Json $PrJson -Path $PrFixturePath -Name "PR evidence"
 
-    if ($mode -eq "pr-no-issue") {
-        if (Test-AnyIssueClosureClaim -Pr $pr) { throw "non-issue PR must not claim issue closure" }
-        Assert-PrVerification -Verification $verification -Pr $pr
-        Complete-Contract -Phase $phase -Reason "premerge checks passed" -Evidence @{ mode = $mode; pr_url = [string]$pr.url; source_plan = [string]$setup.source_plan; changed_files = @($pr.files | ForEach-Object { [string]$_.path }) }
-    }
-
     $issue = Read-JsonInput -Json $IssueJson -Path $IssueFixturePath -Name "issue evidence"
     $issueNumber = Get-IssueNumberFromUrl -IssueUrl ([string]$setup.issue_url)
     if (-not (Test-ClosingKeywordForIssue -Body ([string]$pr.body) -IssueNumber $issueNumber) -and -not (Test-ClosingReferenceIncludesIssue -References $pr.closingIssuesReferences -IssueNumber $issueNumber)) { throw "PR must close the linked issue" }

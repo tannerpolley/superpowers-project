@@ -13,7 +13,7 @@ Use the smallest native question shape that preserves the real decision tree.
 
 Do not collapse real routes into fake categories just to fit old 1-3 question or 2-3 option guidance. Current Codex Desktop testing showed much larger native prompts work, including 20 questions and 20 options. Treat that as current runtime-permissive behavior, not a public guarantee.
 
-For project workflow closeout gates, always ask the three-way trajectory question first. Ask the top-level closeout as Continue? Use Yes for the progress route. Use Revisit as the standard go-back route label unless a more specific local label is materially clearer. Use No for the stop route. Do not flatten closeout into a five-option or larger peer menu. If Yes or Revisit needs more detail, ask the nested branch question after that answer.
+For project workflow closeout gates, always ask the three-way trajectory question first. Ask the top-level closeout as Continue? Use Yes for the progress route. Use Revisit as the standard go-back route label unless a more specific local label is materially clearer. Use Stop for mid-loop exits. Use Done only for verified final states. Do not flatten closeout into a five-option or larger peer menu. If Yes or Revisit needs more detail, ask the nested branch question after that answer.
 
 Use larger native prompts only inside a selected branch, in data-backed selection menus, or for independent bulk decisions that are all needed before one action.
 
@@ -65,11 +65,11 @@ Example:
 
 ```text
 Question: Continue?
-Options: Yes, Revisit, No / Stop / Done
+Options: Yes, Revisit, Stop
 
 If Yes -> ask Plan, Issue, Implement, Resolve, Doctor, or other valid progress route.
 If Revisit -> show evidence, ask the review/revision route, then return to the same closeout gate.
-If No / Stop / Done -> stop.
+If Stop -> stop.
 ```
 
 Nested Yes-route menus must not include Stop / Done. They show only real forward routes. If no forward route is safe, do not ask a nested Yes-route menu; report the blocker or return to the top-level gate with evidence.
@@ -131,19 +131,19 @@ For workflow closeout, preserve the user's direction model:
 
 - Down is shown to the user as Yes and means progress or default move-on.
 - Left is shown to the user as Revisit and means revise, review, repair, rerun, recover, or gather more evidence.
-- Right is shown to the user as No / Stop / Done and means stop or done.
+- Right is terminal and is phase-sensitive.
 
-Revisit is non-terminal. Yes must start the selected progress route or ask the blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only No / Stop / Done can end a continuation loop before that final Done gate.
+Use Stop for mid-loop exits. Use Done only for verified final states.
 
-This model is the first prompt for every project workflow closeout. Ask exactly three top-level options: Yes, Revisit, and No / Stop / Done. If Yes has multiple possible next skills, ask a nested route menu after Yes; for example, Write Plan -> Yes -> Create Issues or Implement Plan. If Revisit has multiple possible reiteration routes, ask a nested review menu after Revisit. Do not put Continue children beside Revisit and No in the same top-level question.
+Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop. A saved spec, saved plan, created issue set, PR-ready branch, or PR-ready worker handoff is not final completion.
 
-Nested Yes-route menus must not include Stop / Done. They include only real forward routes. Nested Revisit-route menus must not include Stop / Done. They include only real review, revise, repair, rerun, recover, or evidence-gathering routes and then return to the originating continuation gate.
+Final clean closeout gates may use exactly three top-level options: Yes, Revisit, and Done. Done is valid only after a skill proves a final state, such as clean merge closeout proof or an explicit healthy audit gate with no remaining repair route.
 
-Recommend Yes when at least one safe forward route exists. Recommend Revisit when evidence is incomplete, validation failed, or review/repair is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states.
+Revisit is non-terminal. Yes must start the selected progress route or ask the blocking child question. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can end an intermediate continuation loop before a verified final Done gate.
 
-Approval gates use domain-specific decline or cancel labels instead of Stop / Done unless the decline actually ends the workflow. Use labels such as Decline, Keep Local, Do Not Merge, Review First, or Recover when those are the real approval outcomes.
+This model is the first prompt for every project workflow closeout. Ask exactly three top-level options: Yes, Revisit, and Stop. If Yes has multiple possible next skills, ask a nested route menu after Yes; for example, Write Plan -> Yes -> Create Issues or Implement Plan. If Revisit has multiple possible reiteration routes, ask a nested review menu after Revisit. Do not put Continue children beside Revisit and No in the same top-level question.
 
-Do not end a loop until the user chooses No / Stop / Done, reaches an explicit final Healthy -> Done gate, or provides a Custom answer that clearly means stop/done. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
+Do not end a loop until the user chooses Stop, reaches a verified final Done gate, or provides a Custom answer that maps to one of those states. Custom answers that mean a mid-loop exit are treated as Stop. Custom answers that claim completion before proof exists are treated as Stop and the agent reports the remaining lifecycle state. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
 
 ## Normal Chat For Exact Text
 
@@ -222,10 +222,7 @@ If a large native prompt fails because of runtime validation:
 
 | Mistake | Fix |
 |---|---|
-| Flattening a closeout gate into five or more options | Ask Continue? with Yes, Revisit, and No / Stop / Done first; ask peer routes only inside the selected branch. |
-| Repeating Stop / Done inside a nested Yes-route menu | Remove it; nested Yes-route menus must show only real forward routes. |
-| Repeating Stop / Done inside a nested Revisit-route menu | Remove it; nested Revisit-route menus must show only revisit, repair, rerun, recovery, review, or evidence routes. |
-| Recommending Stop / Done when progress is safe | Recommend Yes when at least one safe forward route exists; reserve No / Stop / Done for terminal, blocker, or user-requested stop states. |
+| Flattening a closeout gate into five or more options | Ask Continue? with Yes, Revisit, and Stop first; ask peer routes only inside the selected branch. |
 | Asking dependent branch questions in one bulk prompt | Ask the route first, then only the selected follow-up. |
 | Using choices for exact text | Ask in normal chat. |
 | Treating Custom as executable without validation | Clarify or route it deliberately. |

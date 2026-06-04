@@ -155,4 +155,3 @@ $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
-

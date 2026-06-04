@@ -213,6 +213,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Advanced user input policy contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Auto Mode authorization contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-auto-mode-contract.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Auto Mode authorization contract failed" }
+    }))
+
     $results.Add((Invoke-Step "PowerShell parser check" {
         $scripts = @(Get-ChildItem -LiteralPath $repoRoot -Recurse -Filter "*.ps1")
         foreach ($script in $scripts) {

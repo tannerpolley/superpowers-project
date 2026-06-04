@@ -74,7 +74,7 @@ $scenarios = @(
             'Do not answer a brainstorming decision in prose when `request_user_input` is callable.',
             "inspect codebase and project context before asking",
             "report back with evidence gathered, decision points, and assumptions to remove",
-            'Use the same grilling pressure as `$project:brainstorm-spec` plus `grill-me`.'
+            'Use the same grilling pressure as `$superpowers-project:brainstorm-spec` plus `grill-me`.'
         )) {
             Assert-Contains $text $needle "missing native UI/grill pressure contract: $needle"
         }
@@ -97,7 +97,17 @@ $scenarios = @(
             "project_brainstorm_next_step",
             "Continue From Spec",
             "Revise / Review Brainstorm",
-            "Stop / Done",
+            "Stop",
+            "project_brainstorm_start_route",
+            "Manual Planning",
+            "Auto Mode",
+            "project_auto_mode_authorization",
+            "Bounded Auto Merge",
+            "Auto Mode authorization ledger",
+            "bounded-auto-merge",
+            "recorded-defaults",
+            "issue-backed-orchestrate-only",
+            "the repo-root Auto Mode contract helper",
             "project_brainstorm_plan_route",
             "Create One Plan",
             "Multi-Spec Planning",
@@ -120,6 +130,11 @@ $scenarios = @(
             "project_brainstorm_next_step",
             "Continue From Spec",
             "Revise / Review Brainstorm",
+            "project_brainstorm_start_route",
+            "Manual Planning",
+            "Auto Mode",
+            "project_auto_mode_authorization",
+            "Bounded Auto Merge",
             "project_brainstorm_plan_route",
             "Create One Plan",
             "Revise Spec"

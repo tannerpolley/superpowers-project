@@ -9,28 +9,30 @@ This skill is the router for the Superpowers Project extension. It does not repl
 
 ## Native Continuation Loop
 
-Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or reaches a verified final `Done` gate. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only No / Stop / Done can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` option or verified final `Done` gate is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can break an intermediate loop before a verified final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Routing
 
-- Project setup, roadmap context, tracker board setup, or large-scope project map: `$project:setup-project`
-- Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$project:brainstorm-spec`
-- Implementation planning from a spec, issue mirror, or approved direct request: `$project:write-plan`
-- Branch-backed implementation of an approved plan without a GitHub issue: `$project:implement-plan`
-- Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project:create-issues`
-- External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$project:create-issues`
-- One ready issue execution in the current thread with native `/goal` proof: `$project:resolve-issue`
-- Worker-thread implementation of one ready issue: `$project:orchestrate-issues`
-- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project:merge-changes`
-- Drift audit, migration, label review, milestone review, or live sync review: `$project:audit-project`
+- Project setup, roadmap context, tracker board setup, or large-scope project map: `$superpowers-project:setup-project`
+- Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$superpowers-project:brainstorm-spec`
+- Implementation planning from a spec, issue mirror, or approved direct request: `$superpowers-project:write-plan`
+- Branch-backed implementation of an approved plan without a GitHub issue: `$superpowers-project:implement-plan`
+- Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$superpowers-project:create-issues`
+- External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$superpowers-project:create-issues`
+- One ready issue execution in the current thread with native `/goal` proof: `$superpowers-project:resolve-issue`
+- Worker-thread implementation of one ready issue: `$superpowers-project:orchestrate-issues`
+- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$superpowers-project:merge-changes`
+- Drift audit, migration, label review, milestone review, or live sync review: `$superpowers-project:audit-project`
 
-The issue-backed `$project:create-issues` plus `$project:resolve-issue` or `$project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
+The issue-backed `$superpowers-project:create-issues` plus `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$superpowers-project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
 
-External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$project:create-issues` hydration first and block execution until mirror validation passes.
+After `$superpowers-project:brainstorm-spec` saves a spec, Auto Mode may be authorized only through native question `project_auto_mode_authorization` with `Bounded Auto Merge`. That route records an Auto Mode authorization ledger validated by `the repo-root Auto Mode contract helper`; the agent then chooses between planning, issue-backed orchestration, direct plan implementation, verification, merge, and closeout proof within the recorded defaults. If proof is missing, validation fails, GitHub state is unsafe, or the needed decision falls outside the ledger policy, stop outside policy instead of inventing a new approval.
 
-When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route` with `Project Resolve`, `Project Orchestrate`, and `Review First` options. Route direct current-thread implementation to `$project:resolve-issue`; route delegated worker worktree implementation to `$project:orchestrate-issues`.
+External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$superpowers-project:create-issues` hydration first and block execution until mirror validation passes.
+
+When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route` with `Project Resolve`, `Project Orchestrate`, and `Review First` options. Route direct current-thread implementation to `$superpowers-project:resolve-issue`; route delegated worker worktree implementation to `$superpowers-project:orchestrate-issues`.
 
 ## Artifact Root
 
@@ -54,7 +56,7 @@ At major handoffs, use native continuation questions and treat the selected answ
 
 Every Superpowers Project skill must summarize its artifact or result in chat before a closeout continuation question. The summary should name created or changed artifacts, validation or proof status, unresolved decisions, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when they were created or changed and are reasonably sized.
 
-When `request_user_input` is callable, ask the skill-specific native continuation question using flowchart geometry. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. After Yes, ask the nested progress route question when multiple next skills are possible. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. After Revisit, show evidence or rendered artifacts, ask the nested review/revision question when needed, and return to the originating continuation gate. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when the first answer changes which follow-up questions matter.
+When `request_user_input` is callable, ask the skill-specific native continuation question using flowchart geometry. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. After Yes, ask the nested progress route question when multiple next skills are possible. After Revisit, show evidence or rendered artifacts, ask the nested review/revision question when needed, and return to the originating continuation gate. Nested Yes-route menus must not include Stop / Done and should list only forward routes. Nested Revisit-route menus must not include Stop / Done and should list only revisit, repair, rerun, recovery, review, or evidence routes. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when the first answer changes which follow-up questions matter.
 
 Custom Other is not terminal unless it explicitly asks to stop or be done. Otherwise treat Custom Other as input for the next best follow-up question, a custom child question, or the baseline nested route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate. Treat selected native answers as executable routing: start the selected next skill in the same turn when tools and state allow it.
 
@@ -64,7 +66,7 @@ If routing cannot continue because tools, permissions, GitHub state, or user app
 
 When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for concise, decision-oriented questions. Batch independent questions together. Use more than three options only for nested branch menus, data-backed selections, or independent bulk gates where the larger menu preserves the real decision. Ask dependent questions one step at a time after the prior answer changes the branch.
 
-For `$project:brainstorm-spec`, use native UI more aggressively: if there is any unresolved idea, naming, scope, tradeoff, route, or assumption decision, inspect project context and relevant code first, then ask through `request_user_input` instead of resolving the decision in prose.
+For `$superpowers-project:brainstorm-spec`, use native UI more aggressively: if there is any unresolved idea, naming, scope, tradeoff, route, or assumption decision, inspect project context and relevant code first, then ask through `request_user_input` instead of resolving the decision in prose.
 
 ## Native Question Debug Mode
 
@@ -74,9 +76,4 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 ## Goal Routing
 
-Issue implementation must use `$project:resolve-issue` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$project:resolve-issue` creates PR-ready evidence, final integration must route to `$project:merge-changes`.
-
-
-
-
-
+Issue implementation must use `$superpowers-project:resolve-issue` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$superpowers-project:resolve-issue` creates PR-ready evidence, final integration must route to `$superpowers-project:merge-changes`.

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="3200" height="5340" viewBox="0 0 3200 5340" role="img" aria-labelledby="title desc">
   <title id="title">Native Q&amp;A main workflow flowchart</title>
-  <desc id="desc">A fixed-layout flowchart for Superpowers Project. Main workflow boxes are stacked on a centered rail. Implement Plan and Create Issues are peer routes. Orchestrate Issues and Resolve Issue are balanced under Create Issues as worker and classic routes. Review choices loop back to their originating skill. No / Stop / Done choices break the loop, while the final Healthy gate can finish at Done.</desc>
+  <desc id="desc">A fixed-layout flowchart for Superpowers Project. Main workflow boxes are stacked on a centered rail. Implement Plan and Create Issues are peer routes. Orchestrate Issues and Resolve Issue are balanced under Create Issues as worker and direct routes. Revisit choices loop back to their originating skill. Stop pauses a continuation loop, while Done is reserved for verified final completion.</desc>
   <defs>
     <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L0,7 L10,3.5 z" class="arrow-head" />
@@ -51,7 +51,7 @@
 
   <rect x="0" y="0" width="3200" height="5340" class="canvas" />
   <text x="1600" y="56" class="title">Native Q&amp;A Workflow</text>
-  <text x="1600" y="92" class="subtitle">Yes continues into the next depth. Revisit choices loop back. No choices break the loop. Healthy can finish at Done.</text>
+  <text x="1600" y="92" class="subtitle">Yes continues into the next depth. Revisit loops back. Stop means pause. Done means complete.</text>
 
   <rect x="110" y="120" width="520" height="90" rx="5" class="side" />
   <text x="370" y="154" class="node-title">Native Menu Rule</text>
@@ -60,8 +60,8 @@
 
   <rect x="2570" y="120" width="500" height="90" rx="5" class="note" />
   <text x="2820" y="154" class="node-title">Break Rule</text>
-  <text x="2820" y="181" class="node-text">No / Stop / Done breaks the loop.</text>
-  <text x="2820" y="204" class="node-text">Healthy -> Done is explicit.</text>
+  <text x="2820" y="181" class="node-text">Stop means pause.</text>
+  <text x="2820" y="204" class="node-text">Done means complete.</text>
 
   <g id="depth-guides">
     <line id="depth-0-line" x1="260" y1="224" x2="2940" y2="224" class="depth-line" stroke-dasharray="12 14" />
@@ -103,9 +103,9 @@
   <polyline id="return-initiate" points="375,445 375,300 1240,300" class="arrow revise-return" />
   <text x="980" y="456" class="small-label">Revisit</text>
   <rect x="2540" y="448" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="480" class="stop-text">Stop / Done</text>
+  <text x="2670" y="480" class="stop-text">Stop</text>
   <polyline id="stop-initiate" points="1650,480 2540,480" class="arrow stop-route" />
-  <text x="2095" y="456" class="label">No</text>
+  <text x="2095" y="456" class="label">Stop</text>
   <line id="down-d1-setup" x1="1500" y1="540" x2="1500" y2="730" class="arrow down-route" />
   <text x="1610" y="650" class="label">Yes</text>
 
@@ -124,16 +124,16 @@
   <polyline id="return-setup" points="375,925 375,780 1240,780" class="arrow revise-return" />
   <text x="980" y="936" class="small-label">Revisit</text>
   <rect x="2540" y="928" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="960" class="stop-text">Stop / Done</text>
+  <text x="2670" y="960" class="stop-text">Stop</text>
   <polyline id="stop-setup" points="1650,960 2540,960" class="arrow stop-route" />
-  <text x="2095" y="936" class="label">No</text>
+  <text x="2095" y="936" class="label">Stop</text>
   <line id="down-d2-brainstorm" x1="1500" y1="1020" x2="1500" y2="1210" class="arrow down-route" />
   <text x="1610" y="1130" class="label">Yes</text>
 
   <rect id="skill-brainstorm" x="1240" y="1210" width="520" height="100" rx="5" class="skill main-skill" />
   <text x="1500" y="1246" class="node-title">Brainstorm Spec</text>
   <text x="1500" y="1274" class="node-text">inspect context, grill assumptions,</text>
-  <text x="1500" y="1297" class="node-text">save a durable spec</text>
+  <text x="1500" y="1297" class="node-text">manual planning or Auto Mode</text>
   <line id="down-brainstorm-d3" x1="1500" y1="1310" x2="1500" y2="1380" class="arrow down-route" />
   <polygon id="decision-brainstorm" points="1500,1380 1650,1440 1500,1500 1350,1440" class="decision" />
   <text x="1500" y="1434" class="decision-title">Continue?</text>
@@ -145,9 +145,9 @@
   <polyline id="return-brainstorm" points="375,1405 375,1260 1240,1260" class="arrow revise-return" />
   <text x="980" y="1416" class="small-label">Revisit</text>
   <rect x="2540" y="1408" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="1440" class="stop-text">Stop / Done</text>
+  <text x="2670" y="1440" class="stop-text">Stop</text>
   <polyline id="stop-brainstorm" points="1650,1440 2540,1440" class="arrow stop-route" />
-  <text x="2095" y="1416" class="label">No</text>
+  <text x="2095" y="1416" class="label">Stop</text>
   <line id="down-d3-plan" x1="1500" y1="1500" x2="1500" y2="1690" class="arrow down-route" />
   <text x="1610" y="1610" class="label">Yes</text>
 
@@ -166,9 +166,9 @@
   <polyline id="return-plan" points="375,1885 375,1740 1240,1740" class="arrow revise-return" />
   <text x="980" y="1896" class="small-label">Revisit</text>
   <rect x="2540" y="1888" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="1920" class="stop-text">Stop / Done</text>
+  <text x="2670" y="1920" class="stop-text">Stop</text>
   <polyline id="stop-plan" points="1650,1920 2540,1920" class="arrow stop-route" />
-  <text x="2095" y="1896" class="label">No</text>
+  <text x="2095" y="1896" class="label">Stop</text>
 
   <polyline id="down-plan-split" points="1500,1980 1500,2305" class="line down-route" />
   <text x="1610" y="2115" class="label">Yes</text>
@@ -195,9 +195,9 @@
   <polyline id="return-implement" points="375,2580 375,2432 520,2432" class="arrow revise-return" />
   <text x="624" y="2588" class="small-label">Revisit</text>
   <rect x="1110" y="2583" width="260" height="64" rx="32" class="stop" />
-  <text x="1240" y="2615" class="stop-text">Stop / Done</text>
+  <text x="1240" y="2615" class="stop-text">Stop</text>
   <polyline id="stop-implement" points="940,2615 1110,2615" class="arrow stop-route" />
-  <text x="1025" y="2588" class="small-label">No</text>
+  <text x="1025" y="2588" class="small-label">Stop</text>
 
   <line id="down-create-d6" x1="2210" y1="2485" x2="2210" y2="2555" class="arrow down-route" />
   <polygon id="decision-create" points="2210,2555 2360,2615 2210,2675 2060,2615" class="decision" />
@@ -210,9 +210,9 @@
   <polyline id="return-create" points="1665,2580 1665,2432 1940,2432" class="arrow revise-return" />
   <text x="1980" y="2588" class="small-label">Revisit</text>
   <rect x="2540" y="2583" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="2615" class="stop-text">Stop / Done</text>
+  <text x="2670" y="2615" class="stop-text">Stop</text>
   <polyline id="stop-create" points="2360,2615 2540,2615" class="arrow stop-route" />
-  <text x="2450" y="2588" class="small-label">No</text>
+  <text x="2450" y="2588" class="small-label">Stop</text>
 
   <polyline id="route-implement-merge" points="790,2675 790,3935 1500,3935" class="line down-route direct-merge-route" />
   <text x="915" y="2765" class="small-label">Yes</text>
@@ -243,9 +243,9 @@
   <polyline id="return-pr-ready" points="1665,3605 1665,3132 1620,3132" class="arrow revise-return" />
   <text x="1980" y="3616" class="small-label">Revisit</text>
   <rect x="2540" y="3608" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="3640" class="stop-text">Stop / Done</text>
+  <text x="2670" y="3640" class="stop-text">Stop</text>
   <polyline id="stop-pr-ready" points="2360,3640 2540,3640" class="arrow stop-route" />
-  <text x="2450" y="3616" class="small-label">No</text>
+  <text x="2450" y="3616" class="small-label">Stop</text>
   <polyline id="down-pr-ready-merge" points="2210,3700 2210,3935 1500,3935" class="line down-route issue-merge-route" />
   <line id="route-merge-join" x1="1500" y1="3935" x2="1500" y2="4270" class="arrow down-route merge-join-route" />
   <text x="1610" y="3990" class="label">Yes</text>
@@ -265,9 +265,9 @@
   <polyline id="return-merge" points="375,4460 375,4320 1240,4320" class="arrow revise-return" />
   <text x="980" y="4471" class="small-label">Revisit</text>
   <rect x="2540" y="4463" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="4495" class="stop-text">Stop / Done</text>
+  <text x="2670" y="4495" class="stop-text">Stop</text>
   <polyline id="stop-merge" points="1650,4495 2540,4495" class="arrow stop-route" />
-  <text x="2095" y="4471" class="label">No</text>
+  <text x="2095" y="4471" class="label">Stop</text>
   <line id="down-d9-audit" x1="1500" y1="4555" x2="1500" y2="4885" class="arrow down-route" />
   <text x="1610" y="4720" class="label">Yes</text>
 
@@ -278,7 +278,7 @@
   <line id="down-audit-d10" x1="1500" y1="4985" x2="1500" y2="5045" class="arrow down-route" />
   <polygon id="decision-audit" points="1500,5045 1650,5105 1500,5165 1350,5105" class="decision" />
   <text x="1500" y="5099" class="decision-title">Healthy?</text>
-  <text x="1500" y="5123" class="decision-text">close or repair</text>
+  <text x="1500" y="5123" class="decision-text">verified final gate</text>
   <rect id="side-audit" x="140" y="5070" width="470" height="70" rx="5" class="side" />
   <text x="375" y="5099" class="node-title">Revisit Audit</text>
   <text x="375" y="5126" class="node-text">repair or create new plan</text>
@@ -286,11 +286,11 @@
   <polyline id="return-audit" points="375,5070 375,4935 1240,4935" class="arrow revise-return" />
   <text x="980" y="5081" class="small-label">Revisit</text>
   <rect x="2540" y="5073" width="260" height="64" rx="32" class="stop" />
-  <text x="2670" y="5105" class="stop-text">Stop / Done</text>
+  <text x="2670" y="5105" class="stop-text">Stop</text>
   <polyline id="stop-audit" points="1650,5105 2540,5105" class="arrow stop-route" />
-  <text x="2095" y="5081" class="label">No</text>
+  <text x="2095" y="5081" class="label">Stop</text>
   <line id="down-d10-done" x1="1500" y1="5165" x2="1500" y2="5205" class="arrow down-route final-done-route" />
-  <text x="1625" y="5190" class="label">Yes</text>
+  <text x="1625" y="5190" class="label">Done</text>
   <rect x="1415" y="5205" width="170" height="50" rx="25" class="done" />
   <text x="1500" y="5230" class="done-text">Done</text>
 </svg>

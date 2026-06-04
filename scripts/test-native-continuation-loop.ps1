@@ -56,6 +56,17 @@ $workflowSkillNames = @(
     "merge-changes",
     "audit-project"
 )
+$intermediateSkillNames = @(
+    "initiate-workflow",
+    "setup-project",
+    "orchestrate-issues",
+    "brainstorm-spec",
+    "write-plan",
+    "implement-plan",
+    "create-issues",
+    "resolve-issue"
+)
+$finalCapableSkillNames = @("merge-changes", "audit-project")
 
 foreach ($skillName in $workflowSkillNames) {
     $skillPath = Join-Path $skillRoot "$skillName\SKILL.md"
@@ -67,18 +78,22 @@ foreach ($skillName in $workflowSkillNames) {
     foreach ($needle in @(
         '## Native Continuation Loop',
         'Do not end the turn',
-        'until a native continuation question returns `Stop` or `Done`',
+        'until a native continuation question returns `Stop` or reaches a verified final `Done` gate',
         'After every completed action',
         'ask another native continuation question',
-        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
-        'Only a user-selected `Stop` or `Done` option is terminal',
+        'Only a user-selected `Stop` option or verified final `Done` gate is terminal',
         'Revisit is non-terminal',
-        'the only Yes terminal exception is an explicit final Healthy -> Done gate',
-        'Only No / Stop / Done can break the loop before that final Done gate',
+        'Only Stop can break an intermediate loop before a verified final Done gate',
         'Review First is not a terminal answer'
     )) {
         Add-Check $checks "$skillName contains $needle" ($text.Contains($needle)) "$skillPath must contain continuation-loop contract: $needle"
     }
+    $terminalPhrases = @(
+        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
+        'A local merge, created issue, saved plan, completed audit, or synced live plugin is not terminal',
+        'A pushed issue-backed commit, merged issue-backed PR, local branch merge, created issue, saved plan, completed audit, or synced live plugin is not terminal'
+    )
+    Add-Check $checks "$skillName contains non-terminal artifact contract" (@($terminalPhrases | Where-Object { $text.Contains($_) }).Count -gt 0) "$skillPath must contain a non-terminal artifact contract"
 
     foreach ($needle in @(
         '## Native Continuation Gate',
@@ -86,7 +101,7 @@ foreach ($skillName in $workflowSkillNames) {
         'Yes',
         'No',
         'Revisit',
-        'Stop / Done',
+        'Stop',
         'top-level closeout question must use exactly three trajectory options',
         'Do not show Continue children as peer top-level options',
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
@@ -109,17 +124,15 @@ foreach ($skillName in $workflowSkillNames) {
     $agentText = Get-Content -LiteralPath $agentPath -Raw
     foreach ($needle in @(
         'After every completed action, ask the next native continuation or permission question',
-        'Do not end the workflow until the user selects Stop or Done through native continuation input',
-        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
+        'Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate',
         'Revisit is non-terminal',
-        'the only Yes terminal exception is an explicit final Healthy -> Done gate',
-        'Only No / Stop / Done can break the loop before that final Done gate',
+        'Only Stop can break an intermediate loop before a verified final Done gate',
         'Review First is not a terminal answer',
         'Continue?',
         'Yes',
         'No',
         'Revisit',
-        'Stop / Done',
+        'Stop',
         'top-level closeout question must use exactly three trajectory options',
         'Do not show Continue children as peer top-level options',
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
@@ -132,6 +145,15 @@ foreach ($skillName in $workflowSkillNames) {
         'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
+    }
+    Add-Check $checks "$skillName metadata contains non-terminal artifact contract" (@($terminalPhrases | Where-Object { $agentText.Contains($_) }).Count -gt 0) "$agentPath must contain a non-terminal artifact contract"
+
+    if ($intermediateSkillNames -contains $skillName) {
+        $usesCombinedRouteLabel = $text.Contains('Right: `Stop / Done`') -or $agentText.Contains('Right: `Stop / Done`') -or $text.Contains('and No / Stop / Done') -or $agentText.Contains('and No / Stop / Done')
+        Add-Check $checks "$skillName uses Stop for intermediate terminal routes" (-not $usesCombinedRouteLabel) "$skillName must use Stop for intermediate terminal routes"
+    }
+    if ($finalCapableSkillNames -contains $skillName) {
+        Add-Check $checks "$skillName defines verified final Done semantics" ($text.Contains("verified final") -and $agentText.Contains("verified final")) "$skillName must define verified final Done semantics"
     }
 
     foreach ($forbidden in @(

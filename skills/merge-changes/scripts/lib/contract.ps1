@@ -74,7 +74,7 @@ function Get-MergeMode {
         throw "setup ledger merge_mode is required"
     }
     $mode = [string]$Setup.merge_mode
-    $allowedModes = @("pr-issue", "pr-no-issue", "local-branch")
+    $allowedModes = @("pr-issue", "local-branch")
     if ($mode -notin $allowedModes) { throw "setup ledger merge_mode must be one of: $($allowedModes -join ', ')" }
     $mode
 }

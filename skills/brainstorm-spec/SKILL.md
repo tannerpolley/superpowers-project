@@ -11,9 +11,9 @@ Project Brainstorm is the Superpowers Project adapter for `superpowers:brainstor
 
 ## Native Continuation Loop
 
-Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or reaches a verified final `Done` gate. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only No / Stop / Done can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` option or verified final `Done` gate is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can break an intermediate loop before a verified final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Required Method
 
@@ -47,7 +47,7 @@ Carry this grill-me wording verbatim into brainstorming and planning questions w
 
 `Interview me relentlessly about every aspect of this plan`
 
-Use the same grilling pressure as `$project:brainstorm-spec` plus `grill-me`. Do not settle for the first plausible interpretation when a term, boundary, owner, workflow, success criterion, or tradeoff can be sharpened.
+Use the same grilling pressure as `$superpowers-project:brainstorm-spec` plus `grill-me`. Do not settle for the first plausible interpretation when a term, boundary, owner, workflow, success criterion, or tradeoff can be sharpened.
 
 Treat `grill-with-docs` as source behavior for repo-aware challenge: compare the user's terms against context docs, ADRs, project context, milestones, and code reality. Surface contradictions directly and turn them into decisions.
 
@@ -64,9 +64,9 @@ Use the smallest supporting set:
 
 Save approved specs to `docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md` unless the user explicitly chooses a different repo-local Superpowers Project destination. A `-design`, `-prd`, or similar suffix is allowed when it clarifies the artifact type, but the date and slug are the required filename parts.
 
-Project Brainstorm writes loose specs in the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: brainstorming produces loose specs, `$project:write-plan` turns approved source material into milestone-aware execution design, and `$project:create-issues` creates official implementation records. For loose specs, milestone identity is optional and only used when naturally helpful; do not require GitHub issue metadata, source plans, implementation branches, proof oracles, or issue-ready execution metadata.
+Project Brainstorm writes loose specs in the flat canonical roots model. The lifecycle is `spec -> plan -> issue`: brainstorming produces loose specs, `$superpowers-project:write-plan` turns approved source material into milestone-aware execution design, and `$superpowers-project:create-issues` creates official implementation records. For loose specs, milestone identity is optional and only used when naturally helpful; do not require GitHub issue metadata, source plans, implementation branches, proof oracles, or issue-ready execution metadata.
 
-Milestone pages are index views. They should link to flat canonical specs, plans, and issues rather than owning nested copies. Represent milestone/category views through frontmatter plus milestone indexes. If a brainstorm finds `docs/superpowers/milestones/<milestone>/specs`, `plans`, or `issues` being treated as canonical, report that nested canonical milestone artifact folders are drift and route to `$project:audit-project` or `$project:write-plan` for migration guidance.
+Milestone pages are index views. They should link to flat canonical specs, plans, and issues rather than owning nested copies. Represent milestone/category views through frontmatter plus milestone indexes. If a brainstorm finds `docs/superpowers/milestones/<milestone>/specs`, `plans`, or `issues` being treated as canonical, report that nested canonical milestone artifact folders are drift and route to `$superpowers-project:audit-project` or `$superpowers-project:write-plan` for migration guidance.
 
 A saved spec should include:
 
@@ -84,7 +84,7 @@ Before reporting the spec ready, self-review for placeholders, contradictions, a
 
 After saving or revising the brainstorm artifact, summarize the spec, PRD, architecture decision, or unresolved decision set in chat before asking the continuation question. The summary must name the artifact path when one was saved, the key decisions made, assumptions removed, remaining open questions, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_brainstorm_next_step`
 
@@ -94,9 +94,21 @@ Options:
 
 - Down: `Continue From Spec`: choose how to turn the brainstorm artifact into planning work.
 - Left: `Revise / Review Brainstorm`: revise, review, ask follow-ups, or run another brainstorm loop.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Continue From Spec`, ask:
+
+Question id: `project_brainstorm_start_route`
+
+Prompt: `Should I continue manually or authorize Auto Mode?`
+
+Options:
+
+- Down: `Manual Planning`: choose the next planning route yourself.
+- Left: `Auto Mode`: authorize the agent to choose the route, plan, implement, verify, and merge within the bounded policy.
+- Right: `Stop`: break the continuation loop.
+
+If the user selects `Manual Planning`, ask:
 
 Question id: `project_brainstorm_plan_route`
 
@@ -104,8 +116,39 @@ Prompt: `How should planning start from this brainstorm?`
 
 Options:
 
-- Down: `Create One Plan`: create one `$project:write-plan` from the recently generated spec.
+- Down: `Create One Plan`: create one `$superpowers-project:write-plan` from the recently generated spec.
 - Left: `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
+- Right: `Stop`: break the continuation loop.
+
+If the user selects `Auto Mode`, ask:
+
+Question id: `project_auto_mode_authorization`
+
+Prompt: `Authorize bounded Auto Mode for this saved spec?`
+
+Options:
+
+- Down: `Bounded Auto Merge`: create an Auto Mode authorization ledger and continue without more user input through planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
+- Left: `Manual Planning`: return to `project_brainstorm_plan_route`.
+- Right: `Stop`: break the continuation loop.
+
+`Bounded Auto Merge` is the only valid Auto Mode approval. It must record an Auto Mode authorization ledger before the next skill starts. The ledger must include:
+
+- `question_id: project_auto_mode_authorization`
+- `source: request_user_input`
+- `selected_authority: bounded-auto-merge`
+- `source_spec: docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md`
+- `route_policy.selected_mode: agent-chooses`
+- `route_policy.worker_route: issue-backed-orchestrate-only`
+- `decision_policy.selected_mode: recorded-defaults`
+- `decision_policy.stop_outside_policy: true`
+- `merge_permission.selected_mode: preauthorized-after-clean-premerge`
+- `merge_permission.require_clean_premerge: true`
+- `mutation_scope` containing `current-repo` and `development-branch`
+- `required_proof` containing `plan-proof-oracle`, `verification-receipts`, `cleanup-hook`, `premerge-proof`, and `closeout-proof`
+- `stop_conditions` containing `missing-proof`, `dirty-unsafe-state`, `failed-validation`, and `decision-outside-policy`
+
+Validate the ledger with `the repo-root Auto Mode contract helper`. If the ledger does not pass, do not continue into Auto Mode.
 
 If the user selects `Multi-Spec Planning`, ask:
 
@@ -115,8 +158,9 @@ Prompt: `How should multiple specs become plans?`
 
 Options:
 
-- Down: `Plan Multiple Specs`: create one `$project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
+- Down: `Plan Multiple Specs`: create one `$superpowers-project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
 - Left: `Create Multiple Plans`: create multiple related plans from multiple specs; prompt for spec-to-plan grouping if not already known.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Revise / Review Brainstorm`, ask:
 
@@ -126,8 +170,9 @@ Prompt: `How should I revisit this brainstorm output?`
 
 Options:
 
-- Down: `Revise Spec`: continue `$project:brainstorm-spec` with follow-up questions to revise the saved spec or decision summary.
+- Down: `Revise Spec`: continue `$superpowers-project:brainstorm-spec` with follow-up questions to revise the saved spec or decision summary.
 - Left: `Review Or Restart`: choose whether to review the current artifact or brainstorm another idea.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Review Or Restart`, ask:
 
@@ -138,9 +183,7 @@ Prompt: `Should I review this brainstorm or start another one?`
 Options:
 
 - Down: `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_brainstorm_next_step`.
-- Left: `Re-run Brainstorm`: start another `$project:brainstorm-spec` cycle for a new feature, idea, or major alternative.
+- Left: `Re-run Brainstorm`: start another `$superpowers-project:brainstorm-spec` cycle for a new feature, idea, or major alternative.
+- Right: `Stop`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
-
-
-

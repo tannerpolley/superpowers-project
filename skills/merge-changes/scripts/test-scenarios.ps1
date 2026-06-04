@@ -49,16 +49,6 @@ function New-SetupLedger {
     $ledger | ConvertTo-Json -Depth 12 -Compress
 }
 
-function New-NonIssueSetupLedger {
-    @{
-        merge_mode = "pr-no-issue"
-        source_plan = "docs/superpowers/plans/2026-06-02-sample-plan.md"
-        branch = "codex/non-issue-work"
-        goal_id = "thread-goal"
-        goal_objective = "Implement approved plan to PR-ready evidence."
-    } | ConvertTo-Json -Depth 12 -Compress
-}
-
 function New-LocalBranchSetupLedger {
     @{
         merge_mode = "local-branch"
@@ -186,9 +176,16 @@ Invoke-Scenario "skill frontmatter is valid" {
 Invoke-Scenario "merge contract text is present" {
     $text = Get-Content -LiteralPath $skillFile -Raw
     foreach ($needle in @(
-        "PR URL or worker handoff",
+        "issue-backed PR URL",
         "main orchestrator",
         "request_user_input",
+        "Auto Mode authorization ledger",
+        "project_auto_mode_authorization",
+        "the repo-root Auto Mode contract helper",
+        "bounded-auto-merge",
+        "recorded defaults",
+        "preauthorized-after-clean-premerge",
+        "stop outside policy",
         "project_merge_approval",
         "Merge",
         "Decline",
@@ -216,9 +213,8 @@ Invoke-Scenario "merge contract text is present" {
         "Resolve Another",
         "Review Closeout",
         "Stop",
-        "start the selected next skill"
+        "start the selected next skill",
         "pr-issue",
-        "pr-no-issue",
         "local-branch",
         "## Reassessment Routing",
         "Reassess Plan",
@@ -233,12 +229,12 @@ Invoke-Scenario "metadata is present" {
     if (-not (Test-Path -LiteralPath $metadataFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
     Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
-    Assert-Contains $metadata "PR URL or worker handoff" "missing PR intake"
+    Assert-Contains $metadata "issue-backed PR URL" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
     foreach ($needle in @("summarize", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill")) {
         Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
     }
-    foreach ($needle in @("pr-issue", "pr-no-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input")) {
+    foreach ($needle in @("pr-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "preauthorized-after-clean-premerge")) {
         Assert-Contains $metadata $needle "missing metadata merge mode route: $needle"
     }
 }
@@ -272,41 +268,20 @@ Invoke-Scenario "premerge accepts pr-issue with issue closure policy" {
     if ([string]$result.evidence.mode -ne "pr-issue") { throw "premerge did not record pr-issue mode" }
 }
 
-Invoke-Scenario "premerge accepts pr-no-issue with plan linkage and no issue closure expectation" {
-    $pr = @{
-        url = "https://github.com/example/repo/pull/6"
-        state = "OPEN"
-        body = "Implements approved local plan."
-        closingIssuesReferences = @()
-        requiredChecks = @(@{ name = "local-proof"; state = "SUCCESS"; conclusion = "SUCCESS" })
-        files = @(@{ path = "src/example.txt" })
-    } | ConvertTo-Json -Depth 12 -Compress
-    $verification = (New-VerificationLedger | ConvertFrom-Json)
-    $verification.changed_files_covered = @("src/example.txt")
-    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-NonIssueSetupLedger), "-VerificationLedgerJson", ($verification | ConvertTo-Json -Depth 12 -Compress), "-PrJson", $pr)
-    if (-not $result.ok) { throw $result.reason }
-    if ([string]$result.evidence.mode -ne "pr-no-issue") { throw "premerge did not record pr-no-issue mode" }
-}
-
 Invoke-Scenario "premerge accepts local-branch with clean synced main and validation proof" {
     $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-LocalBranchSetupLedger), "-VerificationLedgerJson", (New-LocalBranchVerificationLedger))
     if (-not $result.ok) { throw $result.reason }
     if ([string]$result.evidence.mode -ne "local-branch") { throw "premerge did not record local-branch mode" }
 }
 
-Invoke-Scenario "premerge rejects non-issue PR that claims issue closure" {
-    $pr = @{
-        url = "https://github.com/example/repo/pull/6"
-        state = "OPEN"
-        body = "Closes #12"
-        closingIssuesReferences = @(@{ number = 12 })
-        requiredChecks = @(@{ name = "local-proof"; state = "SUCCESS"; conclusion = "SUCCESS" })
-        files = @(@{ path = "src/example.txt" })
-    } | ConvertTo-Json -Depth 12 -Compress
-    $verification = (New-VerificationLedger | ConvertFrom-Json)
-    $verification.changed_files_covered = @("src/example.txt")
-    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-NonIssueSetupLedger), "-VerificationLedgerJson", ($verification | ConvertTo-Json -Depth 12 -Compress), "-PrJson", $pr)
-    if ($result.ok -or $result.reason -notmatch "must not claim issue closure") { throw "expected non-issue issue closure claim to block" }
+Invoke-Scenario "premerge rejects non-issue PR mode" {
+    $setup = @{
+        merge_mode = "pr-no-issue"
+        source_plan = "docs/superpowers/plans/2026-06-02-sample-plan.md"
+        branch = "codex/non-issue-work"
+    } | ConvertTo-Json -Depth 8 -Compress
+    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", $setup, "-VerificationLedgerJson", (New-VerificationLedger))
+    if ($result.ok -or $result.reason -notmatch "pr-issue, local-branch") { throw "expected obsolete pr-no-issue mode to block" }
 }
 
 Invoke-Scenario "premerge rejects local-branch when main is not clean synced" {
@@ -443,23 +418,6 @@ Invoke-Scenario "orchestrated closeout blocks folder deletion before archival" {
     } | ConvertTo-Json -Depth 20 -Compress
     $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger -Orchestrated), "-CompletionLedgerJson", $completion, "-PrJson", $pr, "-IssueJson", $issue)
     if ($result.ok -or $result.reason -notmatch "after worker thread archival|before worker thread archival") { throw "expected folder deletion order to block" }
-}
-
-Invoke-Scenario "pr-no-issue closeout requires native approval and cleanup proof without issue closure" {
-    $pr = @{ url = "https://github.com/example/repo/pull/6"; state = "MERGED"; body = "Implements approved local plan." } | ConvertTo-Json -Depth 8 -Compress
-    $completion = @{
-        pr_url = "https://github.com/example/repo/pull/6"
-        merge_decision = (New-MergeDecision | ConvertFrom-Json)
-        merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
-        default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
-        branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/non-issue-work"; remote_delete_target = "codex/non-issue-work"; remote_deleted_branches = @("codex/non-issue-work") }
-        worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/non-issue-worktree" }
-        fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
-        cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
-        clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
-    } | ConvertTo-Json -Depth 16 -Compress
-    $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-NonIssueSetupLedger), "-CompletionLedgerJson", $completion, "-PrJson", $pr)
-    if (-not $result.ok) { throw $result.reason }
 }
 
 Invoke-Scenario "local-branch closeout requires native approval validation cleanup and clean repo proof" {

@@ -47,19 +47,18 @@ if ($exists) {
         "Ask the top-level closeout as Continue?",
         "Use Yes for the progress route",
         "Use Revisit as the standard go-back route label",
-        "Use No for the stop route",
+        "Use Stop for mid-loop exits",
+        "Use Done only for verified final states",
+        "Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop",
+        "Final clean closeout gates may use exactly three top-level options: Yes, Revisit, and Done",
         "Do not put Continue children beside Revisit and No in the same top-level question",
         "Revisit is non-terminal",
-        "the only Yes terminal exception is an explicit final Healthy -> Done gate",
         "Review First is not a terminal answer",
-        "Only No / Stop / Done can end a continuation loop before that final Done gate",
-        "reaches an explicit final Healthy -> Done gate",
-        "If the active runtime rejects a large prompt, fail loudly",
-        "Nested Yes-route menus must not include Stop / Done",
-        "Nested Revisit-route menus must not include Stop / Done",
-        "Recommend Yes when at least one safe forward route exists",
-        "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states",
-        "Approval gates use domain-specific decline or cancel labels instead of Stop / Done"
+        "Only Stop can end an intermediate continuation loop before a verified final Done gate",
+        "Custom answers that mean a mid-loop exit are treated as Stop",
+        "Custom answers that claim completion before proof exists are treated as Stop",
+        "reaches a verified final Done gate",
+        "If the active runtime rejects a large prompt, fail loudly"
     )) {
         Add-Check $checks "advanced-user-input contains $needle" ($text.Contains($needle)) "$skillPath must contain policy: $needle"
     }
@@ -72,7 +71,10 @@ if ($exists) {
         "Show all peer options at once when that makes the workflow easier to understand",
         "Forcing all prompts into three options",
         "One call may ask 1-3 questions.",
-        "Each question must define 2-3 mutually exclusive options."
+        "Each question must define 2-3 mutually exclusive options.",
+        "Right is shown to the user as No / Stop / Done",
+        "Only No / Stop / Done can end a continuation loop before that final Done gate",
+        "Ask exactly three top-level options: Yes, Revisit, and No / Stop / Done"
     )) {
         Add-Check $checks "advanced-user-input omits stale limit $forbidden" (-not $text.Contains($forbidden)) "$skillPath must not contain stale native limit: $forbidden"
     }
@@ -82,9 +84,11 @@ if ($metadataExists) {
     $metadata = Get-Content -LiteralPath $metadataPath -Raw
     foreach ($needle in @(
         'display_name: "Advanced User Input"',
-        'Use $project:advanced-user-input',
+        'Use $superpowers-project:advanced-user-input',
         'Use the smallest native question shape that preserves the real decision tree',
         'For project workflow closeout gates, always ask the three-way trajectory question first',
+        'Use Stop for mid-loop exits',
+        'Use Done only for verified final states',
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
         'Nested Yes-route menus must not include Stop / Done',
         'Nested Revisit-route menus must not include Stop / Done',

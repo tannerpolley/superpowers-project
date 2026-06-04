@@ -5,13 +5,13 @@ description: Use when a Superpowers Project spec, plan, PRD, or approved scope n
 
 # Project Issue
 
-Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$project:resolve-issue` to execute one issue at a time.
+Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$superpowers-project:resolve-issue` to execute one issue at a time.
 
 ## Native Continuation Loop
 
-Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or `Done`. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
+Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or reaches a verified final `Done` gate. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` or `Done` option is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only No / Stop / Done can break the loop before that final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` option or verified final `Done` gate is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can break an intermediate loop before a verified final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Inputs
 
@@ -26,6 +26,12 @@ Read the source material and project map before proposing issues:
 - GitHub labels, GitHub milestones, and open GitHub issues when the repo is linked
 
 Use `request_user_input` when callable to approve granularity, dependencies, milestone assignment, and whether each slice is AFK or HITL.
+
+## Auto Mode Input
+
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
+
+Auto Mode may create issue mirrors and GitHub issues only from the authorized source spec or a plan derived from that source spec. It may classify AFK/HITL, choose issue count, assign proof oracles, and choose resolve or orchestrate routing through recorded defaults when repo evidence supports the choice. Worker execution under Auto Mode is allowed only through issue-backed orchestration; do not create direct worker tasks outside issue mirrors. If issue boundaries, labels, milestone, dependencies, publication, GitHub auth, or proof policy require a decision outside the ledger, stop outside policy before publishing or handing issues to execution.
 
 ## Native Question Debug Mode
 
@@ -97,7 +103,7 @@ Each mirror must include:
 - Proof oracle
 - GitHub body text or a close mirror of it
 
-Workflow metadata guides `$project:resolve-issue`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
+Workflow metadata guides `$superpowers-project:resolve-issue`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -157,7 +163,7 @@ For HITL issues, use the configured triage or blocked status label until the mis
 
 ## Mirror Validation
 
-Use the bundled `scripts/validate-issue-mirror.ps1 -IssueFile <docs/superpowers/issues/file.md>` before publishing an issue mirror or handing it to `$project:resolve-issue`.
+Use the bundled `scripts/validate-issue-mirror.ps1 -IssueFile <docs/superpowers/issues/file.md>` before publishing an issue mirror or handing it to `$superpowers-project:resolve-issue`.
 
 Validation must prove:
 
@@ -183,7 +189,7 @@ Protocol:
 3. Preserve the issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command.
 4. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
 5. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
-6. Only then route to `$project:resolve-issue` or `$project:orchestrate-issues`.
+6. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
 
 Hydration may create a source plan and pass mirror validation in the same command, but the original GitHub issue remains intake until the local mirror and source plan exist and validation has passed. Do not hand raw GitHub issue text to execution skills.
 
@@ -195,13 +201,13 @@ scripts/hydrate-external-issue.ps1 -RepoRoot . -IssueUrl <github-issue-url> [-Is
 
 ## Execution Boundary
 
-This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$project:resolve-issue`.
+This skill creates and updates issue tracker artifacts only. It does not create implementation branches, edit product code, open PRs, merge, start `/goal`, or close issues. After publication, hand off each ready AFK issue to `$superpowers-project:resolve-issue`.
 
 ## Native Continuation Gate
 
 After approved issue mirrors or GitHub issues are created and validated, summarize the issue set in chat before asking the continuation question. The summary must name the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, dependencies, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_issue_next_step`
 
@@ -211,7 +217,7 @@ Options:
 
 - Down: `Continue Issue Execution`: choose direct resolve or worker orchestration.
 - Left: `Revise / Review Issues`: revise, reslice, review, or repair issue mirrors.
-- Right: `Stop / Done`: break the continuation loop.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Continue Issue Execution`, ask:
 
@@ -223,6 +229,7 @@ Options:
 
 - Down: `Resolve Issues`: choose a direct current-thread issue resolution route.
 - Left: `Orchestrate Issues`: choose a worker-thread orchestration route.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Resolve Issues`, ask:
 
@@ -232,8 +239,9 @@ Prompt: `Which issue should be resolved directly?`
 
 Options:
 
-- Down: `Resolve First Ready`: start `$project:resolve-issue` on the first ready AFK issue.
-- Left: `Resolve Selected`: ask for or use a selected ready issue mirror, then start `$project:resolve-issue`.
+- Down: `Resolve First Ready`: start `$superpowers-project:resolve-issue` on the first ready AFK issue.
+- Left: `Resolve Selected`: ask for or use a selected ready issue mirror, then start `$superpowers-project:resolve-issue`.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Orchestrate Issues`, ask:
 
@@ -243,8 +251,9 @@ Prompt: `Which issue should be delegated to a worker?`
 
 Options:
 
-- Down: `Orchestrate First Ready`: start `$project:orchestrate-issues` on the first ready worker-suitable issue.
-- Left: `Orchestrate Selected`: ask for or use a selected ready issue mirror, then start `$project:orchestrate-issues`.
+- Down: `Orchestrate First Ready`: start `$superpowers-project:orchestrate-issues` on the first ready worker-suitable issue.
+- Left: `Orchestrate Selected`: ask for or use a selected ready issue mirror, then start `$superpowers-project:orchestrate-issues`.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Revise / Review Issues`, ask:
 
@@ -256,6 +265,7 @@ Options:
 
 - Down: `Revise Or Reslice Issues`: revise issue boundaries or reslice the set, then return to `project_issue_next_step`.
 - Left: `Review Or Repair Issues`: choose whether to review the issue set or repair mirrors.
+- Right: `Stop`: break the continuation loop.
 
 If the user selects `Review Or Repair Issues`, ask:
 
@@ -267,8 +277,6 @@ Options:
 
 - Down: `Review First`: show rendered issue mirrors and ask for follow-up confirmation, then return to `project_issue_next_step`.
 - Left: `Repair Issue Mirrors`: repair local mirror drift, then return to `project_issue_next_step`.
+- Right: `Stop`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
-
-
-

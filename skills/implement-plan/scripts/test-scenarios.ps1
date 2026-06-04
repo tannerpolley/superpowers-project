@@ -42,8 +42,8 @@ function New-HappyLedger {
         branch = "codex/implement-approved-plan"
         topology = [pscustomobject]@{ question_id = "implement_plan_topology"; selected_mode = "inline" }
         verification = [pscustomobject]@{ passed = $true; commands = @("pwsh test") }
-        publish_permission = [pscustomobject]@{ question_id = "implement_plan_publish_permission"; selected_action = "push" }
-        merge_ready = [pscustomobject]@{ ready = $true; route = "merge-changes"; mode = "pr-no-issue" }
+        publish_permission = [pscustomobject]@{ question_id = "implement_plan_publish_permission"; selected_action = "local-merge-ready" }
+        merge_ready = [pscustomobject]@{ ready = $true; route = "merge-changes"; mode = "local-branch" }
     }
 }
 
@@ -67,12 +67,21 @@ $scenarios = @(
             'native `/goal` activation',
             'development branch',
             'request_user_input',
+            'Auto Mode authorization ledger',
+            'project_auto_mode_authorization',
+            'the repo-root Auto Mode contract helper',
+            'bounded-auto-merge',
+            'recorded defaults',
+            'preauthorized-after-clean-premerge',
+            'stop outside policy',
             'implement_plan_topology',
             'superpowers:test-driven-development',
             'superpowers:executing-plans',
             'superpowers:verification-before-completion',
             'implement_plan_publish_permission',
             'merge-ready',
+            'local-branch',
+            'open pull requests',
             'merge-changes'
         )) {
             Assert-Contains $text $needle "missing implement-plan contract: $needle"
