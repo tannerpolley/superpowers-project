@@ -11,6 +11,7 @@ $results = [System.Collections.Generic.List[object]]::new()
 
 function Add-Result { param([string]$Name, [bool]$Ok, [string]$Reason) $results.Add([pscustomobject]@{ name = $Name; ok = $Ok; reason = $Reason }) }
 function Assert-Contains { param([string]$Text, [string]$Needle, [string]$Reason) if (-not $Text.Contains($Needle)) { throw $Reason } }
+function Assert-NotContains { param([string]$Text, [string]$Needle, [string]$Reason) if ($Text.Contains($Needle)) { throw $Reason } }
 
 try {
     if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) { throw "missing SKILL.md" }
@@ -40,13 +41,18 @@ try {
     try {
         if (-not (Test-Path -LiteralPath $readmeFile -PathType Leaf)) { throw "missing README.md" }
         $readme = Get-Content -LiteralPath $readmeFile -Raw
-        foreach ($needle in @('Quick Apply','small-work escape hatch','issue-backed','non-trivial','project_quick_apply_approval','validate-quick-apply.ps1')) {
-            Assert-Contains -Text $skill -Needle $needle -Reason "missing router Quick Apply contract: $needle"
-            Assert-Contains -Text $metadata -Needle $needle -Reason "missing metadata Quick Apply contract: $needle"
-            Assert-Contains -Text $readme -Needle $needle -Reason "missing README Quick Apply contract: $needle"
+        foreach ($needle in @('implement-plan','approved plan without a GitHub issue','development branch','issue-backed','non-trivial')) {
+            Assert-Contains -Text $skill -Needle $needle -Reason "missing router implement-plan contract: $needle"
+            Assert-Contains -Text $metadata -Needle $needle -Reason "missing metadata implement-plan contract: $needle"
+            Assert-Contains -Text $readme -Needle $needle -Reason "missing README implement-plan contract: $needle"
         }
-        Add-Result -Name "quick apply router contract present" -Ok $true -Reason "passed"
-    } catch { Add-Result -Name "quick apply router contract present" -Ok $false -Reason $_.Exception.Message }
+        foreach ($removed in @('Quick Apply','small-work escape hatch','project_quick_apply_approval','validate-quick-apply.ps1','Apply on Main','Use Issue Flow')) {
+            Assert-NotContains -Text $skill -Needle $removed -Reason "router must not advertise removed local-main path: $removed"
+            Assert-NotContains -Text $metadata -Needle $removed -Reason "metadata must not advertise removed local-main path: $removed"
+            Assert-NotContains -Text $readme -Needle $removed -Reason "README must not advertise removed local-main path: $removed"
+        }
+        Add-Result -Name "implement-plan router contract present" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "implement-plan router contract present" -Ok $false -Reason $_.Exception.Message }
 
     $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
@@ -56,4 +62,3 @@ try {
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
-

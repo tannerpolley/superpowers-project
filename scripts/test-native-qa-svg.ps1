@@ -105,6 +105,7 @@ Add-Check $checks "README references SVG" ($readme.Contains("![Native Q&A main w
 Add-Check $checks "README references Mermaid companion" ($readme.Contains("[Native Q&A main flow Mermaid]($mermaidRelativePath)")) "README must link $mermaidRelativePath"
 Add-Check $checks "README archived Mermaid removed" (-not $readme.Contains("Archived full setup, Doctor, and router flow")) "README must not keep the archived full Mermaid flowchart"
 Add-Check $checks "README lists implement-plan skill" ($readme.Contains('$project:implement-plan')) "README must list the non-issue implement route"
+Add-Check $checks "README omits removed Quick Apply path" (-not $readme.Contains("Quick Apply") -and -not $readme.Contains("project_quick_apply_approval")) "README must route direct plan execution through Implement Plan, not Quick Apply"
 Add-Check $checks "SVG exists" (Test-Path -LiteralPath $svgPath -PathType Leaf) "missing SVG: $svgPath"
 Add-Check $checks "Mermaid companion exists" (Test-Path -LiteralPath $mermaidPath -PathType Leaf) "missing Mermaid companion: $mermaidPath"
 
@@ -132,10 +133,23 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
         'Nested routes:',
         'Nested revisit routes:',
         '-->|Yes|',
+        '-->|Revisit|',
+        '-->|No|',
         'Revisit loops back to the same skill',
         'No stops',
+        'Revisit Route',
+        'Revisit Setup',
+        'Revisit Spec',
+        'Revisit Plan',
+        'Revisit Branch',
+        'Revisit Issues',
+        'Revisit Output',
+        'Revisit Merge',
+        'Revisit Audit',
         'classDef skill fill:#dbeafe',
-        'classDef decision fill:#fef3c7'
+        'classDef decision fill:#fef3c7',
+        'classDef revisit fill:#f3f4f6',
+        'classDef stop fill:#fee2e2'
     )) {
         Add-Check $checks "Mermaid companion contains $needle" ($mermaidText.Contains($needle)) "Mermaid companion must contain: $needle"
     }

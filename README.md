@@ -44,8 +44,7 @@ Only `No / Stop / Done` or the explicit final `Healthy?` -> `Done` route ends th
 | `project_setup_next_step` | After Setup Project | Yes, Revisit, No / Stop / Done | Brainstorm Spec, Write Plan, Create Issues, Run Doctor |
 | `project_brainstorm_next_step` | After Brainstorm Spec | Yes, Revisit, No / Stop / Done | Create One Plan, Multi-Spec Planning, Revise Spec |
 | `project_plan_next_step` | After Write Plan | Yes, Revisit, No / Stop / Done | Create Issues, Implement Plan, Resolve Issue, Orchestrate Issues |
-| `project_implement_next_step` | After Implement Plan | Yes, Revisit, No / Stop / Done | Review Evidence, Revise Branch |
-| `project_quick_apply_approval` | Before a small local-main change | Apply on Main, Use Issue Flow, Stop | Verification and cleanup proof |
+| `project_implement_next_step` | After Implement Plan | Yes, Revisit, No / Stop / Done | Merge Changes, Review Evidence, Revise Branch |
 | `project_issue_next_step` | After Create Issues | Yes, Revisit, No / Stop / Done | Resolve Issues, Orchestrate Issues, Repair Issue Mirrors |
 | `project_issue_resolution_route` | Before issue implementation when route is ambiguous | Resolve, Orchestrate, Review First | Direct current-thread work or worker-thread worktree |
 | `project_resolve_next_step` | After direct issue work is PR-ready | Yes, Revisit, No / Stop / Done | Merge, Resolve Another, Address CI / Checks |
@@ -54,11 +53,11 @@ Only `No / Stop / Done` or the explicit final `Healthy?` -> `Done` route ends th
 | `project_merge_next_step` | After merge closeout | Yes, Revisit, No / Stop / Done | Doctor, Resolve Another, Re-run Cleanup |
 | `project_doctor_next_step` | After a Doctor audit | Yes, Revisit, No / Stop / Done | Apply Repair, Create Planning Spec, Run Audit Again |
 
-## Quick Apply
+## Implement Plan
 
-Quick Apply is the small-work escape hatch after `$project:write-plan`: it can apply a narrow, low-risk plan directly on local clean synced `main` only after the native `project_quick_apply_approval` question selects `Apply on Main`.
+`$project:implement-plan` is the direct execution path after `$project:write-plan` when an approved plan without a GitHub issue should be implemented without GitHub issue mirrors.
 
-Use the bundled `skills/write-plan/scripts/validate-quick-apply.ps1` gate to require approval, focused verification commands, and cleanup hook evidence. Publishing after Quick Apply is handled by the normal native continuation question when `request_user_input` is callable. The issue-backed `$project:create-issues` and `$project:resolve-issue` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed work, and PR-bound implementation.
+Implement Plan uses a development branch, native `/goal` where applicable, Superpowers execution discipline, focused verification, and `$project:merge-changes` for final integration. It does not create issue mirrors and must not claim GitHub issue closure. Use the issue-backed `$project:create-issues` route first for non-trivial work that should have GitHub issue and milestone backbone.
 
 ## Canonical Layout
 
@@ -126,6 +125,3 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
 After install, start with `$project:initiate-workflow` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.
-
-
-

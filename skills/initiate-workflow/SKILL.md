@@ -19,7 +19,6 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 - Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$project:brainstorm-spec`
 - Implementation planning from a spec, issue mirror, or approved direct request: `$project:write-plan`
 - Branch-backed implementation of an approved plan without a GitHub issue: `$project:implement-plan`
-- Quick Apply small-work escape hatch after an approved `$project:write-plan`: local-main execution on clean synced `main` only after `project_quick_apply_approval` and `validate-quick-apply.ps1`.
 - Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$project:create-issues`
 - External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$project:create-issues`
 - One ready issue execution in the current thread with native `/goal` proof: `$project:resolve-issue`
@@ -27,7 +26,7 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 - PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project:merge-changes`
 - Drift audit, migration, label review, milestone review, or live sync review: `$project:audit-project`
 
-The issue-backed `$project:create-issues` plus `$project:resolve-issue` or `$project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, branch-backed implementation, and anything expected to end in a PR.
+The issue-backed `$project:create-issues` plus `$project:resolve-issue` or `$project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
 
 External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$project:create-issues` hydration first and block execution until mirror validation passes.
 

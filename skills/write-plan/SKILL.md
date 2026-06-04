@@ -229,7 +229,7 @@ Options:
 - Left: `Re-run Planning Grill`: run the planning grill again for an existing spec with no ready plan.
 - Right: `Stop / Done`: break the continuation loop.
 
-Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation. Quick Apply remains only for small, guarded, explicitly approved implementation work on clean synced `main`.
+Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation.
 
 Route summary:
 
@@ -242,26 +242,6 @@ Route summary:
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the saved plan path, source spec or issue mirror path, decisions, acceptance criteria, and proof oracle. Do not only tell the user what to prompt next.
 
 If the selected next skill needs its own material decision, ask that next skill's native UI question. If the route needs unavailable tools or an external write that still requires approval, stop with a clear pending state and exact resume target.
-
-## Quick Apply Approval Gate
-
-Quick Apply is only for small, low-risk plan follow-up work on clean synced `main`. Non-trivial, risky, multi-issue, branch-backed, or PR-bound implementation stays on the default `$project:create-issues` and `$project:resolve-issue` path.
-
-Before any edits, ask a second native approval question when `request_user_input` is callable:
-
-Question id: `project_quick_apply_approval`
-
-Prompt: `Apply this small plan directly on local main?`
-
-Options:
-
-- `Apply on Main`: approve the local-main Quick Apply path.
-- `Use Issue Flow`: route to `$project:create-issues` instead.
-- `Stop`: stop without edits.
-
-Only `Apply on Main` records `selected_action: apply`. Treat every other answer as a stop or issue-backed route, not approval to edit.
-
-Validate the Quick Apply ledger with `skills/write-plan/scripts/validate-quick-apply.ps1`. The gate requires clean synced `main`, the `project_quick_apply_approval` ledger, passed verification commands, and a passed cleanup hook result. After a successful local commit, ask the next continuation or permission question with `request_user_input` when callable, including whether to push, review, revise, or stop. Run the gate before edits for approval and repository state, then again after focused verification and cleanup evidence are available.
 
 ## Self-Review
 
