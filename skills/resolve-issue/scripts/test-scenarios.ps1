@@ -373,7 +373,32 @@ try {
         }
     }
 
-    $failed = @($results | Where-Object { -not $_.ok })
+    
+    Invoke-Scenario "native continuation policy avoids nested stop routes" {
+        $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
+        $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
+        foreach ($needle in @(
+            "Nested Yes-route menus must not include Stop / Done",
+            "Nested Revisit-route menus must not include Stop / Done",
+            "Recommend Yes when at least one safe forward route exists",
+            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+        )) {
+            Assert-True ($text.Contains($needle)) "missing native continuation policy in SKILL.md: $needle"
+            Assert-True ($metadata.Contains($needle)) "missing native continuation policy in metadata: $needle"
+        }
+
+        $questionIds = [regex]::Matches($text, 'Question id:\s*`([^`]+)`')
+        for ($index = 0; $index -lt $questionIds.Count; $index++) {
+            $current = $questionIds[$index]
+            $nextStart = if ($index + 1 -lt $questionIds.Count) { $questionIds[$index + 1].Index } else { $text.Length }
+            $block = $text.Substring($current.Index, $nextStart - $current.Index)
+            $questionId = $current.Groups[1].Value
+            if ($questionId.EndsWith("_next_step")) { continue }
+            Assert-True (-not $block.Contains('Right: `Stop / Done`: break the continuation loop.')) "nested question $questionId must not repeat Stop / Done"
+        }
+        Assert-True (-not $metadata.Contains("Right Stop / Done")) "metadata must not use old Right Stop / Done wording"
+    }
+$failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
     if ($failed.Count -gt 0) { exit 1 }
 } finally {

@@ -100,7 +100,7 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 After closeout proof passes, summarize the merge closeout in chat before asking the continuation question. The summary must name the merged PR URL, closed issue, synced default branch, branch and worktree cleanup proof, prune proof, cleanup hook proof, and clean repo proof. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_merge_next_step`
 
@@ -122,7 +122,6 @@ Options:
 
 - Down: `Continue Issues`: resolve or orchestrate another ready issue.
 - Left: `Start Planning`: plan or brainstorm next work.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Continue Issues`, ask:
 
@@ -134,7 +133,6 @@ Options:
 
 - Down: `Resolve Another`: start `$project:resolve-issue` for another ready issue mirror.
 - Left: `Orchestrate Another`: start `$project:orchestrate-issues` for another worker-suitable issue.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Start Planning`, ask:
 
@@ -146,7 +144,6 @@ Options:
 
 - Down: `Plan Next`: start `$project:write-plan` from an approved spec or issue mirror.
 - Left: `Brainstorm Next`: start `$project:brainstorm-spec` for the next idea, spec, or architecture direction.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Review / Repair Closeout`, ask:
 
@@ -158,7 +155,6 @@ Options:
 
 - Down: `Review Closeout`: show closeout evidence and rendered artifacts, then return to `project_merge_next_step`.
 - Left: `Repair / Audit Closeout`: choose a repair or audit route.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Repair / Audit Closeout`, ask:
 
@@ -170,7 +166,6 @@ Options:
 
 - Down: `Run Doctor`: start `$project:audit-project` for post-merge drift audit or live sync review.
 - Left: `Repair Or Cleanup`: choose drift repair or cleanup rerun.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Repair Or Cleanup`, ask:
 
@@ -182,7 +177,6 @@ Options:
 
 - Down: `Repair Drift`: repair exact closeout drift after approval.
 - Left: `Re-run Cleanup`: rerun cleanup and closeout proof.
-- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 

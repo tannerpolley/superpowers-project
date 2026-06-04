@@ -83,7 +83,7 @@ If the user gives only a GitHub issue URL, no local mirror exists, or the local 
 
 After PR-ready handoff intake, summarize the worker route before asking the continuation question. `$project:orchestrate-issues` can only close out when all owned worktrees have permission to push their commits to the open PR or the user explicitly routes to recovery. The summary must name the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, verification evidence status, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_orchestrate_next_step`
 
@@ -105,7 +105,6 @@ Options:
 
 - Down: `Merge`: start `$project:merge-changes` for the PR-ready handoff.
 - Left: `Start More Worker Work`: choose another worker-backed issue route.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Start More Worker Work`, ask:
 
@@ -117,7 +116,6 @@ Options:
 
 - Down: `Resolve Another Worker Issue`: start another worker-backed issue route when one is ready.
 - Left: `Start Another Worker`: create another worker thread for a selected ready issue.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Recover / Review Worker Route`, ask:
 
@@ -129,7 +127,6 @@ Options:
 
 - Down: `Recover Audit Workers`: audit and recover workers and worktrees.
 - Left: `Worker Communication`: ask the worker or reassign work.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Worker Communication`, ask:
 
@@ -141,7 +138,6 @@ Options:
 
 - Down: `Ask Worker`: use `request_agent_input` when the current thread is orchestrating a worker.
 - Left: `Reassign Work`: stop the current worker route and reassign the issue through an approved route.
-- Right: `Stop / Done`: break the continuation loop.
 
 Treat selected native answers as executable routing, not advisory text. Start the selected next skill in the same turn when tools and state allow it.
 

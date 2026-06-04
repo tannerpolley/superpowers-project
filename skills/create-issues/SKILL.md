@@ -201,7 +201,7 @@ This skill creates and updates issue tracker artifacts only. It does not create 
 
 After approved issue mirrors or GitHub issues are created and validated, summarize the issue set in chat before asking the continuation question. The summary must name the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, dependencies, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_issue_next_step`
 
@@ -223,7 +223,6 @@ Options:
 
 - Down: `Resolve Issues`: choose a direct current-thread issue resolution route.
 - Left: `Orchestrate Issues`: choose a worker-thread orchestration route.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Resolve Issues`, ask:
 
@@ -235,7 +234,6 @@ Options:
 
 - Down: `Resolve First Ready`: start `$project:resolve-issue` on the first ready AFK issue.
 - Left: `Resolve Selected`: ask for or use a selected ready issue mirror, then start `$project:resolve-issue`.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Orchestrate Issues`, ask:
 
@@ -247,7 +245,6 @@ Options:
 
 - Down: `Orchestrate First Ready`: start `$project:orchestrate-issues` on the first ready worker-suitable issue.
 - Left: `Orchestrate Selected`: ask for or use a selected ready issue mirror, then start `$project:orchestrate-issues`.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Revise / Review Issues`, ask:
 
@@ -259,7 +256,6 @@ Options:
 
 - Down: `Revise Or Reslice Issues`: revise issue boundaries or reslice the set, then return to `project_issue_next_step`.
 - Left: `Review Or Repair Issues`: choose whether to review the issue set or repair mirrors.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Review Or Repair Issues`, ask:
 
@@ -271,7 +267,6 @@ Options:
 
 - Down: `Review First`: show rendered issue mirrors and ask for follow-up confirmation, then return to `project_issue_next_step`.
 - Left: `Repair Issue Mirrors`: repair local mirror drift, then return to `project_issue_next_step`.
-- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 

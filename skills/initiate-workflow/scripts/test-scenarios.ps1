@@ -54,7 +54,31 @@ try {
         Add-Result -Name "implement-plan router contract present" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "implement-plan router contract present" -Ok $false -Reason $_.Exception.Message }
 
-    $failed = @($results | Where-Object { -not $_.ok })
+    
+    try {
+        foreach ($needle in @(
+            "Nested Yes-route menus must not include Stop / Done",
+            "Nested Revisit-route menus must not include Stop / Done",
+            "Recommend Yes when at least one safe forward route exists",
+            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+        )) {
+            Assert-Contains -Text $skill -Needle $needle -Reason "missing native continuation policy in SKILL.md: $needle"
+            Assert-Contains -Text $metadata -Needle $needle -Reason "missing native continuation policy in metadata: $needle"
+        }
+
+        $questionIds = [regex]::Matches($skill, 'Question id:\s*`([^`]+)`')
+        for ($index = 0; $index -lt $questionIds.Count; $index++) {
+            $current = $questionIds[$index]
+            $nextStart = if ($index + 1 -lt $questionIds.Count) { $questionIds[$index + 1].Index } else { $skill.Length }
+            $block = $skill.Substring($current.Index, $nextStart - $current.Index)
+            $questionId = $current.Groups[1].Value
+            if ($questionId.EndsWith("_next_step")) { continue }
+            if ($block.Contains('Right: `Stop / Done`: break the continuation loop.')) { throw "nested question $questionId must not repeat Stop / Done" }
+        }
+        Assert-NotContains -Text $metadata -Needle "Right Stop / Done" -Reason "metadata must not use old Right Stop / Done wording"
+        Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $false -Reason $_.Exception.Message }
+$failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
     if ($failed.Count -gt 0) { exit 1 }
 } catch {

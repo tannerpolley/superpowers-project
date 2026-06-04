@@ -54,7 +54,12 @@ if ($exists) {
         "Review First is not a terminal answer",
         "Only No / Stop / Done can end a continuation loop before that final Done gate",
         "reaches an explicit final Healthy -> Done gate",
-        "If the active runtime rejects a large prompt, fail loudly"
+        "If the active runtime rejects a large prompt, fail loudly",
+        "Nested Yes-route menus must not include Stop / Done",
+        "Nested Revisit-route menus must not include Stop / Done",
+        "Recommend Yes when at least one safe forward route exists",
+        "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states",
+        "Approval gates use domain-specific decline or cancel labels instead of Stop / Done"
     )) {
         Add-Check $checks "advanced-user-input contains $needle" ($text.Contains($needle)) "$skillPath must contain policy: $needle"
     }
@@ -81,6 +86,11 @@ if ($metadataExists) {
         'Use the smallest native question shape that preserves the real decision tree',
         'For project workflow closeout gates, always ask the three-way trajectory question first',
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
+        'Nested Yes-route menus must not include Stop / Done',
+        'Nested Revisit-route menus must not include Stop / Done',
+        'Recommend Yes when at least one safe forward route exists',
+        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states',
+        'Approval gates use domain-specific decline or cancel labels instead of Stop / Done',
         'request_agent_input'
     )) {
         Add-Check $checks "advanced-user-input metadata contains $needle" ($metadata.Contains($needle)) "$metadataPath must contain policy: $needle"

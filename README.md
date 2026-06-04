@@ -31,13 +31,15 @@ This checkout may still be hosted under the older `milestones-plugin` repository
 
 ## Native Q&A Workflow
 
-The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `No / Stop / Done`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected.
+The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. Top-level closeouts always ask `Continue?` with `Yes`, `Revisit`, and `No / Stop / Done`. After `Yes`, nested route menus list only forward routes. After `Revisit`, nested route menus list only review, revision, repair, recovery, rerun, or evidence-gathering routes. `Stop / Done` is not repeated inside those nested route menus.
 
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
 GitHub can also render the simplified Mermaid companion: [Native Q&A main flow Mermaid](docs/assets/native-qa-main-flow-mermaid.md).
 
 Only `No / Stop / Done` or the explicit final `Healthy?` -> `Done` route ends the continuation loop. `Yes` choices enter the next workflow depth and either start the next skill or ask the next route question. Revisit choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
+
+The recommended option should be `Yes` when a safe forward route exists, `Revisit` when evidence or repair is needed, and `No / Stop / Done` only when the workflow is terminal, blocked, or the user has asked to stop.
 
 | Native question | Where it appears | Top-level choices | Nested examples |
 | --- | --- | --- | --- |

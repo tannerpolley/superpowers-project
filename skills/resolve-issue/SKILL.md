@@ -168,7 +168,7 @@ GitHub specialists can be used for CI or review-thread work, but bundled gate sc
 
 After PR-ready handoff proof passes, summarize the resolved issue in chat before asking the continuation question. The summary must name the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_resolve_next_step`
 
@@ -190,7 +190,6 @@ Options:
 
 - Down: `Merge`: start `$project:merge-changes` from the PR URL or worker handoff.
 - Left: `Continue Another Issue`: choose direct resolve or worker orchestration for another issue.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Continue Another Issue`, ask:
 
@@ -202,7 +201,6 @@ Options:
 
 - Down: `Resolve Another`: start `$project:resolve-issue` for another ready issue mirror.
 - Left: `Orchestrate Another`: start `$project:orchestrate-issues` for another worker-suitable issue.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Review / Revise PR-Ready Work`, ask:
 
@@ -214,7 +212,6 @@ Options:
 
 - Down: `Review First`: show PR-ready evidence for main-thread review, then return to `project_resolve_next_step`.
 - Left: `Revise Or Fix Branch`: choose branch revision or CI/check repair.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Revise Or Fix Branch`, ask:
 
@@ -226,7 +223,6 @@ Options:
 
 - Down: `Revise Branch`: continue implementation on the branch, then return to `project_resolve_next_step`.
 - Left: `Address CI / Checks`: inspect and fix checks, then return to `project_resolve_next_step`.
-- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 

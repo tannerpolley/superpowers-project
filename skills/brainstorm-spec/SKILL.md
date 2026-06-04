@@ -84,7 +84,7 @@ Before reporting the spec ready, self-review for placeholders, contradictions, a
 
 After saving or revising the brainstorm artifact, summarize the spec, PRD, architecture decision, or unresolved decision set in chat before asking the continuation question. The summary must name the artifact path when one was saved, the key decisions made, assumptions removed, remaining open questions, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_brainstorm_next_step`
 
@@ -106,7 +106,6 @@ Options:
 
 - Down: `Create One Plan`: create one `$project:write-plan` from the recently generated spec.
 - Left: `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Multi-Spec Planning`, ask:
 
@@ -118,7 +117,6 @@ Options:
 
 - Down: `Plan Multiple Specs`: create one `$project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
 - Left: `Create Multiple Plans`: create multiple related plans from multiple specs; prompt for spec-to-plan grouping if not already known.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Revise / Review Brainstorm`, ask:
 
@@ -130,7 +128,6 @@ Options:
 
 - Down: `Revise Spec`: continue `$project:brainstorm-spec` with follow-up questions to revise the saved spec or decision summary.
 - Left: `Review Or Restart`: choose whether to review the current artifact or brainstorm another idea.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Review Or Restart`, ask:
 
@@ -142,7 +139,6 @@ Options:
 
 - Down: `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_brainstorm_next_step`.
 - Left: `Re-run Brainstorm`: start another `$project:brainstorm-spec` cycle for a new feature, idea, or major alternative.
-- Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 

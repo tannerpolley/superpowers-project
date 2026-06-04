@@ -106,6 +106,8 @@ Add-Check $checks "README references Mermaid companion" ($readme.Contains("[Nati
 Add-Check $checks "README archived Mermaid removed" (-not $readme.Contains("Archived full setup, Doctor, and router flow")) "README must not keep the archived full Mermaid flowchart"
 Add-Check $checks "README lists implement-plan skill" ($readme.Contains('$project:implement-plan')) "README must list the non-issue implement route"
 Add-Check $checks "README omits removed Quick Apply path" (-not $readme.Contains("Quick Apply") -and -not $readme.Contains("project_quick_apply_approval")) "README must route direct plan execution through Implement Plan, not Quick Apply"
+Add-Check $checks "README explains nested route stop policy" ($readme.Contains("is not repeated inside those nested route menus")) "README must explain that nested Yes/Revisit menus do not repeat Stop / Done"
+Add-Check $checks "README explains recommendation policy" ($readme.Contains("recommended option should be") -and $readme.Contains("safe forward route exists")) "README must explain when Yes versus No / Stop / Done should be recommended"
 Add-Check $checks "SVG exists" (Test-Path -LiteralPath $svgPath -PathType Leaf) "missing SVG: $svgPath"
 Add-Check $checks "Mermaid companion exists" (Test-Path -LiteralPath $mermaidPath -PathType Leaf) "missing Mermaid companion: $mermaidPath"
 

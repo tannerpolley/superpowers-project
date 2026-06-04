@@ -119,7 +119,7 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 After saving and self-reviewing the plan, summarize the plan in chat before asking the continuation question. The summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `No / Stop / Done` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. If Revisit has multiple reiteration paths, ask a nested Revisit route question after the user selects Revisit. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_plan_next_step`
 
@@ -141,7 +141,6 @@ Options:
 
 - Down: `Create Work Artifact`: create issues or prepare the upcoming plan implementation route.
 - Left: `Execute Existing Work`: choose an existing issue execution route.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Create Work Artifact`, ask:
 
@@ -153,7 +152,6 @@ Options:
 
 - Down: `Create Issue`: Project Issue First; continue to `$project:create-issues` using the saved plan path.
 - Left: `Plan Implementation`: Project Implement; continue to `$project:implement-plan` using the saved plan path without creating issue mirrors.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Create Issue` or `Project Issue First`, ask:
 
@@ -165,7 +163,6 @@ Options:
 
 - Down: `One Issue`: create one vertical-slice issue.
 - Left: `Multiple Issues`: choose whether to create two issues or three or more.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Multiple Issues`, ask:
 
@@ -177,7 +174,6 @@ Options:
 
 - Down: `Two Issues`: create two coordinated vertical-slice issues.
 - Left: `Three Or More`: create three or more issues, then use nested questions to group issue count and dependencies.
-- Right: `Stop / Done`: break the continuation loop.
 
 If milestone selection is still unresolved, inspect existing GitHub milestones and project roadmap first. Show the real milestone choices in native UI when that is clearer, including more than three options when useful. When exact milestone names, free-form grouping, or a long data-backed list would be clearer as text, ask a focused normal-chat value prompt instead of inventing weak native categories.
 
@@ -191,7 +187,6 @@ Options:
 
 - Down: `Implement Recent Plan`: Project Implement; continue to `$project:implement-plan` using the recently created plan path.
 - Left: `Implement Different Plan`: ask for the exact plan path, then prepare that plan for implementation.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Execute Existing Work`, ask:
 
@@ -203,7 +198,6 @@ Options:
 
 - Down: `Resolve Issue`: start `$project:resolve-issue` for an existing ready issue mirror.
 - Left: `Orchestrate Issues`: start `$project:orchestrate-issues` for worker-thread execution.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Revise / Review Plan`, immediately ask:
 
@@ -215,7 +209,6 @@ Options:
 
 - Down: `Revise Plan`: continue `$project:write-plan` with follow-up questions to revise the saved plan.
 - Left: `Review Or Grill`: choose whether to review the plan or re-run the planning grill.
-- Right: `Stop / Done`: break the continuation loop.
 
 If the user selects `Review Or Grill`, ask:
 
@@ -227,7 +220,6 @@ Options:
 
 - Down: `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_plan_next_step`.
 - Left: `Re-run Planning Grill`: run the planning grill again for an existing spec with no ready plan.
-- Right: `Stop / Done`: break the continuation loop.
 
 Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation.
 

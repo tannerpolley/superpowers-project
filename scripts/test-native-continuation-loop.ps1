@@ -19,6 +19,29 @@ function Add-Check {
     })
 }
 
+function Test-NestedContinuationBlocks {
+    param(
+        [string]$Text,
+        [string]$Forbidden
+    )
+
+    $questionIds = [regex]::Matches($Text, 'Question id:\s*`([^`]+)`')
+    if ($questionIds.Count -eq 0) {
+        return -not $Text.Contains($Forbidden)
+    }
+
+    for ($index = 0; $index -lt $questionIds.Count; $index++) {
+        $current = $questionIds[$index]
+        $nextStart = if ($index + 1 -lt $questionIds.Count) { $questionIds[$index + 1].Index } else { $Text.Length }
+        $block = $Text.Substring($current.Index, $nextStart - $current.Index)
+        $questionId = $current.Groups[1].Value
+        if ($questionId.EndsWith("_next_step")) { continue }
+        if ($block.Contains($Forbidden)) { return $false }
+    }
+
+    return $true
+}
+
 $checks = [System.Collections.Generic.List[object]]::new()
 $skillRoot = Join-Path $RepoRoot "skills"
 $workflowSkillNames = @(
@@ -69,7 +92,11 @@ foreach ($skillName in $workflowSkillNames) {
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
         'Custom Other',
         'rendered Markdown artifacts',
-        'return to the originating continuation gate'
+        'return to the originating continuation gate',
+        'Nested Yes-route menus must not include Stop / Done',
+        'Nested Revisit-route menus must not include Stop / Done',
+        'Recommend Yes when at least one safe forward route exists',
+        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
     )) {
         Add-Check $checks "$skillName contains flowchart contract $needle" ($text.Contains($needle)) "$skillPath must contain native flowchart contract: $needle"
     }
@@ -98,9 +125,21 @@ foreach ($skillName in $workflowSkillNames) {
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
         'Custom Other',
         'rendered Markdown artifacts',
-        'return to the originating continuation gate'
+        'return to the originating continuation gate',
+        'Nested Yes-route menus must not include Stop / Done',
+        'Nested Revisit-route menus must not include Stop / Done',
+        'Recommend Yes when at least one safe forward route exists',
+        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
+    }
+
+    foreach ($forbidden in @(
+        'Right: `Stop / Done`: break the continuation loop.',
+        'Right Stop / Done'
+    )) {
+        Add-Check $checks "$skillName nested routes avoid $forbidden" (Test-NestedContinuationBlocks -Text $text -Forbidden $forbidden) "$skillPath contains nested continuation wording that repeats terminal stop: $forbidden"
+        Add-Check $checks "$skillName metadata nested routes avoid $forbidden" (Test-NestedContinuationBlocks -Text $agentText -Forbidden $forbidden) "$agentPath contains nested continuation wording that repeats terminal stop: $forbidden"
     }
 
     foreach ($forbidden in @(

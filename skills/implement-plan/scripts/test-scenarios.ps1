@@ -84,6 +84,33 @@ $scenarios = @(
         $result = Test-ImplementPlanLedger -RepoRoot $repo -Ledger (New-HappyLedger)
         Assert-True ($result.ok -eq $true) "happy ledger should pass"
     }
+    Invoke-Scenario "native continuation policy avoids nested stop routes" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            "Nested Yes-route menus must not include Stop / Done",
+            "Nested Revisit-route menus must not include Stop / Done",
+            "Recommend Yes when at least one safe forward route exists",
+            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+        )) {
+            if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
+        }
+
+        $questionIds = [regex]::Matches($text, 'Question id:\s*`([^`]+)`')
+        for ($index = 0; $index -lt $questionIds.Count; $index++) {
+            $current = $questionIds[$index]
+            $nextStart = if ($index + 1 -lt $questionIds.Count) { $questionIds[$index + 1].Index } else { $text.Length }
+            $block = $text.Substring($current.Index, $nextStart - $current.Index)
+            $questionId = $current.Groups[1].Value
+            if ($questionId.EndsWith("_next_step")) { continue }
+            if ($block.Contains('Right: `Stop / Done`: break the continuation loop.')) {
+                throw "nested question $questionId must not repeat Stop / Done"
+            }
+        }
+
+        if ($metadata.Contains("Right Stop / Done")) { throw "metadata must not use old Right Stop / Done wording" }
+    }
     Invoke-Scenario "contract rejects issue mirror and closure claims" {
         $repo = New-FixtureRepo
         $ledger = New-HappyLedger
