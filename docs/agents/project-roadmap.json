@@ -1,6 +1,6 @@
 {
   "tracker": "github",
-  "repository": "tannerpolley/milestones-plugin",
+  "repository": "tannerpolley/superpowers-project",
   "milestone_policy": "project-roadmap",
   "project_policy": "optional-dashboard-evidence",
   "project_context": "docs/superpowers/PROJECT_CONTEXT.md",
@@ -36,7 +36,7 @@
     "status": "configured",
     "native_approval_required": true,
     "owner_skill": "setup-project",
-    "repository": "tannerpolley/milestones-plugin",
+    "repository": "tannerpolley/superpowers-project",
     "board_title": "Superpowers Project",
     "project_number": 6,
     "project_url": "https://github.com/users/tannerpolley/projects/6",
@@ -49,49 +49,49 @@
       "Agent State"
     ],
     "linked_issue_urls": [
-      "https://github.com/tannerpolley/milestones-plugin/issues/22",
-      "https://github.com/tannerpolley/milestones-plugin/issues/23",
-      "https://github.com/tannerpolley/milestones-plugin/issues/26",
-      "https://github.com/tannerpolley/milestones-plugin/issues/28",
-      "https://github.com/tannerpolley/milestones-plugin/issues/30",
-      "https://github.com/tannerpolley/milestones-plugin/issues/32"
+      "https://github.com/tannerpolley/superpowers-project/issues/22",
+      "https://github.com/tannerpolley/superpowers-project/issues/23",
+      "https://github.com/tannerpolley/superpowers-project/issues/26",
+      "https://github.com/tannerpolley/superpowers-project/issues/28",
+      "https://github.com/tannerpolley/superpowers-project/issues/30",
+      "https://github.com/tannerpolley/superpowers-project/issues/32"
     ],
     "linked_items": [
       {
         "id": "PVTI_lAHOAozGY84BZq25zgurlQc",
         "title": "Add hard archival gate for orchestrated project-merge closeout",
         "type": "Issue",
-        "url": "https://github.com/tannerpolley/milestones-plugin/issues/22"
+        "url": "https://github.com/tannerpolley/superpowers-project/issues/22"
       },
       {
         "id": "PVTI_lAHOAozGY84BZq25zgurlQ8",
         "title": "[Bug]: Project Doctor flags absent source skill file as repairable in product repos",
         "type": "Issue",
-        "url": "https://github.com/tannerpolley/milestones-plugin/issues/23"
+        "url": "https://github.com/tannerpolley/superpowers-project/issues/23"
       },
       {
         "id": "PVTI_lAHOAozGY84BZq25zgurlRk",
         "title": "Project Namespace And Skill Surface Migration",
         "type": "Issue",
-        "url": "https://github.com/tannerpolley/milestones-plugin/issues/26"
+        "url": "https://github.com/tannerpolley/superpowers-project/issues/26"
       },
       {
         "id": "PVTI_lAHOAozGY84BZq25zgurlSM",
         "title": "Plugin Deployment Policy And Live Sync",
         "type": "Issue",
-        "url": "https://github.com/tannerpolley/milestones-plugin/issues/28"
+        "url": "https://github.com/tannerpolley/superpowers-project/issues/28"
       },
       {
         "id": "PVTI_lAHOAozGY84BZq25zgurlSo",
         "title": "Setup Orchestration Board And Worker Identity",
         "type": "Issue",
-        "url": "https://github.com/tannerpolley/milestones-plugin/issues/30"
+        "url": "https://github.com/tannerpolley/superpowers-project/issues/30"
       },
       {
         "id": "PVTI_lAHOAozGY84BZq25zgurlTQ",
         "title": "Public Repo Release Readiness",
         "type": "Issue",
-        "url": "https://github.com/tannerpolley/milestones-plugin/issues/32"
+        "url": "https://github.com/tannerpolley/superpowers-project/issues/32"
       }
     ],
     "native_approval": {

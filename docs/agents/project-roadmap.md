@@ -20,6 +20,6 @@ GitHub Project board:
 - Native approval is required before creating or mutating a board.
 - Configured board: [Superpowers Project](https://github.com/users/tannerpolley/projects/6).
 - Required board fields when configured: `Status`, `Milestone`, `Issue Type`, `Agent State`.
-- Linked closed issues from the setup batch: #22, #23, #26, #28, #30, #32, closed by [PR #37](https://github.com/tannerpolley/milestones-plugin/pull/37).
+- Linked closed issues from the setup batch: #22, #23, #26, #28, #30, #32, closed by [PR #37](https://github.com/tannerpolley/superpowers-project/pull/37).
 
 Do not create canonical specs, plans, or issue mirrors under `docs/milestones`, `docs/plans`, or root-level `docs/issues`.

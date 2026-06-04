@@ -102,7 +102,7 @@ try {
         if ($plan.evidence.native_question_id -ne "project_setup_board_approval") { throw "board plan missing native approval question" }
         if ($plan.evidence.mutation_allowed_without_native_approval -ne $false) { throw "board plan must block mutation without native approval" }
         $config = @{
-            repository = "tannerpolley/milestones-plugin"
+            repository = "tannerpolley/superpowers-project"
             board_title = "Milestones Plugin"
             project_url = "https://github.com/orgs/tannerpolley/projects/1"
             fields = @("Status", "Milestone", "Issue Type")

@@ -26,7 +26,7 @@ function New-FixtureRepo {
     $issueText = @(
         "# Project Doctor Audit Gate",
         "",
-        "**GitHub Issue:** https://github.com/tannerpolley/milestones-plugin/issues/10",
+        "**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/10",
         "**GitHub Milestone:** M1 - Source Of Truth",
         "**Issue Type:** task",
         "**Source Plan:** docs/superpowers/plans/2026-06-03-audit-project-audit-gate-plan.md",

@@ -23,7 +23,7 @@ Milestone pages under `docs/superpowers/milestones/` are the durable project map
 
 ## GitHub Tracker Config
 
-- Repository: `tannerpolley/milestones-plugin`
+- Repository: `tannerpolley/superpowers-project`
 - Issue tracker: GitHub Issues plus local mirrors under `docs/superpowers/issues/`
 - GitHub milestone policy: mirrors the roadmap pages under `docs/superpowers/milestones/`
 - GitHub Projects policy: optional dashboard evidence created or verified by `$superpowers-project:setup-project` only after native approval

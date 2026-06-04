@@ -197,7 +197,7 @@ $scenarios = @(
             @(
                 [ordered]@{
                     number = 10
-                    url = "https://github.com/tannerpolley/milestones-plugin/issues/10"
+                    url = "https://github.com/tannerpolley/superpowers-project/issues/10"
                     state = "OPEN"
                     title = "Add scripted Project Doctor drift audit"
                     body = "fixture body intentionally differs from the local mirror"
@@ -206,7 +206,7 @@ $scenarios = @(
                 }
                 [ordered]@{
                     number = 404
-                    url = "https://github.com/tannerpolley/milestones-plugin/issues/404"
+                    url = "https://github.com/tannerpolley/superpowers-project/issues/404"
                     state = "CLOSED"
                     title = "Closed mirror fixture"
                     body = "closed"

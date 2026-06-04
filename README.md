@@ -12,9 +12,7 @@ This repository is the canonical source. The live Codex install is a deployment 
 
 ## Public Identity
 
-The canonical plugin identity is `superpowers-project`, and the prompt surface is plugin-scoped as `superpowers-project:*`.
-
-This checkout may still be hosted under the older `milestones-plugin` repository name until the GitHub repo is renamed. New public documentation, installation paths, and plugin metadata should use Superpowers Project naming.
+The canonical plugin identity is `superpowers-project`, the GitHub repository is `tannerpolley/superpowers-project`, and the prompt surface is plugin-scoped as `superpowers-project:*`.
 
 ## Current Skills
 
@@ -117,12 +115,6 @@ From a local clone:
 ```powershell
 git clone https://github.com/tannerpolley/superpowers-project.git
 cd superpowers-project
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
-```
-
-If you are installing from the current pre-rename repository checkout, run the same install command from that checkout root.
-
-```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 

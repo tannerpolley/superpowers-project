@@ -102,7 +102,7 @@ try {
         "## Execution Model",
         "## Extension Skills",
         "## Current Open Questions",
-        "tannerpolley/milestones-plugin",
+        "tannerpolley/superpowers-project",
         "docs/superpowers/issues/"
     )
     Add-Check -Name "project context shape" -Ok $true -Reason "passed"
@@ -148,7 +148,7 @@ try {
 
     $roadmap = Get-Content -LiteralPath (Join-Path $repoRoot "docs/agents/project-roadmap.json") -Raw | ConvertFrom-Json
     if ($roadmap.tracker -ne "github") { throw "project-roadmap.json tracker must be github" }
-    if ($roadmap.repository -ne "tannerpolley/milestones-plugin") { throw "project-roadmap.json repository mismatch" }
+    if ($roadmap.repository -ne "tannerpolley/superpowers-project") { throw "project-roadmap.json repository mismatch" }
     foreach ($label in @("type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked")) {
         if ($roadmap.labels -notcontains $label) { throw "project-roadmap.json missing label: $label" }
     }
