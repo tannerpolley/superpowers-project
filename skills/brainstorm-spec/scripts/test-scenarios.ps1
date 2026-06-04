@@ -86,7 +86,7 @@ $scenarios = @(
     Invoke-Scenario "metadata routes to project brainstorm" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $text = Get-Content -LiteralPath $yamlFile -Raw
-        Assert-Contains $text "brainstorm-spec:" "missing metadata key"
+        Assert-Contains $text "default_prompt:" "missing metadata default_prompt"
         Assert-Contains $text "docs/superpowers/specs" "missing metadata spec path"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"
         Assert-Contains $text "superpowers:brainstorming" "missing metadata Superpowers route"
@@ -132,4 +132,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

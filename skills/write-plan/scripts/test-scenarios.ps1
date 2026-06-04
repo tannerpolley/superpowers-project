@@ -164,7 +164,7 @@ $scenarios = @(
     Invoke-Scenario "metadata routes to project plan" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $text = Get-Content -LiteralPath $yamlFile -Raw
-        Assert-Contains $text "write-plan:" "missing metadata key"
+        Assert-Contains $text "default_prompt:" "missing metadata default_prompt"
         Assert-Contains $text "docs/superpowers/plans" "missing metadata plan path"
         Assert-Contains $text "superpowers:writing-plans" "missing metadata Superpowers route"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"

@@ -96,7 +96,7 @@ $scenarios = @(
     Invoke-Scenario "metadata is present" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
-        Assert-Contains $metadata "audit-project:" "missing metadata key"
+        Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
         Assert-Contains $metadata "docs/superpowers/PROJECT_CONTEXT.md" "missing metadata project context path"
         Assert-Contains $metadata "live plugin sync drift" "missing metadata live sync drift"
         Assert-Contains $metadata "nested canonical milestone artifact folders are drift" "missing metadata nested artifact drift"
@@ -315,4 +315,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

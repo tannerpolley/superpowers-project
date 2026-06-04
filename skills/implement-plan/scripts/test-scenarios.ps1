@@ -55,7 +55,7 @@ $scenarios = @(
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
         Assert-Contains $text "name: implement-plan" "missing skill name"
         Assert-Contains $text "# Implement Plan" "missing title"
-        Assert-Contains $metadata "implement-plan:" "missing metadata key"
+        Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
     }
     Invoke-Scenario "non-issue execution contract is present" {
         $text = Get-Content -LiteralPath $skillFile -Raw
@@ -125,4 +125,3 @@ $scenarios | ConvertTo-Json -Depth 6
 if ($failedScenarios.Count -gt 0) {
     throw "implement-plan scenario tests failed: $($failedScenarios.name -join ', ')"
 }
-

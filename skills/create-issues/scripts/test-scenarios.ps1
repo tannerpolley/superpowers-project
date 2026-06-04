@@ -165,7 +165,7 @@ $scenarios = @(
     Invoke-Scenario "metadata is present" {
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
-        Assert-Contains $metadata "create-issues:" "missing metadata key"
+        Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
         Assert-Contains $metadata "docs/superpowers/issues" "missing metadata issue path"
         Assert-Contains $metadata "vertical slices" "missing metadata slice policy"
         Assert-Contains $metadata "flat canonical roots" "missing metadata flat root policy"
@@ -385,4 +385,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

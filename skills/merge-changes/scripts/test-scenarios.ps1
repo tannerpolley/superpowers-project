@@ -232,7 +232,7 @@ Invoke-Scenario "merge contract text is present" {
 Invoke-Scenario "metadata is present" {
     if (-not (Test-Path -LiteralPath $metadataFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
-    Assert-Contains $metadata "merge-changes:" "missing metadata key"
+    Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
     Assert-Contains $metadata "PR URL or worker handoff" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
     foreach ($needle in @("summarize", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill")) {
@@ -609,4 +609,3 @@ $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
-

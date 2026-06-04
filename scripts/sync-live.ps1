@@ -2,7 +2,8 @@
 param(
     [switch]$Validate,
     [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\project"),
-    [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills")
+    [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills"),
+    [string]$MarketplacePath = (Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json")
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,7 +14,9 @@ $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
 $sourceSkillsRoot = Join-Path $repoRoot "skills"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
+$marketplacePathResolved = [IO.Path]::GetFullPath($MarketplacePath)
 $expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\project"))
+$expectedMarketplacePath = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json"))
 $retiredLivePluginRoots = @(
     [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones")),
     [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
@@ -25,6 +28,9 @@ if ($livePluginRootResolved -ne $expectedLivePluginRoot) {
 }
 if ($userSkillsRootResolved -ne $expectedUserSkillsRoot) {
     throw "UserSkillsRoot must be the user skills path: $expectedUserSkillsRoot"
+}
+if ($marketplacePathResolved -ne $expectedMarketplacePath) {
+    throw "MarketplacePath must be the personal plugin marketplace path: $expectedMarketplacePath"
 }
 if (-not (Test-Path -LiteralPath $sourcePluginManifest -PathType Leaf)) {
     throw "missing source plugin manifest: $sourcePluginManifest"
@@ -97,6 +103,82 @@ function Remove-RetiredLivePluginRoot {
     $true
 }
 
+function Set-JsonProperty {
+    param(
+        [Parameter(Mandatory = $true)]$Object,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)]$Value
+    )
+
+    if ($Object.PSObject.Properties.Name -contains $Name) {
+        $Object.$Name = $Value
+    } else {
+        $Object | Add-Member -NotePropertyName $Name -NotePropertyValue $Value
+    }
+}
+
+function Sync-PersonalMarketplaceEntry {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $entry = [pscustomobject]@{
+        name = "project"
+        source = [pscustomobject]@{
+            source = "local"
+            path = "./plugins/project"
+        }
+        policy = [pscustomobject]@{
+            installation = "AVAILABLE"
+            authentication = "ON_INSTALL"
+        }
+        category = "Productivity"
+    }
+
+    if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        $marketplace = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+        if (-not $marketplace -or -not ($marketplace -is [psobject])) {
+            throw "marketplace.json must contain a JSON object"
+        }
+    } else {
+        $marketplace = [pscustomobject]@{
+            name = "personal"
+            interface = [pscustomobject]@{ displayName = "Personal" }
+            plugins = @()
+        }
+    }
+
+    if (-not ($marketplace.name -is [string]) -or [string]::IsNullOrWhiteSpace($marketplace.name)) {
+        throw "marketplace.json must contain a non-empty name"
+    }
+    if (-not $marketplace.interface) {
+        Set-JsonProperty -Object $marketplace -Name "interface" -Value ([pscustomobject]@{ displayName = "Personal" })
+    }
+    if (-not ($marketplace.interface -is [psobject])) {
+        throw "marketplace.json interface must be an object"
+    }
+    if (-not $marketplace.plugins) {
+        Set-JsonProperty -Object $marketplace -Name "plugins" -Value @()
+    }
+    if (-not ($marketplace.plugins -is [array])) {
+        throw "marketplace.json plugins must be an array"
+    }
+
+    $retiredMarketplaceNames = @("milestones", "superpowers-project")
+    $plugins = @($marketplace.plugins | Where-Object {
+        $_.name -ne "project" -and $retiredMarketplaceNames -notcontains $_.name
+    })
+    Set-JsonProperty -Object $marketplace -Name "plugins" -Value @($plugins + $entry)
+
+    New-Item -ItemType Directory -Path (Split-Path -Parent $Path) -Force | Out-Null
+    $marketplace | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $Path -Encoding UTF8
+
+    [pscustomobject]@{
+        marketplace_path = $Path
+        marketplace_name = $marketplace.name
+        plugin_name = "project"
+        source_path = "./plugins/project"
+    }
+}
+
 if ($Validate) {
     & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate.ps1")
     if ($LASTEXITCODE -ne 0) { throw "validation failed before sync" }
@@ -125,6 +207,7 @@ foreach ($skillName in $userSkillNames) {
 }
 
 $removedRetiredLivePluginRoots = @($retiredLivePluginRoots | ForEach-Object { Remove-RetiredLivePluginRoot -Path $_ })
+$marketplaceEntry = Sync-PersonalMarketplaceEntry -Path $marketplacePathResolved
 
 $deployedPluginSkills = @($activeSkillNames | ForEach-Object {
     [pscustomobject]@{
@@ -144,6 +227,7 @@ $deployedUserSkills = @($userSkillNames | ForEach-Object {
     source = $repoRoot
     live_plugin_root = $livePluginRootResolved
     user_skills_root = $userSkillsRootResolved
+    marketplace = $marketplaceEntry
     deployed_plugin_skills = $deployedPluginSkills
     deployed_user_skills = $deployedUserSkills
     removed_plugin_skills = $removedPluginSkills
