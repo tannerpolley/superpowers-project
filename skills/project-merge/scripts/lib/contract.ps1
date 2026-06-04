@@ -68,10 +68,37 @@ function Get-StringArray {
     @($Value | ForEach-Object { [string]$_ })
 }
 
+function Get-MergeMode {
+    param($Setup)
+    if (-not (Test-Property -Object $Setup -Name "merge_mode") -or [string]::IsNullOrWhiteSpace([string]$Setup.merge_mode)) {
+        throw "setup ledger merge_mode is required"
+    }
+    $mode = [string]$Setup.merge_mode
+    $allowedModes = @("pr-issue", "pr-no-issue", "local-branch")
+    if ($mode -notin $allowedModes) { throw "setup ledger merge_mode must be one of: $($allowedModes -join ', ')" }
+    $mode
+}
+
 function Normalize-RepoPath {
     param([string]$Path)
     if ($null -eq $Path) { return "" }
     ($Path -replace '\\', '/').Trim()
+}
+
+function Assert-SourcePlanLinkage {
+    param($Setup)
+    if (-not (Test-Property -Object $Setup -Name "source_plan") -or [string]::IsNullOrWhiteSpace([string]$Setup.source_plan)) {
+        throw "source plan linkage is required"
+    }
+    $plan = Normalize-RepoPath ([string]$Setup.source_plan)
+    if ($plan -notmatch '^docs/superpowers/plans/.+\.md$') { throw "source plan must be under docs/superpowers/plans" }
+}
+
+function Assert-BranchLinkage {
+    param($Setup)
+    if (-not (Test-Property -Object $Setup -Name "branch") -or [string]::IsNullOrWhiteSpace([string]$Setup.branch)) {
+        throw "branch name is required"
+    }
 }
 
 function Resolve-RepoRoot {
@@ -153,4 +180,86 @@ function Assert-CleanRepoProof {
     }
     if ([int]$Proof.exit_code -ne 0) { throw "clean repo proof command must pass" }
     if (-not [string]::IsNullOrWhiteSpace([string]$Proof.status_output)) { throw "repo status must be clean" }
+}
+
+function Assert-CleanSyncedMainProof {
+    param($Proof)
+    if ($null -eq $Proof -or $Proof -is [string]) { throw "clean synced main proof must be structured" }
+    foreach ($field in @("source", "exit_code", "branch", "upstream", "ahead", "behind", "status_output")) {
+        if (-not (Test-Property -Object $Proof -Name $field)) { throw "clean synced main proof missing $field" }
+    }
+    if ([int]$Proof.exit_code -ne 0) { throw "clean synced main proof command must pass" }
+    if ([string]$Proof.branch -ne "main") { throw "clean synced main proof must be for main" }
+    if ([string]$Proof.upstream -ne "origin/main") { throw "clean synced main proof must compare origin/main" }
+    if ([int]$Proof.ahead -ne 0 -or [int]$Proof.behind -ne 0) { throw "clean synced main proof must show main even with origin/main" }
+    if (-not [string]::IsNullOrWhiteSpace([string]$Proof.status_output)) { throw "clean synced main proof requires clean status" }
+}
+
+function Assert-ValidationProof {
+    param($Proof)
+    if ($null -eq $Proof -or $Proof -is [string]) { throw "validation proof must be structured" }
+    foreach ($field in @("command", "exit_code")) {
+        if (-not (Test-Property -Object $Proof -Name $field)) { throw "validation proof missing $field" }
+    }
+    if ([int]$Proof.exit_code -ne 0) { throw "validation proof must pass" }
+}
+
+function Assert-PrVerification {
+    param($Verification, $Pr)
+    $policy = if (Test-Property -Object $Verification -Name "required_checks_policy") { [string]$Verification.required_checks_policy } else { "require-existing" }
+    $checks = @($Pr.requiredChecks)
+    $checkResult = Test-GitHubRequiredChecks `
+        -Checks $checks `
+        -Policy $policy `
+        -RequiredCheckNames (Get-StringArray $Verification.required_checks) `
+        -OptionalCheckNames (Get-StringArray $Verification.optional_checks)
+    if (-not $checkResult.ok) { throw $checkResult.reason }
+    $covered = Get-StringArray $Verification.changed_files_covered
+    $exempt = Get-StringArray $Verification.verification_exemptions
+    foreach ($file in @($Pr.files)) {
+        $path = Normalize-RepoPath ([string]$file.path)
+        if ($covered -notcontains $path -and $exempt -notcontains $path) { throw "source plan verification receipts must cover PR changed file: $path" }
+    }
+    if ((Get-StringArray $Verification.proof_commands).Count -eq 0) { throw "verification proof commands are required" }
+}
+
+function Test-AnyIssueClosureClaim {
+    param($Pr)
+    if ($null -eq $Pr) { return $false }
+    if (@($Pr.closingIssuesReferences | Where-Object { $null -ne $_ }).Count -gt 0) { return $true }
+    [bool]([string]$Pr.body -match "(?im)\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+\b")
+}
+
+function Assert-BranchCleanup {
+    param($Setup, $Cleanup, [bool]$RequireRemoteDelete)
+    if ($null -eq $Cleanup -or $Cleanup -is [string]) { throw "branch cleanup confirmation must be structured" }
+    $branch = Normalize-RepoPath ([string]$Setup.branch)
+    if ($Cleanup.deleted_local -ne $true -or $Cleanup.only_goal_owned_removed -ne $true) { throw "branch cleanup must delete only the goal branch locally" }
+    if ($RequireRemoteDelete -and $Cleanup.deleted_remote -ne $true) { throw "branch cleanup must delete the remote goal branch" }
+    if ((Normalize-RepoPath ([string]$Cleanup.local_delete_target)) -ne $branch) { throw "branch cleanup local target must match setup branch" }
+    if ($RequireRemoteDelete -and (Normalize-RepoPath ([string]$Cleanup.remote_delete_target)) -ne $branch) { throw "branch cleanup remote target must match setup branch" }
+    foreach ($deleted in (Get-StringArray $Cleanup.remote_deleted_branches)) {
+        if ((Normalize-RepoPath $deleted) -ne $branch) { throw "remote cleanup includes non-goal branch" }
+    }
+}
+
+function Assert-CommonCloseoutProof {
+    param($Completion, $Setup, [bool]$RequireRemoteDelete)
+    foreach ($field in @(
+        "merge_decision",
+        "default_branch_sync",
+        "branch_cleanup_confirmation",
+        "worktree_cleanup_confirmation",
+        "fetch_prune_result",
+        "cleanup_hook_result",
+        "clean_repo_proof"
+    )) {
+        if (-not (Test-Property -Object $Completion -Name $field) -or $Completion.$field -is [string]) { throw "completion ledger $field must be structured" }
+    }
+    Assert-MergeDecision -Decision $Completion.merge_decision
+    Assert-CleanRepoProof -Proof $Completion.clean_repo_proof
+    if ([int]$Completion.default_branch_sync.exit_code -ne 0) { throw "default branch sync must pass" }
+    if ([int]$Completion.fetch_prune_result.exit_code -ne 0) { throw "git fetch --prune must pass" }
+    if ([int]$Completion.cleanup_hook_result.exit_code -ne 0) { throw "cleanup hook must pass" }
+    Assert-BranchCleanup -Setup $Setup -Cleanup $Completion.branch_cleanup_confirmation -RequireRemoteDelete $RequireRemoteDelete
 }

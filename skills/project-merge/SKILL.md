@@ -5,7 +5,13 @@ description: Use when a Superpowers Project PR URL or worker handoff must be rev
 
 # Project Merge
 
-This skill owns integration after `$project-resolve` creates PR-ready evidence. It starts from a PR URL or worker handoff, verifies the issue mirror and source plan, runs premerge checks, asks native UI merge approval, merges only after approval, verifies linked issue closure, cleans up the owned branch and worktree, runs `git fetch --prune`, runs the cleanup hook, and records final clean repo proof.
+This skill owns integration after `$project-resolve` creates PR-ready evidence or after approved plan work produces merge-ready local or PR evidence. It supports three closeout modes:
+
+- `pr-issue`: issue-backed PRs that must verify exact GitHub issue closure and issue mirror cleanup.
+- `pr-no-issue`: non-issue PRs linked to a source plan that must not claim GitHub issue closure.
+- `local-branch`: approved local branch merges linked to a source plan, with clean synced main proof, validation proof, native merge approval, branch/worktree cleanup, cleanup hook proof, and clean repo proof.
+
+It starts from a PR URL, local branch, or worker handoff, verifies the issue mirror when the mode is `pr-issue`, verifies the source plan, runs premerge checks, asks native UI merge approval, merges only after approval, cleans up the owned branch and worktree, runs `git fetch --prune`, runs the cleanup hook, and records final clean repo proof.
 
 `$project-merge` is normally run by the main orchestrator thread. Workers do not merge their own PR by default.
 
@@ -20,9 +26,12 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 Stop immediately when any of these are true:
 
 - No PR URL or worker handoff is named.
-- No linked issue mirror under `docs/superpowers/issues` can be identified.
+- Mode is missing or is not `pr-issue`, `pr-no-issue`, or `local-branch`.
+- Mode is `pr-issue` and no linked issue mirror under `docs/superpowers/issues` can be identified.
 - No linked source plan under `docs/superpowers/plans` can be identified.
-- PR evidence does not close the exact linked GitHub issue.
+- Mode is `pr-issue` and PR evidence does not close the exact linked GitHub issue.
+- Mode is `pr-no-issue` and PR evidence or completion evidence claims GitHub issue closure.
+- Mode is `local-branch` and clean synced main proof, validation proof, local merge proof, or native approval proof is missing.
 - Required checks fail, are pending, or are missing while policy requires existing checks.
 - PR changed files are not covered by verification receipts tied to the source plan.
 - Premerge proof has not passed.
@@ -43,13 +52,13 @@ Follow this order exactly:
 3. `premerge`: run `scripts/premerge.ps1` with real GitHub evidence or local fixtures.
 4. `merge approval`: explain the clean premerge evidence, then ask native UI question `project_merge_approval`.
 5. `merge`: merge the PR only when the user selects `Merge`.
-6. `issue closure`: verify the exact linked GitHub issue is closed.
+6. `issue closure`: for `pr-issue`, verify the exact linked GitHub issue is closed; skip issue-close verification for `pr-no-issue` and `local-branch`.
 7. `default sync`: sync the default branch.
 8. `branch cleanup`: delete only the owned implementation branch locally and remotely.
 9. `worktree cleanup`: remove only the owned worktree when one exists.
 10. `prune`: run `git fetch --prune`.
 11. `cleanup hook`: run the repo cleanup hook.
-12. `closed mirror cleanup`: delete the closed issue mirror by default, or retain it only with `**Mirror Retention:** Keep`; preserve the milestone history as a closed issue summary with GitHub issue and PR links.
+12. `closed mirror cleanup`: for `pr-issue`, delete the closed issue mirror by default, or retain it only with `**Mirror Retention:** Keep`; preserve the milestone history as a closed issue summary with GitHub issue and PR links. Do not require issue mirror cleanup for `pr-no-issue` or `local-branch`.
 13. `clean state`: verify clean repo state and record closeout proof through `scripts/closeout.ps1`.
 
 ## Native Merge Approval
@@ -70,6 +79,16 @@ Options:
 - `Decline`: stop without merging and report the exact pending state.
 
 Use `Merge` as the recommended option only after premerge proof is clean. Do not merge without native UI approval.
+
+## Reassessment Routing
+
+If merge approval is declined, ask native follow-up through `advanced-user-input` when callable:
+
+- `User Review`: stop with the PR or branch evidence.
+- `Reassess Plan`: route to `$project-plan` for strict execution, testing, acceptance, or branch strategy revision.
+- `Reassess Spec`: route to `$project-brainstorm` for loose idea or scope reassessment.
+
+When this thread is a worker/subagent and the merge decision belongs to the orchestrator, use the `request_agent_input` protocol instead of native `request_user_input`.
 
 ## Native Question Debug Mode
 
@@ -172,10 +191,10 @@ After the user selects an option, start the selected next skill in the same turn
 Run bundled scripts with explicit `-RepoRoot`:
 
 - `scripts/collect-premerge-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrNumber <n> -IssueNumber <n> -VerificationCommands <commands> -ChangedFilesCovered <paths> -OutputDir <temp-or-handoff-dir>`: collects PR, issue, changed-file, check, and verification evidence into the verification ledger consumed by `scripts/premerge.ps1`.
-- `scripts/premerge.ps1`: validates PR closing reference, checks, issue acceptance state, changed-file coverage, and proof commands.
+- `scripts/premerge.ps1`: validates mode-specific evidence. `pr-issue` validates PR closing reference, checks, issue acceptance state, changed-file coverage, and proof commands. `pr-no-issue` validates source plan linkage, PR checks, changed-file coverage, proof commands, and absence of issue closure claims. `local-branch` validates source plan linkage, clean synced main proof, validation proof, branch linkage, and proof commands.
 - `scripts/validate-merge-decision.ps1`: validates the native merge approval ledger and blocks declined decisions.
 - `scripts/collect-closeout-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrNumber <n> -IssueNumber <n> -MergeDecisionJson <json> -CleanupHookOutput <text> -ResolveGoalCompletionProofJson <json> -MirrorCleanupJson <json> -OutputDir <temp-or-handoff-dir>`: collects merged PR, closed issue, cleanup, clean repo, native goal completion, mirror cleanup confirmation, and milestone closed-summary evidence into the completion ledger consumed by `scripts/closeout.ps1`. When no explicit `MirrorCleanupJson` is supplied for a closed issue, it deletes the mirror unless the mirror is marked `**Mirror Retention:** Keep`, and updates the milestone closed summary with GitHub issue and PR links.
-- `scripts/closeout.ps1`: validates merged PR proof, linked issue closure proof, branch cleanup, worktree cleanup, prune proof, cleanup hook proof, closed mirror deletion or retention evidence, milestone closed-summary issue and PR links, and clean repo proof.
+- `scripts/closeout.ps1`: validates mode-specific closeout. `pr-issue` validates merged PR proof, linked issue closure proof, branch cleanup, worktree cleanup, prune proof, cleanup hook proof, closed mirror deletion or retention evidence, milestone closed-summary issue and PR links, and clean repo proof. `pr-no-issue` validates merged PR proof, native approval, branch/worktree cleanup, prune proof, cleanup hook proof, clean repo proof, and absence of issue closure claims. `local-branch` validates native approval, local merge proof, validation proof, branch/worktree cleanup, prune proof, cleanup hook proof, and clean repo proof.
 
 All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is false, block with the script reason.
 
@@ -189,13 +208,13 @@ This keeps generated ledgers passed to existing gates while avoiding a no hand-a
 
 Do not send a success-style final response until closeout proof shows:
 
-- PR merged.
-- Exact linked issue closed.
+- PR merged, or local branch merged in `local-branch` mode.
+- Exact linked issue closed only in `pr-issue` mode.
 - Default branch synced.
 - Only the owned implementation branch deleted.
 - Owned worktree removed or proven absent.
 - `git fetch --prune` passed.
 - Repo cleanup hook passed.
-- Closed issue mirror was deleted by default or explicitly retained with `Mirror Retention: Keep`.
-- Milestone page kept a closed issue summary with GitHub issue and PR links.
+- Closed issue mirror was deleted by default or explicitly retained with `Mirror Retention: Keep` in `pr-issue` mode.
+- Milestone page kept a closed issue summary with GitHub issue and PR links in `pr-issue` mode.
 - Repo state is clean.

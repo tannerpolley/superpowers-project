@@ -29,11 +29,13 @@ Invoke-Scenario "shared helper exists" {
 
 Invoke-Scenario "project merge premerge uses shared helper" {
     $premergePath = Join-Path $repoRoot "skills\project-merge\scripts\premerge.ps1"
+    $contractPath = Join-Path $repoRoot "skills\project-merge\scripts\lib\contract.ps1"
     $premerge = Get-Content -LiteralPath $premergePath -Raw
-    if (-not $premerge.Contains("Test-GitHubRequiredChecks")) {
+    $contract = Get-Content -LiteralPath $contractPath -Raw
+    if (-not ($premerge.Contains("Test-GitHubRequiredChecks") -or $contract.Contains("Test-GitHubRequiredChecks"))) {
         throw "premerge must use shared GitHub check helper"
     }
-    if ($premerge.Contains("SUCCESS|PASS|COMPLETED")) {
+    if ($premerge.Contains("SUCCESS|PASS|COMPLETED") -or $contract.Contains("SUCCESS|PASS|COMPLETED")) {
         throw "premerge must not use loose success regex matching"
     }
 }
