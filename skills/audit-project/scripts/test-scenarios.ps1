@@ -24,6 +24,13 @@ function Assert-Contains {
     if (-not $Text.Contains($Needle)) { throw $Message }
 }
 
+function ConvertTo-JsonText {
+    param($Value, [int]$Depth = 12)
+    $text = $Value | ConvertTo-Json -Depth $Depth -Compress
+    if ($null -eq $text) { return "" }
+    [string]$text
+}
+
 function Invoke-JsonScript {
     param([string]$ScriptPath, [string[]]$Arguments)
     $output = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $ScriptPath @Arguments 2>&1
@@ -44,6 +51,11 @@ function New-TestRepo {
     Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth.md") -Value "# M1 - Source Of Truth`n`n## Related Issues`n`n- ``docs/superpowers/issues/12-sample.md```n" -Encoding utf8NoBOM
     Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/12-sample.md") -Value "# Sample`n`n**GitHub Issue:** https://github.com/example/repo/issues/12`n**GitHub Milestone:** M1 - Source Of Truth`n**Source Plan:** docs/superpowers/plans/2026-06-02-sample-plan.md`n**Classification:** AFK`n`n## Acceptance Criteria`n`n- [x] Sample issue is resolved.`n" -Encoding utf8NoBOM
     $repo
+}
+
+function New-IssueFixture {
+    param([string]$Path, [object[]]$Issues)
+    @{ issues = @($Issues) } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $Path -Encoding utf8NoBOM
 }
 
 $scenarios = @(
@@ -249,6 +261,61 @@ $scenarios = @(
             }
         }
     }
+    Invoke-Scenario "GitHub-aware audit resolves repository metadata from roadmap repository" {
+        $repo = New-TestRepo
+        try {
+            New-Item -ItemType Directory -Path (Join-Path $repo "docs/agents") -Force | Out-Null
+            @{ repository = "example/repository-source" } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $repo "docs/agents/project-roadmap.json") -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            New-IssueFixture -Path $issueFixture -Issues @(
+                @{ number = 12; url = "https://github.com/example/repository-source/issues/12"; state = "OPEN"; title = "Sample"; labels = @("type:feature"); milestone = @{ title = "M1 - Source Of Truth" } }
+            )
+            $result = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
+            if (-not $result.ok) { throw $result.reason }
+            if ($result.target_repo -ne "example/repository-source") { throw "repository metadata did not resolve target_repo" }
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "GitHub-aware issue mirror drift uses concise mirror metadata" {
+        $repo = New-TestRepo
+        try {
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/15-frontmatter-title.md") -Value "---`ntitle: Frontmatter Mirror Title`n---`n`n**GitHub Issue:** https://github.com/example/repo/issues/15`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:bug, status:ready`n`n## Acceptance Criteria`n`n- [ ] Frontmatter title is parsed.`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/16-h1-after-frontmatter.md") -Value "---`nowner: test`n---`n`n# H1 After Frontmatter`n`n**GitHub Issue:** https://github.com/example/repo/issues/16`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:task, status:ready`n`n## Acceptance Criteria`n`n- [ ] H1 title is parsed after frontmatter.`n" -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            New-IssueFixture -Path $issueFixture -Issues @(
+                @{ number = 15; url = "https://github.com/example/repo/issues/15"; state = "OPEN"; title = "Frontmatter Mirror Title"; body = "Full GitHub body is intentionally not copied into the concise mirror."; labels = @("type:bug", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" } },
+                @{ number = 16; url = "https://github.com/example/repo/issues/16"; state = "OPEN"; title = "H1 After Frontmatter"; body = "Another full body intentionally omitted by the mirror."; labels = @("type:task", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" } }
+            )
+            $result = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
+            if (-not $result.ok) { throw $result.reason }
+            $repairableText = ConvertTo-JsonText $result.findings.repairable
+            if ($repairableText.Contains("15-frontmatter-title.md") -or $repairableText.Contains("16-h1-after-frontmatter.md")) { throw "concise mirrors were reported as repairable drift" }
+            $healthyText = ConvertTo-JsonText $result.findings.healthy
+            Assert-Contains $healthyText "15-frontmatter-title.md" "frontmatter title mirror was not reported healthy"
+            Assert-Contains $healthyText "16-h1-after-frontmatter.md" "H1 after frontmatter mirror was not reported healthy"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "GitHub-aware issue mirror metadata drift is informational without repair receipt" {
+        $repo = New-TestRepo
+        try {
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            New-IssueFixture -Path $issueFixture -Issues @(
+                @{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "OPEN"; title = "Changed Sample Title"; labels = @("type:feature"); milestone = @{ title = "M1 - Source Of Truth" } }
+            )
+            $result = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
+            if (-not $result.ok) { throw $result.reason }
+            $repairableText = ConvertTo-JsonText $result.findings.repairable
+            if ($repairableText.Contains("mirror-github-drift")) { throw "manual mirror drift was reported as repairable" }
+            $informationalText = ConvertTo-JsonText $result.findings.informational
+            Assert-Contains $informationalText "mirror-github-drift" "manual mirror drift was not informational"
+            Assert-Contains $informationalText "title" "manual mirror drift did not report the changed field"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
     Invoke-Scenario "audit-project reports stale closed mirrors as repairable drift" {
         if (-not (Test-Path -LiteralPath $auditScript -PathType Leaf)) { throw "missing audit-project.ps1" }
         $repo = New-TestRepo
@@ -306,6 +373,71 @@ $scenarios = @(
                 Assert-Contains $receiptText $needle "missing repair receipt entry: $needle"
             }
             if ($receiptText.Contains("DRAFT_1") -and $receiptText.Contains("delete")) { throw "draft Project item must not be deleted automatically" }
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
+
+    Invoke-Scenario "GitHub-aware audit resolves target repo from roadmap and git remote" {
+        $targetRepo = New-TestRepo
+        $remoteRepo = New-TestRepo
+        try {
+            New-Item -ItemType Directory -Path (Join-Path $targetRepo "docs/agents") -Force | Out-Null
+            @{ target_repo = "ePC-SAFT/ePC-SAFT"; target_repo_root = $targetRepo } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $targetRepo "docs/agents/project-roadmap.json") -Encoding utf8NoBOM
+            $targetAudit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $targetRepo, "-Mode", "GitHubAware")
+            if (-not $targetAudit.ok) { throw $targetAudit.reason }
+            if ($targetAudit.target_repo -ne "ePC-SAFT/ePC-SAFT") { throw "target_repo was not read from roadmap target_repo" }
+
+            & git -C $remoteRepo init -b main | Out-Null
+            & git -C $remoteRepo remote add origin "git@github.com:example/from-remote.git" | Out-Null
+            $remoteAudit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $remoteRepo, "-Mode", "GitHubAware")
+            if (-not $remoteAudit.ok) { throw $remoteAudit.reason }
+            if ($remoteAudit.target_repo -ne "example/from-remote") { throw "target_repo was not parsed from git remote" }
+        } finally {
+            foreach ($repo in @($targetRepo, $remoteRepo)) {
+                if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+            }
+        }
+    }
+
+    Invoke-Scenario "concise frontmatter issue mirrors compare structured GitHub fields without body drift" {
+        $repo = New-TestRepo
+        try {
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/15-frontmatter.md") -Value "---`ntitle: Concise Mirror`n---`n`n# Concise Mirror`n`n**GitHub Issue:** https://github.com/example/repo/issues/15`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:task, status:ready`n`n## Acceptance Criteria`n`n- [ ] Concise mirror remains enough for audit.`n" -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            @{
+                issues = @(
+                    @{ number = 15; url = "https://github.com/example/repo/issues/15"; state = "OPEN"; title = "Concise Mirror"; body = "The full GitHub body is intentionally longer than the concise mirror."; labels = @("type:task", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" }; node_id = "ISSUE_15" }
+                )
+            } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $issueFixture -Encoding utf8NoBOM
+            $audit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
+            if (-not $audit.ok) { throw $audit.reason }
+            $repairableText = ConvertTo-JsonText $audit.findings.repairable -Depth 20
+            if ($repairableText.Contains("mirror-github-drift")) { throw "concise body mirror drift must not be repairable" }
+            $healthyText = ConvertTo-JsonText $audit.findings.healthy -Depth 20
+            Assert-Contains $healthyText "Issue mirror matches inspected GitHub issue fields" "concise mirror did not compare healthy"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
+
+    Invoke-Scenario "audit-project reports native issue type drift and label-only fallback" {
+        $repo = New-TestRepo
+        try {
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/16-type-drift.md") -Value "# Type Drift`n`n**GitHub Issue:** https://github.com/example/repo/issues/16`n**GitHub Milestone:** M1 - Source Of Truth`n**Issue Type:** feature`n**Labels:** type:feature, status:ready`n`n## Acceptance Criteria`n`n- [ ] Native type drift is reported.`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/17-label-only.md") -Value "# Label Only`n`n**GitHub Issue:** https://github.com/example/repo/issues/17`n**GitHub Milestone:** M1 - Source Of Truth`n**Issue Type:** task`n**Labels:** type:task, status:ready`n`n## Acceptance Criteria`n`n- [ ] Label-only repos continue explicitly.`n" -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            @{
+                issues = @(
+                    @{ number = 16; url = "https://github.com/example/repo/issues/16"; state = "OPEN"; title = "Type Drift"; body = "body"; labels = @("type:feature", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" }; node_id = "ISSUE_16"; issueType = @{ name = "Bug" } },
+                    @{ number = 17; url = "https://github.com/example/repo/issues/17"; state = "OPEN"; title = "Label Only"; body = "body"; labels = @("type:task", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" }; node_id = "ISSUE_17"; issueType = $null }
+                )
+            } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $issueFixture -Encoding utf8NoBOM
+            $audit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-TrackerHygiene", "-IssueFixturePath", $issueFixture)
+            if (-not $audit.ok) { throw $audit.reason }
+            $informationalText = $audit.findings.informational | ConvertTo-Json -Depth 20 -Compress
+            Assert-Contains $informationalText "native_issue_type" "native issue type drift was not reported"
+            Assert-Contains $informationalText "native-issue-type-label-only" "label-only native issue type fallback was not reported"
         } finally {
             if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
         }

@@ -100,6 +100,8 @@ Before creating or mutating a board, summarize the proposed board title, reposit
 
 Use `scripts/prepare-github-project-board.ps1 -Mode Plan` before native approval. After native approval selects `Create Board`, use `-Mode Create` with structured `NativeApprovalJson`; the script creates or reuses the board, ensures required fields, links approved issue URLs, and records board configuration in `docs/agents/project-roadmap.json`. Use `-Mode ValidateConfig` for existing-board evidence. When useful for humans, mirror the board summary in `docs/agents/project-roadmap.md`.
 
+For repositories that support native GitHub issue types, setup must inspect `repository.issueTypes` through GraphQL and use `UpdateIssueInput.issueTypeId` when assigning the local issue mirror's `Issue Type` to a GitHub issue. Keep compatibility labels such as `type:task`, `type:bug`, and `type:feature`. If GraphQL reports no enabled native issue types, say so explicitly and continue with label-only behavior. Do not conclude native issue types are unavailable merely because high-level `gh issue create` or `gh issue edit` lacks a `--type` flag.
+
 ## Validation
 
 Before reporting setup or repair complete, verify:

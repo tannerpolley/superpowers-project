@@ -101,6 +101,7 @@ try {
         if (-not $plan.ok) { throw $plan.reason }
         if ($plan.evidence.native_question_id -ne "project_setup_board_approval") { throw "board plan missing native approval question" }
         if ($plan.evidence.mutation_allowed_without_native_approval -ne $false) { throw "board plan must block mutation without native approval" }
+        if ($plan.evidence.PSObject.Properties.Name -notcontains "native_issue_types") { throw "board plan missing native issue type evidence" }
         $config = @{
             repository = "tannerpolley/superpowers-project"
             board_title = "Milestones Plugin"
@@ -116,8 +117,46 @@ try {
     } catch { Add-Result -Name "github project board preparation script passes" -Ok $false -Reason $_.Exception.Message }
 
     try {
+        $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ("setup-native-issue-types-" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
+        try {
+            $enabledFixture = Join-Path $fixtureRoot "enabled-issue-types.json"
+            @{
+                issueTypes = @{
+                    nodes = @(
+                        @{ id = "IT_TASK"; name = "Task"; isEnabled = $true },
+                        @{ id = "IT_BUG"; name = "Bug"; isEnabled = $true },
+                        @{ id = "IT_FEATURE"; name = "Feature"; isEnabled = $true }
+                    )
+                }
+            } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $enabledFixture -Encoding utf8NoBOM
+            $enabledRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "prepare-github-project-board.ps1") -RepoRoot $repoRoot -Mode Plan -IssueTypeFixturePath $enabledFixture
+            if ($LASTEXITCODE -ne 0) { throw ($enabledRaw | Out-String) }
+            $enabled = ($enabledRaw | Out-String) | ConvertFrom-Json
+            if (-not $enabled.ok) { throw $enabled.reason }
+            if ($enabled.evidence.native_issue_types.available -ne $true) { throw "enabled native issue types were not detected" }
+            $enabledNames = @($enabled.evidence.native_issue_types.names | ForEach-Object { [string]$_ })
+            foreach ($name in @("Task", "Bug", "Feature")) {
+                if ($enabledNames -notcontains $name) { throw "missing native issue type in plan evidence: $name" }
+            }
+
+            $disabledFixture = Join-Path $fixtureRoot "disabled-issue-types.json"
+            @{ issueTypes = @{ nodes = @() } } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $disabledFixture -Encoding utf8NoBOM
+            $disabledRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "prepare-github-project-board.ps1") -RepoRoot $repoRoot -Mode Plan -IssueTypeFixturePath $disabledFixture
+            if ($LASTEXITCODE -ne 0) { throw ($disabledRaw | Out-String) }
+            $disabled = ($disabledRaw | Out-String) | ConvertFrom-Json
+            if (-not $disabled.ok) { throw $disabled.reason }
+            if ($disabled.evidence.native_issue_types.available -ne $false) { throw "disabled native issue types should report unavailable" }
+            Assert-Contains -Text ([string]$disabled.evidence.native_issue_types.label_only_reason) -Needle "no enabled native issue types" -Reason "label-only reason missing"
+        } finally {
+            if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
+        }
+        Add-Result -Name "github native issue type planning contract passes" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "github native issue type planning contract passes" -Ok $false -Reason $_.Exception.Message }
+
+    try {
         $scriptText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "prepare-github-project-board.ps1") -Raw
-        foreach ($needle in @('ValidateSet("Plan", "ValidateConfig", "Create")', "NativeApprovalJson", "project_setup_board_approval", "project field-create", "project item-add", "github_project_board")) {
+        foreach ($needle in @('ValidateSet("Plan", "ValidateConfig", "Create")', "NativeApprovalJson", "project_setup_board_approval", "project field-create", "project item-add", "github_project_board", "repository.issueTypes", "UpdateIssueInput.issueTypeId", "issueTypeId", "label-only")) {
             Assert-Contains -Text $scriptText -Needle $needle -Reason "board create script missing contract: $needle"
         }
         Add-Result -Name "github project board create mode contract is present" -Ok $true -Reason "passed"

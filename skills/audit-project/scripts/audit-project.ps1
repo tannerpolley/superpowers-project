@@ -44,6 +44,72 @@ function Get-FieldValue {
     $null
 }
 
+function Get-FrontmatterFieldValue {
+    param([string]$Text, [string]$Name)
+    if (-not $Text.StartsWith("---")) { return $null }
+    $match = [regex]::Match($Text, "(?s)^---\s*(?<frontmatter>.*?)\s*---")
+    if (-not $match.Success) { return $null }
+    $escaped = [regex]::Escape($Name)
+    $field = [regex]::Match($match.Groups["frontmatter"].Value, "(?im)^\s*$escaped\s*:\s*(?<value>.+?)\s*$")
+    if ($field.Success) { return $field.Groups["value"].Value.Trim().Trim('"').Trim("'") }
+    $null
+}
+
+function Remove-Frontmatter {
+    param([string]$Text)
+    if (-not $Text.StartsWith("---")) { return $Text }
+    [regex]::Replace($Text, "(?s)^---\s*.*?\s*---\s*", "", 1)
+}
+
+function Get-MirrorTitle {
+    param([string]$Text, [string]$Path)
+    $frontmatterTitle = Get-FrontmatterFieldValue -Text $Text -Name "title"
+    if (-not [string]::IsNullOrWhiteSpace($frontmatterTitle)) { return $frontmatterTitle }
+    $body = Remove-Frontmatter -Text $Text
+    $heading = [regex]::Match($body, "(?m)^#\s+(?<title>.+?)\s*$")
+    if ($heading.Success) { return $heading.Groups["title"].Value.Trim() }
+    $slug = [IO.Path]::GetFileNameWithoutExtension($Path) -replace '^\d+-', ''
+    ($slug -replace '[-_]+', ' ').Trim()
+}
+
+function Normalize-GitHubRepoSlug {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
+    $trimmed = $Value.Trim()
+    if ($trimmed -match '^https://github\.com/(?<owner>[^/\s]+)/(?<repo>[^/\s]+?)(?:\.git)?/?$') {
+        return "$($Matches.owner)/$($Matches.repo)"
+    }
+    if ($trimmed -match '^git@github\.com:(?<owner>[^/\s]+)/(?<repo>[^/\s]+?)(?:\.git)?$') {
+        return "$($Matches.owner)/$($Matches.repo)"
+    }
+    if ($trimmed -match '^(?<owner>[^/:\s]+)/(?<repo>[^/\s]+?)(?:\.git)?$') {
+        return "$($Matches.owner)/$($Matches.repo)"
+    }
+    $null
+}
+
+function Normalize-IssueTypeName {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return "" }
+    $clean = $Value.Trim()
+    if ($clean.StartsWith("type:")) { $clean = $clean.Substring(5) }
+    ([regex]::Replace($clean.ToLowerInvariant(), "[^a-z0-9]+", ""))
+}
+
+function Get-IssueNativeTypeName {
+    param($Issue)
+    if ($null -eq $Issue) { return "" }
+    if ($Issue.PSObject.Properties.Name -contains "issueType" -and $null -ne $Issue.issueType) {
+        if ($Issue.issueType -is [string]) { return [string]$Issue.issueType }
+        if ($Issue.issueType.PSObject.Properties.Name -contains "name") { return [string]$Issue.issueType.name }
+    }
+    if ($Issue.PSObject.Properties.Name -contains "issue_type" -and $null -ne $Issue.issue_type) {
+        if ($Issue.issue_type -is [string]) { return [string]$Issue.issue_type }
+        if ($Issue.issue_type.PSObject.Properties.Name -contains "name") { return [string]$Issue.issue_type.name }
+    }
+    ""
+}
+
 function Get-IssueNumber {
     param([string]$IssueUrl, [string]$Path)
     if ($IssueUrl -match '/issues/(?<n>\d+)(?:$|[?#])') { return [int]$Matches.n }
@@ -125,11 +191,12 @@ function Get-IssueMirrors {
                 path = ConvertTo-RepoPath -Root $Root -Path $_.FullName
                 full_name = $_.FullName
                 text = $text
-                title = ($text -split "`r?`n" | Select-Object -First 1) -replace '^#\s+', ''
+                title = Get-MirrorTitle -Text $text -Path $_.Name
                 issue_url = $issueUrl
                 number = Get-IssueNumber -IssueUrl $issueUrl -Path $_.Name
                 milestone = Get-FieldValue -Text $text -Name "GitHub Milestone"
                 labels = $labels
+                issue_type = Get-FieldValue -Text $text -Name "Issue Type"
                 mirror_retention = Get-FieldValue -Text $text -Name "Mirror Retention"
                 project_status = Get-FieldValue -Text $text -Name "Project Status"
                 project_priority = Get-FieldValue -Text $text -Name "Project Priority"
@@ -190,7 +257,15 @@ function Get-RepoSlug {
     $roadmapPath = Get-RepoFile -Root $Root -RelativePath "docs/agents/project-roadmap.json"
     if (Test-Path -LiteralPath $roadmapPath -PathType Leaf) {
         $roadmap = Get-Content -LiteralPath $roadmapPath -Raw | ConvertFrom-Json
-        if (-not [string]::IsNullOrWhiteSpace([string]$roadmap.repository)) { return [string]$roadmap.repository }
+        $repository = Normalize-GitHubRepoSlug -Value ([string]$roadmap.repository)
+        if (-not [string]::IsNullOrWhiteSpace($repository)) { return $repository }
+        $targetRepo = Normalize-GitHubRepoSlug -Value ([string]$roadmap.target_repo)
+        if (-not [string]::IsNullOrWhiteSpace($targetRepo)) { return $targetRepo }
+    }
+    $remote = & git -C $Root remote get-url origin 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $repo = Normalize-GitHubRepoSlug -Value (($remote | Out-String).Trim())
+        if (-not [string]::IsNullOrWhiteSpace($repo)) { return $repo }
     }
     $null
 }
@@ -208,9 +283,42 @@ function Read-GitHubIssues {
     if ([string]::IsNullOrWhiteSpace($repo)) { return @() }
     $gh = Get-Command gh -ErrorAction SilentlyContinue
     if ($null -eq $gh) { return @() }
-    $raw = & gh issue list --repo $repo --state all --limit 200 --json number,title,state,body,url,labels,milestone 2>$null
+    $owner, $name = $repo -split '/', 2
+    $query = @'
+query($owner:String!, $name:String!) {
+  repository(owner:$owner, name:$name) {
+    issues(first: 100, states: [OPEN, CLOSED], orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes {
+        id
+        number
+        title
+        state
+        body
+        url
+        issueType { id name }
+        labels(first: 50) { nodes { name } }
+        milestone { title }
+      }
+    }
+  }
+}
+'@
+    $raw = & gh api graphql -f owner=$owner -f name=$name -f query=$query 2>$null
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace(($raw | Out-String))) { return @() }
-    @($raw | ConvertFrom-Json)
+    $graph = $raw | ConvertFrom-Json
+    @($graph.data.repository.issues.nodes | ForEach-Object {
+        [pscustomobject]@{
+            number = $_.number
+            title = $_.title
+            state = $_.state
+            body = $_.body
+            url = $_.url
+            labels = @($_.labels.nodes)
+            milestone = $_.milestone
+            node_id = $_.id
+            issueType = $_.issueType
+        }
+    })
 }
 
 function Read-ProjectFixture {
@@ -451,16 +559,25 @@ function Invoke-GitHubAwareAudit {
         $mirrorLabels = @(Get-StringArray $mirror.labels)
         $drift = [System.Collections.Generic.List[string]]::new()
         if (-not [string]::IsNullOrWhiteSpace([string]$issue.title) -and [string]$issue.title -ne [string]$mirror.title) { $drift.Add("title") | Out-Null }
-        if (-not [string]::IsNullOrWhiteSpace([string]$issue.body) -and -not $mirror.text.Contains([string]$issue.body)) { $drift.Add("body") | Out-Null }
         $issueMilestoneTitle = ""
         if ($null -ne $issue.milestone -and $issue.milestone.PSObject.Properties.Name -contains "title") { $issueMilestoneTitle = [string]$issue.milestone.title }
         if (-not [string]::IsNullOrWhiteSpace($issueMilestoneTitle) -and $issueMilestoneTitle -ne [string]$mirror.milestone) { $drift.Add("milestone") | Out-Null }
         $missingLabels = @($mirrorLabels | Where-Object { $issueLabels -notcontains $_ })
         $extraLabels = @($issueLabels | Where-Object { $mirrorLabels -notcontains $_ -and $_ -match '^(type|status):' })
         if ($missingLabels.Count -gt 0 -or $extraLabels.Count -gt 0) { $drift.Add("labels") | Out-Null }
+        $expectedIssueType = Normalize-IssueTypeName -Value ([string]$mirror.issue_type)
+        $actualIssueTypeName = Get-IssueNativeTypeName -Issue $issue
+        $actualIssueType = Normalize-IssueTypeName -Value $actualIssueTypeName
+        if (-not [string]::IsNullOrWhiteSpace($expectedIssueType)) {
+            if (-not [string]::IsNullOrWhiteSpace($actualIssueType)) {
+                if ($actualIssueType -ne $expectedIssueType) { $drift.Add("native_issue_type") | Out-Null }
+            } else {
+                Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "native-issue-type-label-only" -Severity "informational" -Dimension "native-issue-type" -Message "GitHub issue has no native issue type; label-only behavior remains active unless the repository has native issue types configured." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url; expected_issue_type = [string]$mirror.issue_type })
+            }
+        }
 
         if ($drift.Count -gt 0) {
-            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "mirror-github-drift" -Severity "repairable" -Dimension "mirror-versus-github" -Message "Issue mirror differs from inspected GitHub issue evidence." -Artifact $mirror.path -Evidence @{ fields = @($drift); github_issue = $issue.url })
+            Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "mirror-github-drift" -Severity "informational" -Dimension "mirror-versus-github" -Message "Issue mirror differs from inspected GitHub issue evidence and requires manual review." -Artifact $mirror.path -Evidence @{ fields = @($drift); github_issue = $issue.url })
         } else {
             Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "mirror-github-drift" -Severity "healthy" -Dimension "mirror-versus-github" -Message "Issue mirror matches inspected GitHub issue fields." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url })
         }

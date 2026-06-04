@@ -89,6 +89,8 @@ Run `scripts/audit-project.ps1 -RepoRoot . -Mode LocalDocs` for a local-docs aud
 
 Run `scripts/audit-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` for tracker hygiene. Use `-ApplyTrackerRepairs` only after native approval and include the `repair_receipt` in the handoff or audit report.
 
+For repositories that support native GitHub issue types, GitHub-aware audits must inspect issue type state through GraphQL issue evidence in addition to compatibility labels such as `type:task`, `type:bug`, and `type:feature`. If GraphQL reports no native issue type on an issue or no enabled repository issue types, report explicit label-only behavior rather than treating missing high-level `gh issue --type` flags as proof that native issue types are unavailable.
+
 ## Goal Execution Checks
 
 For active issue work, verify that issue mirrors include source plan linkage, AFK/HITL classification, Goal Command for AFK work, acceptance criteria, proof oracle, and native goal setup expectations consumed by `$superpowers-project:resolve-issue`.
