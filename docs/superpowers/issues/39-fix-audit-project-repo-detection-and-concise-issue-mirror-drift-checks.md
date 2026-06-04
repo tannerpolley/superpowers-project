@@ -8,6 +8,7 @@
 **Classification:** AFK
 **Labels:** type:bug, status:ready
 **Goal Command:** /goal Resolve issue 39 by fixing audit-project repository detection and concise issue mirror drift checks, with scenario coverage and repo validation.
+**Branch:** codex/resolve-issues-39-40
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Current thread owns PR

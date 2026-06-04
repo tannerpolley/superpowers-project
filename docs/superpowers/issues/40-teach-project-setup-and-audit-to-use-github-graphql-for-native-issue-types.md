@@ -8,6 +8,7 @@
 **Classification:** AFK
 **Labels:** type:task, status:ready
 **Goal Command:** /goal Resolve issue 40 by teaching project setup and audit to detect, report, and apply native GitHub issue types through GraphQL while preserving compatibility labels and label-only behavior when native issue types are unavailable.
+**Branch:** codex/resolve-issues-39-40
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Current thread owns PR
