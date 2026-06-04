@@ -31,27 +31,27 @@ This checkout may still be hosted under the older `milestones-plugin` repository
 
 ## Native Q&A Workflow
 
-The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `No / Stop / Done`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected.
+The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `Stop`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected.
 
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
 GitHub can also render the simplified Mermaid companion: [Native Q&A main flow Mermaid](docs/assets/native-qa-main-flow-mermaid.md).
 
-Only `No / Stop / Done` or the explicit final `Healthy?` -> `Done` route ends the continuation loop. `Yes` choices enter the next workflow depth and either start the next skill or ask the next route question. Revisit choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
+`Stop` pauses a continuation loop before verified completion. `Done` is reserved for a verified final clean state, such as a merge or audit closeout with passing proof. `Yes` choices enter the next workflow depth and either start the next skill or ask the next route question. Revisit choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
 
 | Native question | Where it appears | Top-level choices | Nested examples |
 | --- | --- | --- | --- |
-| `project_setup_next_step` | After Setup Project | Yes, Revisit, No / Stop / Done | Brainstorm Spec, Write Plan, Create Issues, Run Doctor |
-| `project_brainstorm_next_step` | After Brainstorm Spec | Yes, Revisit, No / Stop / Done | Create One Plan, Multi-Spec Planning, Revise Spec |
-| `project_plan_next_step` | After Write Plan | Yes, Revisit, No / Stop / Done | Create Issues, Implement Plan, Resolve Issue, Orchestrate Issues |
-| `project_implement_next_step` | After Implement Plan | Yes, Revisit, No / Stop / Done | Merge Changes, Review Evidence, Revise Branch |
-| `project_issue_next_step` | After Create Issues | Yes, Revisit, No / Stop / Done | Resolve Issues, Orchestrate Issues, Repair Issue Mirrors |
+| `project_setup_next_step` | After Setup Project | Yes, Revisit, Stop | Brainstorm Spec, Write Plan, Create Issues, Run Doctor |
+| `project_brainstorm_next_step` | After Brainstorm Spec | Yes, Revisit, Stop | Manual Planning, Auto Mode, Revise Spec |
+| `project_plan_next_step` | After Write Plan | Yes, Revisit, Stop | Create Issues, Implement Plan, Resolve Issue, Orchestrate Issues |
+| `project_implement_next_step` | After Implement Plan | Yes, Revisit, Stop | Merge Changes, Review Evidence, Revise Branch |
+| `project_issue_next_step` | After Create Issues | Yes, Revisit, Stop | Resolve Issues, Orchestrate Issues, Repair Issue Mirrors |
 | `project_issue_resolution_route` | Before issue implementation when route is ambiguous | Resolve, Orchestrate, Review First | Direct current-thread work or worker-thread worktree |
-| `project_resolve_next_step` | After direct issue work is PR-ready | Yes, Revisit, No / Stop / Done | Merge, Resolve Another, Address CI / Checks |
-| `project_orchestrate_next_step` | After worker-thread issue work is PR-ready | Yes, Revisit, No / Stop / Done | Merge, Recover Worker |
+| `project_resolve_next_step` | After direct issue work is PR-ready | Yes, Revisit, Stop | Merge, Resolve Another, Address CI / Checks |
+| `project_orchestrate_next_step` | After worker-thread issue work is PR-ready | Yes, Revisit, Stop | Merge, Recover Worker |
 | `project_merge_approval` | Before merge | Merge, Decline | Premerge evidence review |
-| `project_merge_next_step` | After merge closeout | Yes, Revisit, No / Stop / Done | Doctor, Resolve Another, Re-run Cleanup |
-| `project_doctor_next_step` | After a Doctor audit | Yes, Revisit, No / Stop / Done | Apply Repair, Create Planning Spec, Run Audit Again |
+| `project_merge_next_step` | After merge closeout | Yes, Revisit, Stop or verified Done | Doctor, Resolve Another, Re-run Cleanup |
+| `project_doctor_next_step` | After a Doctor audit | Yes, Revisit, Stop or verified Done | Apply Repair, Create Planning Spec, Run Audit Again |
 
 ## Implement Plan
 

@@ -129,14 +129,16 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
         'Choose issue route?',
         'select the next blue skill',
         'First-level gate rule',
-        'Yes / Revisit / No',
+        'Yes / Revisit / Stop',
+        'Auto Mode',
         'Nested routes:',
         'Nested revisit routes:',
         '-->|Yes|',
         '-->|Revisit|',
-        '-->|No|',
-        'Revisit loops back to the same skill',
-        'No stops',
+        '-->|Stop|',
+        '-->|Done|',
+        'Stop means pause',
+        'Done means complete',
         'Revisit Route',
         'Revisit Setup',
         'Revisit Spec',
@@ -198,7 +200,8 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Depth 7",
         "Done",
         "Yes",
-        "No",
+        "Stop",
+        "Auto Mode",
         "Revisit Route",
         "Revisit Setup",
         "Revisit Spec",
@@ -208,8 +211,9 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Revisit Output",
         "Revisit Merge",
         "Revisit Audit",
-        "Healthy can finish at Done",
-        "Healthy -> Done"
+        "Stop means pause",
+        "Done means complete",
+        "verified final gate"
     )) {
         Add-Check $checks "SVG contains label $needle" ($svgText.Contains($needle)) "SVG must show workflow label: $needle"
     }
@@ -219,6 +223,7 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Down: merge branch",
         "Left: review",
         "Left: repair",
+        "Stop / Done",
         "Right: Stop / Done",
         "Final down: Done",
         "Choose Work Route",
@@ -314,8 +319,8 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         Add-Check $checks "depth line avoids skill boxes $($line.id)" (-not $crossesSkillBox) "Depth guide lines must sit on Yes transition bands, not through skill boxes"
     }
     Add-Check $checks "stop nodes stay on right side of decisions" (@($stopRects | Where-Object { [int]$_.x -lt 580 }).Count -eq 0) "stop nodes must be right-side break nodes"
-    Add-Check $checks "stop nodes are pulled in from far edge" (@($stopRects | Where-Object { [int]$_.x -gt 2540 }).Count -eq 0) "right-side Stop / Done nodes must not sit too far to the edge"
-    Add-Check $checks "stop nodes have readable size" (@($stopRects | Where-Object { [int]$_.width -lt 260 -or [int]$_.height -lt 64 }).Count -eq 0) "Stop / Done nodes must be large enough to read"
+    Add-Check $checks "stop nodes are pulled in from far edge" (@($stopRects | Where-Object { [int]$_.x -gt 2540 }).Count -eq 0) "right-side Stop nodes must not sit too far to the edge"
+    Add-Check $checks "stop nodes have readable size" (@($stopRects | Where-Object { [int]$_.width -lt 260 -or [int]$_.height -lt 64 }).Count -eq 0) "Stop nodes must be large enough to read"
     $stopSideOverlap = $false
     foreach ($stopRect in $stopRects) {
         foreach ($sideRect in $sideRects) {
@@ -407,7 +412,7 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
                 }
             }
         }
-        Add-Check $checks "create resolve route avoids stop nodes" (-not $createResolveCrossesStop) "Create Issues -> Resolve Issue route must not pass through Stop / Done nodes"
+        Add-Check $checks "create resolve route avoids stop nodes" (-not $createResolveCrossesStop) "Create Issues -> Resolve Issue route must not pass through Stop nodes"
     }
     $implementRoute = $svg.SelectSingleNode("//*[@id='route-implement-merge']")
     Add-Check $checks "implement bypasses issue execution" ($svgText.Contains('id="route-implement-merge"') -and $svgText.Contains('direct-merge-route')) "Implement Plan must route directly to Merge Changes"
