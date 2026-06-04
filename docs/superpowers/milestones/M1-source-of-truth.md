@@ -25,6 +25,7 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Related Issues
 
+- `docs/superpowers/issues/21-add-project-doctor-tracker-hygiene-audit-and-repair-mode.md`
 - `docs/superpowers/issues/26-project-namespace-skill-surface-migration.md`
 - `docs/superpowers/issues/28-plugin-deployment-policy-and-live-sync.md`
 - `docs/superpowers/issues/30-setup-orchestration-board-and-worker-identity.md`
