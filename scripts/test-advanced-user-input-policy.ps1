@@ -21,9 +21,12 @@ function Add-Check {
 
 $checks = [System.Collections.Generic.List[object]]::new()
 $skillPath = Join-Path $RepoRoot "skills\advanced-user-input\SKILL.md"
+$metadataPath = Join-Path $RepoRoot "skills\advanced-user-input\agents\openai.yaml"
 
 $exists = Test-Path -LiteralPath $skillPath -PathType Leaf
 Add-Check $checks "advanced-user-input exists in plugin source" $exists "missing $skillPath"
+$metadataExists = Test-Path -LiteralPath $metadataPath -PathType Leaf
+Add-Check $checks "advanced-user-input has plugin UI metadata" $metadataExists "missing $metadataPath"
 
 if ($exists) {
     $text = Get-Content -LiteralPath $skillPath -Raw
@@ -67,6 +70,20 @@ if ($exists) {
         "Each question must define 2-3 mutually exclusive options."
     )) {
         Add-Check $checks "advanced-user-input omits stale limit $forbidden" (-not $text.Contains($forbidden)) "$skillPath must not contain stale native limit: $forbidden"
+    }
+}
+
+if ($metadataExists) {
+    $metadata = Get-Content -LiteralPath $metadataPath -Raw
+    foreach ($needle in @(
+        'display_name: "Advanced User Input"',
+        'Use $project:advanced-user-input',
+        'Use the smallest native question shape that preserves the real decision tree',
+        'For project workflow closeout gates, always ask the three-way trajectory question first',
+        'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
+        'request_agent_input'
+    )) {
+        Add-Check $checks "advanced-user-input metadata contains $needle" ($metadata.Contains($needle)) "$metadataPath must contain policy: $needle"
     }
 }
 

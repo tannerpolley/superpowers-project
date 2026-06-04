@@ -15,7 +15,9 @@ try {
     $syncText = Get-Content -LiteralPath $syncPath -Raw
     foreach ($needle in @(
         'plugins\project',
+        'assets',
         '$userSkillNames = @("advanced-user-input")',
+        'Assert-NoTreeDrift -SourceRoot $sourceAssetsRoot -TargetRoot $livePluginAssetsRoot -Label "plugin assets"',
         'Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved -SkillNames $userSkillNames',
         'Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $userSkillsRootResolved $skillName) -Label "user skill $skillName"',
         '"superpowers-project"',

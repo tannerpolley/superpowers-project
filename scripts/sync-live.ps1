@@ -12,6 +12,7 @@ $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
 $sourceSkillsRoot = Join-Path $repoRoot "skills"
+$sourceAssetsRoot = Join-Path $repoRoot "assets"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
 $marketplacePathResolved = [IO.Path]::GetFullPath($MarketplacePath)
@@ -186,11 +187,22 @@ if ($Validate) {
 
 $livePluginManifestDir = Join-Path $livePluginRootResolved ".codex-plugin"
 $livePluginSkillsRoot = Join-Path $livePluginRootResolved "skills"
+$livePluginAssetsRoot = Join-Path $livePluginRootResolved "assets"
 New-Item -ItemType Directory -Path $livePluginManifestDir -Force | Out-Null
 New-Item -ItemType Directory -Path $livePluginSkillsRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $userSkillsRootResolved -Force | Out-Null
 
 Copy-Item -LiteralPath $sourcePluginManifest -Destination (Join-Path $livePluginManifestDir "plugin.json") -Force
+
+Assert-ChildDirectory -Parent $livePluginRootResolved -Child $livePluginAssetsRoot
+if (Test-Path -LiteralPath $sourceAssetsRoot -PathType Container) {
+    if (Test-Path -LiteralPath $livePluginAssetsRoot -PathType Container) {
+        Remove-Item -LiteralPath $livePluginAssetsRoot -Recurse -Force
+    }
+    Copy-Item -LiteralPath $sourceAssetsRoot -Destination $livePluginAssetsRoot -Recurse
+} elseif (Test-Path -LiteralPath $livePluginAssetsRoot -PathType Container) {
+    Remove-Item -LiteralPath $livePluginAssetsRoot -Recurse -Force
+}
 
 Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $livePluginSkillsRoot
 $removedPluginSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $livePluginSkillsRoot -ActiveSkillNames $activeSkillNames -RetiredSkillNames $retiredSkillNames)
@@ -199,6 +211,9 @@ Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootR
 $removedUserSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $userSkillsRootResolved -ActiveSkillNames $userSkillNames -RetiredSkillNames $retiredSkillNames)
 
 Assert-NoTreeDrift -SourceRoot (Split-Path $sourcePluginManifest -Parent) -TargetRoot $livePluginManifestDir -Label "plugin manifest"
+if (Test-Path -LiteralPath $sourceAssetsRoot -PathType Container) {
+    Assert-NoTreeDrift -SourceRoot $sourceAssetsRoot -TargetRoot $livePluginAssetsRoot -Label "plugin assets"
+}
 foreach ($skillName in $activeSkillNames) {
     Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $livePluginSkillsRoot $skillName) -Label "plugin skill $skillName"
 }
@@ -228,6 +243,7 @@ $deployedUserSkills = @($userSkillNames | ForEach-Object {
     live_plugin_root = $livePluginRootResolved
     user_skills_root = $userSkillsRootResolved
     marketplace = $marketplaceEntry
+    assets_target = if (Test-Path -LiteralPath $livePluginAssetsRoot -PathType Container) { $livePluginAssetsRoot } else { $null }
     deployed_plugin_skills = $deployedPluginSkills
     deployed_user_skills = $deployedUserSkills
     removed_plugin_skills = $removedPluginSkills
