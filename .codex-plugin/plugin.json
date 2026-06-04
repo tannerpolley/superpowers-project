@@ -28,8 +28,8 @@
       "Workflow"
     ],
     "defaultPrompt": [
-      "Use project:workflow to choose the next Superpowers Project route.",
-      "Use project:setup to set up this repo's project context and tracker.",
+      "Use project:initiate-workflow to choose the next Superpowers Project route.",
+      "Use project:setup-project to set up this repo's project context and tracker.",
       "Use project:audit-project to audit Superpowers Project workflow drift.",
       "Use project:brainstorm-spec to brainstorm a project idea with native grilling.",
       "Use project:create-issues to convert a plan into GitHub issue mirrors.",
@@ -40,4 +40,5 @@
     ]
   }
 }
+
 

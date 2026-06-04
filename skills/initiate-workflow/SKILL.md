@@ -1,9 +1,9 @@
 ---
-name: workflow
-description: Route Superpowers Project extension requests to project context, brainstorming, planning, issue creation, issue triage, doctor, or goal-backed resolution workflows.
+name: initiate-workflow
+description: Route Superpowers Project extension requests to project setup, brainstorming, planning, issue creation, issue triage, doctor, or goal-backed resolution workflows.
 ---
 
-# Superpowers Project
+# Initiate Workflow
 
 This skill is the router for the Superpowers Project extension. It does not replace Superpowers. It routes project-backed work to extension skills and routes method work to Superpowers skills.
 
@@ -15,7 +15,7 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 
 ## Routing
 
-- Project setup, roadmap context, tracker board setup, or large-scope project map: `$project:setup`
+- Project setup, roadmap context, tracker board setup, or large-scope project map: `$project:setup-project`
 - Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision: `$project:brainstorm-spec`
 - Implementation planning from a spec, issue mirror, or approved direct request: `$project:write-plan`
 - Quick Apply small-work escape hatch after an approved `$project:write-plan`: local-main execution on clean synced `main` only after `project_quick_apply_approval` and `validate-quick-apply.ps1`.
@@ -75,4 +75,6 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 ## Goal Routing
 
 Issue implementation must use `$project:resolve-issue` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$project:resolve-issue` creates PR-ready evidence, final integration must route to `$project:merge-changes`.
+
+
 

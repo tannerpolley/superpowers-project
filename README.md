@@ -18,8 +18,8 @@ This checkout may still be hosted under the older `milestones-plugin` repository
 
 ## Current Skills
 
-- `$project:workflow`: routes extension workflows.
-- `$project:setup`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
+- `$project:initiate-workflow`: routes extension workflows.
+- `$project:setup-project`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
 - `$project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
 - `$project:write-plan`: writes Superpowers implementation plans with project context.
 - `$project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
@@ -119,5 +119,7 @@ If you are installing from the current pre-rename repository checkout, run the s
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
-After install, start with `$project:workflow` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.
+After install, start with `$project:initiate-workflow` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.
+
+
 

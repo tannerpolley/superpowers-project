@@ -65,9 +65,9 @@ Modify:
 - `skills/write-plan/scripts/test-scenarios.ps1`: test continuation-gate text.
 - `docs/superpowers/issues/README.md`: document the merge section template.
 - `docs/superpowers/issues/smoke-test-workflow.md`: add the merge section.
-- `skills/workflow/SKILL.md`: route PR/handoff integration to `$project:merge-changes`.
-- `skills/workflow/agents/openai.yaml`: include `$project:merge-changes`.
-- `skills/workflow/scripts/test-scenarios.ps1`: require router text for `$project:merge-changes`.
+- `skills/initiate-workflow/SKILL.md`: route PR/handoff integration to `$project:merge-changes`.
+- `skills/initiate-workflow/agents/openai.yaml`: include `$project:merge-changes`.
+- `skills/initiate-workflow/scripts/test-scenarios.ps1`: require router text for `$project:merge-changes`.
 - `docs/superpowers/PROJECT_CONTEXT.md`: list `merge-changes` in extension skills and execution model.
 - `README.md`: list `$project:merge-changes`.
 - `.codex-plugin/plugin.json`: add a default prompt for merge integration.
@@ -85,7 +85,7 @@ Test:
 - `skills/resolve-issue/scripts/test-scenarios.ps1`
 - `skills/merge-changes/scripts/test-scenarios.ps1`
 - `skills/create-issues/scripts/test-scenarios.ps1`
-- `skills/workflow/scripts/test-scenarios.ps1`
+- `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - `scripts/test-superpowers-project-dummy-repo.ps1`
 - `scripts/test-superpowers-project-repo-contract.ps1`
 - `scripts/validate.ps1`
@@ -138,7 +138,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 
 - Modify: `scripts/validate.ps1`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Modify: `skills/workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Test: `scripts/validate.ps1`
 
 - [ ] **Step 1: Add `merge-changes` to active skill validation**
@@ -181,7 +181,7 @@ foreach ($skillName in @(
 
 - [ ] **Step 3: Add `merge-changes` to router scenario tests**
 
-In `skills/workflow/scripts/test-scenarios.ps1`, extend the router needle list so it includes `merge-changes`:
+In `skills/initiate-workflow/scripts/test-scenarios.ps1`, extend the router needle list so it includes `merge-changes`:
 
 ```powershell
 foreach ($needle in @(
@@ -1087,21 +1087,21 @@ Expected: PASS.
 
 **Files:**
 
-- Modify: `skills/workflow/SKILL.md`
-- Modify: `skills/workflow/agents/openai.yaml`
-- Modify: `skills/workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/SKILL.md`
+- Modify: `skills/initiate-workflow/agents/openai.yaml`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `README.md`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `scripts/test-superpowers-project-dummy-repo.ps1`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Test: `skills/workflow/scripts/test-scenarios.ps1`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Test: `scripts/test-superpowers-project-dummy-repo.ps1`
 - Test: `scripts/test-superpowers-project-repo-contract.ps1`
 
 - [ ] **Step 1: Update router text**
 
-In `skills/workflow/SKILL.md`, add this route:
+In `skills/initiate-workflow/SKILL.md`, add this route:
 
 ```markdown
 - PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$project:merge-changes`
@@ -1115,7 +1115,7 @@ After `$project:resolve-issue` creates PR-ready evidence, final integration must
 
 - [ ] **Step 2: Update router metadata**
 
-In `skills/workflow/agents/openai.yaml`, replace the default prompt with a prompt that includes:
+In `skills/initiate-workflow/agents/openai.yaml`, replace the default prompt with a prompt that includes:
 
 ```text
 PR or worker-handoff integration to $project:merge-changes with native merge approval, issue close verification, branch/worktree cleanup, prune, cleanup hook, and clean repo proof
@@ -1197,12 +1197,12 @@ Expected: all PASS.
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/merge-changes/SKILL.md`
-- Modify: `skills/workflow/SKILL.md`
+- Modify: `skills/initiate-workflow/SKILL.md`
 - Test: `skills/write-plan/scripts/test-scenarios.ps1`
 - Test: `skills/create-issues/scripts/test-scenarios.ps1`
 - Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
 - Test: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `skills/workflow/scripts/test-scenarios.ps1`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add a failing `$project:write-plan` continuation test**
 
@@ -1304,7 +1304,7 @@ After closeout proof passes, ask how to continue when `request_user_input` is ca
 
 - [ ] **Step 6: Update router text**
 
-In `skills/workflow/SKILL.md`, add:
+In `skills/initiate-workflow/SKILL.md`, add:
 
 ```markdown
 ## Continuation Routing
@@ -1405,4 +1405,5 @@ Expected: commit succeeds after all proof commands pass.
 ## Execution Handoff
 
 Plan complete when this file is saved. The implemented `$project:write-plan` closeout should ask `project_plan_next_step` and then immediately route to `$project:create-issues`, `superpowers:subagent-driven-development`, or `superpowers:executing-plans` based on the selected native UI answer.
+
 

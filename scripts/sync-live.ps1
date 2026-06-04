@@ -57,6 +57,8 @@ $retiredSkillNames = @(
     "project-doctor",
     "workflow",
     "setup",
+    "initiate-workflow",
+    "setup-project",
     "orchestrate-issues",
     "brainstorm-spec",
     "write-plan",
@@ -149,4 +151,3 @@ $deployedUserSkills = @($userSkillNames | ForEach-Object {
     retired_live_plugin_roots = $retiredLivePluginRoots
     removed_retired_live_plugin_roots = $removedRetiredLivePluginRoots
 } | ConvertTo-Json -Depth 8
-

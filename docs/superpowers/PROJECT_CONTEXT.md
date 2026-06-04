@@ -26,7 +26,7 @@ Milestone pages under `docs/superpowers/milestones/` are the durable project map
 - Repository: `tannerpolley/milestones-plugin`
 - Issue tracker: GitHub Issues plus local mirrors under `docs/superpowers/issues/`
 - GitHub milestone policy: mirrors the roadmap pages under `docs/superpowers/milestones/`
-- GitHub Projects policy: optional dashboard evidence created or verified by `$project:setup` only after native approval
+- GitHub Projects policy: optional dashboard evidence created or verified by `$project:setup-project` only after native approval
 - Label vocabulary: `docs/agents/triage-labels.md`
 - Tracker config: `docs/agents/issue-tracker.md` and `docs/agents/project-roadmap.json`
 
@@ -36,8 +36,8 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 
 ## Extension Skills
 
-- `workflow`
-- `setup`
+- `initiate-workflow`
+- `setup-project`
 - `brainstorm-spec`
 - `write-plan`
 - `create-issues`
@@ -50,4 +50,6 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 
 - Decide whether smoke-test issue mirrors should remain pre-publication fixtures or be published as real GitHub issues.
 - Decide whether GitHub Projects should stay dashboard-only or become a required project-management surface.
+
+
 

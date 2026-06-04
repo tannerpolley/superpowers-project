@@ -22,6 +22,8 @@ try {
         '"project-setup"',
         '"project-doctor"',
         '"workflow"',
+        '"initiate-workflow"',
+        '"setup-project"',
         '"merge-changes"'
     )) {
         if (-not $syncText.Contains($needle)) { throw "sync-live.ps1 missing policy text: $needle" }

@@ -18,8 +18,8 @@ function Assert-Contains {
 try {
     $targetSkills = @(
         "advanced-user-input",
-        "workflow",
-        "setup",
+        "initiate-workflow",
+        "setup-project",
         "audit-project",
         "brainstorm-spec",
         "write-plan",
@@ -49,7 +49,7 @@ try {
     Add-Check -Name "frontmatter names" -Ok $true -Reason "passed"
 
     $readme = Get-Content -LiteralPath (Join-Path $repoRoot "README.md") -Raw
-    foreach ($needle in @('$project:workflow', '$project:setup', '$project:write-plan', '$project:create-issues', '$project:resolve-issue', '$project:orchestrate-issues', '$project:merge-changes', '$project:audit-project')) {
+    foreach ($needle in @('$project:initiate-workflow', '$project:setup-project', '$project:write-plan', '$project:create-issues', '$project:resolve-issue', '$project:orchestrate-issues', '$project:merge-changes', '$project:audit-project')) {
         Assert-Contains -Text $readme -Needle $needle -Reason "README missing migrated prompt: $needle"
     }
     Add-Check -Name "README prompt surface" -Ok $true -Reason "passed"
@@ -68,3 +68,5 @@ try {
     [pscustomobject]@{ ok = $false; phase = "project-namespace-migration"; reason = $_.Exception.Message; checks = $checks } | ConvertTo-Json -Depth 8
     exit 1
 }
+
+

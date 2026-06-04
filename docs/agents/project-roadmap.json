@@ -35,7 +35,7 @@
   "github_project_board": {
     "status": "configured",
     "native_approval_required": true,
-    "owner_skill": "setup",
+    "owner_skill": "setup-project",
     "repository": "tannerpolley/milestones-plugin",
     "board_title": "Superpowers Project",
     "project_number": 6,

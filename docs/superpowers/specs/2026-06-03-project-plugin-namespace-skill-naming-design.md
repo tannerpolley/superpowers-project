@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Migrate Superpowers Project from a mostly user-skill surface such as `$project:brainstorm-spec` and `$project:workflow` to a true plugin namespace surface under `$project`.
+Migrate Superpowers Project from a mostly user-skill surface such as `$project:brainstorm-spec` and `$project:initiate-workflow` to a true plugin namespace surface under `$project`.
 
 The target experience is that typing `$project` exposes the whole Superpowers Project skill family as plugin-scoped skills, the same way the Superpowers plugin exposes `superpowers:*` skills.
 
@@ -29,8 +29,8 @@ The target experience is that typing `$project` exposes the whole Superpowers Pr
 
 The canonical prompt surface should be:
 
-- `project:workflow`: top-level router and continuation chooser, replacing `superpowers-project`.
-- `project:setup`: project setup, tracker configuration, roadmap, and milestone context.
+- `project:initiate-workflow`: top-level router and continuation chooser, replacing `superpowers-project`.
+- `project:setup-project`: project setup, tracker configuration, roadmap, and milestone context.
 - `project:audit-project`: drift, tracker, sync, migration, and repair audit, replacing `audit-project`.
 - `project:brainstorm-spec`: repo-backed brainstorming, native grilling, and loose spec creation.
 - `project:write-plan`: approved spec or issue mirror to implementation plan.
@@ -83,7 +83,7 @@ Renaming `audit-project` to `audit-project` makes the skill clearer in autocompl
 ## Proof Oracle Candidates
 
 - `.codex-plugin/plugin.json` has `name: project` and display name `Superpowers Project`.
-- `skills/workflow/SKILL.md` exists and has `name: workflow`.
+- `skills/initiate-workflow/SKILL.md` exists and has `name: workflow`.
 - `skills/brainstorm-spec/SKILL.md` exists and has `name: brainstorm-spec`.
 - `skills/write-plan/SKILL.md` exists and has `name: write-plan`.
 - `skills/create-issues/SKILL.md` exists and has `name: create-issues`.
@@ -101,7 +101,7 @@ Renaming `audit-project` to `audit-project` makes the skill clearer in autocompl
 
 ## Open Questions For Planning
 
-- Should `project:workflow` keep a separate display phrase such as "Superpowers Project Workflow" inside docs and prompts, or should prompts use only the compact skill name?
+- Should `project:initiate-workflow` keep a separate display phrase such as "Superpowers Project Workflow" inside docs and prompts, or should prompts use only the compact skill name?
 - Should the implementation plan migrate every skill directory in one change, or split runtime namespace and skill-name migration into separate validation steps to reduce blast radius?
 - Should the live sync script remove the old `C:\Users\Tanner\plugins\superpowers-project` directory in the same pass or report it first for a follow-up Doctor repair?
 
@@ -111,4 +111,5 @@ Renaming `audit-project` to `audit-project` makes the skill clearer in autocompl
 - Consistency check: the spec treats `project` as runtime namespace and `Superpowers Project` as display brand throughout.
 - Scope check: the artifact is a migration contract, not an implementation plan.
 - Ambiguity check: old-name compatibility policy is explicit: remove old names without wrappers.
+
 

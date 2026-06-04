@@ -248,7 +248,7 @@ Secondary milestone:
 
 ## Proof Oracle Candidates For Later Planning
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup\scripts\test-scenarios.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1`
@@ -273,4 +273,5 @@ Secondary milestone:
 - Worker-thread naming, branch naming, and evidence naming share one canonical issue identity.
 - GitHub Project board setup is added without making the board the canonical artifact source.
 - External issue hydration is included because issue #15 exposed that workflow gap during this session.
+
 

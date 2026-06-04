@@ -304,8 +304,8 @@ Update `$project:resolve-issue` so it:
 
 Update:
 
-- `skills/workflow/SKILL.md`
-- `skills/workflow/agents/openai.yaml`
+- `skills/initiate-workflow/SKILL.md`
+- `skills/initiate-workflow/agents/openai.yaml`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `README.md`
 - validation active skill lists
@@ -400,4 +400,5 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 ## Recommended Next Step
 
 Run `$project:write-plan` on this spec to create the implementation plan. The plan should start with failing tests for the new skill route and the narrowed `$project:resolve-issue` completion state before moving scripts.
+
 

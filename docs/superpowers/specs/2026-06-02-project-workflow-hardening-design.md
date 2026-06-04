@@ -273,7 +273,7 @@ Update `$project:brainstorm-spec`:
 - ask a native continuation question with `Project Plan`, `Review First`, and `Revise Spec` options;
 - route `Project Plan` directly into `$project:write-plan` in the same turn when tools and state allow it.
 
-Update `$project:workflow` router:
+Update `$project:initiate-workflow` router:
 
 - route direct small post-plan work to `$project:write-plan` plus `Quick Apply`;
 - keep issue-backed execution as default for non-trivial work;
@@ -315,7 +315,7 @@ Implementation planning should include proof for:
 
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
-- focused scenario tests for `$project:write-plan`, `$project:resolve-issue`, `$project:merge-changes`, `$project:audit-project`, and `$project:workflow`
+- focused scenario tests for `$project:write-plan`, `$project:resolve-issue`, `$project:merge-changes`, `$project:audit-project`, and `$project:initiate-workflow`
 - a script-doc parameter drift fixture that fails on renamed parameters
 - a ledger-generation fixture that creates setup, PR-ready, premerge, and closeout ledgers without hand-authored JSON
 - a GitHub check normalization fixture covering success, pending, failed, skipped optional, and skipped required checks
@@ -338,4 +338,5 @@ Implementation planning should include proof for:
 - The Quick Apply path is bounded and does not replace issue-backed work.
 - Closed mirror deletion is explicit and has a retention escape hatch.
 - Every review finding from the milestones-plugin and ePC-SAFT runs is represented.
+
 

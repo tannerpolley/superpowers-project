@@ -59,9 +59,9 @@ Modify:
 - `scripts/validate.ps1`
 - `scripts/test-superpowers-project-dummy-repo.ps1`
 - `scripts/test-superpowers-project-repo-contract.ps1`
-- `skills/workflow/SKILL.md`
-- `skills/workflow/agents/openai.yaml`
-- `skills/workflow/scripts/test-scenarios.ps1`
+- `skills/initiate-workflow/SKILL.md`
+- `skills/initiate-workflow/agents/openai.yaml`
+- `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - `skills/project-context/SKILL.md`
 - `skills/project-context/agents/openai.yaml`
 - `skills/project-context/scripts/test-scenarios.ps1`
@@ -121,9 +121,9 @@ Test:
 
 **Files:**
 
-- Modify: `skills/workflow/SKILL.md`
-- Modify: `skills/workflow/agents/openai.yaml`
-- Modify: `skills/workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/SKILL.md`
+- Modify: `skills/initiate-workflow/agents/openai.yaml`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Modify: `skills/project-context/SKILL.md`
 - Modify: `skills/project-context/agents/openai.yaml`
 - Modify: `skills/project-context/scripts/test-scenarios.ps1`
@@ -580,9 +580,9 @@ git commit -m "feat: detect ignored project files"
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
 - Modify: `skills/write-plan/scripts/test-scenarios.ps1`
-- Modify: `skills/workflow/SKILL.md`
-- Modify: `skills/workflow/agents/openai.yaml`
-- Modify: `skills/workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/SKILL.md`
+- Modify: `skills/initiate-workflow/agents/openai.yaml`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Modify: `README.md`
 
 - [ ] **Step 1: Add failing Quick Apply tests**
@@ -644,7 +644,7 @@ Options:
 
 - [ ] **Step 4: Update router docs**
 
-Update `$project:workflow` and `README.md` so small, low-risk post-plan work can route to Quick Apply, while non-trivial work stays issue-backed.
+Update `$project:initiate-workflow` and `README.md` so small, low-risk post-plan work can route to Quick Apply, while non-trivial work stays issue-backed.
 
 - [ ] **Step 5: Run tests and commit checkpoint**
 
@@ -814,4 +814,5 @@ git commit -m "docs: document hardened project workflow"
 ## Execution Handoff
 
 Plan complete when this file is saved and self-reviewed. The closeout question should summarize this plan and ask whether to continue to `$project:create-issues`, use Quick Apply, review first, or revise the plan.
+
 

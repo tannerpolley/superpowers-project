@@ -40,7 +40,7 @@
 - Create: `docs/superpowers/milestones/M0-governance.md`
 - Create: `docs/superpowers/milestones/M1-source-of-truth.md`
 - Create: `docs/superpowers/milestones/M2-distribution.md`
-- Create: `canonical-skills/workflow/`
+- Create: `canonical-skills/initiate-workflow/`
 - Create: `canonical-skills/project-context/`
 - Create: `canonical-skills/brainstorm-spec/`
 - Create: `canonical-skills/write-plan/`
@@ -308,19 +308,19 @@ git commit -m "feat: rename plugin to superpowers project"
 ## Task 3: Add The Project Router And Project Context Skill
 
 **Files:**
-- Create: `canonical-skills/workflow/SKILL.md`
-- Create: `canonical-skills/workflow/agents/openai.yaml`
-- Create: `canonical-skills/workflow/scripts/test-scenarios.ps1`
+- Create: `canonical-skills/initiate-workflow/SKILL.md`
+- Create: `canonical-skills/initiate-workflow/agents/openai.yaml`
+- Create: `canonical-skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Create: `canonical-skills/project-context/SKILL.md`
 - Create: `canonical-skills/project-context/agents/openai.yaml`
 - Create: `canonical-skills/project-context/scripts/test-scenarios.ps1`
-- Create: `skills/workflow/SKILL.md`
+- Create: `skills/initiate-workflow/SKILL.md`
 - Create: `skills/project-context/SKILL.md`
 - Test: targeted scenario scripts
 
 - [ ] **Step 1: Write failing router scenario tests**
 
-Create `canonical-skills/workflow/scripts/test-scenarios.ps1` with assertions that `SKILL.md` contains:
+Create `canonical-skills/initiate-workflow/scripts/test-scenarios.ps1` with assertions that `SKILL.md` contains:
 
 ```text
 project-context
@@ -347,7 +347,7 @@ Expected: fails because the skill does not exist yet.
 
 - [ ] **Step 2: Create `superpowers-project` skill**
 
-Create `canonical-skills/workflow/SKILL.md` with this contract:
+Create `canonical-skills/initiate-workflow/SKILL.md` with this contract:
 
 ```markdown
 ---
@@ -972,4 +972,5 @@ Before claiming this plan is complete, verify:
 - GoalBuddy board creation is absent from default execution scripts.
 - Dummy repo validation proves the full extension loop.
 - Full validation and sync-live validation exit zero.
+
 

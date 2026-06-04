@@ -119,8 +119,8 @@ function Assert-TextContains {
 function Get-ActiveSkillNames {
     @(
         "advanced-user-input",
-        "workflow",
-        "setup",
+        "initiate-workflow",
+        "setup-project",
         "orchestrate-issues",
         "brainstorm-spec",
         "write-plan",
@@ -329,4 +329,3 @@ try {
     } | ConvertTo-Json -Depth 8
     exit 1
 }
-

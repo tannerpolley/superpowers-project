@@ -32,12 +32,12 @@ Create:
 - `skills/orchestrate-issues/scripts/derive-worker-identity.ps1`: derives canonical issue identity, thread title, branch name, evidence folder, and PR title hints from one issue mirror.
 - `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`: validates a ready issue mirror/source plan and emits the worker handoff ledger.
 - `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`: verifies worker identity, branch, issue URL, source plan, proof oracle, and topology handoff evidence.
-- `skills/setup/scripts/prepare-github-project-board.ps1`: creates an approval-ready GitHub Project board plan and validates post-creation board config evidence.
-- `skills/setup/scripts/test-scenarios.ps1`: renamed and extended copy of the current project-context scenario script.
+- `skills/setup-project/scripts/prepare-github-project-board.ps1`: creates an approval-ready GitHub Project board plan and validates post-creation board config evidence.
+- `skills/setup-project/scripts/test-scenarios.ps1`: renamed and extended copy of the current project-context scenario script.
 
 Rename:
 
-- `skills/project-context/` to `skills/setup/`.
+- `skills/project-context/` to `skills/setup-project/`.
 
 Modify:
 
@@ -48,11 +48,11 @@ Modify:
 - `scripts/sync-live.ps1`
 - `scripts/test-superpowers-project-repo-contract.ps1`
 - `scripts/test-superpowers-project-dummy-repo.ps1`
-- `skills/workflow/SKILL.md`
-- `skills/workflow/agents/openai.yaml`
-- `skills/workflow/scripts/test-scenarios.ps1`
-- `skills/setup/SKILL.md`
-- `skills/setup/agents/openai.yaml`
+- `skills/initiate-workflow/SKILL.md`
+- `skills/initiate-workflow/agents/openai.yaml`
+- `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- `skills/setup-project/SKILL.md`
+- `skills/setup-project/agents/openai.yaml`
 - `skills/create-issues/SKILL.md`
 - `skills/create-issues/agents/openai.yaml`
 - `skills/create-issues/scripts/validate-issue-mirror.ps1`
@@ -71,7 +71,7 @@ Modify:
 
 Delete:
 
-- `skills/project-context/` after the git rename is complete and `skills/setup/` passes validation.
+- `skills/project-context/` after the git rename is complete and `skills/setup-project/` passes validation.
 - Live deployed `project-context` copies during `scripts/sync-live.ps1 -Validate` by adding `project-context` to the retired skill list.
 
 ## Acceptance Criteria Mapping
@@ -100,7 +100,7 @@ Delete:
 Run these commands before claiming the implementation complete:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
@@ -122,7 +122,7 @@ Expected result: every command exits `0`; `scripts/validate.ps1` emits top-level
 - Modify: `scripts/validate.ps1`
 - Modify: `scripts/sync-live.ps1`
 - Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Modify: `skills/workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Test: `scripts/validate.ps1`
 
 - [ ] **Step 1: Write failing active-skill inventory expectations**
@@ -206,7 +206,7 @@ Add a focused assertion that active routing docs contain `setup` and `orchestrat
 
 ```powershell
 Assert-TextContains -RelativePath "README.md" -Needles @(
-    '$project:setup',
+    '$project:setup-project',
     '$project:orchestrate-issues'
 )
 $readmeText = Get-Content -LiteralPath (Join-Path $repoRoot "README.md") -Raw
@@ -217,7 +217,7 @@ if ($readmeText.Contains('$project-context')) {
 
 - [ ] **Step 4: Write failing router scenario checks**
 
-In `skills/workflow/scripts/test-scenarios.ps1`, change the routing contract needles to require `setup` and `orchestrate-issues`.
+In `skills/initiate-workflow/scripts/test-scenarios.ps1`, change the routing contract needles to require `setup` and `orchestrate-issues`.
 
 ```powershell
 foreach ($needle in @(
@@ -252,22 +252,22 @@ Expected: failures name missing `setup`, missing `orchestrate-issues`, or stale 
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add scripts/validate.ps1 scripts/sync-live.ps1 scripts/test-superpowers-project-repo-contract.ps1 skills/workflow/scripts/test-scenarios.ps1
+git add scripts/validate.ps1 scripts/sync-live.ps1 scripts/test-superpowers-project-repo-contract.ps1 skills/initiate-workflow/scripts/test-scenarios.ps1
 git commit -m "test: define setup and orchestration skill contracts"
 ```
 
 ### Task 2: Rename project-context To setup
 
 **Files:**
-- Move: `skills/project-context/` to `skills/setup/`
-- Modify: `skills/setup/SKILL.md`
-- Modify: `skills/setup/agents/openai.yaml`
-- Modify: `skills/setup/scripts/test-scenarios.ps1`
+- Move: `skills/project-context/` to `skills/setup-project/`
+- Modify: `skills/setup-project/SKILL.md`
+- Modify: `skills/setup-project/agents/openai.yaml`
+- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
 - Modify: `README.md`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/superpowers/milestones/README.md`
-- Test: `skills/setup/scripts/test-scenarios.ps1`
+- Test: `skills/setup-project/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Move the skill directory**
 
@@ -281,7 +281,7 @@ Expected: `git status --short` shows a rename from `skills/project-context` to `
 
 - [ ] **Step 2: Update skill frontmatter and title**
 
-In `skills/setup/SKILL.md`, replace the frontmatter and H1 with:
+In `skills/setup-project/SKILL.md`, replace the frontmatter and H1 with:
 
 ```markdown
 ---
@@ -296,7 +296,7 @@ Update purpose language so it says `Project setup` establishes durable infrastru
 
 - [ ] **Step 3: Rename continuation question id and options**
 
-In `skills/setup/SKILL.md`, replace `project_context_next_step` with `project_setup_next_step` and update the prompt:
+In `skills/setup-project/SKILL.md`, replace `project_context_next_step` with `project_setup_next_step` and update the prompt:
 
 ```markdown
 Question id: `project_setup_next_step`
@@ -308,17 +308,17 @@ Keep `Project Brainstorm`, `Project Plan`, `Project Issue`, `Project Doctor`, `R
 
 - [ ] **Step 4: Update setup metadata**
 
-In `skills/setup/agents/openai.yaml`, use this key and prompt prefix:
+In `skills/setup-project/agents/openai.yaml`, use this key and prompt prefix:
 
 ```yaml
 agents:
   setup:
-    default_prompt: "Use $project:setup for Superpowers Project setup, adoption, large-context mapping, milestone pages, GitHub tracker configuration, GitHub Project board setup, and roadmap repair under docs/superpowers. Maintain docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, docs/agents/project-roadmap.json, and tracker configuration. Use request_user_input when callable for roadmap, milestone, GitHub, board creation, or /goal execution policy decisions. Summarize setup results, then ask native question project_setup_next_step with Project Brainstorm, Project Plan, Project Issue, Project Doctor, Review First, and Stop options, and start the selected next skill in the same turn when tools and state allow it."
+    default_prompt: "Use $project:setup-project for Superpowers Project setup, adoption, large-context mapping, milestone pages, GitHub tracker configuration, GitHub Project board setup, and roadmap repair under docs/superpowers. Maintain docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, docs/agents/project-roadmap.json, and tracker configuration. Use request_user_input when callable for roadmap, milestone, GitHub, board creation, or /goal execution policy decisions. Summarize setup results, then ask native question project_setup_next_step with Project Brainstorm, Project Plan, Project Issue, Project Doctor, Review First, and Stop options, and start the selected next skill in the same turn when tools and state allow it."
 ```
 
 - [ ] **Step 5: Update setup scenario script**
 
-In `skills/setup/scripts/test-scenarios.ps1`, change the metadata checks:
+In `skills/setup-project/scripts/test-scenarios.ps1`, change the metadata checks:
 
 ```powershell
 Assert-Contains -Text $metadata -Needle 'setup' -Reason "metadata missing skill name"
@@ -343,7 +343,7 @@ Remove checks that require `project-context` as the metadata key.
 In `README.md`, replace the active skill line with:
 
 ```markdown
-- `$project:setup`: creates and maintains project setup, large-context mapping, milestone pages, GitHub tracker configuration, and approved GitHub Project board setup.
+- `$project:setup-project`: creates and maintains project setup, large-context mapping, milestone pages, GitHub tracker configuration, and approved GitHub Project board setup.
 ```
 
 Add:
@@ -369,7 +369,7 @@ In `docs/superpowers/PROJECT_CONTEXT.md` and `docs/superpowers/milestones/README
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
 ```
@@ -379,7 +379,7 @@ Expected: all three commands pass, except any failures from the missing `orchest
 - [ ] **Step 9: Commit**
 
 ```powershell
-git add .codex-plugin/plugin.json README.md docs/superpowers/PROJECT_CONTEXT.md docs/superpowers/milestones/README.md skills/setup scripts/validate.ps1 scripts/sync-live.ps1 scripts/test-superpowers-project-repo-contract.ps1 skills/workflow/scripts/test-scenarios.ps1
+git add .codex-plugin/plugin.json README.md docs/superpowers/PROJECT_CONTEXT.md docs/superpowers/milestones/README.md skills/setup scripts/validate.ps1 scripts/sync-live.ps1 scripts/test-superpowers-project-repo-contract.ps1 skills/initiate-workflow/scripts/test-scenarios.ps1
 git commit -m "feat: rename project context to project setup"
 ```
 
@@ -740,19 +740,19 @@ git commit -m "refactor: make project resolve direct-only"
 ### Task 6: Update Router And Issue Mirror Contracts For Resolve Versus Orchestrate
 
 **Files:**
-- Modify: `skills/workflow/SKILL.md`
-- Modify: `skills/workflow/agents/openai.yaml`
-- Modify: `skills/workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/SKILL.md`
+- Modify: `skills/initiate-workflow/agents/openai.yaml`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
 - Modify: `skills/create-issues/scripts/validate-issue-mirror.ps1`
 - Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `skills/workflow/scripts/test-scenarios.ps1`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
 - Test: `skills/create-issues/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add router red tests for ambiguous resolve routing**
 
-In `skills/workflow/scripts/test-scenarios.ps1`, add checks for:
+In `skills/initiate-workflow/scripts/test-scenarios.ps1`, add checks for:
 
 ```powershell
 foreach ($needle in @(
@@ -770,10 +770,10 @@ foreach ($needle in @(
 
 - [ ] **Step 2: Update router docs**
 
-In `skills/workflow/SKILL.md`, change routing bullets:
+In `skills/initiate-workflow/SKILL.md`, change routing bullets:
 
 ```markdown
-- Project setup, roadmap context, tracker board setup, or large-scope project map: `$project:setup`
+- Project setup, roadmap context, tracker board setup, or large-scope project map: `$project:setup-project`
 - Current-thread implementation of one ready issue with native `/goal` proof: `$project:resolve-issue`
 - Worker-thread implementation of one ready issue: `$project:orchestrate-issues`
 ```
@@ -794,7 +794,7 @@ Options:
 
 - [ ] **Step 3: Update router metadata**
 
-In `skills/workflow/agents/openai.yaml`, mention:
+In `skills/initiate-workflow/agents/openai.yaml`, mention:
 
 ```text
 Route worker-thread implementation to $project:orchestrate-issues and current-thread implementation to $project:resolve-issue. When the user asks to resolve an issue without naming the route, ask native question project_issue_resolution_route with Project Orchestrate, Project Resolve, and Review First options.
@@ -871,17 +871,17 @@ git commit -m "feat: split issue routing between resolve and orchestrate"
 ### Task 7: Add GitHub Project Board Setup Gate
 
 **Files:**
-- Modify: `skills/setup/SKILL.md`
-- Modify: `skills/setup/agents/openai.yaml`
-- Modify: `skills/setup/scripts/test-scenarios.ps1`
-- Create: `skills/setup/scripts/prepare-github-project-board.ps1`
+- Modify: `skills/setup-project/SKILL.md`
+- Modify: `skills/setup-project/agents/openai.yaml`
+- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
+- Create: `skills/setup-project/scripts/prepare-github-project-board.ps1`
 - Modify: `docs/agents/project-roadmap.md`
 - Modify: `docs/agents/project-roadmap.json`
-- Test: `skills/setup/scripts/test-scenarios.ps1`
+- Test: `skills/setup-project/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add red project board setup scenarios**
 
-In `skills/setup/scripts/test-scenarios.ps1`, add a scenario requiring:
+In `skills/setup-project/scripts/test-scenarios.ps1`, add a scenario requiring:
 
 - `prepare-github-project-board.ps1`;
 - native question id `project_setup_github_project_board`;
@@ -909,7 +909,7 @@ foreach ($needle in @(
 
 - [ ] **Step 2: Implement prepare-github-project-board.ps1**
 
-Create `skills/setup/scripts/prepare-github-project-board.ps1` with modes:
+Create `skills/setup-project/scripts/prepare-github-project-board.ps1` with modes:
 
 ```powershell
 param(
@@ -935,12 +935,12 @@ param(
 
 - [ ] **Step 3: Update project setup skill docs**
 
-In `skills/setup/SKILL.md`, add:
+In `skills/setup-project/SKILL.md`, add:
 
 ```markdown
 ## GitHub Project Board Setup
 
-When a repo is GitHub-linked, `$project:setup` can create or verify a GitHub Project board after native approval.
+When a repo is GitHub-linked, `$project:setup-project` can create or verify a GitHub Project board after native approval.
 
 Question id: `project_setup_github_project_board`
 
@@ -991,7 +991,7 @@ In `docs/agents/project-roadmap.json`, add a null-safe config shape that does no
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
 ```
 
 Expected: setup scenarios pass and no GitHub mutation is attempted.
@@ -1090,8 +1090,8 @@ git commit -m "feat: hydrate external github issues before orchestration"
 
 In `README.md`, make `Current Skills` exactly reflect:
 
-- `$project:workflow`
-- `$project:setup`
+- `$project:initiate-workflow`
+- `$project:setup-project`
 - `$project:brainstorm-spec`
 - `$project:write-plan`
 - `$project:create-issues`
@@ -1160,7 +1160,7 @@ git commit -m "docs: document setup and orchestration workflow"
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
@@ -1250,4 +1250,6 @@ If no files changed after verification, do not create an empty commit.
 - Bug/debug discipline is included for unclear validation failures.
 - No permanent compatibility wrapper is planned for `project-context`.
 - GitHub Project board setup remains approval-gated and non-canonical.
+
+
 

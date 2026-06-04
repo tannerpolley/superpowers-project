@@ -123,7 +123,7 @@ try {
     Assert-TextContains -RelativePath "README.md" -Needles @(
         "codex-superpowers-project",
         "plugins\project",
-        'After install, start with `$project:workflow`'
+        'After install, start with `$project:initiate-workflow`'
     )
     $publicTemplatePaths = @(
         ".github/ISSUE_TEMPLATE/bug.yml",
@@ -155,8 +155,8 @@ try {
     Add-Check -Name "tracker config" -Ok $true -Reason "passed"
 
     foreach ($skillName in @(
-        "workflow",
-        "setup",
+        "initiate-workflow",
+        "setup-project",
         "orchestrate-issues",
         "brainstorm-spec",
         "write-plan",
@@ -255,4 +255,5 @@ try {
     Add-Check -Name "fatal" -Ok $false -Reason $_.Exception.Message
     Complete -Ok $false -Reason $_.Exception.Message
 }
+
 

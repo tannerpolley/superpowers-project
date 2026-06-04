@@ -163,7 +163,7 @@ try {
         $config = [ordered]@{
             status = "configured"
             native_approval_required = $true
-            owner_skill = "setup"
+            owner_skill = "setup-project"
             repository = [string]$roadmap.repository
             board_title = $BoardTitle
             project_number = [int]$board.number

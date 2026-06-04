@@ -126,8 +126,8 @@
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/agents/project-roadmap.json`
 - Modify: `docs/agents/issue-tracker.md`
-- Modify: `skills/setup/**`
-- Modify: `skills/workflow/**`
+- Modify: `skills/setup-project/**`
+- Modify: `skills/initiate-workflow/**`
 - Modify: `skills/write-plan/**`
 - Modify: `skills/create-issues/**`
 - Modify: `skills/resolve-issue/**`
@@ -565,8 +565,8 @@ Expected: `git status --short` shows renames, not delete/add churn where Git can
 Update these files:
 
 ```text
-skills/workflow/SKILL.md                  name: workflow
-skills/setup/SKILL.md                     name: setup
+skills/initiate-workflow/SKILL.md                  name: workflow
+skills/setup-project/SKILL.md                     name: setup
 skills/audit-project/SKILL.md             name: audit-project
 skills/brainstorm-spec/SKILL.md           name: brainstorm-spec
 skills/write-plan/SKILL.md                name: write-plan
@@ -601,8 +601,8 @@ Keep:
 Update `interface.defaultPrompt` entries to use `project:*` language, for example:
 
 ```json
-"Use project:workflow to choose the right Superpowers Project workflow.",
-"Use project:setup to initialize project context, roadmap, and tracker setup.",
+"Use project:initiate-workflow to choose the right Superpowers Project workflow.",
+"Use project:setup-project to initialize project context, roadmap, and tracker setup.",
 "Use project:write-plan to turn an approved spec into an implementation plan.",
 "Use project:implement-plan to implement an approved plan without creating a GitHub issue.",
 "Use project:merge-changes to integrate a PR or local branch."
@@ -613,8 +613,8 @@ Update `interface.defaultPrompt` entries to use `project:*` language, for exampl
 Replace active prompt references:
 
 ```text
-$project:workflow       -> project:workflow
-$project:setup             -> project:setup
+$project:initiate-workflow       -> project:initiate-workflow
+$project:setup-project             -> project:setup-project
 $project:audit-project            -> project:audit-project
 $project:brainstorm-spec        -> project:brainstorm-spec
 $project:write-plan              -> project:write-plan
@@ -782,8 +782,8 @@ git commit -m "feat: deploy project plugin without global skill copies"
 - Create: `skills/implement-plan/agents/openai.yaml`
 - Create: `skills/implement-plan/scripts/lib/contract.ps1`
 - Create: `skills/implement-plan/scripts/test-scenarios.ps1`
-- Modify: `skills/workflow/SKILL.md`
-- Modify: `skills/workflow/agents/openai.yaml`
+- Modify: `skills/initiate-workflow/SKILL.md`
+- Modify: `skills/initiate-workflow/agents/openai.yaml`
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
 - Test: `skills/implement-plan/scripts/test-scenarios.ps1`
@@ -923,7 +923,7 @@ skills:
 
 - [ ] **Step 5: Update workflow and write-plan routing**
 
-In `skills/workflow/SKILL.md` and `skills/workflow/agents/openai.yaml`, add route:
+In `skills/initiate-workflow/SKILL.md` and `skills/initiate-workflow/agents/openai.yaml`, add route:
 
 ```text
 project:implement-plan - implement an approved plan without creating a GitHub issue.
@@ -949,7 +949,7 @@ Run:
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\workflow\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
 ```
 
 Expected: all pass.
@@ -1037,9 +1037,9 @@ git commit -m "feat: support non-issue and local branch merges"
 
 **Files:**
 
-- Modify: `skills/setup/SKILL.md`
-- Modify: `skills/setup/agents/openai.yaml`
-- Modify: `skills/setup/scripts/test-scenarios.ps1`
+- Modify: `skills/setup-project/SKILL.md`
+- Modify: `skills/setup-project/agents/openai.yaml`
+- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
 - Modify: `skills/orchestrate-issues/SKILL.md`
 - Modify: `skills/orchestrate-issues/agents/openai.yaml`
 - Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
@@ -1049,7 +1049,7 @@ git commit -m "feat: support non-issue and local branch merges"
 
 - [ ] **Step 1: Add setup board scenarios**
 
-In `skills/setup/scripts/test-scenarios.ps1`, add checks for:
+In `skills/setup-project/scripts/test-scenarios.ps1`, add checks for:
 
 ```text
 GitHub Project board setup contract is present
@@ -1060,7 +1060,7 @@ project-roadmap.json records board config for audit
 
 - [ ] **Step 2: Add setup skill docs**
 
-In `skills/setup/SKILL.md`, add:
+In `skills/setup-project/SKILL.md`, add:
 
 ```markdown
 ## GitHub Project Board Setup
@@ -1123,7 +1123,7 @@ Derived names:
 Run:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
 ```
 
@@ -1142,8 +1142,8 @@ git commit -m "feat: harden setup board and orchestration contracts"
 
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Modify: `skills/workflow/SKILL.md`
-- Modify: `skills/workflow/agents/openai.yaml`
+- Modify: `skills/initiate-workflow/SKILL.md`
+- Modify: `skills/initiate-workflow/agents/openai.yaml`
 - Test: `skills/create-issues/scripts/test-scenarios.ps1`
 
 - [ ] **Step 1: Add hydration scenario tests**
@@ -1179,7 +1179,7 @@ Protocol:
 
 - [ ] **Step 3: Update workflow routing**
 
-In `skills/workflow/SKILL.md`, route prompts like `hydrate this GitHub issue`, `issue exists on GitHub but not locally`, or `Source Plan: TBD` to `project:create-issues`.
+In `skills/initiate-workflow/SKILL.md`, route prompts like `hydrate this GitHub issue`, `issue exists on GitHub but not locally`, or `Source Plan: TBD` to `project:create-issues`.
 
 - [ ] **Step 4: Run focused tests**
 
@@ -1187,7 +1187,7 @@ Run:
 
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\workflow\scripts\test-scenarios.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
 ```
 
 Expected: all pass.
@@ -1218,8 +1218,8 @@ In `README.md`, replace old global skill examples with:
 ```markdown
 ## Skill Surface
 
-- `project:workflow`: choose the right Superpowers Project workflow.
-- `project:setup`: initialize or maintain project context, roadmap, tracker, and board setup.
+- `project:initiate-workflow`: choose the right Superpowers Project workflow.
+- `project:setup-project`: initialize or maintain project context, roadmap, tracker, and board setup.
 - `project:audit-project`: audit drift across docs, GitHub, live sync, and tracker config.
 - `project:brainstorm-spec`: shape repo-backed specs with native Q&A grilling.
 - `project:write-plan`: turn an approved spec or issue mirror into an implementation plan.
@@ -1268,7 +1268,7 @@ In `scripts/test-superpowers-project-repo-contract.ps1`, update expected public 
 ```text
 project namespace
 C:\Users\Tanner\plugins\project
-project:workflow
+project:initiate-workflow
 project:implement-plan
 skills/advanced-user-input
 skills/implement-plan
@@ -1457,4 +1457,6 @@ Do not end with a prose-only pending push state when `request_user_input` is cal
 - TDD policy: every behavior task starts with scenario or contract tests before skill/script changes.
 - Debug policy: `request_agent_input` is treated as a written worker-to-orchestrator protocol, not as a runtime tool or normal user-facing prompt.
 - Verification policy: full repo validation, live sync validation, cleanup hook, and native publish continuation are mandatory before closeout.
+
+
 

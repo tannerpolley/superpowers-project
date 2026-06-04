@@ -1,9 +1,9 @@
 ---
-name: setup
+name: setup-project
 description: Create or maintain the Superpowers Project setup, milestone map, GitHub tracker configuration, GitHub Project board configuration, and roadmap artifacts under docs/superpowers.
 ---
 
-# Project Setup
+# Setup Project
 
 Use this skill when a repo needs the Superpowers Project setup layer: durable intent, roadmap framing, milestone pages, tracker rules, approved GitHub Project board configuration, and the shared map that makes Superpowers specs, plans, and issues add up to a coherent project.
 
@@ -92,7 +92,7 @@ Issue mirrors should match GitHub issue body and status closely enough that an a
 
 ## GitHub Project Board Setup
 
-When a repo is GitHub-linked, `$project:setup` can create or verify a GitHub Project board after native approval.
+When a repo is GitHub-linked, `$project:setup-project` can create or verify a GitHub Project board after native approval.
 
 Board setup is optional project-management evidence. GitHub Projects must not become canonical storage for specs, plans, issue mirrors, or milestone pages. The canonical artifacts remain under `docs/superpowers`.
 
@@ -108,7 +108,7 @@ Before reporting setup or repair complete, verify:
 - `docs/superpowers/milestones` exists and contains a README or milestone pages.
 - GitHub tracker config names the repository when issue mirrors or milestones are used.
 - `/goal` execution criteria are present for issue work that can be assigned to an agent.
-- Superpowers Project skill names are listed where agents will discover them, including `$project:setup`.
+- Superpowers Project skill names are listed where agents will discover them, including `$project:setup-project`.
 
 ## Native Continuation Gate
 
@@ -175,4 +175,6 @@ Options:
 - Right: `Stop / Done`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
+
+
 
