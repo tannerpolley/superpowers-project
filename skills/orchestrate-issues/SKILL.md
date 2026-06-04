@@ -42,6 +42,12 @@ Stop before creating a worker thread when any of these are true:
 9. `PR-ready intake`: validate worker PR-ready evidence and route the PR URL to `$project:merge-changes`.
 10. `closeout`: summarize the worker route and ask `project_orchestrate_next_step`.
 
+## Auto Mode Input
+
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
+
+Auto Mode may delegate worker-thread execution only for a ready issue mirror derived from the authorized source spec or plan. It may choose the first ready worker-suitable issue, derive worker identity, prepare the handoff, monitor the worker, validate PR-ready evidence, and route to merge without additional user input when the route stays inside the ledger policy. Do not create direct Auto Mode workers outside issue-backed orchestration. If worker recovery, reassignment, GitHub auth, missing proof, failed validation, or scope expansion needs a decision outside recorded defaults, stop outside policy and report the resume target.
+
 ## Worker Identity Contract
 
 Use `scripts/derive-worker-identity.ps1 -RepoRoot . -IssueFile <docs/superpowers/issues/<issue>.md>` before creating the worker. The derived identity is canonical for the worker run:

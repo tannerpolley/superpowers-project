@@ -27,6 +27,12 @@ Read the source material and project map before proposing issues:
 
 Use `request_user_input` when callable to approve granularity, dependencies, milestone assignment, and whether each slice is AFK or HITL.
 
+## Auto Mode Input
+
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `scripts/lib/auto-mode-contract.ps1`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
+
+Auto Mode may create issue mirrors and GitHub issues only from the authorized source spec or a plan derived from that source spec. It may classify AFK/HITL, choose issue count, assign proof oracles, and choose resolve or orchestrate routing through recorded defaults when repo evidence supports the choice. Worker execution under Auto Mode is allowed only through issue-backed orchestration; do not create direct worker tasks outside issue mirrors. If issue boundaries, labels, milestone, dependencies, publication, GitHub auth, or proof policy require a decision outside the ledger, stop outside policy before publishing or handing issues to execution.
+
 ## Native Question Debug Mode
 
 For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not publish GitHub issues and must not be used to pretend a live user approved issue boundaries, dependencies, labels, milestones, AFK/HITL classification, or publication.

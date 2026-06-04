@@ -189,6 +189,13 @@ Invoke-Scenario "merge contract text is present" {
         "PR URL or worker handoff",
         "main orchestrator",
         "request_user_input",
+        "Auto Mode authorization ledger",
+        "project_auto_mode_authorization",
+        "scripts/lib/auto-mode-contract.ps1",
+        "bounded-auto-merge",
+        "recorded defaults",
+        "preauthorized-after-clean-premerge",
+        "stop outside policy",
         "project_merge_approval",
         "Merge",
         "Decline",
@@ -238,7 +245,7 @@ Invoke-Scenario "metadata is present" {
     foreach ($needle in @("summarize", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill")) {
         Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
     }
-    foreach ($needle in @("pr-issue", "pr-no-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input")) {
+    foreach ($needle in @("pr-issue", "pr-no-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "preauthorized-after-clean-premerge")) {
         Assert-Contains $metadata $needle "missing metadata merge mode route: $needle"
     }
 }
