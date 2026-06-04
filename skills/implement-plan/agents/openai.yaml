@@ -1,0 +1,4 @@
+version: 1
+skills:
+  implement-plan:
+    default_prompt: "Use $implement-plan when an approved plan under `docs/superpowers/plans` should be implemented without creating a GitHub issue. This route does not create issue mirrors and must not claim GitHub issue closure. Require native `/goal` activation, a development branch, request_user_input for implement_plan_topology when callable, superpowers:test-driven-development, superpowers:executing-plans, superpowers:verification-before-completion, the approved plan proof oracle, cleanup evidence, implement_plan_publish_permission, and merge-ready output routed to project-merge or another approved merge route. Use pr-no-issue merge-ready evidence for pushed PRs. Only use worker mode when the worker handoff names the orchestrator, role, plan path, branch, reporting path, and request_agent_input boundary."
