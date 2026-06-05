@@ -121,6 +121,29 @@ function New-ExecutionDecision {
     } | ConvertTo-Json -Depth 8 -Compress
 }
 
+function New-ResolveContinuationDecision {
+    param(
+        [string]$QuestionId = "project_resolve_next_step",
+        [string]$SelectedOptionId = "stop",
+        [string]$RecommendedOptionId = "integrate-resolved-issue",
+        [string]$TerminalState = "stop",
+        [string[]]$OptionIds = @("integrate-resolved-issue", "review-revise-pr-ready-work", "stop"),
+        [string]$Source = "request_user_input"
+    )
+    @{
+        skill = "resolve-issue"
+        question_id = $QuestionId
+        prompt = "How should I continue from this PR-ready issue?"
+        source = $Source
+        selected_option_id = $SelectedOptionId
+        selected_option_label = $SelectedOptionId
+        recommended_option_id = $RecommendedOptionId
+        recommended_option_label = $RecommendedOptionId
+        option_ids = @($OptionIds)
+        terminal_state = $TerminalState
+    } | ConvertTo-Json -Depth 8 -Compress
+}
+
 function New-SetupLedger {
     param([object]$Extra = $null, [object]$GoalProof = $null)
     $ledger = [ordered]@{
@@ -332,6 +355,68 @@ try {
         Assert-True (-not $ledgerPath.StartsWith($repoPath, [StringComparison]::OrdinalIgnoreCase)) "default ledger path must not be inside repo"
     }
 
+    Invoke-Scenario "collect-continuation-ledger emits structured stop ledger" {
+        $outputDir = Join-Path $tempRoot "resolve-continuation-output"
+        $collected = Invoke-JsonScript -ScriptName "collect-continuation-ledger.ps1" -Arguments @(
+            "-RepoRoot", $repo,
+            "-QuestionId", "project_resolve_next_step",
+            "-Prompt", "How should I continue from this PR-ready issue?",
+            "-Source", "request_user_input",
+            "-SelectedOptionId", "stop",
+            "-RecommendedOptionId", "integrate-resolved-issue",
+            "-TerminalState", "stop",
+            "-OptionIds", "integrate-resolved-issue,review-revise-pr-ready-work,stop",
+            "-OutputDir", $outputDir
+        )
+        Assert-True ($collected.ok) $collected.reason
+        Assert-True (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf) "collector did not write continuation ledger"
+        Assert-True ([string]$collected.ledger.skill -eq "resolve-issue") "continuation ledger missing resolve-issue skill"
+        Assert-True ([string]$collected.ledger.terminal_state -eq "stop") "continuation ledger did not record stop terminal state"
+    }
+
+    Invoke-Scenario "resolve terminal closeout blocks non-terminal continuation" {
+        $prReady = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", (@{
+            pr_url = "https://github.com/example/repo/pull/5"
+            issue_url = "https://github.com/example/repo/issues/12"
+            branch = "codex/sample-issue"
+            branch_pushed = $true
+            pr_closes_issue = $true
+            acceptance_criteria_covered = $true
+            verification_passed = $true
+            handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
+            goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        } | ConvertTo-Json -Depth 16 -Compress))
+        Assert-True ($prReady.ok) $prReady.reason
+        $result = Invoke-JsonScript -ScriptName "validate-terminal-closeout.ps1" -Arguments @(
+            "-RepoRoot", $repo,
+            "-PrReadyResultJson", ($prReady | ConvertTo-Json -Depth 16 -Compress),
+            "-ContinuationDecisionJson", (New-ResolveContinuationDecision -QuestionId "project_resolve_integration_route" -SelectedOptionId "merge" -RecommendedOptionId "merge" -TerminalState "continue" -OptionIds @("merge", "continue-another-issue", "stop"))
+        )
+        Assert-True (-not $result.ok -and $result.reason -match "cannot terminate") "expected non-terminal continuation route to block resolve termination"
+    }
+
+    Invoke-Scenario "resolve terminal closeout accepts explicit stop" {
+        $prReady = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", (@{
+            pr_url = "https://github.com/example/repo/pull/5"
+            issue_url = "https://github.com/example/repo/issues/12"
+            branch = "codex/sample-issue"
+            branch_pushed = $true
+            pr_closes_issue = $true
+            acceptance_criteria_covered = $true
+            verification_passed = $true
+            handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
+            goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        } | ConvertTo-Json -Depth 16 -Compress))
+        Assert-True ($prReady.ok) $prReady.reason
+        $result = Invoke-JsonScript -ScriptName "validate-terminal-closeout.ps1" -Arguments @(
+            "-RepoRoot", $repo,
+            "-PrReadyResultJson", ($prReady | ConvertTo-Json -Depth 16 -Compress),
+            "-ContinuationDecisionJson", (New-ResolveContinuationDecision)
+        )
+        Assert-True ($result.ok) $result.reason
+        Assert-True ($result.evidence.terminal_state -eq "stop") "resolve terminal closeout did not record stop evidence"
+    }
+
     Invoke-Scenario "skill text declares native goal state machine" {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
         foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "PR-ready validation", "GoalBuddy boards are outside the default execution model", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the repo-root Auto Mode contract helper", "bounded-auto-merge", "recorded defaults", "stop outside policy")) {
@@ -348,11 +433,14 @@ try {
             "verification-before-completion",
             "finishing-a-development-branch",
             "collect-pr-ready-ledger.ps1",
+            "collect-continuation-ledger.ps1",
             "Temp Plus Evidence",
             "generated ledgers passed to existing gates",
             "no hand-authored JSON requirement",
             "main thread orchestrator",
             "merge-changes",
+            "validate-terminal-closeout.ps1",
+            'explicit `Stop`',
             "## Native Continuation Gate",
             "summarize",
             "project_resolve_next_step",
@@ -368,7 +456,7 @@ try {
 
     Invoke-Scenario "metadata declares executable continuation routing" {
         $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
-        foreach ($needle in @("summarize", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge")) {
+        foreach ($needle in @("summarize", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop")) {
             Assert-True ($metadata.Contains($needle)) "missing metadata continuation route: $needle"
         }
     }

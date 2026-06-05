@@ -180,6 +180,48 @@ function Assert-ExecutionDecision {
     }
 }
 
+function Assert-ResolveContinuationDecision {
+    param($Decision)
+    if ($null -eq $Decision) { throw "continuation decision is required" }
+    if ($Decision -is [string]) { throw "continuation decision must be structured, not a string" }
+    foreach ($field in @("skill", "question_id", "prompt", "source", "selected_option_id", "recommended_option_id", "option_ids", "terminal_state")) {
+        if (-not (Test-Property -Object $Decision -Name $field)) { throw "continuation decision missing $field" }
+    }
+    if ([string]$Decision.skill -ne "resolve-issue") { throw "continuation decision skill must be resolve-issue" }
+    $questionId = [string]$Decision.question_id
+    $allowedQuestionIds = @(
+        "project_resolve_next_step",
+        "project_resolve_integration_route",
+        "project_resolve_another_issue_route",
+        "project_resolve_reiteration_route",
+        "project_resolve_fix_route"
+    )
+    if ($questionId -notin $allowedQuestionIds) { throw "continuation decision question_id is not recognized for resolve-issue" }
+    if ([string]$Decision.source -notin @("request_user_input", "debug_question_mode")) { throw "continuation decision source must be request_user_input or debug_question_mode" }
+    $selectedOptionId = [string]$Decision.selected_option_id
+    $recommendedOptionId = [string]$Decision.recommended_option_id
+    $optionIds = Get-StringArray $Decision.option_ids
+    if ($optionIds.Count -eq 0) { throw "continuation decision option_ids must be populated" }
+    if ($optionIds -notcontains $selectedOptionId) { throw "continuation decision selected_option_id must appear in option_ids" }
+    if ($optionIds -notcontains $recommendedOptionId) { throw "continuation decision recommended_option_id must appear in option_ids" }
+    $terminalState = [string]$Decision.terminal_state
+    if ($terminalState -notin @("stop", "done", "continue", "revisit")) { throw "continuation decision terminal_state must be stop, done, continue, or revisit" }
+    if ($selectedOptionId -eq "stop" -and $terminalState -ne "stop") { throw "continuation decision stop must use terminal_state stop" }
+    if ($selectedOptionId -eq "done" -and $terminalState -ne "done") { throw "continuation decision done must use terminal_state done" }
+}
+
+function Assert-ResolveTerminalContinuationDecision {
+    param($Decision)
+    Assert-ResolveContinuationDecision -Decision $Decision
+    $selectedOptionId = [string]$Decision.selected_option_id
+    $terminalState = [string]$Decision.terminal_state
+    if ($selectedOptionId -eq "stop" -and $terminalState -eq "stop") { return }
+    if ($terminalState -eq "done" -or $selectedOptionId -eq "done") {
+        throw "resolve-issue has no verified final Done gate; explicit Stop is required to end the workflow"
+    }
+    throw "resolve-issue cannot terminate on continuation decision '$selectedOptionId'; continue the selected route or record explicit Stop"
+}
+
 function Test-ClosingKeywordForIssue {
     param([string]$Body, [int]$IssueNumber)
     if ([string]::IsNullOrWhiteSpace($Body) -or $IssueNumber -le 0) { return $false }

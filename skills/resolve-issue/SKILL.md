@@ -44,6 +44,7 @@ Stop immediately when any of these are true:
 - Code edits or implementation tests begin before setup validation passes.
 - PR-ready evidence does not close the exact linked GitHub issue.
 - PR-ready evidence does not show acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
+- A terminal success or final closeout is attempted without a structured continuation decision ledger that records explicit `Stop`.
 
 ## State Machine
 
@@ -61,6 +62,7 @@ Follow this order exactly:
 10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
 11. `PR-ready validation`: validate branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
 12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$superpowers-project:merge-changes`.
+13. `terminal closeout`: before ending this skill as complete, collect a continuation decision ledger and validate that the user explicitly selected `Stop`. Any non-terminal route must keep the workflow running.
 
 ## Route Check
 
@@ -89,12 +91,16 @@ Run bundled scripts from this skill package with explicit `-RepoRoot`:
 - `scripts/validate-setup.ps1`: rejects GoalBuddy board fields and requires issue mirror, source plan, branch, proof oracle, goal id or thread goal proof, and structured native goal proof.
 - `scripts/collect-pr-ready-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrJson <json> -VerificationCommands <commands> -AcceptanceCoverageJson <json> -HandoffProofJson <json> -GoalCompletionProofJson <json> -OutputDir <temp-or-handoff-dir>`: generates the PR-ready ledger from PR evidence, acceptance coverage, verification receipts, handoff proof, and native goal completion proof.
 - `scripts/validate-pr-ready.ps1`: validates branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+- `scripts/collect-continuation-ledger.ps1 -RepoRoot . -QuestionId <id> -Prompt <text> -Source <request_user_input|debug_question_mode> -SelectedOptionId <id> -RecommendedOptionId <id> -TerminalState <stop|continue|revisit> -OptionIds <id1,id2,id3> -OutputDir <temp-or-handoff-dir>`: records the structured continuation decision after a PR-ready native route question.
+- `scripts/validate-terminal-closeout.ps1 -RepoRoot . -PrReadyResultJson <json-or-path> -ContinuationDecisionJson <json-or-path>`: blocks terminal success unless the PR-ready gate passed and the continuation decision records explicit `Stop`.
 
 All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is false, block with the script reason.
 
 ## Temp Plus Evidence
 
 Normal runs should use `scripts/collect-pr-ready-ledger.ps1` before `scripts/validate-pr-ready.ps1`. The collector writes generated ledgers to a temp directory by default, or to an explicit output directory when the final handoff needs selected evidence artifacts. This keeps generated ledgers passed to existing gates without making agents hand-build JSON during ordinary resolution. The validator remains authoritative; collector output is convenience evidence, not a replacement for the PR-ready gate.
+
+Terminal closeout is separate from PR-ready proof. If the thread is about to stop after PR-ready, collect the continuation decision with `scripts/collect-continuation-ledger.ps1` and pass it to `scripts/validate-terminal-closeout.ps1`. That terminal validator is authoritative for whether `resolve-issue` may end the workflow; PR-ready proof alone is not terminal permission.
 
 There is no hand-authored JSON requirement for normal runs. Hand-authored JSON is acceptable only for fixture tests, debug smoke tests, or unusual recovery work where the collector cannot access the source evidence.
 
@@ -236,6 +242,8 @@ Options:
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 
+Record the selected route in a structured continuation decision ledger. If the answer is `Stop`, collect the ledger and run `scripts/validate-terminal-closeout.ps1` before any final success-style response. If the answer is any non-terminal route such as `Merge`, `Resolve Another`, `Orchestrate Another`, `Review First`, `Revise Branch`, or `Address CI / Checks`, the ledger must still be recorded, and the thread must continue into that route instead of terminating.
+
 ## Completion Rule
 
 Do not send a success-style final response until PR-ready proof shows:
@@ -246,3 +254,5 @@ Do not send a success-style final response until PR-ready proof shows:
 - PR is opened and closes the exact linked issue.
 - Native resolve goal is marked complete.
 - PR-ready handoff was sent or recorded for `$superpowers-project:merge-changes`.
+- A structured continuation decision ledger was collected for the last native continuation answer.
+- `scripts/validate-terminal-closeout.ps1` passes with explicit `Stop`.

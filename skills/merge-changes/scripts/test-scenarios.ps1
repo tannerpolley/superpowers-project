@@ -99,6 +99,29 @@ function New-MergeDecision {
     } | ConvertTo-Json -Depth 8 -Compress
 }
 
+function New-MergeContinuationDecision {
+    param(
+        [string]$QuestionId = "project_merge_next_step",
+        [string]$SelectedOptionId = "stop",
+        [string]$RecommendedOptionId = "continue-project-execution",
+        [string]$TerminalState = "stop",
+        [string[]]$OptionIds = @("continue-project-execution", "review-repair-closeout", "stop"),
+        [string]$Source = "request_user_input"
+    )
+    @{
+        skill = "merge-changes"
+        question_id = $QuestionId
+        prompt = "How should I continue from this merge closeout?"
+        source = $Source
+        selected_option_id = $SelectedOptionId
+        selected_option_label = $SelectedOptionId
+        recommended_option_id = $RecommendedOptionId
+        recommended_option_label = $RecommendedOptionId
+        option_ids = @($OptionIds)
+        terminal_state = $TerminalState
+    } | ConvertTo-Json -Depth 8 -Compress
+}
+
 function New-TestRepo {
     $repo = Join-Path $tempRoot ("repo-" + [guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Path $repo -Force | Out-Null
@@ -195,9 +218,13 @@ Invoke-Scenario "merge contract text is present" {
         "cleanup hook",
         "collect-premerge-ledger.ps1",
         "collect-closeout-ledger.ps1",
+        "collect-continuation-ledger.ps1",
         "Temp Plus Evidence",
         "generated ledgers passed to existing gates",
         "no hand-authored JSON requirement",
+        "validate-terminal-closeout.ps1",
+        'explicit `Stop`',
+        'verified final `Done`',
         "Do not merge without native UI approval",
         "## Native Question Debug Mode",
         "debug_question_mode",
@@ -231,7 +258,7 @@ Invoke-Scenario "metadata is present" {
     Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
     Assert-Contains $metadata "issue-backed PR URL" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
-    foreach ($needle in @("summarize", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill")) {
+    foreach ($needle in @("summarize", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
         Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
     }
     foreach ($needle in @("pr-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "preauthorized-after-clean-premerge")) {
@@ -561,6 +588,109 @@ Invoke-Scenario "collect-closeout-ledger deletes closed mirror and records miles
     Assert-Contains $milestone "https://github.com/example/repo/pull/5" "milestone summary missing PR link"
     if ($collected.ledger.mirror_cleanup_confirmation.deleted -ne $true) { throw "collector did not record deletion evidence" }
     if ([string]$collected.ledger.mirror_cleanup_confirmation.milestone_record -ne "closed-summary") { throw "collector did not record closed-summary milestone evidence" }
+}
+
+Invoke-Scenario "collect-continuation-ledger emits structured stop ledger" {
+    $repo = New-TestRepo
+    $outputDir = Join-Path $tempRoot "merge-continuation-output"
+    $collected = Invoke-JsonScript -ScriptName "collect-continuation-ledger.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-QuestionId", "project_merge_next_step",
+        "-Prompt", "How should I continue from this merge closeout?",
+        "-Source", "request_user_input",
+        "-SelectedOptionId", "stop",
+        "-RecommendedOptionId", "continue-project-execution",
+        "-TerminalState", "stop",
+        "-OptionIds", "continue-project-execution,review-repair-closeout,stop",
+        "-OutputDir", $outputDir
+    )
+    if (-not $collected.ok) { throw $collected.reason }
+    if (-not (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf)) { throw "collector did not write continuation ledger" }
+    if ([string]$collected.ledger.skill -ne "merge-changes") { throw "continuation ledger missing merge-changes skill" }
+    if ([string]$collected.ledger.terminal_state -ne "stop") { throw "continuation ledger did not record stop terminal state" }
+}
+
+Invoke-Scenario "merge terminal closeout blocks non-terminal continuation" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $completion = @{}
+    $completion.pr_url = "https://github.com/example/repo/pull/5"
+    $completion.issue_url = "https://github.com/example/repo/issues/12"
+    $completion.merge_decision = (New-MergeDecision | ConvertFrom-Json)
+    $completion.merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+    $completion.linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+    $completion.default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+    $completion.branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+    $completion.worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+    $completion.fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+    $completion.cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+    $completion.clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+    $completion.resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+    $completion.mirror_cleanup_confirmation = New-MirrorCleanupConfirmation
+    $closeout = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", ($completion | ConvertTo-Json -Depth 20 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $closeout.ok) { throw $closeout.reason }
+    $result = Invoke-JsonScript -ScriptName "validate-terminal-closeout.ps1" -Arguments @(
+        "-RepoRoot", $tempRoot,
+        "-CloseoutResultJson", ($closeout | ConvertTo-Json -Depth 20 -Compress),
+        "-ContinuationDecisionJson", (New-MergeContinuationDecision -QuestionId "project_merge_continue_group" -SelectedOptionId "continue-issues" -RecommendedOptionId "continue-issues" -TerminalState "continue" -OptionIds @("continue-issues", "start-planning", "stop"))
+    )
+    if ($result.ok -or $result.reason -notmatch "cannot terminate") { throw "expected non-terminal merge continuation route to block terminal closeout" }
+}
+
+Invoke-Scenario "merge terminal closeout accepts explicit stop" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $completion = @{}
+    $completion.pr_url = "https://github.com/example/repo/pull/5"
+    $completion.issue_url = "https://github.com/example/repo/issues/12"
+    $completion.merge_decision = (New-MergeDecision | ConvertFrom-Json)
+    $completion.merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+    $completion.linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+    $completion.default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+    $completion.branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+    $completion.worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+    $completion.fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+    $completion.cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+    $completion.clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+    $completion.resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+    $completion.mirror_cleanup_confirmation = New-MirrorCleanupConfirmation
+    $closeout = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", ($completion | ConvertTo-Json -Depth 20 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $closeout.ok) { throw $closeout.reason }
+    $result = Invoke-JsonScript -ScriptName "validate-terminal-closeout.ps1" -Arguments @(
+        "-RepoRoot", $tempRoot,
+        "-CloseoutResultJson", ($closeout | ConvertTo-Json -Depth 20 -Compress),
+        "-ContinuationDecisionJson", (New-MergeContinuationDecision)
+    )
+    if (-not $result.ok) { throw $result.reason }
+    if ($result.evidence.terminal_state -ne "stop") { throw "merge terminal closeout did not record stop evidence" }
+}
+
+Invoke-Scenario "merge terminal closeout accepts verified final done" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $completion = @{}
+    $completion.pr_url = "https://github.com/example/repo/pull/5"
+    $completion.issue_url = "https://github.com/example/repo/issues/12"
+    $completion.merge_decision = (New-MergeDecision | ConvertFrom-Json)
+    $completion.merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+    $completion.linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+    $completion.default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+    $completion.branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+    $completion.worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+    $completion.fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+    $completion.cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+    $completion.clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+    $completion.resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+    $completion.mirror_cleanup_confirmation = New-MirrorCleanupConfirmation
+    $closeout = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", ($completion | ConvertTo-Json -Depth 20 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $closeout.ok) { throw $closeout.reason }
+    $result = Invoke-JsonScript -ScriptName "validate-terminal-closeout.ps1" -Arguments @(
+        "-RepoRoot", $tempRoot,
+        "-CloseoutResultJson", ($closeout | ConvertTo-Json -Depth 20 -Compress),
+        "-ContinuationDecisionJson", (New-MergeContinuationDecision -QuestionId "project_merge_final_health_gate" -SelectedOptionId "done" -RecommendedOptionId "done" -TerminalState "done" -OptionIds @("done", "revisit", "stop"))
+    )
+    if (-not $result.ok) { throw $result.reason }
+    if ($result.evidence.selected_option_id -ne "done") { throw "merge terminal closeout did not preserve done evidence" }
 }
 
 

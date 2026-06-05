@@ -172,6 +172,52 @@ function Assert-MergeDecision {
     if ([string]$Decision.selected_action -eq "decline") { throw "merge declined by user" }
 }
 
+function Assert-MergeContinuationDecision {
+    param($Decision)
+    if ($null -eq $Decision) { throw "continuation decision is required" }
+    if ($Decision -is [string]) { throw "continuation decision must be structured, not a string" }
+    foreach ($field in @("skill", "question_id", "prompt", "source", "selected_option_id", "recommended_option_id", "option_ids", "terminal_state")) {
+        if (-not (Test-Property -Object $Decision -Name $field)) { throw "continuation decision missing $field" }
+    }
+    if ([string]$Decision.skill -ne "merge-changes") { throw "continuation decision skill must be merge-changes" }
+    $questionId = [string]$Decision.question_id
+    $allowedQuestionIds = @(
+        "project_merge_final_health_gate",
+        "project_merge_next_step",
+        "project_merge_continue_group",
+        "project_merge_issue_route",
+        "project_merge_planning_route",
+        "project_merge_reiteration_group",
+        "project_merge_repair_route",
+        "project_merge_repair_cleanup_route"
+    )
+    if ($questionId -notin $allowedQuestionIds) { throw "continuation decision question_id is not recognized for merge-changes" }
+    if ([string]$Decision.source -notin @("request_user_input", "debug_question_mode")) { throw "continuation decision source must be request_user_input or debug_question_mode" }
+    $selectedOptionId = [string]$Decision.selected_option_id
+    $recommendedOptionId = [string]$Decision.recommended_option_id
+    $optionIds = Get-StringArray $Decision.option_ids
+    if ($optionIds.Count -eq 0) { throw "continuation decision option_ids must be populated" }
+    if ($optionIds -notcontains $selectedOptionId) { throw "continuation decision selected_option_id must appear in option_ids" }
+    if ($optionIds -notcontains $recommendedOptionId) { throw "continuation decision recommended_option_id must appear in option_ids" }
+    $terminalState = [string]$Decision.terminal_state
+    if ($terminalState -notin @("stop", "done", "continue", "revisit")) { throw "continuation decision terminal_state must be stop, done, continue, or revisit" }
+    if ($selectedOptionId -eq "stop" -and $terminalState -ne "stop") { throw "continuation decision stop must use terminal_state stop" }
+    if ($selectedOptionId -eq "done" -and $terminalState -ne "done") { throw "continuation decision done must use terminal_state done" }
+}
+
+function Assert-MergeTerminalContinuationDecision {
+    param($Decision)
+    Assert-MergeContinuationDecision -Decision $Decision
+    $selectedOptionId = [string]$Decision.selected_option_id
+    $terminalState = [string]$Decision.terminal_state
+    if ($selectedOptionId -eq "stop" -and $terminalState -eq "stop") { return }
+    if ($selectedOptionId -eq "done" -and $terminalState -eq "done" -and [string]$Decision.question_id -eq "project_merge_final_health_gate") { return }
+    if ($terminalState -eq "done" -or $selectedOptionId -eq "done") {
+        throw "merge-changes Done is valid only from project_merge_final_health_gate after clean closeout proof"
+    }
+    throw "merge-changes cannot terminate on continuation decision '$selectedOptionId'; continue the selected route or record explicit Stop"
+}
+
 function Assert-CleanRepoProof {
     param($Proof)
     if ($null -eq $Proof -or $Proof -is [string]) { throw "clean repo proof must be structured" }

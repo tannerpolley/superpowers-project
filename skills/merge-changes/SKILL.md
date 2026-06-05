@@ -46,6 +46,7 @@ Stop immediately when any of these are true:
 - Final repo state is dirty.
 - Closed issue mirror cleanup evidence is missing: closed mirrors are deleted by default, or explicitly retained only when marked `**Mirror Retention:** Keep`.
 - Milestone closed-summary evidence is missing the GitHub issue link or PR link.
+- A terminal success or final closeout is attempted without a structured continuation decision ledger that records explicit `Stop` or verified final `Done`.
 
 ## State Machine
 
@@ -64,6 +65,7 @@ Follow this order exactly:
 11. `cleanup hook`: run the repo cleanup hook.
 12. `closed mirror cleanup`: for `pr-issue`, delete the closed issue mirror by default, or retain it only with `**Mirror Retention:** Keep`; preserve the milestone history as a closed issue summary with GitHub issue and PR links. Do not require issue mirror cleanup for `local-branch`.
 13. `clean state`: verify clean repo state and record closeout proof through `scripts/closeout.ps1`.
+14. `terminal closeout`: before ending this skill as complete, collect a continuation decision ledger and validate explicit `Stop` or verified final `Done`. Any non-terminal route must keep the workflow running.
 
 ## Native Merge Approval
 
@@ -202,6 +204,8 @@ Options:
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 
+Record the selected route in a structured continuation decision ledger. If the answer is `Stop`, or if `project_merge_final_health_gate` records verified `Done`, collect the ledger and run `scripts/validate-terminal-closeout.ps1` before any final success-style response. If the answer is any non-terminal route such as `Continue Project Execution`, `Continue Issues`, `Start Planning`, `Review Closeout`, `Run Doctor`, `Repair Drift`, or `Re-run Cleanup`, the ledger must still be recorded, and the thread must continue into that route instead of terminating.
+
 ## Scripted Gates
 
 Run bundled scripts with explicit `-RepoRoot`:
@@ -211,6 +215,8 @@ Run bundled scripts with explicit `-RepoRoot`:
 - `scripts/validate-merge-decision.ps1`: validates the native merge approval ledger and blocks declined decisions.
 - `scripts/collect-closeout-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrNumber <n> -IssueNumber <n> -MergeDecisionJson <json> -CleanupHookOutput <text> -ResolveGoalCompletionProofJson <json> -MirrorCleanupJson <json> -OutputDir <temp-or-handoff-dir>`: collects merged issue-backed PR, closed issue, cleanup, clean repo, native goal completion, mirror cleanup confirmation, and milestone closed-summary evidence into the completion ledger consumed by `scripts/closeout.ps1`. When no explicit `MirrorCleanupJson` is supplied for a closed issue, it deletes the mirror unless the mirror is marked `**Mirror Retention:** Keep`, and updates the milestone closed summary with GitHub issue and PR links.
 - `scripts/closeout.ps1`: validates mode-specific closeout. `pr-issue` validates merged PR proof, linked issue closure proof, branch cleanup, worktree cleanup, prune proof, cleanup hook proof, closed mirror deletion or retention evidence, milestone closed-summary issue and PR links, and clean repo proof. `local-branch` validates native approval, local merge proof, validation proof, branch/worktree cleanup, prune proof, cleanup hook proof, and clean repo proof.
+- `scripts/collect-continuation-ledger.ps1 -RepoRoot . -QuestionId <id> -Prompt <text> -Source <request_user_input|debug_question_mode> -SelectedOptionId <id> -RecommendedOptionId <id> -TerminalState <stop|done|continue|revisit> -OptionIds <id1,id2,id3> -OutputDir <temp-or-handoff-dir>`: records the structured continuation decision after a merge closeout native route question.
+- `scripts/validate-terminal-closeout.ps1 -RepoRoot . -CloseoutResultJson <json-or-path> -ContinuationDecisionJson <json-or-path>`: blocks terminal success unless clean closeout proof passed and the continuation decision records explicit `Stop` or verified final `Done` from `project_merge_final_health_gate`.
 
 All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is false, block with the script reason.
 
@@ -219,6 +225,8 @@ All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is f
 Normal runs should use `scripts/collect-premerge-ledger.ps1` before `scripts/premerge.ps1`, and `scripts/collect-closeout-ledger.ps1` before `scripts/closeout.ps1`. The collectors write generated ledgers to temp directories by default, or to explicit output directories when selected final evidence should be preserved.
 
 This keeps generated ledgers passed to existing gates while avoiding a no hand-authored JSON requirement for ordinary merge work. The gate scripts remain authoritative; collectors only assemble evidence from GitHub, Git, cleanup output, native merge approval, and native goal completion proof.
+
+Terminal closeout is separate from merge closeout proof. If the thread is about to stop after merge closeout, collect the continuation decision with `scripts/collect-continuation-ledger.ps1` and pass it to `scripts/validate-terminal-closeout.ps1`. That terminal validator is authoritative for whether `merge-changes` may end the workflow; merge closeout proof alone is not terminal permission.
 
 ## Completion Rule
 
