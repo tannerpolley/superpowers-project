@@ -125,11 +125,11 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 After saving and self-reviewing the plan, summarize the plan in chat before asking the continuation question. The summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_plan_next_step`
 
-Prompt: `How should I continue from this project plan?`
+Prompt: `Should I continue on with the workflow?`
 
 Options:
 
@@ -141,25 +141,13 @@ If the user selects `Continue Into Work`, immediately ask:
 
 Question id: `project_plan_work_route`
 
-Prompt: `Which work route should follow this project plan?`
+Prompt: `Which workflow should continue from this plan?`
 
 Options:
 
-- Down: `Create Work Artifact`: create issues or prepare the upcoming plan implementation route.
-- Left: `Execute Existing Work`: choose an existing issue execution route.
-- Right: `Stop`: break the continuation loop.
-
-If the user selects `Create Work Artifact`, ask:
-
-Question id: `project_plan_artifact_route`
-
-Prompt: `Which work artifact should follow this plan?`
-
-Options:
-
-- Down: `Create Issue`: Project Issue First; continue to `$superpowers-project:create-issues` using the saved plan path.
-- Left: `Plan Implementation`: Project Implement; continue to `$superpowers-project:implement-plan` using the saved plan path without creating issue mirrors.
-- Right: `Stop`: break the continuation loop.
+- Down: `Project Issue First`: continue to `$superpowers-project:create-issues` using the saved plan path.
+- Left: `Project Implement`: continue to `$superpowers-project:implement-plan` using the saved plan path without creating issue mirrors.
+- Right: `Use Ready Issue`: choose an existing ready issue execution route.
 
 If the user selects `Create Issue` or `Project Issue First`, ask:
 
@@ -187,23 +175,11 @@ Options:
 
 If milestone selection is still unresolved, inspect existing GitHub milestones and project roadmap first. Show the real milestone choices in native UI when that is clearer, including more than three options when useful. When exact milestone names, free-form grouping, or a long data-backed list would be clearer as text, ask a focused normal-chat value prompt instead of inventing weak native categories.
 
-If the user selects `Plan Implementation` or `Project Implement`, ask:
+If the user selects `Use Ready Issue`, ask:
 
-Question id: `project_plan_implementation_route`
+Question id: `project_plan_issue_execution_route`
 
-Prompt: `Which plan implementation route should be prepared?`
-
-Options:
-
-- Down: `Implement Recent Plan`: Project Implement; continue to `$superpowers-project:implement-plan` using the recently created plan path.
-- Left: `Implement Different Plan`: ask for the exact plan path, then prepare that plan for implementation.
-- Right: `Stop`: break the continuation loop.
-
-If the user selects `Execute Existing Work`, ask:
-
-Question id: `project_plan_execution_route`
-
-Prompt: `Which existing execution route should I use?`
+Prompt: `Which ready-issue execution route should continue from this plan?`
 
 Options:
 
@@ -235,12 +211,13 @@ Options:
 - Left: `Re-run Planning Grill`: run the planning grill again for an existing spec with no ready plan.
 - Right: `Stop`: break the continuation loop.
 
-Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation.
+Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation. Recommend `Use Ready Issue` only when a compatible ready issue mirror already exists and the plan should route into that execution path.
 
 Route summary:
 
 - `Project Implement`: continue to `$superpowers-project:implement-plan` using the saved plan path.
 - `Project Issue First`: continue to `$superpowers-project:create-issues` using the saved plan path.
+- `Use Ready Issue`: choose between `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues` for an existing ready issue mirror.
 - Project Implement does not create issue mirrors.
 - Recommend `Project Implement` for branch-backed non-issue implementation.
 - Recommend `Project Issue First` when the GitHub issue backbone is desired.
@@ -260,3 +237,7 @@ Before reporting the plan ready:
 5. Confirm feature and bug work uses `superpowers:test-driven-development` or records the user's explicit opt-out.
 6. Confirm bug work uses `superpowers:systematic-debugging` or diagnose discipline.
 7. Confirm completion requires `superpowers:verification-before-completion`.
+
+
+
+

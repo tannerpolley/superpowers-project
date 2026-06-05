@@ -224,8 +224,8 @@ Options:
 ```markdown
 Question id: `project_plan_work_route`
 Options:
-- Down: `Create Work Artifact`: create issues or prepare the upcoming plan implementation route.
-- Left: `Execute Existing Work`: choose an existing issue execution route.
+- Down: `Project Issue First`: continue to issue creation from the saved plan.
+- Left: `Project Implement`: continue direct plan implementation without creating issue mirrors first.
 ```
 
 Apply the same pattern to all nested Yes-route menus in the active workflow skills.
@@ -291,7 +291,7 @@ For each active skill, add checks that known nested question blocks do not conta
 
 ```powershell
 "Question id: `project_plan_work_route`"
-"Question id: `project_plan_artifact_route`"
+"Question id: `project_plan_issue_execution_route`"
 ```
 
 and assert that segment does not contain:

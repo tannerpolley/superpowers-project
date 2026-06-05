@@ -47,7 +47,7 @@ Use native Q&A confidently for:
 
 Keep prompts smaller when fewer choices are clearer. Small prompts are a usability preference, not a hard runtime limit. For project workflow closeout, the top-level question is always the three-way Continue? gate, even when the Yes branch has several real next skills.
 
-Do not add an explicit `Other` option. The client provides free-form Other. When the user chooses Other, validate the custom answer before executing it. If it clearly means stop or done, stop. Otherwise ask the next best native follow-up or normal-chat clarification.
+Do not add an explicit `Other` option. The client provides free-form Other. When the user chooses Other, validate the custom answer before executing it. Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other. Do not infer terminal intent from ambiguity, frustration, or a loose completion claim. Otherwise ask the next best native follow-up or normal-chat clarification and keep the workflow running.
 
 ## Sequential Branching
 
@@ -141,9 +141,9 @@ Final clean closeout gates may use exactly three top-level options: Yes, Revisit
 
 Revisit is non-terminal. Yes must start the selected progress route or ask the blocking child question. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can end an intermediate continuation loop before a verified final Done gate.
 
-This model is the first prompt for every project workflow closeout. Ask exactly three top-level options: Yes, Revisit, and Stop. If Yes has multiple possible next skills, ask a nested route menu after Yes; for example, Write Plan -> Yes -> Create Issues or Implement Plan. If Revisit has multiple possible reiteration routes, ask a nested review menu after Revisit. Do not put Continue children beside Revisit and No in the same top-level question.
+This model is the first prompt for every project workflow closeout. Ask exactly three top-level options: Yes, Revisit, and Stop. If Yes has multiple possible next skills, ask a nested route menu after Yes; for example, Write Plan -> Yes -> Create Issues or Implement Plan. If Revisit has multiple possible reiteration routes, ask a nested review menu after Revisit. Do not put Continue children beside Revisit and No in the same top-level question. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question.
 
-Do not end a loop until the user chooses Stop, reaches a verified final Done gate, or provides a Custom answer that maps to one of those states. Custom answers that mean a mid-loop exit are treated as Stop. Custom answers that claim completion before proof exists are treated as Stop and the agent reports the remaining lifecycle state. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
+Do not end a loop until the user chooses Stop or reaches a verified final Done gate through a built-in terminal option. Custom Other never terminates a workflow directly. If a Custom answer appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other. Do not infer terminal intent from a Custom answer. Custom answers that ask for another route, review, revision, repair, explanation, or continued work are non-terminal and must continue through the next follow-up question or route. Custom answers that claim completion before proof exists are invalid terminal claims; report the remaining lifecycle state and continue with the next follow-up question instead of converting them to Stop. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
 
 ## Normal Chat For Exact Text
 
@@ -229,3 +229,6 @@ If a large native prompt fails because of runtime validation:
 | Treating Review First as a stopping point | Show evidence, ask follow-up questions, then return to the originating continuation gate. |
 | Hiding stop/done | Always make stop/done available at formal workflow gates. |
 | Proceeding after a rejected native prompt | Fail loudly, then retry sequentially without losing routes. |
+
+
+

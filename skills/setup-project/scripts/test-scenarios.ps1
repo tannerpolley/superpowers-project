@@ -50,7 +50,7 @@ try {
     try {
         Assert-Contains -Text $metadata -Needle 'setup' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers/PROJECT_CONTEXT.md' -Reason "metadata missing project context path"
-        foreach ($needle in @('summarize','project_setup_next_step','Brainstorm','Plan','Create Issue','Run Doctor','Stop','start the selected next skill')) {
+        foreach ($needle in @('summarize','project_setup_next_step','Brainstorm New Spec','Write Plan','Create Issues','Run Doctor','Stop','start the selected next skill')) {
             Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing continuation route: $needle"
         }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"
@@ -65,9 +65,9 @@ try {
             'request_user_input',
             'start the selected next skill',
             'project_setup_next_step',
-            'Brainstorm',
-            'Plan',
-            'Create Issue',
+            'Brainstorm New Spec',
+            'Write Plan',
+            'Create Issues',
             'Run Doctor',
             'Stop'
         )) {
@@ -75,6 +75,13 @@ try {
         }
         Add-Result -Name "native continuation gate is present" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "native continuation gate is present" -Ok $false -Reason $_.Exception.Message }
+
+    try {
+        if ($skill.Contains("Use Existing Artifact")) { throw "setup skill must not use 'Use Existing Artifact'" }
+        if ($skill.Contains("project_setup_existing_artifact_route")) { throw "setup skill must not keep the existing-artifact route" }
+        if ($metadata.Contains("existing-artifact")) { throw "setup metadata must not keep existing-artifact wording" }
+        Add-Result -Name "setup workflow labels avoid artifact jargon" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "setup workflow labels avoid artifact jargon" -Ok $false -Reason $_.Exception.Message }
 
     try {
         foreach ($needle in @(
@@ -168,7 +175,7 @@ try {
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
         )) {
             if (-not $skill.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
             if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
@@ -194,3 +201,4 @@ $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
+

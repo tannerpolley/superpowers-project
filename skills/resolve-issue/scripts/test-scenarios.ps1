@@ -133,7 +133,7 @@ function New-ResolveContinuationDecision {
     @{
         skill = "resolve-issue"
         question_id = $QuestionId
-        prompt = "How should I continue from this PR-ready issue?"
+        prompt = "Should I continue on with the workflow?"
         source = $Source
         selected_option_id = $SelectedOptionId
         selected_option_label = $SelectedOptionId
@@ -360,7 +360,7 @@ try {
         $collected = Invoke-JsonScript -ScriptName "collect-continuation-ledger.ps1" -Arguments @(
             "-RepoRoot", $repo,
             "-QuestionId", "project_resolve_next_step",
-            "-Prompt", "How should I continue from this PR-ready issue?",
+            "-Prompt", "Should I continue on with the workflow?",
             "-Source", "request_user_input",
             "-SelectedOptionId", "stop",
             "-RecommendedOptionId", "integrate-resolved-issue",
@@ -469,7 +469,7 @@ try {
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
         )) {
             Assert-True ($text.Contains($needle)) "missing native continuation policy in SKILL.md: $needle"
             Assert-True ($metadata.Contains($needle)) "missing native continuation policy in metadata: $needle"
@@ -492,3 +492,4 @@ $failed = @($results | Where-Object { -not $_.ok })
 } finally {
     if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 }
+

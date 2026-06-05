@@ -109,7 +109,7 @@ $scenarios = @(
         Assert-Contains $text "plans include creation date and milestone identity where applicable" "missing metadata plan filename policy"
         Assert-Contains $text "project_plan_next_step" "missing continuation question id"
         Assert-Contains $text "start the selected next skill" "missing executable routing guidance"
-        foreach ($needle in @("summarize", "Create Work Artifact", "Create Issue", "Plan Implementation", "Review First", "Revise Plan")) {
+        foreach ($needle in @("summarize", "Project Issue First", "Project Implement", "Use Ready Issue", "Review First", "Revise Plan")) {
             Assert-Contains $text $needle "missing metadata continuation route: $needle"
         }
     }
@@ -122,8 +122,9 @@ $scenarios = @(
             "stop",
             "request_user_input",
             "project_plan_next_step",
-            "Create Issue",
-            "Plan Implementation",
+            "Project Issue First",
+            "Project Implement",
+            "Use Ready Issue",
             "Revise Plan",
             "start the selected next skill",
             "Do not only tell the user what to prompt next"
@@ -142,12 +143,12 @@ $scenarios = @(
             "Revise / Review Plan",
             "Stop",
             "project_plan_work_route",
-            "Create Work Artifact",
-            "Execute Existing Work",
-            "project_plan_artifact_route",
-            "Create Issue",
-            "Plan Implementation",
-            "project_plan_implementation_route",
+            "Project Issue First",
+            "Project Implement",
+            "Use Ready Issue",
+            "project_plan_issue_execution_route",
+            "Resolve Issue",
+            "Orchestrate Issues",
             "implement-plan",
             "project_plan_review_route",
             "Review First",
@@ -165,12 +166,14 @@ $scenarios = @(
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
         foreach ($needle in @(
             'Project Implement',
-            'continue to `$superpowers-project:implement-plan` using the saved plan path',
+            '`$superpowers-project:implement-plan` using the saved plan path',
             'Project Issue First',
-            'continue to `$superpowers-project:create-issues` using the saved plan path',
+            '`$superpowers-project:create-issues` using the saved plan path',
+            'Use Ready Issue',
+            'compatible ready issue mirror already exists',
             'Recommend `Project Implement` for branch-backed non-issue implementation',
             'Recommend `Project Issue First` when the GitHub issue backbone is desired',
-            'does not create issue mirrors'
+            'creating issue mirrors'
         )) {
             Assert-Contains $text $needle "missing direct implement route contract: $needle"
             Assert-Contains $metadata $needle "missing direct implement route metadata: $needle"
@@ -184,6 +187,11 @@ $scenarios = @(
             "project_quick_apply_approval",
             "Apply on Main",
             "Use Issue Flow",
+            "Create Work Artifact",
+            "Execute Existing Work",
+            "project_plan_artifact_route",
+            "project_plan_implementation_route",
+            "project_plan_execution_route",
             "validate-quick-apply.ps1",
             "clean synced ``main``"
         )) {
@@ -200,7 +208,7 @@ $scenarios = @(
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
         )) {
             if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
             if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
@@ -225,3 +233,4 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
+

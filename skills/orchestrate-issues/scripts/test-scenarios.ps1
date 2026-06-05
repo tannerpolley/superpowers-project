@@ -111,7 +111,7 @@ try {
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
         )) {
             if (-not $skill.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
             if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
@@ -135,3 +135,4 @@ $results | ConvertTo-Json -Depth 8
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
+

@@ -116,11 +116,11 @@ Before reporting setup or repair complete, verify:
 
 After creating, auditing, or repairing project setup, summarize the setup result in chat before asking the continuation question. The summary must name changed or verified artifacts, unresolved roadmap or tracker decisions, GitHub Project board status when relevant, and the recommended next workflow. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_setup_next_step`
 
-Prompt: `How should I continue from this project setup work?`
+Prompt: `Should I continue on with the workflow?`
 
 Options:
 
@@ -136,21 +136,9 @@ Prompt: `Which project workflow should start from setup?`
 
 Options:
 
-- Down: `Brainstorm`: start `$superpowers-project:brainstorm-spec` for a spec, PRD, architecture idea, or product direction.
-- Left: `Use Existing Artifact`: choose whether to plan or create issues from existing approved work.
-- Right: `Stop`: break the continuation loop.
-
-If the user selects `Use Existing Artifact`, ask:
-
-Question id: `project_setup_existing_artifact_route`
-
-Prompt: `Which existing-artifact workflow should start?`
-
-Options:
-
-- Down: `Plan`: start `$superpowers-project:write-plan` from an approved spec or issue mirror.
-- Left: `Create Issue`: start `$superpowers-project:create-issues` for vertical slices and GitHub issue mirrors.
-- Right: `Stop`: break the continuation loop.
+- Down: `Brainstorm New Spec`: start `$superpowers-project:brainstorm-spec` for a spec, PRD, architecture idea, or product direction.
+- Left: `Write Plan`: start `$superpowers-project:write-plan` from an approved spec or issue mirror.
+- Right: `Create Issues`: start `$superpowers-project:create-issues` for vertical slices and GitHub issue mirrors.
 
 If the user selects `Revise / Review Setup`, ask:
 
@@ -177,3 +165,6 @@ Options:
 - Right: `Stop`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
+
+
+

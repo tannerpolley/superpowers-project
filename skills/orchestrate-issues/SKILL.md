@@ -5,9 +5,11 @@ description: Use when a ready Superpowers Project issue should be delegated to a
 
 # Project Orchestrate
 
-Use this skill when one ready GitHub issue mirror should be implemented by a separate Codex worker thread or worktree while the current thread owns orchestration, review, PR handoff intake, and routing to `$superpowers-project:merge-changes`.
+This skill is the delegated Superpowers Project adapter for `superpowers:subagent-driven-development`. Use it when one ready GitHub issue mirror should be implemented by a separate Codex worker thread or worktree while the current thread owns orchestration, review, PR handoff intake, and routing to `$superpowers-project:merge-changes`.
 
 `$superpowers-project:orchestrate-issues` does not replace `$superpowers-project:resolve-issue`. `$superpowers-project:resolve-issue` is the direct current-thread route. `$superpowers-project:orchestrate-issues` is the delegated worker-thread route.
+
+**Announce at start:** "I'm using the orchestrate-issues skill with superpowers:subagent-driven-development for delegated issue execution."
 
 ## Native Continuation Loop
 
@@ -71,13 +73,17 @@ Run `scripts/prepare-worker-handoff.ps1 -RepoRoot . -IssueFile <docs/superpowers
 
 Run `scripts/validate-worker-handoff.ps1 -RepoRoot . -HandoffPath <handoff-json>` before sending the handoff to the worker.
 
-The worker handoff must instruct the worker to use:
+## Superpowers Method Contract
+
+This skill is the delegated Superpowers Project adapter for `superpowers:subagent-driven-development`. The orchestrator must use that delegation discipline, and the worker handoff must require this companion skill set:
 
 - `superpowers:using-git-worktrees`
 - `superpowers:test-driven-development`
 - `superpowers:executing-plans` or `superpowers:subagent-driven-development`
 - `superpowers:verification-before-completion`
 - `superpowers:finishing-a-development-branch`
+
+Do not create or launch a worker without this companion skill set in the handoff.
 
 The worker must not merge the PR. The worker finishes by pushing the derived branch, opening a PR that closes the linked issue, and returning PR-ready handoff evidence to the orchestrator.
 
@@ -89,11 +95,11 @@ If the user gives only a GitHub issue URL, no local mirror exists, or the local 
 
 After PR-ready handoff intake, summarize the worker route before asking the continuation question. `$superpowers-project:orchestrate-issues` can only close out when all owned worktrees have permission to push their commits to the open PR or the user explicitly routes to recovery. The summary must name the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, verification evidence status, and the recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_orchestrate_next_step`
 
-Prompt: `How should I continue from this worker route?`
+Prompt: `Should I continue on with the workflow?`
 
 Options:
 
@@ -150,3 +156,6 @@ Options:
 - Right: `Stop`: break the continuation loop.
 
 Treat selected native answers as executable routing, not advisory text. Start the selected next skill in the same turn when tools and state allow it.
+
+
+

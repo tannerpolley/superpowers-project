@@ -55,8 +55,10 @@ if ($exists) {
         "Revisit is non-terminal",
         "Review First is not a terminal answer",
         "Only Stop can end an intermediate continuation loop before a verified final Done gate",
-        "Custom answers that mean a mid-loop exit are treated as Stop",
-        "Custom answers that claim completion before proof exists are treated as Stop",
+        "Other never terminates a workflow directly",
+        "If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other",
+        "Do not end a loop until the user chooses Stop or reaches a verified final Done gate through a built-in terminal option",
+        "Custom answers that ask for another route, review, revision, repair, explanation, or continued work are non-terminal",
         "reaches a verified final Done gate",
         "If the active runtime rejects a large prompt, fail loudly"
     )) {
@@ -74,7 +76,11 @@ if ($exists) {
         "Each question must define 2-3 mutually exclusive options.",
         "Right is shown to the user as No / Stop / Done",
         "Only No / Stop / Done can end a continuation loop before that final Done gate",
-        "Ask exactly three top-level options: Yes, Revisit, and No / Stop / Done"
+        "Ask exactly three top-level options: Yes, Revisit, and No / Stop / Done",
+        "Custom answers that mean a mid-loop exit are treated as Stop",
+        "Custom answers that claim completion before proof exists are treated as Stop",
+        "Custom answers are terminal only when they explicitly say Stop",
+        "Treat it as terminal only when it explicitly says Stop"
     )) {
         Add-Check $checks "advanced-user-input omits stale limit $forbidden" (-not $text.Contains($forbidden)) "$skillPath must not contain stale native limit: $forbidden"
     }
@@ -93,11 +99,21 @@ if ($metadataExists) {
         'Nested Yes-route menus must not include Stop / Done',
         'Nested Revisit-route menus must not include Stop / Done',
         'Recommend Yes when at least one safe forward route exists',
-        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states',
+        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
+        'Custom answers never terminate directly from Other',
+        'ask a fresh confirmation question instead of terminating from Other',
         'Approval gates use domain-specific decline or cancel labels instead of Stop / Done',
         'request_agent_input'
     )) {
         Add-Check $checks "advanced-user-input metadata contains $needle" ($metadata.Contains($needle)) "$metadataPath must contain policy: $needle"
+    }
+
+    foreach ($forbidden in @(
+        'Custom answers are terminal only when they explicitly say Stop',
+        'Custom answers that claim completion before proof exists are treated as Stop',
+        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
+    )) {
+        Add-Check $checks "advanced-user-input metadata omits stale terminal rule $forbidden" (-not $metadata.Contains($forbidden)) "$metadataPath must not contain stale terminal rule: $forbidden"
     }
 }
 
@@ -109,3 +125,4 @@ $failed = @($checks | Where-Object { -not $_.ok })
 } | ConvertTo-Json -Depth 8
 
 if ($failed.Count -gt 0) { exit 1 }
+

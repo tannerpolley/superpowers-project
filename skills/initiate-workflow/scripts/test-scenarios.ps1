@@ -60,7 +60,7 @@ try {
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
         )) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing native continuation policy in SKILL.md: $needle"
             Assert-Contains -Text $metadata -Needle $needle -Reason "missing native continuation policy in metadata: $needle"
@@ -86,3 +86,4 @@ $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
+

@@ -5,9 +5,9 @@ description: Use when an approved Superpowers Project plan should be implemented
 
 # Implement Plan
 
-Implement Plan is the non-issue execution route for an approved plan under `docs/superpowers/plans`. It does not create issue mirrors and must not claim GitHub issue closure.
+Implement Plan is the Superpowers Project adapter for `superpowers:executing-plans` on non-issue approved plans. Use it when an approved plan under `docs/superpowers/plans` should be executed without creating a GitHub issue. It does not create issue mirrors and must not claim GitHub issue closure.
 
-**Announce at start:** "I'm using the implement-plan skill to execute this approved plan without creating a GitHub issue."
+**Announce at start:** "I'm using the implement-plan skill with superpowers:executing-plans to execute this approved plan without creating a GitHub issue."
 
 ## Native Continuation Loop
 
@@ -51,9 +51,19 @@ Options:
 
 Only use worker mode when the worker handoff names the orchestrator, role, plan path, branch, reporting path, and reason the worker may ask for `request_agent_input`. Otherwise fail loudly and use inline execution only after native approval.
 
-## Implementation Discipline
+## Superpowers Method Contract
 
-Use `superpowers:test-driven-development` for feature and bug work unless the approved plan explicitly opted out. Use `superpowers:executing-plans` to execute the plan task-by-task, and use `superpowers:verification-before-completion` before any success claim, commit, or local merge.
+This skill is the Superpowers Project adapter for `superpowers:executing-plans` on non-issue approved plans. The method pairing is mandatory:
+
+- Always use `superpowers:executing-plans` as the base implementation workflow.
+- Require `superpowers:test-driven-development` for feature and bug work unless the approved plan records an explicit opt-out.
+- Require `superpowers:systematic-debugging` or `diagnose` for bugs, regressions, CI failures, performance work, or unclear failure modes.
+- Require `superpowers:verification-before-completion` before any success claim, commit, or local merge.
+- If worker topology is selected, require `superpowers:subagent-driven-development` for delegation and reporting discipline.
+
+Do not treat these companion skills as optional suggestions. If a required companion skill cannot be applied, stop and report the blocker instead of silently continuing with ad hoc execution.
+
+## Implementation Discipline
 
 Follow the approved plan's proof oracle. If a task needs a decision that the plan did not make, ask through native UI when callable and stop until the decision is answered. Do not invent broad policy during implementation.
 
@@ -90,11 +100,11 @@ Route merge-ready output to `$superpowers-project:merge-changes` or another appr
 
 After focused verification, cleanup, local merge permission, and merge-ready proof exist, summarize the branch result in chat before asking the continuation question. The summary must name the approved plan path, branch, commit list, verification status, cleanup hook status, local merge decision, merge mode, and the fact that no issue mirror was created and no pull request was opened. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_implement_next_step`
 
-Prompt: `How should I continue from this implemented plan?`
+Prompt: `Should I continue on with the workflow?`
 
 Options:
 
@@ -119,3 +129,6 @@ After the user selects an option, start the selected next skill in the same turn
 ## Contract Helper
 
 Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, native `/goal` activation, a development branch, topology selection, passed verification, native publish permission, merge-ready evidence, and no issue closure claim.
+
+
+

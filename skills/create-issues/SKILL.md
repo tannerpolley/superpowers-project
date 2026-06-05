@@ -5,7 +5,7 @@ description: Use when a Superpowers Project spec, plan, PRD, or approved scope n
 
 # Project Issue
 
-Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$superpowers-project:resolve-issue` to execute one issue at a time.
+Project Issue turns approved Superpowers Project source material into GitHub issues and local issue mirrors. It borrows `to-issues` tracer-bullet behavior, keeps issues independently grabbable, and records enough structure for `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues` to execute one issue at a time with their mandatory Superpowers companion skills.
 
 ## Native Continuation Loop
 
@@ -103,7 +103,7 @@ Each mirror must include:
 - Proof oracle
 - GitHub body text or a close mirror of it
 
-Workflow metadata guides `$superpowers-project:resolve-issue`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
+Workflow metadata guides `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. Issue metadata must keep downstream routing compatible with the mandatory Superpowers companion skills used by those execution routes. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -207,11 +207,11 @@ This skill creates and updates issue tracker artifacts only. It does not create 
 
 After approved issue mirrors or GitHub issues are created and validated, summarize the issue set in chat before asking the continuation question. The summary must name the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, dependencies, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other is not terminal unless it explicitly asks to stop or be done; otherwise turn it into the next best follow-up question or baseline route tree. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_issue_next_step`
 
-Prompt: `How should I continue from these project issues?`
+Prompt: `Should I continue on with the workflow?`
 
 Options:
 
@@ -280,3 +280,6 @@ Options:
 - Right: `Stop`: break the continuation loop.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
+
+
+

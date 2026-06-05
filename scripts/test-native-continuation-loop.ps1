@@ -111,7 +111,9 @@ foreach ($skillName in $workflowSkillNames) {
         'Nested Yes-route menus must not include Stop / Done',
         'Nested Revisit-route menus must not include Stop / Done',
         'Recommend Yes when at least one safe forward route exists',
-        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
+        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
+        'Custom Other never terminates a workflow directly',
+        'fresh confirmation question instead of terminating from Other'
     )) {
         Add-Check $checks "$skillName contains flowchart contract $needle" ($text.Contains($needle)) "$skillPath must contain native flowchart contract: $needle"
     }
@@ -142,7 +144,8 @@ foreach ($skillName in $workflowSkillNames) {
         'Nested Yes-route menus must not include Stop / Done',
         'Nested Revisit-route menus must not include Stop / Done',
         'Recommend Yes when at least one safe forward route exists',
-        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
+        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
+        'fresh confirmation question instead of terminating from Other'
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
     }
@@ -173,7 +176,13 @@ foreach ($skillName in $workflowSkillNames) {
         'Each question must define 2-3 mutually exclusive options',
         'show all real peer routes when clearer',
         'Show four or more native options when they are real peer routes',
-        'including more than three peer options or independent questions when useful'
+        'including more than three peer options or independent questions when useful',
+        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states',
+        'Custom answers that mean a mid-loop exit are treated as Stop',
+        'Custom answers that claim completion before proof exists are treated as Stop',
+        'Custom Other is terminal only when it explicitly says Stop',
+        'Custom answers are terminal only when they explicitly say Stop',
+        'Treat it as terminal only when it explicitly says Stop'
     )) {
         Add-Check $checks "$skillName omits stale native limit $forbidden" (-not $text.Contains($forbidden) -and -not $agentText.Contains($forbidden)) "$skillName must not keep stale native UI limit wording: $forbidden"
     }
@@ -187,3 +196,4 @@ $failed = @($checks | Where-Object { -not $_.ok })
 } | ConvertTo-Json -Depth 8
 
 if ($failed.Count -gt 0) { exit 1 }
+

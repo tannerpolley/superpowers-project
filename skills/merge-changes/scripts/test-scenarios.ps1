@@ -111,7 +111,7 @@ function New-MergeContinuationDecision {
     @{
         skill = "merge-changes"
         question_id = $QuestionId
-        prompt = "How should I continue from this merge closeout?"
+        prompt = "Should I continue on with the workflow?"
         source = $Source
         selected_option_id = $SelectedOptionId
         selected_option_label = $SelectedOptionId
@@ -596,7 +596,7 @@ Invoke-Scenario "collect-continuation-ledger emits structured stop ledger" {
     $collected = Invoke-JsonScript -ScriptName "collect-continuation-ledger.ps1" -Arguments @(
         "-RepoRoot", $repo,
         "-QuestionId", "project_merge_next_step",
-        "-Prompt", "How should I continue from this merge closeout?",
+        "-Prompt", "Should I continue on with the workflow?",
         "-Source", "request_user_input",
         "-SelectedOptionId", "stop",
         "-RecommendedOptionId", "continue-project-execution",
@@ -701,7 +701,7 @@ Invoke-Scenario "merge terminal closeout accepts verified final done" {
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states"
+            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
         )) {
             if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
             if (-not $metadataText.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
@@ -723,3 +723,4 @@ $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
+
