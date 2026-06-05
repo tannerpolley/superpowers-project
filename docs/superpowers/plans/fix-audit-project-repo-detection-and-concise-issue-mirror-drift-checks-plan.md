@@ -1,7 +1,6 @@
 # Fix audit-project repo detection and concise issue mirror drift checks Plan
 
 **Source:** https://github.com/tannerpolley/superpowers-project/issues/39
-**Issue Mirror:** docs/superpowers/issues/39-fix-audit-project-repo-detection-and-concise-issue-mirror-drift-checks.md
 
 ## Goal
 

@@ -29,6 +29,8 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Closed Issues
 
+- [#39 Fix audit-project repo detection and concise issue mirror drift checks](https://github.com/tannerpolley/superpowers-project/issues/39) closed by [PR #41](https://github.com/tannerpolley/superpowers-project/pull/41).
+- [#40 Use GitHub GraphQL for native issue type setup and audit](https://github.com/tannerpolley/superpowers-project/issues/40) closed by [PR #41](https://github.com/tannerpolley/superpowers-project/pull/41).
 - [#23 Project Doctor flags absent source skill file as repairable in product repos](https://github.com/tannerpolley/superpowers-project/issues/23) closed by [PR #37](https://github.com/tannerpolley/superpowers-project/pull/37).
 - [#26 Project Namespace And Skill Surface Migration](https://github.com/tannerpolley/superpowers-project/issues/26) closed by [PR #37](https://github.com/tannerpolley/superpowers-project/pull/37).
 - [#28 Plugin Deployment Policy And Live Sync](https://github.com/tannerpolley/superpowers-project/issues/28) closed by [PR #37](https://github.com/tannerpolley/superpowers-project/pull/37).
