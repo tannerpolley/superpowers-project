@@ -20,9 +20,10 @@ try {
     foreach ($field in @("branch_pushed", "pr_closes_issue", "acceptance_criteria_covered", "verification_passed")) {
         if ($ready.$field -ne $true) { throw "PR-ready ledger requires $field" }
     }
-    foreach ($field in @("handoff_sent", "goal_completion_proof")) {
+    foreach ($field in @("push_permission", "branch_push_proof", "handoff_sent", "goal_completion_proof")) {
         if (-not (Test-Property -Object $ready -Name $field) -or $ready.$field -is [string]) { throw "PR-ready ledger $field must be structured" }
     }
+    Assert-PushPermission -Permission $ready.push_permission
     $goalProof = $ready.goal_completion_proof
     if ([string]$goalProof.status -ne "complete") { throw "goal completion proof must mark status complete" }
     if ([string]$goalProof.source -ne "update_goal" -and [string]$goalProof.source -ne "slash-command") { throw "goal completion proof must come from update_goal or exact slash-command evidence" }

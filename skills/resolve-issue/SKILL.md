@@ -45,7 +45,7 @@ Stop immediately when any of these are true:
 - Setup ledger contains `goal_board_path`, `goalbuddy_checker`, or `docs/goals`.
 - Code edits or implementation tests begin before setup validation passes.
 - PR-ready evidence does not close the exact linked GitHub issue.
-- PR-ready evidence does not show acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
+- PR-ready evidence does not show push permission proof, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
 - A terminal success or final closeout is attempted without a structured continuation decision ledger that records explicit `Stop`.
 
 ## State Machine
@@ -62,9 +62,10 @@ Follow this order exactly:
 8. `worktree and branch setup`: create or verify the current-thread worktree/branch.
 9. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
 10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
-11. `PR-ready validation`: validate branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
-12. `handoff`: send or record the worker/main-thread handoff and route final integration to `$superpowers-project:merge-changes`.
-13. `terminal closeout`: before ending this skill as complete, collect a continuation decision ledger and validate that the user explicitly selected `Stop`. Any non-terminal route must keep the workflow running.
+11. `push permission`: ask native push permission before pushing the branch or opening the PR.
+12. `PR-ready validation`: validate push permission, branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+13. `handoff`: send or record the worker/main-thread handoff and route final integration to `$superpowers-project:merge-changes`.
+14. `terminal closeout`: before ending this skill as complete, collect a continuation decision ledger and validate that the user explicitly selected `Stop`. Any non-terminal route must keep the workflow running.
 
 ## Route Check
 
@@ -91,8 +92,8 @@ Run bundled scripts from this skill package with explicit `-RepoRoot`:
 - `scripts/prepare-execution.ps1 -Mode ApplySetup`: creates or verifies the implementation branch and prints the native goal objective.
 - `scripts/prepare-execution.ps1 -Mode FinalizeSetup`: accepts structured `get_goal` proof and writes the native setup ledger.
 - `scripts/validate-setup.ps1`: rejects GoalBuddy board fields and requires issue mirror, source plan, branch, proof oracle, goal id or thread goal proof, and structured native goal proof.
-- `scripts/collect-pr-ready-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrJson <json> -VerificationCommands <commands> -AcceptanceCoverageJson <json> -HandoffProofJson <json> -GoalCompletionProofJson <json> -OutputDir <temp-or-handoff-dir>`: generates the PR-ready ledger from PR evidence, acceptance coverage, verification receipts, handoff proof, and native goal completion proof.
-- `scripts/validate-pr-ready.ps1`: validates branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+- `scripts/collect-pr-ready-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrJson <json> -VerificationCommands <commands> -PushPermissionJson <json-or-path> -AcceptanceCoverageJson <json> -HandoffProofJson <json> -GoalCompletionProofJson <json> -OutputDir <temp-or-handoff-dir>`: generates the PR-ready ledger from PR evidence, push permission proof, acceptance coverage, verification receipts, handoff proof, and native goal completion proof.
+- `scripts/validate-pr-ready.ps1`: validates push permission proof, branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
 - `scripts/collect-continuation-ledger.ps1 -RepoRoot . -QuestionId <id> -Prompt <text> -Source <request_user_input|debug_question_mode> -SelectedOptionId <id> -RecommendedOptionId <id> -TerminalState <stop|continue|revisit> -OptionIds <id1,id2,id3> -OutputDir <temp-or-handoff-dir>`: records the structured continuation decision after a PR-ready native route question.
 - `scripts/validate-terminal-closeout.ps1 -RepoRoot . -PrReadyResultJson <json-or-path> -ContinuationDecisionJson <json-or-path>`: blocks terminal success unless the PR-ready gate passed and the continuation decision records explicit `Stop`.
 
@@ -179,9 +180,24 @@ Do not collapse this into generic "Superpowers execution". If a required compani
 
 GitHub specialists can be used for CI or review-thread work, but bundled gate scripts remain authoritative.
 
+## Push Permission Gate
+
+After verification passes, complete the artifact review gate before asking native push permission. Surface every produced or materially changed execution artifact relevant to the decision, including verification evidence, issue acceptance coverage, branch state, and PR-ready draft evidence. The findings summary must state what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and why push and PR creation are or are not the next safe step. Do not ask for push approval first and explain later. After that review and before pushing the branch or opening the PR, ask native push permission:
+
+Question id: `project_resolve_push_permission`
+
+Prompt: `Should I push this branch and create the PR now?`
+
+Options:
+
+- `Push And Open PR`: push the branch, open the PR, and continue to PR-ready handoff.
+- `Hold`: keep the branch local and stop with explicit hold state.
+
+Only `Push And Open PR` records `selected_action: push-pr`. Only `Hold` records `selected_action: hold`. PR-ready evidence is invalid unless this gate was answered and approved before the push/PR step.
+
 ## Native Continuation Gate
 
-After PR-ready handoff proof passes, summarize the resolved issue in chat before asking the continuation question. The summary must name the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
+After PR-ready handoff proof passes, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the direct issue-resolution run. The findings summary must name the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, native goal completion proof, what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and the recommended next route. Show exact artifact paths and links, show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized, and summarize machine-readable artifacts with exact path plus key fields.
 
 Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
@@ -252,6 +268,7 @@ Record the selected route in a structured continuation decision ledger. If the a
 Do not send a success-style final response until PR-ready proof shows:
 
 - Acceptance criteria are covered.
+- Push permission was explicitly approved.
 - Verification passed.
 - Branch is pushed.
 - PR is opened and closes the exact linked issue.

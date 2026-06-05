@@ -157,6 +157,8 @@ foreach ($skillName in $workflowSkillNames) {
     }
     if ($finalCapableSkillNames -contains $skillName) {
         Add-Check $checks "$skillName defines verified final Done semantics" ($text.Contains("verified final") -and $agentText.Contains("verified final")) "$skillName must define verified final Done semantics"
+        Add-Check $checks "$skillName final Done requires clean worktree in SKILL.md" ($text.Contains("git status --short") -or $text.Contains("worktree is clean")) "$skillPath must state that final Done requires a clean worktree"
+        Add-Check $checks "$skillName final Done requires clean worktree in metadata" ($agentText.Contains("git status --short") -or $agentText.Contains("worktree is clean")) "$agentPath must state that final Done requires a clean worktree"
     }
 
     foreach ($forbidden in @(

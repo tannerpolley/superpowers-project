@@ -5,6 +5,8 @@ param(
     [string]$PrJson,
     [string]$PrFixturePath,
     [string[]]$VerificationCommands = @(),
+    [string]$PushPermissionJson,
+    [string]$PushPermissionPath,
     [string]$AcceptanceCoverageJson,
     [string]$HandoffProofJson,
     [string]$GoalCompletionProofJson,
@@ -52,6 +54,7 @@ try {
     $root = Resolve-RepoRoot -RepoRoot $RepoRoot
     $setup = Read-JsonInput -Path $SetupLedgerPath -Name "setup ledger"
     $pr = Read-JsonInput -Json $PrJson -Path $PrFixturePath -Name "PR evidence"
+    $pushPermission = Read-JsonInput -Json $PushPermissionJson -Path $PushPermissionPath -Name "push permission"
     $acceptanceCoverage = Read-JsonInput -Json $AcceptanceCoverageJson -Name "acceptance coverage"
     $handoffProof = Read-JsonInput -Json $HandoffProofJson -Name "handoff proof"
     $goalCompletionProof = Read-JsonInput -Json $GoalCompletionProofJson -Name "goal completion proof"
@@ -76,6 +79,7 @@ try {
             source = "PR evidence"
             closing_issue_number = $issueNumber
         }
+        push_permission = $pushPermission
         acceptance_criteria_covered = (Test-AcceptanceCovered -Coverage $acceptanceCoverage)
         acceptance_coverage = $acceptanceCoverage
         verification_passed = $verification.Count -gt 0
@@ -92,4 +96,3 @@ try {
 } catch {
     Write-CollectorResult -Ok $false -Reason $_.Exception.Message
 }
-

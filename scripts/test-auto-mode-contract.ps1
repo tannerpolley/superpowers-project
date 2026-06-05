@@ -60,6 +60,14 @@ Invoke-Scenario "happy authorization passes" {
     if (-not $result.ok) { throw $result.reason }
 }
 
+Invoke-Scenario "ordered authorization passes" {
+    $plain = New-HappyAuthorization
+    $auth = [ordered]@{}
+    foreach ($entry in $plain.GetEnumerator()) { $auth[$entry.Key] = $entry.Value }
+    $result = Test-AutoModeAuthorization -Authorization $auth -RepoRoot $repoRoot
+    if (-not $result.ok) { throw $result.reason }
+}
+
 foreach ($field in @("question_id", "source_spec", "route_policy", "decision_policy", "merge_permission", "mutation_scope", "required_proof", "stop_conditions")) {
     Invoke-Scenario "missing $field blocks" {
         $auth = New-HappyAuthorization

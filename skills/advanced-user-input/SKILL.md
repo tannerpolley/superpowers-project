@@ -137,7 +137,13 @@ Use Stop for mid-loop exits. Use Done only for verified final states.
 
 Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop. A saved spec, saved plan, created issue set, PR-ready branch, or PR-ready worker handoff is not final completion.
 
-Final clean closeout gates may use exactly three top-level options: Yes, Revisit, and Done. Done is valid only after a skill proves a final state, such as clean merge closeout proof or an explicit healthy audit gate with no remaining repair route.
+Final clean closeout gates may use exactly three top-level options: Yes, Revisit, and Done. Done is valid only after a skill proves a final state, such as clean merge closeout proof or an explicit healthy audit gate with no remaining repair route, and the repo worktree is clean. Done is invalid whenever `git status --short` is non-empty. A verified final Done gate requires both final proof and a clean worktree.
+
+Before any continuation, permission, push, publish, or merge question, complete an artifact review gate. Surface every produced or materially changed artifact with an exact path or identifier. Render human-readable Markdown artifacts when reasonably sized, summarize machine-readable artifacts with their key fields and decisions, and say when an expected artifact type was not produced.
+
+After the artifact review gate, add a findings summary that states what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and what next steps are now recommended.
+
+Push, publish, and merge approval questions are invalid until the artifact review gate and findings summary have been shown.
 
 Revisit is non-terminal. Yes must start the selected progress route or ask the blocking child question. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can end an intermediate continuation loop before a verified final Done gate.
 

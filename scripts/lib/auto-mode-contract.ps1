@@ -7,8 +7,10 @@ function Test-AutoModeAuthorization {
 
     function Has-AuthProperty {
         param([object]$Object, [string]$Name)
-        if ($Object -is [hashtable]) { return $Object.ContainsKey($Name) }
-        return @($Object.PSObject.Properties.Name) -contains $Name
+        if ($Object -is [System.Collections.IDictionary]) {
+            return $Object.Contains($Name)
+        }
+        return $null -ne $Object -and (@($Object.PSObject.Properties.Name) -contains $Name)
     }
 
     $requiredFields = @(

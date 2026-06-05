@@ -225,6 +225,7 @@ Invoke-Scenario "merge contract text is present" {
         "validate-terminal-closeout.ps1",
         'explicit `Stop`',
         'verified final `Done`',
+        "git status --short",
         "Do not merge without native UI approval",
         "## Native Question Debug Mode",
         "debug_question_mode",
@@ -235,6 +236,12 @@ Invoke-Scenario "merge contract text is present" {
         "Debug mode must not",
         "## Native Continuation Gate",
         "summarize",
+        "artifact review gate",
+        "verification evidence",
+        "broader project context",
+        "recommended next route",
+        "machine-readable artifacts",
+        "Do not ask for approval first and explain later",
         "project_merge_next_step",
         "Run Doctor",
         "Resolve Another",
@@ -258,7 +265,7 @@ Invoke-Scenario "metadata is present" {
     Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
     Assert-Contains $metadata "issue-backed PR URL" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
-    foreach ($needle in @("summarize", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
+    foreach ($needle in @("summarize", "artifact review gate", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
         Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
     }
     foreach ($needle in @("pr-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "preauthorized-after-clean-premerge")) {

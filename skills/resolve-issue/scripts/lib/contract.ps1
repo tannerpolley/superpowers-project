@@ -180,6 +180,24 @@ function Assert-ExecutionDecision {
     }
 }
 
+function Assert-PushPermission {
+    param($Permission)
+    if ($null -eq $Permission) { throw "push permission is required" }
+    if ($Permission -is [string]) { throw "push permission must be structured, not a string" }
+    foreach ($field in @("question_id", "source", "selected_action", "recommended_action", "options")) {
+        if (-not (Test-Property -Object $Permission -Name $field)) { throw "push permission missing $field" }
+    }
+    if ([string]$Permission.question_id -ne "project_resolve_push_permission") { throw "push permission question_id mismatch" }
+    if ([string]$Permission.source -notin @("request_user_input", "debug_question_mode")) { throw "push permission source must be request_user_input or debug_question_mode" }
+    if ([string]$Permission.selected_action -notin @("push-pr", "hold")) { throw "push permission selected_action must be push-pr or hold" }
+    if ([string]$Permission.recommended_action -ne "push-pr") { throw "push permission recommended_action must be push-pr after clean verification" }
+    $options = Get-StringArray $Permission.options
+    foreach ($requiredOption in @("push-pr", "hold")) {
+        if ($options -notcontains $requiredOption) { throw "push permission options must include $requiredOption" }
+    }
+    if ([string]$Permission.selected_action -ne "push-pr") { throw "push was not approved by the user" }
+}
+
 function Assert-ResolveContinuationDecision {
     param($Decision)
     if ($null -eq $Decision) { throw "continuation decision is required" }

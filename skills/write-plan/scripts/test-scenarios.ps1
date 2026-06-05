@@ -79,6 +79,25 @@ $scenarios = @(
             Assert-Contains $text $needle "missing planning grill gate contract: $needle"
         }
     }
+    Invoke-Scenario "test-complete and metrics gate is present" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        foreach ($needle in @(
+            "## Test-Complete And Metrics Gate",
+            "what counts as test complete",
+            "what proof demonstrates that status",
+            "what metrics define pass versus fail",
+            "edge-case thresholds",
+            "scientific or engineering-oriented",
+            "numerical metrics",
+            "thresholds",
+            "tolerances",
+            "units",
+            "validation coverage",
+            "explicitly marked not applicable with a clear reason"
+        )) {
+            Assert-Contains $text $needle "missing test-complete or metrics contract: $needle"
+        }
+    }
     Invoke-Scenario "flat canonical plan root contract is present" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         foreach ($needle in @(
@@ -107,6 +126,19 @@ $scenarios = @(
         Assert-Contains $text "request_user_input" "missing metadata native question policy"
         Assert-Contains $text "flat canonical roots" "missing metadata flat root policy"
         Assert-Contains $text "plans include creation date and milestone identity where applicable" "missing metadata plan filename policy"
+        foreach ($needle in @(
+            "what counts as test complete",
+            "what metrics define pass versus fail",
+            "scientific or engineering-oriented",
+            "numerical metrics",
+            "thresholds",
+            "tolerances",
+            "units",
+            "artifact review gate",
+            "broader project context"
+        )) {
+            Assert-Contains $text $needle "missing metadata planning closeout contract: $needle"
+        }
         Assert-Contains $text "project_plan_next_step" "missing continuation question id"
         Assert-Contains $text "start the selected next skill" "missing executable routing guidance"
         foreach ($needle in @("summarize", "Project Issue First", "Project Implement", "Use Ready Issue", "Review First", "Revise Plan")) {
@@ -118,6 +150,11 @@ $scenarios = @(
         foreach ($needle in @(
             "## Native Continuation Gate",
             "summarize",
+            "artifact review gate",
+            "Inventory every produced or materially changed artifact",
+            "what counts as test complete",
+            "scientific or engineering numerical metrics",
+            "broader project context",
             "Review First",
             "stop",
             "request_user_input",

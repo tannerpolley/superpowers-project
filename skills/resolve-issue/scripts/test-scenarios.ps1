@@ -121,6 +121,17 @@ function New-ExecutionDecision {
     } | ConvertTo-Json -Depth 8 -Compress
 }
 
+function New-PushPermission {
+    param([string]$SelectedAction = "push-pr", [string]$Source = "request_user_input")
+    @{
+        question_id = "project_resolve_push_permission"
+        source = $Source
+        selected_action = $SelectedAction
+        recommended_action = "push-pr"
+        options = @("push-pr", "hold")
+    } | ConvertTo-Json -Depth 8 -Compress
+}
+
 function New-ResolveContinuationDecision {
     param(
         [string]$QuestionId = "project_resolve_next_step",
@@ -275,6 +286,8 @@ try {
             branch = "codex/sample-issue"
             branch_pushed = $true
             pr_closes_issue = $true
+            push_permission = (New-PushPermission | ConvertFrom-Json)
+            branch_push_proof = @{ source = "PR evidence"; pr_url = "https://github.com/example/repo/pull/5" }
             acceptance_criteria_covered = $true
             verification_passed = $true
             handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
@@ -308,11 +321,13 @@ try {
             status = "complete"
             issue_url = "https://github.com/example/repo/issues/12"
         } | ConvertTo-Json -Depth 8 -Compress
+        $pushPermission = New-PushPermission
         $collected = Invoke-JsonScript -ScriptName "collect-pr-ready-ledger.ps1" -Arguments @(
             "-RepoRoot", $repo,
             "-SetupLedgerPath", $setupPath,
             "-PrJson", $pr,
             "-VerificationCommands", "pwsh -NoProfile -Command 'exit 0'",
+            "-PushPermissionJson", $pushPermission,
             "-AcceptanceCoverageJson", $acceptance,
             "-HandoffProofJson", $handoff,
             "-GoalCompletionProofJson", $goalCompletion,
@@ -337,11 +352,13 @@ try {
         $acceptance = @(@{ criterion = "Sample issue is resolved"; evidence = "fixture coverage" }) | ConvertTo-Json -Depth 8 -Compress
         $handoff = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" } | ConvertTo-Json -Depth 8 -Compress
         $goalCompletion = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" } | ConvertTo-Json -Depth 8 -Compress
+        $pushPermission = New-PushPermission
         $collected = Invoke-JsonScript -ScriptName "collect-pr-ready-ledger.ps1" -Arguments @(
             "-RepoRoot", $repo,
             "-SetupLedgerPath", $setupPath,
             "-PrJson", $pr,
             "-VerificationCommands", "pwsh -NoProfile -Command 'exit 0'",
+            "-PushPermissionJson", $pushPermission,
             "-AcceptanceCoverageJson", $acceptance,
             "-HandoffProofJson", $handoff,
             "-GoalCompletionProofJson", $goalCompletion
@@ -374,6 +391,23 @@ try {
         Assert-True ([string]$collected.ledger.terminal_state -eq "stop") "continuation ledger did not record stop terminal state"
     }
 
+    Invoke-Scenario "PR-ready handoff rejects missing push permission" {
+        $prReady = @{
+            pr_url = "https://github.com/example/repo/pull/5"
+            issue_url = "https://github.com/example/repo/issues/12"
+            branch = "codex/sample-issue"
+            branch_pushed = $true
+            pr_closes_issue = $true
+            branch_push_proof = @{ source = "PR evidence"; pr_url = "https://github.com/example/repo/pull/5" }
+            acceptance_criteria_covered = $true
+            verification_passed = $true
+            handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
+            goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        } | ConvertTo-Json -Depth 16 -Compress
+        $result = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", $prReady)
+        Assert-True (-not $result.ok -and $result.reason -match "push[_ ]permission") "expected missing push permission failure"
+    }
+
     Invoke-Scenario "resolve terminal closeout blocks non-terminal continuation" {
         $prReady = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", (@{
             pr_url = "https://github.com/example/repo/pull/5"
@@ -381,6 +415,8 @@ try {
             branch = "codex/sample-issue"
             branch_pushed = $true
             pr_closes_issue = $true
+            push_permission = (New-PushPermission | ConvertFrom-Json)
+            branch_push_proof = @{ source = "PR evidence"; pr_url = "https://github.com/example/repo/pull/5" }
             acceptance_criteria_covered = $true
             verification_passed = $true
             handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
@@ -402,6 +438,8 @@ try {
             branch = "codex/sample-issue"
             branch_pushed = $true
             pr_closes_issue = $true
+            push_permission = (New-PushPermission | ConvertFrom-Json)
+            branch_push_proof = @{ source = "PR evidence"; pr_url = "https://github.com/example/repo/pull/5" }
             acceptance_criteria_covered = $true
             verification_passed = $true
             handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
@@ -419,7 +457,7 @@ try {
 
     Invoke-Scenario "skill text declares native goal state machine" {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
-        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "PR-ready validation", "GoalBuddy boards are outside the default execution model", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the repo-root Auto Mode contract helper", "bounded-auto-merge", "recorded defaults", "stop outside policy")) {
+        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "native goal activation", "Superpowers execution", "PR-ready validation", "project_resolve_push_permission", "GoalBuddy boards are outside the default execution model", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the repo-root Auto Mode contract helper", "bounded-auto-merge", "recorded defaults", "stop outside policy")) {
             Assert-True ($text.Contains($needle)) "missing skill text: $needle"
         }
         foreach ($needle in @(
@@ -443,6 +481,12 @@ try {
             'explicit `Stop`',
             "## Native Continuation Gate",
             "summarize",
+            "artifact review gate",
+            "verification evidence",
+            "broader project context",
+            "recommended next route",
+            "machine-readable artifacts",
+            "Do not ask for push approval first and explain later",
             "project_resolve_next_step",
             "Merge",
             "Resolve Another",
@@ -456,7 +500,7 @@ try {
 
     Invoke-Scenario "metadata declares executable continuation routing" {
         $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
-        foreach ($needle in @("summarize", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop")) {
+        foreach ($needle in @("summarize", "artifact review gate", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill", "project_resolve_push_permission", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop")) {
             Assert-True ($metadata.Contains($needle)) "missing metadata continuation route: $needle"
         }
     }

@@ -173,6 +173,17 @@ function Test-TextContainsAll {
     $true
 }
 
+function Get-DirtyWorktreeStatus {
+    param([string]$Root)
+    $gitRoot = & git -C $Root rev-parse --is-inside-work-tree 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]$gitRoot.Trim() -ne "true") { return $null }
+    $statusOutput = (& git -C $Root status --short 2>$null | Out-String).Trim()
+    if ([string]::IsNullOrWhiteSpace($statusOutput)) {
+        return [pscustomobject]@{ dirty = $false; status_output = "" }
+    }
+    [pscustomobject]@{ dirty = $true; status_output = $statusOutput }
+}
+
 function Get-IssueMirrors {
     param([string]$Root)
     $issueRoot = Get-RepoFile -Root $Root -RelativePath "docs/superpowers/issues"
@@ -647,6 +658,15 @@ $script:repairReceipt = [System.Collections.Generic.List[object]]::new()
 $mirrors = @(Get-IssueMirrors -Root $root)
 $milestonePages = @(Get-MilestonePages -Root $root)
 $labelVocabulary = @(Get-LabelVocabulary -Root $root)
+
+$dirtyWorktree = Get-DirtyWorktreeStatus -Root $root
+if ($null -ne $dirtyWorktree) {
+    if ($dirtyWorktree.dirty) {
+        Add-Finding -Findings $findings -Category repairable -Finding (New-Finding -Id "dirty-worktree" -Severity "repairable" -Dimension "git-worktree" -Message "Repo has uncommitted changes, so a final healthy Done gate is invalid until the worktree is clean." -Artifact "." -Evidence @{ status_output = [string]$dirtyWorktree.status_output })
+    } else {
+        Add-Finding -Findings $findings -Category healthy -Finding (New-Finding -Id "dirty-worktree" -Severity "healthy" -Dimension "git-worktree" -Message "Git worktree is clean for final health-gate purposes." -Artifact "." -Evidence @{ status_output = "" })
+    }
+}
 
 Invoke-LocalDocsAudit -Root $root -Findings $findings
 if ($Mode -eq "GitHubAware") {

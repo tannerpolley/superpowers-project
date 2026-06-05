@@ -94,6 +94,10 @@ $scenarios = @(
         Assert-Contains $text "loose specs" "missing metadata loose spec policy"
         foreach ($needle in @(
             "summarize",
+            "artifact review gate",
+            "what the result means for the next workflow step",
+            "broader project context",
+            "machine-readable artifacts",
             "project_brainstorm_next_step",
             "Continue From Spec",
             "Revise / Review Brainstorm",
@@ -123,6 +127,10 @@ $scenarios = @(
         foreach ($needle in @(
             "## Native Continuation Gate",
             "summarize",
+            "artifact review gate",
+            "what the result means for the next workflow step",
+            "broader project context",
+            "machine-readable artifacts",
             "Review First",
             "stop",
             "request_user_input",

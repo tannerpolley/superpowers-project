@@ -47,6 +47,19 @@ If a question can be answered by inspecting the repo, inspect first instead of a
 
 Use `request_user_input` in Default mode when the tool is callable and a decision affects scope, acceptance criteria, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, or live mutation.
 
+## Test-Complete And Metrics Gate
+
+Before presenting a plan as ready, ask or record direct answers for:
+
+- what counts as test complete
+- what proof demonstrates that status
+- what metrics define pass versus fail
+- whether tolerances, edge-case thresholds, or error bounds matter
+
+When the project is scientific or engineering-oriented, ask for numerical metrics, thresholds, tolerances, units, and validation coverage. Record those answers in the plan acceptance criteria and proof oracle. If those prompts are not applicable, record that with a clear reason before routing into work.
+
+Do not route to `Continue Into Work` until the test-complete and metrics answers exist or are explicitly marked not applicable with a clear reason.
+
 ## Native Question Debug Mode
 
 For explicit non-interactive smoke tests, use `debug_question_mode` instead of `request_user_input` only when the prompt authorizes debug defaults or when a background-thread native prompt is proven stuck in `waitingOnUserInput`. Record a Native Question Debug Ledger entry with the skill name, question id, prompt, options, recommended option, selected answer, and answer source (`recommended-default` or `user-provided-debug-answer`). Debug mode must not be used for normal planning or to pretend a live user approved scope, acceptance criteria, sequencing, proof oracle, or TDD policy.
@@ -123,7 +136,7 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 ## Native Continuation Gate
 
-After saving and self-reviewing the plan, summarize the plan in chat before asking the continuation question. The summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, and recommended next route. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
+After saving and self-reviewing the plan, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the planning run. The findings summary must name the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, what counts as test complete, whether scientific or engineering numerical metrics were required, what the result means for the active goal, what it means for the broader project context, and the recommended next route. Show exact artifact paths and links, show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized, and summarize machine-readable artifacts with exact path plus key fields.
 
 Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 

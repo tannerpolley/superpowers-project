@@ -42,7 +42,8 @@ function New-HappyLedger {
         branch = "codex/implement-approved-plan"
         topology = [pscustomobject]@{ question_id = "implement_plan_topology"; selected_mode = "inline" }
         verification = [pscustomobject]@{ passed = $true; commands = @("pwsh test") }
-        publish_permission = [pscustomobject]@{ question_id = "implement_plan_publish_permission"; selected_action = "local-merge-ready" }
+        push_permission = [pscustomobject]@{ question_id = "implement_plan_push_permission"; selected_action = "push-branch" }
+        branch_push_proof = [pscustomobject]@{ source = "git push"; pushed = $true; remote = "origin"; branch = "codex/implement-approved-plan" }
         merge_ready = [pscustomobject]@{ ready = $true; route = "merge-changes"; mode = "local-branch" }
     }
 }
@@ -78,7 +79,8 @@ $scenarios = @(
             'superpowers:test-driven-development',
             'superpowers:executing-plans',
             'superpowers:verification-before-completion',
-            'implement_plan_publish_permission',
+            'implement_plan_push_permission',
+            'branch push proof',
             'merge-ready',
             'local-branch',
             'open pull requests',
@@ -92,6 +94,21 @@ $scenarios = @(
         $repo = New-FixtureRepo
         $result = Test-ImplementPlanLedger -RepoRoot $repo -Ledger (New-HappyLedger)
         Assert-True ($result.ok -eq $true) "happy ledger should pass"
+    }
+    Invoke-Scenario "closeout artifact review and findings summary are explicit" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            "artifact review gate",
+            "verification evidence",
+            "broader project context",
+            "recommended next route",
+            "machine-readable artifacts",
+            "Do not ask for push approval first and explain later"
+        )) {
+            Assert-Contains $text $needle "missing implement-plan closeout contract: $needle"
+            Assert-Contains $metadata $needle "missing implement-plan metadata closeout contract: $needle"
+        }
     }
     Invoke-Scenario "native continuation policy avoids nested stop routes" {
         $text = Get-Content -LiteralPath $skillFile -Raw
@@ -153,6 +170,18 @@ $scenarios = @(
         $failed = $false
         try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "verification" }
         Assert-True $failed "failed verification should fail"
+
+        $ledger = New-HappyLedger
+        $ledger.PSObject.Properties.Remove("push_permission")
+        $failed = $false
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "push permission" }
+        Assert-True $failed "missing push permission should fail"
+
+        $ledger = New-HappyLedger
+        $ledger.branch_push_proof.pushed = $false
+        $failed = $false
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "branch push proof" }
+        Assert-True $failed "branch push proof should fail when push is not confirmed"
     }
 )
 

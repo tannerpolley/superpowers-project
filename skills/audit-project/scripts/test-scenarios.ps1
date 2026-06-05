@@ -50,6 +50,11 @@ function New-TestRepo {
     Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/PROJECT_CONTEXT.md") -Value "# Project Context`n" -Encoding utf8NoBOM
     Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth.md") -Value "# M1 - Source Of Truth`n`n## Related Issues`n`n- ``docs/superpowers/issues/12-sample.md```n" -Encoding utf8NoBOM
     Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/12-sample.md") -Value "# Sample`n`n**GitHub Issue:** https://github.com/example/repo/issues/12`n**GitHub Milestone:** M1 - Source Of Truth`n**Source Plan:** docs/superpowers/plans/2026-06-02-sample-plan.md`n**Classification:** AFK`n`n## Acceptance Criteria`n`n- [x] Sample issue is resolved.`n" -Encoding utf8NoBOM
+    & git -C $repo init -b main | Out-Null
+    & git -C $repo config user.email tests@example.invalid | Out-Null
+    & git -C $repo config user.name "Audit Project Tests" | Out-Null
+    & git -C $repo add . | Out-Null
+    & git -C $repo commit -m initial | Out-Null
     $repo
 }
 
@@ -113,7 +118,7 @@ $scenarios = @(
         Assert-Contains $metadata "live plugin sync drift" "missing metadata live sync drift"
         Assert-Contains $metadata "nested canonical milestone artifact folders are drift" "missing metadata nested artifact drift"
         Assert-Contains $metadata "generated index/view output" "missing metadata generated view exception"
-        foreach ($needle in @("summarize", "project_doctor_next_step", "Apply Repair", "Create Planning Spec", "Run Audit Again", "Stop", "start the selected next skill")) {
+        foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_doctor_next_step", "Apply Repair", "Create Planning Spec", "Run Audit Again", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }
     }
@@ -122,6 +127,10 @@ $scenarios = @(
         foreach ($needle in @(
             "## Native Continuation Gate",
             "summarize",
+            "artifact review gate",
+            "broader project context",
+            "recommended next route",
+            "machine-readable artifacts",
             "Review First",
             "stop",
             "request_user_input",
@@ -166,12 +175,23 @@ $scenarios = @(
             "native-ui-closeout",
             "ignored-path-traps",
             "live-sync",
-            "closed-mirror-lifecycle"
+            "closed-mirror-lifecycle",
+            "dirty-worktree"
         )) {
             Assert-Contains $allFindingText $needle "missing local docs audit dimension: $needle"
         }
         if ($audit.mutation_allowed -ne $false) { throw "Doctor audit must not allow mutation" }
         Assert-Contains ($audit.repair_policy | ConvertTo-Json -Depth 8) "request_user_input" "missing native repair approval policy"
+    }
+    Invoke-Scenario "dirty worktree is repairable drift" {
+        $repo = New-TestRepo
+        try {
+            Set-Content -LiteralPath (Join-Path $repo "DIRTY.txt") -Value "dirty`n" -Encoding utf8NoBOM
+            $audit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "LocalDocs")
+            Assert-Contains (($audit.findings.repairable | ConvertTo-Json -Depth 12)) "dirty-worktree" "dirty repo was not reported as repairable drift"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
     }
     Invoke-Scenario "product repo without Doctor source skips native closeout repair" {
         $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ("audit-project-product-" + [guid]::NewGuid().ToString("N"))
@@ -287,6 +307,8 @@ $scenarios = @(
                 @{ number = 15; url = "https://github.com/example/repo/issues/15"; state = "OPEN"; title = "Frontmatter Mirror Title"; body = "Full GitHub body is intentionally not copied into the concise mirror."; labels = @("type:bug", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" } },
                 @{ number = 16; url = "https://github.com/example/repo/issues/16"; state = "OPEN"; title = "H1 After Frontmatter"; body = "Another full body intentionally omitted by the mirror."; labels = @("type:task", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" } }
             )
+            & git -C $repo add . | Out-Null
+            & git -C $repo commit -m concise | Out-Null
             $result = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
             if (-not $result.ok) { throw $result.reason }
             $repairableText = ConvertTo-JsonText $result.findings.repairable

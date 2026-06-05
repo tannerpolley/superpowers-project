@@ -75,7 +75,7 @@ Follow this order exactly:
 
 ## Native Merge Approval
 
-After premerge proof passes and before any merge command, ask with `request_user_input` when callable.
+After premerge proof passes, complete the artifact review gate before any merge command. Surface every produced or materially changed artifact relevant to the merge decision, including premerge proof, linked issue or source-plan evidence, and any cleanup or closeout drafts already assembled. The findings summary must state what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and why merge is or is not the next safe step. Do not ask for approval first and explain later. After that review, ask with `request_user_input` when callable.
 
 Question id: `project_merge_approval`
 
@@ -110,9 +110,9 @@ In `debug_question_mode`, do not call `request_user_input`. Instead, record a Na
 
 ## Native Continuation Gate
 
-After closeout proof passes, summarize the merge closeout in chat before asking the continuation question. The summary must name the merged issue-backed PR URL and closed issue for `pr-issue`, or the merged local branch for `local-branch`, plus synced default branch, branch and worktree cleanup proof, prune proof, cleanup hook proof, and clean repo proof. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
+After closeout proof passes, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the merge closeout run. The findings summary must name the merged issue-backed PR URL and closed issue for `pr-issue`, or the merged local branch for `local-branch`, plus synced default branch, branch and worktree cleanup proof, prune proof, cleanup hook proof, clean repo proof, what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and the recommended next route. Show exact artifact paths and links, show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized, and summarize machine-readable artifacts with exact path plus key fields.
 
-Done is valid only at a verified final Done gate. Stop remains the terminal option when premerge or closeout proof is incomplete. If closeout proof passes, ask:
+Done is valid only at a verified final Done gate. For `merge-changes`, that means clean closeout proof passed and `git status --short` is empty at the final health gate. If the repo worktree is still dirty after merge or cleanup, `Done` is invalid and the workflow must revisit cleanup instead. Stop remains the terminal option when premerge or closeout proof is incomplete. If closeout proof passes, ask:
 
 Question id: `project_merge_final_health_gate`
 

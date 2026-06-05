@@ -177,7 +177,7 @@ $scenarios = @(
         Assert-Contains $metadata "vertical slices" "missing metadata slice policy"
         Assert-Contains $metadata "flat canonical roots" "missing metadata flat root policy"
         Assert-Contains $metadata "issue mirrors include the GitHub issue number" "missing metadata issue filename policy"
-        foreach ($needle in @("summarize", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
+        foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }
         foreach ($needle in @("external GitHub issue hydration", "hydrate-external-issue.ps1", "Source Plan: TBD", "local mirror and source plan")) {
@@ -189,6 +189,10 @@ $scenarios = @(
         foreach ($needle in @(
             "## Native Continuation Gate",
             "summarize",
+            "artifact review gate",
+            "broader project context",
+            "recommended next route",
+            "machine-readable artifacts",
             "Review First",
             "stop",
             "request_user_input",

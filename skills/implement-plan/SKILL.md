@@ -67,20 +67,20 @@ Do not treat these companion skills as optional suggestions. If a required compa
 
 Follow the approved plan's proof oracle. If a task needs a decision that the plan did not make, ask through native UI when callable and stop until the decision is answered. Do not invent broad policy during implementation.
 
-## Local Merge Permission Gate
+## Push Permission Gate
 
-After focused verification and cleanup evidence exist, ask native local merge permission before preparing local merge-ready output or holding the branch:
+After focused verification and cleanup evidence exist, complete the artifact review gate before asking native push permission. Surface every produced or materially changed implementation artifact relevant to the decision, including verification evidence, cleanup evidence, branch state, and any merge-ready drafts. The findings summary must state what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and why push is or is not the next safe step. Do not ask for push approval first and explain later. After that review, ask native push permission before pushing the branch, preparing merge-ready output, or holding the branch:
 
-Question id: `implement_plan_publish_permission`
+Question id: `implement_plan_push_permission`
 
-Prompt: `How should I finish this implemented plan?`
+Prompt: `Should I push this implementation branch before merge routing?`
 
 Options:
 
-- `Local Merge Ready`: keep the development branch local and produce merge-ready evidence.
+- `Push Branch`: push the development branch and continue toward merge-ready evidence.
 - `Hold`: stop with the branch preserved.
 
-Only `Local Merge Ready` records `selected_action: local-merge-ready`. Only `Hold` records `selected_action: hold`.
+Only `Push Branch` records `selected_action: push-branch`. Only `Hold` records `selected_action: hold`. Merge routing is unavailable until this push gate is answered and, when approved, the branch push proof exists.
 
 ## Merge-Ready Output
 
@@ -90,7 +90,8 @@ Produce a merge-ready handoff that includes:
 - branch name and commit list
 - verification commands and results
 - cleanup hook result
-- publish permission ledger
+- push permission ledger
+- branch push proof
 - merge mode `local-branch`
 - explicit statement that no issue mirror was created, no pull request was opened, and no GitHub issue closure is claimed
 
@@ -98,7 +99,7 @@ Route merge-ready output to `$superpowers-project:merge-changes` or another appr
 
 ## Native Continuation Gate
 
-After focused verification, cleanup, local merge permission, and merge-ready proof exist, summarize the branch result in chat before asking the continuation question. The summary must name the approved plan path, branch, commit list, verification status, cleanup hook status, local merge decision, merge mode, and the fact that no issue mirror was created and no pull request was opened. Show exact artifact paths and links, and show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized.
+After focused verification, cleanup, push permission, branch push proof, and merge-ready proof exist, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the implementation run. The findings summary must name the approved plan path, branch, commit list, verification status, cleanup hook status, push decision, branch push status, merge mode, the fact that no issue mirror was created and no pull request was opened, what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and the recommended next route. Show exact artifact paths and links, show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized, and summarize machine-readable artifacts with exact path plus key fields.
 
 Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
@@ -109,7 +110,7 @@ Prompt: `Should I continue on with the workflow?`
 Options:
 
 - Down: `Merge Implemented Plan`: start `$superpowers-project:merge-changes` with the merge-ready proof.
-- Left: `Revise / Review Branch`: review, fix, rerun verification, or update publish permission.
+- Left: `Revise / Review Branch`: review, fix, rerun verification, or update push permission.
 - Right: `Stop`: break the continuation loop.
 
 If the user selects `Revise / Review Branch`, ask:
@@ -124,11 +125,11 @@ Options:
 - Left: `Review Evidence`: show the rendered handoff and verification evidence, then return to `project_implement_next_step`.
 - Right: `Stop`: break the continuation loop.
 
-After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the approved plan path, branch, verification evidence, local merge permission ledger, and merge-ready proof. Do not only tell the user what to prompt next.
+After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Carry forward the approved plan path, branch, verification evidence, push permission ledger, branch push proof, and merge-ready proof. Do not only tell the user what to prompt next.
 
 ## Contract Helper
 
-Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, native `/goal` activation, a development branch, topology selection, passed verification, native publish permission, merge-ready evidence, and no issue closure claim.
+Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, native `/goal` activation, a development branch, topology selection, passed verification, native push permission, branch push proof, merge-ready evidence, and no issue closure claim.
 
 
 

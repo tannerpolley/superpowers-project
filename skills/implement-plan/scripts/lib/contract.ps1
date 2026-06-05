@@ -30,9 +30,13 @@ function Test-ImplementPlanLedger {
     if (-not (Test-Property $Ledger "topology") -or [string]::IsNullOrWhiteSpace([string]$Ledger.topology.selected_mode)) { throw "execution topology selection is required" }
     if ([string]$Ledger.topology.selected_mode -notin @("inline", "worker")) { throw "execution topology selected_mode is invalid" }
     if (-not (Test-Property $Ledger "verification") -or $Ledger.verification.passed -ne $true) { throw "passed verification is required" }
-    if (-not (Test-Property $Ledger "publish_permission")) { throw "native publish permission is required" }
-    if ([string]$Ledger.publish_permission.question_id -ne "implement_plan_publish_permission") { throw "publish permission question_id is invalid" }
-    if ([string]$Ledger.publish_permission.selected_action -notin @("local-merge-ready", "hold")) { throw "publish permission selected_action is invalid" }
+    if (-not (Test-Property $Ledger "push_permission")) { throw "native push permission is required" }
+    if ([string]$Ledger.push_permission.question_id -ne "implement_plan_push_permission") { throw "push permission question_id is invalid" }
+    if ([string]$Ledger.push_permission.selected_action -notin @("push-branch", "hold")) { throw "push permission selected_action is invalid" }
+    if ([string]$Ledger.push_permission.selected_action -eq "push-branch") {
+        if (-not (Test-Property $Ledger "branch_push_proof") -or $Ledger.branch_push_proof -is [string]) { throw "branch push proof is required" }
+        if (-not (Test-Property $Ledger.branch_push_proof "pushed") -or $Ledger.branch_push_proof.pushed -ne $true) { throw "branch push proof must confirm the branch was pushed" }
+    }
     if (-not (Test-Property $Ledger "merge_ready") -or $Ledger.merge_ready.ready -ne $true) { throw "merge-ready evidence is required" }
     if ([string]$Ledger.merge_ready.route -notin @("merge-changes", "approved-merge-route")) { throw "merge-ready route is invalid" }
     if (-not (Test-Property $Ledger.merge_ready "mode") -or [string]$Ledger.merge_ready.mode -ne "local-branch") { throw "implement-plan merge-ready mode must be local-branch" }
@@ -45,6 +49,6 @@ function Test-ImplementPlanLedger {
         plan_path = $planPath
         branch = [string]$Ledger.branch
         selected_mode = [string]$Ledger.topology.selected_mode
-        publish_action = [string]$Ledger.publish_permission.selected_action
+        push_action = [string]$Ledger.push_permission.selected_action
     }
 }
