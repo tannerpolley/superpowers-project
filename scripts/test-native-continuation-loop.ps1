@@ -118,6 +118,25 @@ foreach ($skillName in $workflowSkillNames) {
         Add-Check $checks "$skillName contains flowchart contract $needle" ($text.Contains($needle)) "$skillPath must contain native flowchart contract: $needle"
     }
 
+    Add-Check $checks "$skillName contains artifact review gate" ($text.Contains('artifact review gate')) "$skillPath must contain closeout artifact review wording"
+    Add-Check $checks "$skillName contains machine-readable artifact summary" ($text.Contains('machine-readable artifacts')) "$skillPath must summarize machine-readable artifacts at closeout"
+    Add-Check $checks "$skillName contains broader project context closeout wording" ($text.Contains('broader project context')) "$skillPath must connect closeout findings to the broader project context"
+    Add-Check $checks "$skillName contains recommended next route wording" (
+        $text.Contains('recommended next route') -or
+        $text.Contains('recommended next workflow') -or
+        $text.Contains('what next steps are now recommended') -or
+        $text.Contains('what the result means for the next workflow step') -or
+        $text.Contains('Recommend `Project Implement`')
+    ) "$skillPath must include a next-route or next-steps closeout recommendation"
+    Add-Check $checks "$skillName contains findings interpretation wording" (
+        $text.Contains('what the agent thinks those results mean') -or
+        $text.Contains('what the agent thinks those results and findings mean') -or
+        $text.Contains('what the results mean for the active goal') -or
+        $text.Contains('explain what the results mean for the active goal and broader project context') -or
+        $text.Contains('what the result means for the active goal') -or
+        $text.Contains('what the result means for the next workflow step')
+    ) "$skillPath must interpret the meaning of the closeout result"
+
     $agentPath = Join-Path $skillRoot "$skillName\agents\openai.yaml"
     $agentExists = Test-Path -LiteralPath $agentPath -PathType Leaf
     Add-Check $checks "$skillName agents/openai.yaml exists" $agentExists "missing $agentPath"
@@ -149,6 +168,24 @@ foreach ($skillName in $workflowSkillNames) {
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
     }
+    Add-Check $checks "$skillName metadata contains artifact review gate" ($agentText.Contains('artifact review gate')) "$agentPath must contain closeout artifact review wording"
+    Add-Check $checks "$skillName metadata contains machine-readable artifact summary" ($agentText.Contains('machine-readable artifacts')) "$agentPath must summarize machine-readable artifacts at closeout"
+    Add-Check $checks "$skillName metadata contains broader project context closeout wording" ($agentText.Contains('broader project context')) "$agentPath must connect closeout findings to the broader project context"
+    Add-Check $checks "$skillName metadata contains recommended next route wording" (
+        $agentText.Contains('recommended next route') -or
+        $agentText.Contains('recommended next workflow') -or
+        $agentText.Contains('what next steps are now recommended') -or
+        $agentText.Contains('what the result means for the next workflow step') -or
+        $agentText.Contains('Recommend `Project Implement`')
+    ) "$agentPath must include a next-route or next-steps closeout recommendation"
+    Add-Check $checks "$skillName metadata contains findings interpretation wording" (
+        $agentText.Contains('what the agent thinks those results mean') -or
+        $agentText.Contains('what the agent thinks those results and findings mean') -or
+        $agentText.Contains('what the results mean for the active goal') -or
+        $agentText.Contains('explain what the results mean for the active goal and broader project context') -or
+        $agentText.Contains('what the result means for the active goal') -or
+        $agentText.Contains('what the result means for the next workflow step')
+    ) "$agentPath must interpret the meaning of the closeout result"
     Add-Check $checks "$skillName metadata contains non-terminal artifact contract" (@($terminalPhrases | Where-Object { $agentText.Contains($_) }).Count -gt 0) "$agentPath must contain a non-terminal artifact contract"
 
     if ($intermediateSkillNames -contains $skillName) {

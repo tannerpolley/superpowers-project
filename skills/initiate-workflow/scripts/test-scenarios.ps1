@@ -20,10 +20,10 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     try {
-        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the repo-root Auto Mode contract helper','stop outside policy')) {
+        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the repo-root Auto Mode contract helper','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
-        foreach ($needle in @('## Native Continuation Gate','summarize','Review First','stop','start the selected next skill','selected native answers','executable routing')) {
+        foreach ($needle in @('## Native Continuation Gate','artifact review gate','Review First','stop','start the selected next skill','selected native answers','executable routing','what the agent thinks those results mean','machine-readable artifacts')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router continuation contract: $needle"
         }
         Add-Result -Name "router contract present" -Ok $true -Reason "passed"
@@ -32,7 +32,7 @@ try {
     try {
         Assert-Contains -Text $metadata -Needle 'workflow' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers' -Reason "metadata missing artifact root"
-        foreach ($needle in @('summarize','selected native answers','executable routing','start selected continuation routes','setup','orchestrate-issues','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger')) {
+        foreach ($needle in @('artifact review gate','what the agent thinks those results mean','machine-readable artifacts','broader project context','recommended next route','selected native answers','executable routing','start selected continuation routes','setup','orchestrate-issues','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger')) {
             Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing router continuation contract: $needle"
         }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"

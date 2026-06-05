@@ -148,6 +148,8 @@ Options:
 - `required_proof` containing `plan-proof-oracle`, `verification-receipts`, `cleanup-hook`, `premerge-proof`, and `closeout-proof`
 - `stop_conditions` containing `missing-proof`, `dirty-unsafe-state`, `failed-validation`, and `decision-outside-policy`
 
+If a saved-spec closeout appears to omit `project_brainstorm_start_route`, `project_auto_mode_authorization`, or `Bounded Auto Merge`, treat that as stale-thread recovery. Warn that the loaded thread may still be using older skill text, re-ask the missed native route, and continue from the corrected path instead of stopping or inferring approval from the stale behavior.
+
 Validate the ledger with `the repo-root Auto Mode contract helper`. If the ledger does not pass, do not continue into Auto Mode.
 
 If the user selects `Multi-Spec Planning`, ask:

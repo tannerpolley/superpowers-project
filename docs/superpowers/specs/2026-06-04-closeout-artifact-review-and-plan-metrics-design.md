@@ -18,11 +18,15 @@ Tighten the Superpowers Project workflow contract so every skill closeout explic
 ## User Decisions
 
 - Every skill closeout should have an explicit artifact review gate.
+- The artifact review requirement should be a hard gate at every skill closeout, not a best-effort summary or optional narration block.
 - The agent should show all produced artifacts at closeout, not only a selective mention of Markdown files.
+- The artifact review gate must happen before any continuation, push, publish, or merge question. The agent must not ask for a decision first and promise to summarize later.
 - The agent should create a findings summary that states what it thinks the results mean, how they affect the current goal, how they affect the broader project context, and what next steps follow from that reading.
+- The findings summary should explicitly cover the full project context and suggested next steps, not only the immediate route choice.
 - That richer summary is most important before push and merge questions.
 - Brainstorming and planning should also use the summary pattern, but with a lighter-weight version than push/merge closeout.
 - `write-plan` closeout must ask direct questions that define what counts as test complete.
+- `write-plan` closeout must ask those questions directly and natively, not hide them inside a long prose summary or vague acceptance text.
 - For scientific or engineering projects, `write-plan` must ask for the numerical metrics, thresholds, tolerances, or target values that define pass/fail and should record those values as plan goals.
 
 ## Problem Statement
@@ -55,6 +59,8 @@ These changes should be expressed in repo-owned skill text, metadata, validation
 
 Before any skill asks its continuation question, it must complete an explicit artifact review gate.
 
+This is a blocking closeout rule. A skill closeout is not valid when it skips artifact surfacing and jumps straight to a continuation, push, publish, or merge question.
+
 The gate requires:
 
 - an inventory of every produced or materially changed artifact owned by that skill run
@@ -73,6 +79,18 @@ Artifacts to surface can include:
 
 This gate should be treated as mandatory closeout work, not optional flavor text.
 
+### Closeout Ordering Rule
+
+Closeout order should be explicit and invariant:
+
+1. show all produced or materially changed artifacts owned by the skill run
+2. explain what those artifacts say
+3. explain what the agent thinks that means for the active goal and the full project context
+4. recommend the next safe route
+5. only then ask the continuation, push, publish, or merge question
+
+This ordering matters most at publish and integration boundaries because the user should never be asked to authorize push or merge before seeing the underlying artifacts and the agent's interpretation of them.
+
 ### Artifact Display Policy By Type
 
 To avoid noisy raw dumps while still honoring the user's requirement to show all produced artifacts:
@@ -90,9 +108,9 @@ After the artifact review gate and before the continuation question, every skill
 
 - what was produced or changed
 - what the results say
-- what the agent thinks those results mean
+- what the agent thinks those results and findings mean
 - what that means for the active goal
-- what that means for the broader project context
+- what that means for the broader or full project context
 - what next steps are now recommended
 
 This should be expressed as an interpretation step, not just a file list.
@@ -123,6 +141,10 @@ They do not need the same heavy verification framing as push and merge, but they
 
 `write-plan` should add a mandatory direct-question gate before the plan is considered ready for execution. The goal is to force clarity on what counts as complete, not to leave it buried in vague acceptance text.
 
+When `request_user_input` is callable, these should be asked as native decision questions rather than left as prose assumptions.
+
+The plan closeout should be explicit that the agent is asking the user to define the test-complete boundary for the plan, not merely to review wording. A plan is not ready just because it has tasks, phases, or generic acceptance bullets.
+
 Required direct questions should cover:
 
 - what exactly counts as `test complete`
@@ -132,6 +154,18 @@ Required direct questions should cover:
 - whether any tolerances, edge cases, or error bounds matter
 
 If the plan cannot answer those questions, the plan is not ready for `Continue Into Work`.
+
+### Suggested Direct Questions For `write-plan`
+
+The exact UI wording can vary, but the plan workflow should directly force answers to questions equivalent to:
+
+- what exact condition means this work is test complete
+- what proof, checks, or user-visible evidence demonstrate that condition
+- what metrics make the result a pass instead of a fail
+- what edge cases, tolerances, or regression checks are part of that decision
+- for scientific or engineering work, what numerical goals, thresholds, tolerances, units, datasets, or validation ranges define success
+
+Those answers should then be carried into the saved plan instead of remaining only in the chat transcript.
 
 ### Scientific And Engineering Metrics Gate
 
@@ -143,7 +177,7 @@ When the project is scientific, numerical, modeling, simulation, optimization, t
 - what dataset, benchmark, scenario set, or validation range the metric must cover
 - whether there are baseline-comparison or regression-protection numbers that must be met
 
-Those answers should be written into the plan as explicit acceptance criteria and proof-oracle content, not kept only in chat.
+Those answers should be written into the plan as explicit acceptance criteria, plan goals, and proof-oracle content, not kept only in chat.
 
 ### Plan Readiness Rule
 

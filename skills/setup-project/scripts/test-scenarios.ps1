@@ -59,7 +59,11 @@ try {
     try {
         foreach ($needle in @(
             '## Native Continuation Gate',
-            'summarize',
+            'artifact review gate',
+            'what the agent thinks those results mean',
+            'machine-readable artifacts',
+            'broader project context',
+            'recommended next route',
             'Review Setup',
             'stop',
             'request_user_input',
@@ -75,6 +79,19 @@ try {
         }
         Add-Result -Name "native continuation gate is present" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "native continuation gate is present" -Ok $false -Reason $_.Exception.Message }
+
+    try {
+        foreach ($needle in @(
+            'artifact review gate',
+            'what the agent thinks those results mean',
+            'machine-readable artifacts',
+            'broader project context',
+            'recommended next route'
+        )) {
+            Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing closeout artifact-review contract: $needle"
+        }
+        Add-Result -Name "setup closeout artifact review contract is present" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "setup closeout artifact review contract is present" -Ok $false -Reason $_.Exception.Message }
 
     try {
         if ($skill.Contains("Use Existing Artifact")) { throw "setup skill must not use 'Use Existing Artifact'" }
