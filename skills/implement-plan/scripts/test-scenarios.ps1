@@ -104,6 +104,7 @@ $scenarios = @(
             "broader project context",
             "recommended next route",
             "machine-readable artifacts",
+            "Do not recommend Stop merely because the branch is clean, validated, or already pushed",
             "Do not ask for push approval first and explain later"
         )) {
             Assert-Contains $text $needle "missing implement-plan closeout contract: $needle"
@@ -117,7 +118,8 @@ $scenarios = @(
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
+            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.",
+            "Do not recommend Stop merely because the branch is clean, validated, or already pushed"
         )) {
             if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
             if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }

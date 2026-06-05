@@ -25,6 +25,7 @@ Tighten the Superpowers Project workflow contract so every skill closeout explic
 - The findings summary should explicitly cover the full project context and suggested next steps, not only the immediate route choice.
 - That richer summary is most important before push and merge questions.
 - Brainstorming and planning should also use the summary pattern, but with a lighter-weight version than push/merge closeout.
+- `Stop` should stay available as a terminal option, but it must not be the recommended answer when a clean forward route exists and the user has not asked to stop.
 - `write-plan` closeout must ask direct questions that define what counts as test complete.
 - `write-plan` closeout must ask those questions directly and natively, not hide them inside a long prose summary or vague acceptance text.
 - For scientific or engineering projects, `write-plan` must ask for the numerical metrics, thresholds, tolerances, or target values that define pass/fail and should record those values as plan goals.
@@ -125,6 +126,10 @@ Before asking push or merge questions, the skill must first show:
 - the recommended next step and why
 
 Push and merge approval questions should be blocked until that review gate is satisfied. This applies to both manual routes and Auto Mode routes that need user approval at those points.
+
+### Stop Recommendation Policy
+
+`Stop` remains available at the top-level closeout gate, but recommendation policy should be stricter than availability. The agent should not recommend `Stop` merely because the branch is locally healthy, the immediate ask has been satisfied, or a broader forward route is already authorized and ready. When a clean forward route exists and the user has not indicated that they want to stop, the recommendation should stay on the forward or review path instead of steering toward termination.
 
 ### Lighter Brainstorming And Planning Review
 
