@@ -42,6 +42,29 @@ function Test-NestedContinuationBlocks {
     return $true
 }
 
+function Test-NestedContinuationBlocksRegex {
+    param(
+        [string]$Text,
+        [string]$ForbiddenPattern
+    )
+
+    $questionIds = [regex]::Matches($Text, 'Question id:\s*`([^`]+)`')
+    if ($questionIds.Count -eq 0) {
+        return $true
+    }
+
+    for ($index = 0; $index -lt $questionIds.Count; $index++) {
+        $current = $questionIds[$index]
+        $nextStart = if ($index + 1 -lt $questionIds.Count) { $questionIds[$index + 1].Index } else { $Text.Length }
+        $block = $Text.Substring($current.Index, $nextStart - $current.Index)
+        $questionId = $current.Groups[1].Value
+        if ($questionId.EndsWith("_next_step") -or $questionId.EndsWith("_final_health_gate")) { continue }
+        if ([regex]::IsMatch($block, $ForbiddenPattern)) { return $false }
+    }
+
+    return $true
+}
+
 $checks = [System.Collections.Generic.List[object]]::new()
 $skillRoot = Join-Path $RepoRoot "skills"
 $workflowSkillNames = @(
@@ -84,7 +107,10 @@ foreach ($skillName in $workflowSkillNames) {
         'Only a user-selected `Stop` option or verified final `Done` gate is terminal',
         'Revisit is non-terminal',
         'Only Stop can break an intermediate loop before a verified final Done gate',
-        'Review First is not a terminal answer'
+        'Review First is not a terminal answer',
+        'The agent must not get out of the loop by itself',
+        'ending a turn after a governed workflow action is invalid',
+        'must not recommend Stop before verified final completion'
     )) {
         Add-Check $checks "$skillName contains $needle" ($text.Contains($needle)) "$skillPath must contain continuation-loop contract: $needle"
     }
@@ -111,7 +137,7 @@ foreach ($skillName in $workflowSkillNames) {
         'Nested Yes-route menus must not include Stop / Done',
         'Nested Revisit-route menus must not include Stop / Done',
         'Recommend Yes when at least one safe forward route exists',
-        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
+        'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
         'Custom Other never terminates a workflow directly',
         'fresh confirmation question instead of terminating from Other'
     )) {
@@ -136,6 +162,7 @@ foreach ($skillName in $workflowSkillNames) {
         $text.Contains('what the result means for the active goal') -or
         $text.Contains('what the result means for the next workflow step')
     ) "$skillPath must interpret the meaning of the closeout result"
+    Add-Check $checks "$skillName omits old direction-coded option labels" (-not [regex]::IsMatch($text, '(?m)^\s*-\s+(Down|Left|Right):')) "$skillPath must not expose Down/Left/Right as option names"
 
     $agentPath = Join-Path $skillRoot "$skillName\agents\openai.yaml"
     $agentExists = Test-Path -LiteralPath $agentPath -PathType Leaf
@@ -149,6 +176,9 @@ foreach ($skillName in $workflowSkillNames) {
         'Revisit is non-terminal',
         'Only Stop can break an intermediate loop before a verified final Done gate',
         'Review First is not a terminal answer',
+        'The agent must not get out of the loop by itself',
+        'ending a turn after a governed workflow action is invalid',
+        'must not recommend Stop before verified final completion',
         'Continue?',
         'Yes',
         'No',
@@ -163,7 +193,7 @@ foreach ($skillName in $workflowSkillNames) {
         'Nested Yes-route menus must not include Stop / Done',
         'Nested Revisit-route menus must not include Stop / Done',
         'Recommend Yes when at least one safe forward route exists',
-        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
+        'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
         'fresh confirmation question instead of terminating from Other'
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
@@ -187,6 +217,16 @@ foreach ($skillName in $workflowSkillNames) {
         $agentText.Contains('what the result means for the next workflow step')
     ) "$agentPath must interpret the meaning of the closeout result"
     Add-Check $checks "$skillName metadata contains non-terminal artifact contract" (@($terminalPhrases | Where-Object { $agentText.Contains($_) }).Count -gt 0) "$agentPath must contain a non-terminal artifact contract"
+    foreach ($forbiddenMetadata in @(
+        'with Down',
+        'Down Continue',
+        'Down Merge',
+        'Right Stop',
+        'Down default progress',
+        'Left reiteration'
+    )) {
+        Add-Check $checks "$skillName metadata omits old direction wording $forbiddenMetadata" (-not $agentText.Contains($forbiddenMetadata)) "$agentPath must not advertise old direction wording: $forbiddenMetadata"
+    }
 
     if ($intermediateSkillNames -contains $skillName) {
         $usesCombinedRouteLabel = $text.Contains('Right: `Stop / Done`') -or $agentText.Contains('Right: `Stop / Done`') -or $text.Contains('and No / Stop / Done') -or $agentText.Contains('and No / Stop / Done')
@@ -205,6 +245,14 @@ foreach ($skillName in $workflowSkillNames) {
         Add-Check $checks "$skillName nested routes avoid $forbidden" (Test-NestedContinuationBlocks -Text $text -Forbidden $forbidden) "$skillPath contains nested continuation wording that repeats terminal stop: $forbidden"
         Add-Check $checks "$skillName metadata nested routes avoid $forbidden" (Test-NestedContinuationBlocks -Text $agentText -Forbidden $forbidden) "$agentPath contains nested continuation wording that repeats terminal stop: $forbidden"
     }
+    foreach ($forbiddenPattern in @(
+        '(?m)^\s*-\s+Right:\s*`?Stop`?',
+        '(?m)^\s*-\s+(?:Right:\s*)?`?Stop / Done`?',
+        '(?m)^\s*-\s+(?:Right:\s*)?`?No / Stop / Done`?'
+    )) {
+        Add-Check $checks "$skillName nested routes avoid pattern $forbiddenPattern" (Test-NestedContinuationBlocksRegex -Text $text -ForbiddenPattern $forbiddenPattern) "$skillPath contains nested continuation wording that repeats terminal stop: $forbiddenPattern"
+        Add-Check $checks "$skillName metadata nested routes avoid pattern $forbiddenPattern" (Test-NestedContinuationBlocksRegex -Text $agentText -ForbiddenPattern $forbiddenPattern) "$agentPath contains nested continuation wording that repeats terminal stop: $forbiddenPattern"
+    }
 
     foreach ($forbidden in @(
         'Ask one to three short questions',
@@ -217,6 +265,7 @@ foreach ($skillName in $workflowSkillNames) {
         'Show four or more native options when they are real peer routes',
         'including more than three peer options or independent questions when useful',
         'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states',
+        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
         'Custom answers that mean a mid-loop exit are treated as Stop',
         'Custom answers that claim completion before proof exists are treated as Stop',
         'Custom Other is terminal only when it explicitly says Stop',
@@ -235,4 +284,3 @@ $failed = @($checks | Where-Object { -not $_.ok })
 } | ConvertTo-Json -Depth 8
 
 if ($failed.Count -gt 0) { exit 1 }
-

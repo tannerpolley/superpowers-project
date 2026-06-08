@@ -58,6 +58,9 @@ if ($exists) {
         "what that means for the broader project context",
         "what next steps are now recommended",
         "Do not recommend Stop merely because a clean forward route exists",
+        "The agent must not get out of the loop by itself",
+        "ending a turn after a governed workflow action is invalid",
+        "must not recommend Stop before verified final completion",
         "Push, publish, and merge approval questions are invalid until the artifact review gate and findings summary have been shown",
         "loaded thread may still be using older skill text",
         "re-ask that gate natively",
@@ -72,6 +75,7 @@ if ($exists) {
         "If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other",
         "Do not end a loop until the user chooses Stop or reaches a verified final Done gate through a built-in terminal option",
         "Custom answers that ask for another route, review, revision, repair, explanation, or continued work are non-terminal",
+        "Custom answers that request revision, review, repair, more evidence, a different route, or stronger loop behavior are Revisit behavior",
         "reaches a verified final Done gate",
         "If the active runtime rejects a large prompt, fail loudly"
     )) {
@@ -93,7 +97,8 @@ if ($exists) {
         "Custom answers that mean a mid-loop exit are treated as Stop",
         "Custom answers that claim completion before proof exists are treated as Stop",
         "Custom answers are terminal only when they explicitly say Stop",
-        "Treat it as terminal only when it explicitly says Stop"
+        "Treat it as terminal only when it explicitly says Stop",
+        "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
     )) {
         Add-Check $checks "advanced-user-input omits stale limit $forbidden" (-not $text.Contains($forbidden)) "$skillPath must not contain stale native limit: $forbidden"
     }
@@ -116,6 +121,9 @@ if ($metadataExists) {
         'what that means for the broader project context',
         'what next steps are now recommended',
         'Do not recommend Stop merely because a clean forward route exists',
+        'The agent must not get out of the loop by itself',
+        'ending a turn after a governed workflow action is invalid',
+        'must not recommend Stop before verified final completion',
         'Push, publish, and merge approval questions are invalid until the artifact review gate and findings summary have been shown',
         'loaded thread may still be using older skill text',
         're-ask that gate natively',
@@ -124,8 +132,9 @@ if ($metadataExists) {
         'Nested Yes-route menus must not include Stop / Done',
         'Nested Revisit-route menus must not include Stop / Done',
         'Recommend Yes when at least one safe forward route exists',
-        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
+        'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
         'Custom answers never terminate directly from Other',
+        'Custom answers that request revision, review, repair, more evidence, a different route, or stronger loop behavior are Revisit behavior',
         'ask a fresh confirmation question instead of terminating from Other',
         'Approval gates use domain-specific decline or cancel labels instead of Stop / Done',
         'request_agent_input'
@@ -136,7 +145,8 @@ if ($metadataExists) {
     foreach ($forbidden in @(
         'Custom answers are terminal only when they explicitly say Stop',
         'Custom answers that claim completion before proof exists are treated as Stop',
-        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
+        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states',
+        'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.'
     )) {
         Add-Check $checks "advanced-user-input metadata omits stale terminal rule $forbidden" (-not $metadata.Contains($forbidden)) "$metadataPath must not contain stale terminal rule: $forbidden"
     }
@@ -150,4 +160,3 @@ $failed = @($checks | Where-Object { -not $_.ok })
 } | ConvertTo-Json -Depth 8
 
 if ($failed.Count -gt 0) { exit 1 }
-

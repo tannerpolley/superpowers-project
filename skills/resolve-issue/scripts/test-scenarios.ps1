@@ -513,7 +513,7 @@ try {
             "Nested Yes-route menus must not include Stop / Done",
             "Nested Revisit-route menus must not include Stop / Done",
             "Recommend Yes when at least one safe forward route exists",
-            "Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate."
+            "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
             Assert-True ($text.Contains($needle)) "missing native continuation policy in SKILL.md: $needle"
             Assert-True ($metadata.Contains($needle)) "missing native continuation policy in metadata: $needle"

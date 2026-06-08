@@ -13,7 +13,7 @@ Project Brainstorm is the Superpowers Project adapter for `superpowers:brainstor
 
 Do not end the turn or report the workflow complete until a native continuation question returns `Stop` or reaches a verified final `Done` gate. After every completed action, summarize the result and ask another native continuation question when `request_user_input` is callable.
 
-A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` option or verified final `Done` gate is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can break an intermediate loop before a verified final Done gate. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
+A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` option or verified final `Done` gate is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question; the only Yes terminal exception is an explicit final Healthy -> Done gate. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can break an intermediate loop before a verified final Done gate. The agent must not get out of the loop by itself, and ending a turn after a governed workflow action is invalid until the next native continuation or permission question is answered. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
 ## Required Method
 
@@ -84,7 +84,7 @@ Before reporting the spec ready, self-review for placeholders, contradictions, a
 
 After saving or revising the brainstorm artifact, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the brainstorm run, show the saved artifact, and summarize the spec, PRD, architecture decision, or unresolved decision set in chat. The summary must name the artifact path when one was saved, the key decisions made, assumptions removed, remaining open questions, what the result means for the next workflow step, what it means for the broader project context, and the recommended next route. Show exact artifact paths and links, show rendered Markdown artifacts in chat when created or changed artifacts are Markdown and reasonably sized, and summarize any machine-readable artifacts with their exact path plus key fields.
 
-Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
+Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and No in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include Stop / Done; they include only real forward routes. Nested Revisit-route menus must not include Stop / Done; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If it appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
 Question id: `project_brainstorm_next_step`
 
@@ -92,9 +92,9 @@ Prompt: `Should I continue on with the workflow?`
 
 Options:
 
-- Down: `Continue From Spec`: choose how to turn the brainstorm artifact into planning work.
-- Left: `Revise / Review Brainstorm`: revise, review, ask follow-ups, or run another brainstorm loop.
-- Right: `Stop`: break the continuation loop.
+- Yes: choose how to turn the brainstorm artifact into planning work.
+- Revisit: revise, review, ask follow-ups, or run another brainstorm loop.
+- Stop: break the continuation loop.
 
 If the user selects `Continue From Spec`, ask:
 
@@ -104,9 +104,8 @@ Prompt: `Should I continue manually or authorize Auto Mode?`
 
 Options:
 
-- Down: `Manual Planning`: choose the next planning route yourself.
-- Left: `Auto Mode`: authorize the agent to choose the route, plan, implement, verify, and merge within the bounded policy.
-- Right: `Stop`: break the continuation loop.
+- `Manual Planning`: choose the next planning route yourself.
+- `Auto Mode`: authorize the agent to choose the route, plan, implement, verify, and merge within the bounded policy.
 
 If the user selects `Manual Planning`, ask:
 
@@ -116,9 +115,8 @@ Prompt: `How should planning start from this brainstorm?`
 
 Options:
 
-- Down: `Create One Plan`: create one `$superpowers-project:write-plan` from the recently generated spec.
-- Left: `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
-- Right: `Stop`: break the continuation loop.
+- `Create One Plan`: create one `$superpowers-project:write-plan` from the recently generated spec.
+- `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
 
 If the user selects `Auto Mode`, ask:
 
@@ -128,9 +126,8 @@ Prompt: `Authorize bounded Auto Mode for this saved spec?`
 
 Options:
 
-- Down: `Bounded Auto Merge`: create an Auto Mode authorization ledger and continue without more user input through planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
-- Left: `Manual Planning`: return to `project_brainstorm_plan_route`.
-- Right: `Stop`: break the continuation loop.
+- `Bounded Auto Merge`: create an Auto Mode authorization ledger and continue without more user input through planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
+- `Manual Planning`: return to `project_brainstorm_plan_route`.
 
 `Bounded Auto Merge` is the only valid Auto Mode approval. It must record an Auto Mode authorization ledger before the next skill starts. The ledger must include:
 
@@ -160,9 +157,8 @@ Prompt: `How should multiple specs become plans?`
 
 Options:
 
-- Down: `Plan Multiple Specs`: create one `$superpowers-project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
-- Left: `Create Multiple Plans`: create multiple related plans from multiple specs; prompt for spec-to-plan grouping if not already known.
-- Right: `Stop`: break the continuation loop.
+- `Plan Multiple Specs`: create one `$superpowers-project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
+- `Create Multiple Plans`: create multiple related plans from multiple specs; prompt for spec-to-plan grouping if not already known.
 
 If the user selects `Revise / Review Brainstorm`, ask:
 
@@ -172,9 +168,8 @@ Prompt: `How should I revisit this brainstorm output?`
 
 Options:
 
-- Down: `Revise Spec`: continue `$superpowers-project:brainstorm-spec` with follow-up questions to revise the saved spec or decision summary.
-- Left: `Review Or Restart`: choose whether to review the current artifact or brainstorm another idea.
-- Right: `Stop`: break the continuation loop.
+- `Revise Spec`: continue `$superpowers-project:brainstorm-spec` with follow-up questions to revise the saved spec or decision summary.
+- `Review Or Restart`: choose whether to review the current artifact or brainstorm another idea.
 
 If the user selects `Review Or Restart`, ask:
 
@@ -184,9 +179,8 @@ Prompt: `Should I review this brainstorm or start another one?`
 
 Options:
 
-- Down: `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_brainstorm_next_step`.
-- Left: `Re-run Brainstorm`: start another `$superpowers-project:brainstorm-spec` cycle for a new feature, idea, or major alternative.
-- Right: `Stop`: break the continuation loop.
+- `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_brainstorm_next_step`.
+- `Re-run Brainstorm`: start another `$superpowers-project:brainstorm-spec` cycle for a new feature, idea, or major alternative.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 

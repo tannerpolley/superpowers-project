@@ -37,7 +37,7 @@ GitHub can also render the simplified Mermaid companion: [Native Q&A main flow M
 
 `Stop` pauses a continuation loop before verified completion. `Done` is reserved for a verified final clean state, such as a merge or audit closeout with passing proof. `Yes` choices enter the next workflow depth and either start the next skill or ask the next route question. Revisit choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
 
-The recommended option should be `Yes` when a safe forward route exists, `Revisit` when evidence or repair is needed, and `No / Stop / Done` only when the workflow is terminal, blocked, or the user has asked to stop.
+The recommended option should be `Yes` when a safe forward route exists and `Revisit` when evidence or repair is needed. `Stop` may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.
 
 | Native question | Where it appears | Top-level choices | Nested examples |
 | --- | --- | --- | --- |
