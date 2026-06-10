@@ -38,10 +38,33 @@ try {
     Add-Check -Name "frontmatter names" -Ok $true -Reason "passed"
 
     $readme = Get-Content -LiteralPath (Join-Path $repoRoot "README.md") -Raw
+    Assert-Contains -Text $readme -Needle 'prompt surface is `$superpowers-project:*`' -Reason "README must declare canonical prompt surface"
     foreach ($needle in @('$superpowers-project:initiate-workflow', '$superpowers-project:setup-project', '$superpowers-project:write-plan', '$superpowers-project:create-issues', '$superpowers-project:resolve-issue', '$superpowers-project:orchestrate-issues', '$superpowers-project:merge-changes', '$superpowers-project:audit-project', '$superpowers-project:align-project')) {
         Assert-Contains -Text $readme -Needle $needle -Reason "README missing migrated prompt: $needle"
     }
     Add-Check -Name "README prompt surface" -Ok $true -Reason "passed"
+
+    foreach ($prompt in @($manifest.interface.defaultPrompt)) {
+        if ($prompt -match '(?<!\$)superpowers-project:') {
+            throw "manifest prompt must use canonical `$superpowers-project:* spelling: $prompt"
+        }
+        Assert-Contains -Text $prompt -Needle '$superpowers-project:' -Reason "manifest prompt missing canonical namespace: $prompt"
+    }
+    Add-Check -Name "manifest prompt surface" -Ok $true -Reason "passed"
+
+    $activeSurfacePaths = @(
+        (Join-Path $repoRoot "README.md"),
+        (Join-Path $repoRoot ".codex-plugin/plugin.json")
+    )
+    $activeSurfacePaths += @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs/superpowers/issues") -Recurse -File | Select-Object -ExpandProperty FullName)
+    $activeSurfacePaths += @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "skills") -Recurse -File -Include "SKILL.md", "openai.yaml" | Select-Object -ExpandProperty FullName)
+    foreach ($path in $activeSurfacePaths) {
+        $text = Get-Content -LiteralPath $path -Raw
+        if ($text.Contains('$project:')) {
+            throw "stale `$project:* namespace remains in active surface: $path"
+        }
+    }
+    Add-Check -Name "stale project namespace absent" -Ok $true -Reason "passed"
 
     $retiredDirs = @("superpowers-project", "project-setup", "project-brainstorm", "project-plan", "project-issue", "project-resolve", "project-orchestrate", "project-merge", "project-doctor")
     foreach ($dir in $retiredDirs) {

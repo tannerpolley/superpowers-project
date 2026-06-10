@@ -16,9 +16,9 @@ Issue mirrors are flat canonical artifacts. Do not create canonical mirrors unde
 
 GitHub issues created outside the local Superpowers Project workflow are intake records until a local mirror and source plan exist. A GitHub issue URL, raw issue body, or `Source Plan: TBD` field is not a ready execution mirror.
 
-Hydrate external intake through `$project:create-issues` with `skills/create-issues/scripts/hydrate-external-issue.ps1`. Hydration preserves the GitHub issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command, then creates or links a source plan under `docs/superpowers/plans`.
+Hydrate external intake through `$superpowers-project:create-issues` with `skills/create-issues/scripts/hydrate-external-issue.ps1`. Hydration preserves the GitHub issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command, then creates or links a source plan under `docs/superpowers/plans`.
 
-`$project:resolve-issue` and `$project:orchestrate-issues` must wait until the hydrated mirror passes `skills/create-issues/scripts/validate-issue-mirror.ps1`.
+`$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues` must wait until the hydrated mirror passes `skills/create-issues/scripts/validate-issue-mirror.ps1`.
 
 ## Workflow Metadata
 
@@ -34,7 +34,7 @@ New issue mirrors should include:
 **Script Gate Mode:** Safety only
 ```
 
-These fields tell `$project:resolve-issue` how to ask the runtime execution question and who owns integration. Missing fields are migration drift; malformed values should be fixed before GitHub publication.
+These fields tell `$superpowers-project:resolve-issue` how to ask the runtime execution question and who owns integration. Missing fields are migration drift; malformed values should be fixed before GitHub publication.
 
 ## Project Merge Metadata
 
@@ -50,13 +50,13 @@ New issue mirrors should include:
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 ```
 
-These fields tell `$project:merge-changes` who owns final integration, when native approval is required, and what cleanup evidence must exist after merge.
+These fields tell `$superpowers-project:merge-changes` who owns final integration, when native approval is required, and what cleanup evidence must exist after merge.
 
 ## Closed Mirror Lifecycle
 
-Issue mirrors are execution inputs, not the durable historical record. While an issue is open, its mirror stays under `docs/superpowers/issues/` so `$project:resolve-issue`, `$project:merge-changes`, and `$project:audit-project` can audit source plan linkage, acceptance criteria, proof oracles, and native goal setup.
+Issue mirrors are execution inputs, not the durable historical record. While an issue is open, its mirror stays under `docs/superpowers/issues/` so `$superpowers-project:resolve-issue`, `$superpowers-project:merge-changes`, and `$superpowers-project:audit-project` can audit source plan linkage, acceptance criteria, proof oracles, and native goal setup.
 
-After `$project:merge-changes` verifies that the linked GitHub issue is closed, the closed mirror is deleted by default. The closeout ledger must include structured mirror cleanup confirmation showing the mirror path, deletion evidence, and milestone `closed-summary` evidence.
+After `$superpowers-project:merge-changes` verifies that the linked GitHub issue is closed, the closed mirror is deleted by default. The closeout ledger must include structured mirror cleanup confirmation showing the mirror path, deletion evidence, and milestone `closed-summary` evidence.
 
 Use this marker only for unusual mirrors that must remain as historical artifacts:
 
@@ -64,7 +64,6 @@ Use this marker only for unusual mirrors that must remain as historical artifact
 **Mirror Retention:** Keep
 ```
 
-Retained mirrors must include a retention reason in closeout evidence. `$project:audit-project` reports closed mirrors without this marker as repairable drift.
+Retained mirrors must include a retention reason in closeout evidence. `$superpowers-project:audit-project` reports closed mirrors without this marker as repairable drift.
 
 Milestone pages keep durable closed issue history. When a mirror is deleted, the milestone page should remove the active mirror link and add a concise closed summary with both the GitHub issue link and the PR link that closed it.
-

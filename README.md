@@ -12,7 +12,7 @@ This repository is the canonical source. The live Codex install is a deployment 
 
 ## Public Identity
 
-The canonical plugin identity is `superpowers-project`, the GitHub repository is `tannerpolley/superpowers-project`, and the prompt surface is plugin-scoped as `superpowers-project:*`.
+The canonical plugin identity is `superpowers-project`, the GitHub repository is `tannerpolley/superpowers-project`, and the canonical user-facing prompt surface is `$superpowers-project:*`.
 
 ## Current Skills
 

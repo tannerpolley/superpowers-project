@@ -31,7 +31,7 @@ Use this repository as a smoke-test fixture for the Superpowers Project extensio
 
 ## Acceptance Criteria
 
-- [ ] `docs/superpowers/PROJECT_CONTEXT.md` contains the project context sections required by `$project:setup-project`.
+- [ ] `docs/superpowers/PROJECT_CONTEXT.md` contains the project context sections required by `$superpowers-project:setup-project`.
 - [ ] `docs/superpowers/issues/` exists and contains at least one valid issue mirror.
 - [ ] The issue mirror validator accepts this pre-publication mirror with milestone enforcement.
 - [ ] The resolve-issue setup gate accepts structured native goal proof and rejects missing proof in the dummy repo validation.
