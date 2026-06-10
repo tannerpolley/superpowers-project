@@ -25,23 +25,26 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
 - `$superpowers-project:orchestrate-issues`: creates and manages worker-thread issue resolution with aligned thread title, branch name, worktree identity, and PR-ready handoff evidence.
 - `$superpowers-project:merge-changes`: reviews and merges issue-backed PR work or approved local branch work, cleans owned branches and worktrees, prunes, and records clean repo proof.
-- `$superpowers-project:audit-project`: audits project, GitHub, migration, and live-sync drift.
+- `$superpowers-project:audit-project`: reviews code or workflow behavior and writes P-coded repair findings specs.
+- `$superpowers-project:align-project`: aligns project, GitHub, migration, tracker, and live-sync drift.
 
 ## Native Q&A Workflow
 
-The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `Stop`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected. Nested Yes menus list only forward routes, nested Revisit menus list only review, revision, repair, recovery, rerun, or evidence routes, and `Stop / Done` is not repeated inside those nested route menus.
+The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `Stop`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected. Nested Yes menus list only forward routes, nested Revisit menus list only review, revision, repair, recovery, rerun, or evidence routes, and terminal options are not repeated inside those nested route menus.
 
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
 GitHub can also render the simplified Mermaid companion: [Native Q&A main flow Mermaid](docs/assets/native-qa-main-flow-mermaid.md).
 
-`Stop` pauses a continuation loop before verified completion. `Done` is reserved for a verified final clean state, such as a merge or audit closeout with passing proof. `Yes` choices enter the next workflow depth and either start the next skill or ask the next route question. Revisit choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
+`Stop` pauses a continuation loop before verified completion. `Done` is reserved for a verified final clean state, such as an explicit merge final gate or explicitly asked healthy audit gate with passing proof. `Yes` choices enter the next workflow depth and either start the next skill or ask the next route question. Revisit choices such as `Review First`, revise, repair, or gather evidence must show the relevant artifacts or evidence, ask follow-up questions, and return to the originating continuation gate.
 
 The recommended option should be `Yes` when a safe forward route exists and `Revisit` when evidence or repair is needed. `Stop` may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.
 
+Before any closeout, push, publish, or merge question, the agent must show the artifacts first. It must show what was created or revised, not merely say something changed. This includes the chosen brainstorm design/spec, full plan task and step list, created issue bodies or mirrors, full changed-artifact inventory for implementation routes, exact test values/results, cleanup evidence, branch or PR proof, and machine-readable ledgers when present. After artifacts are shown, the agent must add its own findings summary: what was done, what was fixed, what remains unsatisfactory or risky, its feedback/opinion, active-goal impact, broader project impact, and the recommended next route.
+
 | Native question | Where it appears | Top-level choices | Nested examples |
 | --- | --- | --- | --- |
-| `project_setup_next_step` | After Setup Project | Yes, Revisit, Stop | Brainstorm Spec, Write Plan, Create Issues, Run Doctor |
+| `project_setup_next_step` | After Setup Project | Yes, Revisit, Stop | Brainstorm Spec, Write Plan, Create Issues, Run Align |
 | `project_brainstorm_next_step` | After Brainstorm Spec | Yes, Revisit, Stop | Manual Planning, Auto Mode, Revise Spec |
 | `project_plan_next_step` | After Write Plan | Yes, Revisit, Stop | Create Issues, Implement Plan, Resolve Issue, Orchestrate Issues |
 | `project_implement_next_step` | After Implement Plan | Yes, Revisit, Stop | Merge Changes, Review Evidence, Revise Branch |
@@ -50,8 +53,9 @@ The recommended option should be `Yes` when a safe forward route exists and `Rev
 | `project_resolve_next_step` | After direct issue work is PR-ready | Yes, Revisit, Stop | Merge, Resolve Another, Address CI / Checks |
 | `project_orchestrate_next_step` | After worker-thread issue work is PR-ready | Yes, Revisit, Stop | Merge, Recover Worker |
 | `project_merge_approval` | Before merge | Merge, Decline | Premerge evidence review |
-| `project_merge_next_step` | After merge closeout | Yes, Revisit, Stop or verified Done | Doctor, Resolve Another, Re-run Cleanup |
-| `project_doctor_next_step` | After a Doctor audit | Yes, Revisit, Stop or verified Done | Apply Repair, Create Planning Spec, Run Audit Again |
+| `project_merge_next_step` | After merge closeout | Yes, Revisit, Stop; final clean gates may use Done | Align, Resolve Another, Re-run Cleanup |
+| `project_audit_next_step` | After a findings audit | Yes, Revisit, Stop | Write Plan, Create Issues, Review Findings |
+| `project_align_next_step` | After an alignment check | Yes, Revisit, Stop | Apply Repair, Create Planning Spec, Run Align Again |
 
 ## Implement Plan
 
@@ -118,4 +122,4 @@ cd superpowers-project
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
-After install, start with `$superpowers-project:initiate-workflow` in Codex to route setup, brainstorming, planning, issue creation, issue resolution, orchestration, merge cleanup, or Doctor audits.
+After install, start with `$superpowers-project:initiate-workflow` in Codex to route setup, brainstorming, code/workflow audits, planning, issue creation, issue resolution, orchestration, merge cleanup, or alignment checks.

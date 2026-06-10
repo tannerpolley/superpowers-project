@@ -491,18 +491,18 @@ function Invoke-LocalDocsAudit {
         }
     }
 
-    $skillPath = Get-RepoFile -Root $Root -RelativePath "skills/audit-project/SKILL.md"
-    $ownsDoctorSource = Test-Path -LiteralPath $skillPath -PathType Leaf
-    $skillText = if ($ownsDoctorSource) { Get-Content -LiteralPath $skillPath -Raw } else { "" }
-    if (-not $ownsDoctorSource) {
-        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "native-ui-closeout" -Severity "informational" -Dimension "native-ui-contracts" -Message "Doctor native closeout wording check skipped because this repo does not own the Doctor source skill." -Artifact "skills/audit-project/SKILL.md")
-    } elseif (Test-TextContainsAll -Text $skillText -Needles @("## Native Continuation Gate", "request_user_input", "project_doctor_next_step", "Review First", "Stop")) {
-        Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "native-ui-closeout" -Severity "healthy" -Dimension "native-ui-contracts" -Message "Doctor native closeout wording is present." -Artifact "skills/audit-project/SKILL.md")
+    $skillPath = Get-RepoFile -Root $Root -RelativePath "skills/align-project/SKILL.md"
+    $ownsAlignSource = Test-Path -LiteralPath $skillPath -PathType Leaf
+    $skillText = if ($ownsAlignSource) { Get-Content -LiteralPath $skillPath -Raw } else { "" }
+    if (-not $ownsAlignSource) {
+        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "native-ui-closeout" -Severity "informational" -Dimension "native-ui-contracts" -Message "Align native closeout wording check skipped because this repo does not own the Align source skill." -Artifact "skills/align-project/SKILL.md")
+    } elseif (Test-TextContainsAll -Text $skillText -Needles @("## Native Continuation Gate", "request_user_input", "project_align_next_step", "Review First", "Stop")) {
+        Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "native-ui-closeout" -Severity "healthy" -Dimension "native-ui-contracts" -Message "Align native closeout wording is present." -Artifact "skills/align-project/SKILL.md")
     } else {
-        Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "native-ui-closeout" -Severity "repairable" -Dimension "native-ui-contracts" -Message "Doctor native closeout wording needs repair." -Artifact "skills/audit-project/SKILL.md")
+        Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "native-ui-closeout" -Severity "repairable" -Dimension "native-ui-contracts" -Message "Align native closeout wording needs repair." -Artifact "skills/align-project/SKILL.md")
     }
 
-    foreach ($relative in @("AGENTS.md", "docs/agents/triage-labels.md", "docs/superpowers/PROJECT_CONTEXT.md", "docs/superpowers/issues/README.md", "skills/audit-project/SKILL.md")) {
+    foreach ($relative in @("AGENTS.md", "docs/agents/triage-labels.md", "docs/superpowers/PROJECT_CONTEXT.md", "docs/superpowers/issues/README.md", "skills/align-project/SKILL.md")) {
         if (Test-GitIgnored -Root $Root -RelativePath $relative) {
             Add-Finding -Findings $Findings -Category blocking -Finding (New-Finding -Id "ignored-path-traps" -Severity "blocking" -Dimension "ignored-files" -Message "Source-of-truth path is ignored by Git." -Artifact $relative)
         } else {
@@ -518,28 +518,28 @@ function Invoke-LocalDocsAudit {
         Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "closed-mirror-lifecycle" -Severity "informational" -Dimension "closed-mirror-lifecycle" -Message "LocalDocs mode cannot verify closed GitHub state; lifecycle policy wording should be checked with GitHub evidence." -Artifact "docs/superpowers/issues/README.md")
     }
 
-    $sourceSkill = Get-RepoFile -Root $Root -RelativePath "skills/audit-project/SKILL.md"
+    $sourceSkill = Get-RepoFile -Root $Root -RelativePath "skills/align-project/SKILL.md"
     if (Test-Path -LiteralPath $sourceSkill -PathType Leaf) {
         $liveTargets = @(
-            Join-Path $env:USERPROFILE "plugins/superpowers-project/skills/audit-project/SKILL.md"
-            Join-Path $env:USERPROFILE ".agents/skills/audit-project/SKILL.md"
+            Join-Path $env:USERPROFILE "plugins/superpowers-project/skills/align-project/SKILL.md"
+            Join-Path $env:USERPROFILE ".agents/skills/align-project/SKILL.md"
         )
         $liveChecks = @($liveTargets | ForEach-Object { Compare-LiveFile -SourcePath $sourceSkill -TargetPath $_ })
         $checked = @($liveChecks | Where-Object { $_.checked })
         $drifted = @($checked | Where-Object { -not $_.equal })
         if ($drifted.Count -gt 0) {
-            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "live-sync" -Severity "repairable" -Dimension "live-sync" -Message "Live deployed Doctor skill differs from source." -Artifact "skills/audit-project/SKILL.md" -Evidence @{ targets = @($drifted.target) })
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "live-sync" -Severity "repairable" -Dimension "live-sync" -Message "Live deployed Align skill differs from source." -Artifact "skills/align-project/SKILL.md" -Evidence @{ targets = @($drifted.target) })
         } elseif ($checked.Count -gt 0) {
-            Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "live-sync" -Severity "healthy" -Dimension "live-sync" -Message "Checked live Doctor skill target matches source." -Artifact "skills/audit-project/SKILL.md" -Evidence @{ targets = @($checked.target) })
+            Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "live-sync" -Severity "healthy" -Dimension "live-sync" -Message "Checked live Align skill target matches source." -Artifact "skills/align-project/SKILL.md" -Evidence @{ targets = @($checked.target) })
         } else {
-            Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live deployed Doctor skill target was not inspected." -Artifact "skills/audit-project/SKILL.md" -Evidence @{ targets = $liveTargets })
+            Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live deployed Align skill target was not inspected." -Artifact "skills/align-project/SKILL.md" -Evidence @{ targets = $liveTargets })
         }
         $retiredLiveRoot = Join-Path $env:USERPROFILE "plugins/milestones"
         if (Test-Path -LiteralPath $retiredLiveRoot -PathType Container) {
             Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "retired-live-plugin-root" -Severity "repairable" -Dimension "live-sync" -Message "Retired Milestones live plugin root still exists; sync-live should remove the owned retired copy." -Artifact $retiredLiveRoot)
         }
     } else {
-        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live sync comparison skipped because the source Doctor skill file is absent." -Artifact "skills/audit-project/SKILL.md")
+        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live sync comparison skipped because the source Align skill file is absent." -Artifact "skills/align-project/SKILL.md")
     }
 }
 
@@ -679,7 +679,7 @@ if ($Mode -eq "GitHubAware") {
 
 [ordered]@{
     ok = $true
-    phase = "audit-project-audit"
+    phase = "align-project-audit"
     mode = $Mode
     repo_root = $root
     target_repo = Get-RepoSlug -Root $root

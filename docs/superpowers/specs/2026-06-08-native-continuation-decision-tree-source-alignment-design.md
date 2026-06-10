@@ -67,19 +67,19 @@ This makes the plugin capable of loading old wording even when user-facing docs 
 
 ### P1: Validation Has A False Green
 
-`scripts/validate.ps1` passed while active skill sources still contain direction labels and nested Stop routes. The native continuation validation checks currently forbid nested `Right: Stop / Done`, but they do not catch plain nested `Right: Stop`.
+`scripts/validate.ps1` passed while active skill sources still contain direction labels and nested Stop routes. The native continuation validation checks currently forbid nested `Right: terminal label`, but they do not catch plain nested `Right: Stop`.
 
 Representative evidence:
 
-- `scripts/test-native-continuation-loop.ps1:202` forbids `Right: Stop / Done`.
-- `scripts/test-native-continuation-loop.ps1:203` forbids `Right Stop / Done`.
+- `scripts/test-native-continuation-loop.ps1:202` forbids `Right: terminal label`.
+- `scripts/test-native-continuation-loop.ps1:203` forbids `Right terminal label`.
 - The same test does not fail on nested `Right: Stop`.
 
 Validation should fail when active skill source contradicts the desired tree.
 
 ### P2: README Still Has Stale Recommendation Wording
 
-`README.md:40` still says the recommended option should be `No / Stop / Done` only in terminal, blocked, or user-requested stop states. The current visible option vocabulary should be `Yes`, `Revisit`, and `Stop`, with `Done` reserved for verified final gates.
+`README.md:40` still says the recommended option should be `stale terminal option` only in terminal, blocked, or user-requested stop states. The current visible option vocabulary should be `Yes`, `Revisit`, and `Stop`, with `Done` reserved for verified final gates.
 
 ### P2: Dev Decision Tree Needs Canonical Role Clarification
 
@@ -144,7 +144,7 @@ The active skill text and metadata should not present `Down`, `Left`, or `Right`
 
 If the user selects `Yes`, the next question should ask the actual progress route only when multiple progress routes exist.
 
-Nested Yes-route menus should include only real forward routes. They should not include `Stop`, `Stop / Done`, `Right: Stop`, or direction-coded labels.
+Nested Yes-route menus should include only real forward routes. They should not include `Stop`, `stale terminal label`, `Right: Stop`, or direction-coded labels.
 
 Examples of valid nested Yes-route options:
 
@@ -161,7 +161,7 @@ Examples of valid nested Yes-route options:
 
 If the user selects `Revisit`, the next question should ask the actual review, revision, repair, rerun, recovery, or evidence route only when multiple revisit routes exist.
 
-Nested Revisit-route menus should not include `Stop`, `Stop / Done`, `Right: Stop`, or direction-coded labels.
+Nested Revisit-route menus should not include `Stop`, `stale terminal label`, `Right: Stop`, or direction-coded labels.
 
 Examples of valid nested Revisit-route options:
 
@@ -234,7 +234,7 @@ Implement the repair in one coordinated pass, but keep the work grouped by contr
 
 1. Update active `SKILL.md` native continuation gate examples.
 2. Update active `agents/openai.yaml` metadata summaries.
-3. Update README and workflow docs to remove stale `No / Stop / Done` recommendation wording.
+3. Update README and workflow docs to remove stale `stale terminal option` recommendation wording.
 4. Clarify the developer decision-tree document role.
 5. Harden validation so source drift fails.
 6. Run repo validation and live-sync validation.
@@ -279,7 +279,7 @@ Likely validation:
 Validation should prove:
 
 - no active governed `SKILL.md` closeout gate exposes `Down`, `Left`, or `Right` as user-visible route labels
-- no nested Yes-route or Revisit-route block contains `Right: Stop`, `Stop / Done`, or equivalent terminal wording
+- no nested Yes-route or Revisit-route block contains `Right: Stop`, `stale terminal label`, or equivalent terminal wording
 - active `agents/openai.yaml` metadata does not advertise `Down`, `Left`, or `Right Stop` route wording for closeout gates
 - governed skill text says the agent must not get out of the loop by itself before Stop or verified final Done
 - governed skill text treats custom revision, review, repair, evidence, or route-change answers as non-terminal Revisit behavior
@@ -294,7 +294,7 @@ Validation should prove:
 ## Proof Oracle Candidates
 
 - `rg -n '^- (Down|Left|Right):' skills -g SKILL.md`
-- ``rg -n 'Right: `Stop|Right: Stop|Stop / Done|No / Stop / Done' skills README.md docs/assets docs/superpowers/closeout-startup-decision-tree*.md``
+- ``rg -n 'Right: `Stop|Right: Stop|stale terminal label|stale terminal option' skills README.md docs/assets docs/superpowers/closeout-startup-decision-tree*.md``
 - `rg -n 'with Down|Down Continue|Down Merge|Right Stop|Down default progress' skills -g openai.yaml`
 - ``rg -n 'must not get out of the loop by itself|ending a turn.*invalid|must not recommend `Stop` before' skills README.md docs/superpowers/closeout-startup-decision-tree*.md``
 - `rg -n 'Recommend Stop only|recommended.*Stop.*blocker|Stop.*recommended.*locally complete|Stop.*recommended.*validation passed' skills README.md docs/superpowers/closeout-startup-decision-tree*.md`

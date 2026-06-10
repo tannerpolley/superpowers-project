@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make Superpowers Project native Q&A recommend progress when safe and remove routine `Stop / Done` choices from nested branch questions after the user already selected `Yes` or `Revisit`.
+**Goal:** Make Superpowers Project native Q&A recommend progress when safe and remove routine `stale terminal label` choices from nested branch questions after the user already selected `Yes` or `Revisit`.
 
 **Architecture:** Treat this as a skill-contract migration. First harden policy tests, then update `advanced-user-input`, project skill docs, plugin metadata prompts, and per-skill scenario tests so top-level closeouts keep `Yes / Revisit / No`, while nested Yes and Revisit menus contain only real forward or revisit routes.
 
@@ -19,16 +19,16 @@
 - Apply the change across all active Project workflow skills.
 - Nested Yes-route menus should be forward-only.
 - Nested Revisit-route menus should be revisit-only.
-- Do not add a routine `Back`, `Cancel`, or `Stop / Done` option to nested route menus.
+- Do not add a routine `Back`, `Cancel`, or `stale terminal label` option to nested route menus.
 - Do not update SVG or Mermaid diagrams unless validation shows the diagrams contradict the new contract.
 
 ## Acceptance Criteria
 
-- Top-level workflow closeout questions still include `Yes`, `Revisit`, and `No / Stop / Done`.
-- Nested questions asked after `Yes` do not include `Stop / Done`.
-- Nested questions asked after `Revisit` do not include `Stop / Done`.
-- `Stop / Done` is recommended only for final `Healthy? -> Done`, explicit user stop, no safe next route, or blocker states.
-- Permission gates use action-specific labels such as `Decline`, `Keep Local`, or `Do Not Merge` instead of generic `Stop / Done`.
+- Top-level workflow closeout questions still include `Yes`, `Revisit`, and `stale terminal option`.
+- Nested questions asked after `Yes` do not include `stale terminal label`.
+- Nested questions asked after `Revisit` do not include `stale terminal label`.
+- `stale terminal label` is recommended only for final `Healthy? -> Done`, explicit user stop, no safe next route, or blocker states.
+- Permission gates use action-specific labels such as `Decline`, `Keep Local`, or `Do Not Merge` instead of generic `stale terminal label`.
 - Active `agents/openai.yaml` prompts teach the same policy as the corresponding `SKILL.md` files.
 - Scenario and policy tests reject regressions.
 - `scripts/validate.ps1` passes.
@@ -52,11 +52,11 @@
 In `scripts/test-advanced-user-input-policy.ps1`, add required policy strings for `advanced-user-input`:
 
 ```powershell
-"Nested Yes-route menus must not include Stop / Done",
-"Nested Revisit-route menus must not include Stop / Done",
+"Nested Yes-route menus must not include terminal options",
+"Nested Revisit-route menus must not include terminal options",
 "Recommend Yes when at least one safe forward route exists",
-"Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states",
-"Approval gates use domain-specific decline or cancel labels instead of Stop / Done"
+"Recommend terminal option only for explicit terminal, blocker, or user-requested stop states",
+"Approval gates use domain-specific decline or cancel labels instead of generic terminal labels"
 ```
 
 Expected result before contract edits: the test fails because these exact policy strings are missing.
@@ -66,17 +66,17 @@ Expected result before contract edits: the test fails because these exact policy
 In `scripts/test-native-continuation-loop.ps1`, add required strings for every workflow skill and metadata prompt:
 
 ```powershell
-'Nested Yes-route menus must not include Stop / Done',
-'Nested Revisit-route menus must not include Stop / Done',
+'Nested Yes-route menus must not include terminal options',
+'Nested Revisit-route menus must not include terminal options',
 'Recommend Yes when at least one safe forward route exists',
-'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states'
+'Recommend terminal option only for explicit terminal, blocker, or user-requested stop states'
 ```
 
 Also add a forbidden scan for active skill docs and metadata:
 
 ```powershell
-'Right: `Stop / Done`: break the continuation loop.'
-'Right Stop / Done'
+'Right: terminal option: break the continuation loop.'
+'Right terminal label'
 ```
 
 Expected result before skill edits: the test fails on nested route sections.
@@ -104,13 +104,13 @@ Expected: both tests fail for missing new policy and existing nested stop wordin
 In `skills/advanced-user-input/SKILL.md`, update `Sequential Branching`, `Large Option Sets`, `Continuation Gates`, and `Common Mistakes` so the contract says:
 
 ```markdown
-Nested Yes-route menus must not include Stop / Done. They show only real forward routes.
+Nested Yes-route menus must not include terminal options. They show only real forward routes.
 
-Nested Revisit-route menus must not include Stop / Done. They show only real review, revise, repair, rerun, recover, or evidence-gathering routes and then return to the originating top-level gate.
+Nested Revisit-route menus must not include terminal options. They show only real review, revise, repair, rerun, recover, or evidence-gathering routes and then return to the originating top-level gate.
 
-Recommend Yes when at least one safe forward route exists. Recommend Revisit when evidence is incomplete, validation failed, or review/repair is the next safe action. Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states.
+Recommend Yes when at least one safe forward route exists. Recommend Revisit when evidence is incomplete, validation failed, or review/repair is the next safe action. Recommend terminal option only for explicit terminal, blocker, or user-requested stop states.
 
-Approval gates use domain-specific decline or cancel labels instead of Stop / Done unless the decline actually ends the workflow.
+Approval gates use domain-specific decline or cancel labels instead of generic terminal labels unless the decline actually ends the workflow.
 ```
 
 Remove or rewrite the current large-menu example that includes `Stop` after `Yes selected`.
@@ -158,11 +158,11 @@ Expected: policy test passes after the skill and metadata contract align.
 In each `SKILL.md` Native Continuation Gate section, replace the current nested-branch guidance with:
 
 ```markdown
-If Yes has multiple next routes, ask a nested Yes-route question after the user selects Yes. Nested Yes-route menus must not include `Stop / Done`; they include only real forward routes. If no forward route is safe, do not ask the nested route question; return to the top-level gate with evidence or report the blocker.
+If Yes has multiple next routes, ask a nested Yes-route question after the user selects Yes. Nested Yes-route menus must not include `stale terminal label`; they include only real forward routes. If no forward route is safe, do not ask the nested route question; return to the top-level gate with evidence or report the blocker.
 
-If Revisit has multiple reiteration paths, ask a nested Revisit-route question after the user selects Revisit. Nested Revisit-route menus must not include `Stop / Done`; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. After the revisit action, return to the originating top-level gate.
+If Revisit has multiple reiteration paths, ask a nested Revisit-route question after the user selects Revisit. Nested Revisit-route menus must not include `stale terminal label`; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. After the revisit action, return to the originating top-level gate.
 
-Recommend `Yes` when at least one safe forward route exists. Recommend `Revisit` when review, repair, or missing evidence is the next safe action. Recommend `No / Stop / Done` only for explicit terminal, blocker, or user-requested stop states.
+Recommend `Yes` when at least one safe forward route exists. Recommend `Revisit` when review, repair, or missing evidence is the next safe action. Recommend `stale terminal option` only for explicit terminal, blocker, or user-requested stop states.
 ```
 
 - [ ] **Step 2: Update metadata prompts**
@@ -170,7 +170,7 @@ Recommend `Yes` when at least one safe forward route exists. Recommend `Revisit`
 In each `agents/openai.yaml`, add equivalent compact wording:
 
 ```text
-Nested Yes-route menus must not include Stop / Done and should list only forward routes. Nested Revisit-route menus must not include Stop / Done and should list only revisit routes. Recommend Yes when a safe forward route exists; recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states.
+Nested Yes-route menus must not include terminal options and should list only forward routes. Nested Revisit-route menus must not include terminal options and should list only revisit routes. Recommend Yes when a safe forward route exists; recommend terminal option only for explicit terminal, blocker, or user-requested stop states.
 ```
 
 - [ ] **Step 3: Run the global continuation test**
@@ -201,14 +201,14 @@ Expected: the test still fails until per-skill nested option lists are cleaned u
 Keep the top-level closeout route in each skill:
 
 ```markdown
-- Right: `Stop / Done`: break the continuation loop.
+- Right: terminal option: break the continuation loop.
 ```
 
 Only keep this in the first `project_*_next_step` closeout menu or equivalent final health gate.
 
 - [ ] **Step 2: Remove nested stop options from Yes-route menus**
 
-For nested menus after progress selection, remove the `Right: Stop / Done` line entirely. Examples:
+For nested menus after progress selection, remove the `Right: terminal label` line entirely. Examples:
 
 `skills/brainstorm-spec/SKILL.md`:
 
@@ -232,7 +232,7 @@ Apply the same pattern to all nested Yes-route menus in the active workflow skil
 
 - [ ] **Step 3: Remove nested stop options from Revisit-route menus**
 
-For nested menus after Revisit selection, remove the `Right: Stop / Done` line entirely. Examples:
+For nested menus after Revisit selection, remove the `Right: terminal label` line entirely. Examples:
 
 ```markdown
 Question id: `project_brainstorm_reiteration_route`
@@ -245,14 +245,14 @@ Apply the same pattern to all nested Revisit-route menus.
 
 - [ ] **Step 4: Keep approval gates domain-specific**
 
-Do not remove legitimate approval labels such as `Decline`, `Keep Local`, `Do Not Merge`, `Review First`, or `Recover`. Replace generic `Stop / Done` in approval gates only when it appears as a routine continuation option rather than a real approval outcome.
+Do not remove legitimate approval labels such as `Decline`, `Keep Local`, `Do Not Merge`, `Review First`, or `Recover`. Replace generic `stale terminal label` in approval gates only when it appears as a routine continuation option rather than a real approval outcome.
 
 - [ ] **Step 5: Run a nested-stop scan**
 
 Run:
 
 ```powershell
-rg -n "Right: `Stop / Done`: break the continuation loop|Right Stop / Done" skills -g SKILL.md -g openai.yaml
+rg -n "Right: `stale terminal label`: break the continuation loop|Right terminal label" skills -g SKILL.md -g openai.yaml
 ```
 
 Expected: matches remain only for top-level closeout sections or test fixtures that assert the policy. Review each remaining match manually.
@@ -276,18 +276,18 @@ Expected: matches remain only for top-level closeout sections or test fixtures t
 Each scenario test should assert that the skill text and metadata include:
 
 ```powershell
-"Nested Yes-route menus must not include Stop / Done"
-"Nested Revisit-route menus must not include Stop / Done"
+"Nested Yes-route menus must not include terminal options"
+"Nested Revisit-route menus must not include terminal options"
 "Recommend Yes when at least one safe forward route exists"
 ```
 
 - [ ] **Step 2: Remove stale assertions expecting nested stop options**
 
-Where a scenario test currently expects nested menu routes to include `Stop` or `Stop / Done`, update the assertion to expect only the real branch routes.
+Where a scenario test currently expects nested menu routes to include `Stop` or `stale terminal label`, update the assertion to expect only the real branch routes.
 
 - [ ] **Step 3: Add skill-specific negative checks**
 
-For each active skill, add checks that known nested question blocks do not contain `Stop / Done`. For example in `skills/write-plan/scripts/test-scenarios.ps1`, inspect the text between:
+For each active skill, add checks that known nested question blocks do not contain `stale terminal label`. For example in `skills/write-plan/scripts/test-scenarios.ps1`, inspect the text between:
 
 ```powershell
 "Question id: `project_plan_work_route`"
@@ -297,7 +297,7 @@ For each active skill, add checks that known nested question blocks do not conta
 and assert that segment does not contain:
 
 ```powershell
-"Stop / Done"
+"stale terminal label"
 ```
 
 Repeat for the nested Yes and Revisit route IDs owned by that skill.
@@ -323,7 +323,7 @@ Expected: all parser, policy, and scenario tests pass.
 Update the Native Q&A Workflow section so it says:
 
 ```markdown
-Top-level closeouts always ask `Continue?` with `Yes`, `Revisit`, and `No / Stop / Done`. After `Yes`, nested route menus list only forward routes. After `Revisit`, nested route menus list only review, revision, repair, recovery, rerun, or evidence-gathering routes. `Stop / Done` is not repeated inside those nested route menus.
+Top-level closeouts always ask `Continue?` with `Yes`, `Revisit`, and `stale terminal option`. After `Yes`, nested route menus list only forward routes. After `Revisit`, nested route menus list only review, revision, repair, recovery, rerun, or evidence-gathering routes. terminal options are not repeated inside those nested route menus.
 ```
 
 - [ ] **Step 2: Clarify recommendation behavior**
@@ -331,7 +331,7 @@ Top-level closeouts always ask `Continue?` with `Yes`, `Revisit`, and `No / Stop
 Add:
 
 ```markdown
-The recommended option should be `Yes` when a safe forward route exists, `Revisit` when evidence or repair is needed, and `No / Stop / Done` only when the workflow is terminal, blocked, or the user has asked to stop.
+The recommended option should be `Yes` when a safe forward route exists, `Revisit` when evidence or repair is needed, and `stale terminal option` only when the workflow is terminal, blocked, or the user has asked to stop.
 ```
 
 - [ ] **Step 3: Run README-related tests**

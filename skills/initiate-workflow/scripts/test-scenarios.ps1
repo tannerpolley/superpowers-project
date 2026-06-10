@@ -20,7 +20,7 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     try {
-        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the repo-root Auto Mode contract helper','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route')) {
+        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the repo-root Auto Mode contract helper','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
         foreach ($needle in @('## Native Continuation Gate','artifact review gate','Review First','stop','start the selected next skill','selected native answers','executable routing','what the agent thinks those results mean','machine-readable artifacts')) {
@@ -57,8 +57,8 @@ try {
     
     try {
         foreach ($needle in @(
-            "Nested Yes-route menus must not include Stop / Done",
-            "Nested Revisit-route menus must not include Stop / Done",
+            "Nested Yes-route menus must not include terminal options",
+            "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
@@ -73,9 +73,9 @@ try {
             $block = $skill.Substring($current.Index, $nextStart - $current.Index)
             $questionId = $current.Groups[1].Value
             if ($questionId.EndsWith("_next_step")) { continue }
-            if ($block.Contains('Right: `Stop / Done`: break the continuation loop.')) { throw "nested question $questionId must not repeat Stop / Done" }
+            if ($block.Contains('Right: terminal option: break the continuation loop.')) { throw "nested question $questionId must not repeat stale terminal label" }
         }
-        Assert-NotContains -Text $metadata -Needle "Right Stop / Done" -Reason "metadata must not use old Right Stop / Done wording"
+        Assert-NotContains -Text $metadata -Needle "Right terminal label" -Reason "metadata must not use old Right terminal label wording"
         Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $false -Reason $_.Exception.Message }
 $failed = @($results | Where-Object { -not $_.ok })
@@ -86,4 +86,3 @@ $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
-

@@ -67,14 +67,14 @@ Example:
 Question: Continue?
 Options: Yes, Revisit, Stop
 
-If Yes -> ask Plan, Issue, Implement, Resolve, Doctor, or other valid progress route.
+If Yes -> ask Plan, Issue, Implement, Resolve, Align, or other valid progress route.
 If Revisit -> show evidence, ask the review/revision route, then return to the same closeout gate.
 If Stop -> stop.
 ```
 
-Nested Yes-route menus must not include Stop / Done. They show only real forward routes. If no forward route is safe, do not ask a nested Yes-route menu; report the blocker or return to the top-level gate with evidence.
+Nested Yes-route menus must not include terminal options. They show only real forward routes. If no forward route is safe, do not ask a nested Yes-route menu; report the blocker or return to the top-level gate with evidence.
 
-Nested Revisit-route menus must not include Stop / Done. They show only real review, revise, repair, rerun, recover, or evidence-gathering routes and then return to the originating top-level gate.
+Nested Revisit-route menus must not include terminal options. They show only real review, revise, repair, rerun, recover, or evidence-gathering routes and then return to the originating top-level gate.
 
 ## Bulk Question Sets
 
@@ -90,7 +90,7 @@ Good bulk gate:
 
 Bad bulk gate:
 
-- questions for `Resolve` mixed with questions that only apply to `Doctor`;
+- questions for `Resolve` mixed with questions that only apply to `Align`;
 - implementation details that depend on a branch the user has not chosen;
 - exact text fields disguised as multiple choice.
 
@@ -110,7 +110,7 @@ Project Implement
 Project Resolve
 Project Orchestrate
 Project Merge
-Project Doctor
+Project Align
 ```
 
 Bad large menu:
@@ -131,7 +131,7 @@ For workflow closeout, preserve the user's direction model:
 
 - Down is shown to the user as Yes and means progress or default move-on.
 - Left is shown to the user as Revisit and means revise, review, repair, rerun, recover, or gather more evidence.
-- Right is terminal and is phase-sensitive.
+- Right is shown as Stop during unfinished workflow closeout and Done only at proven final closeout.
 
 Use Stop for mid-loop exits. Use Done only for verified final states.
 
@@ -139,9 +139,9 @@ Intermediate closeout gates use exactly three top-level options: Yes, Revisit, a
 
 Final clean closeout gates may use exactly three top-level options: Yes, Revisit, and Done. Done is valid only after a skill proves a final state, such as clean merge closeout proof or an explicit healthy audit gate with no remaining repair route, and the repo worktree is clean. Done is invalid whenever `git status --short` is non-empty. A verified final Done gate requires both final proof and a clean worktree.
 
-Before any continuation, permission, push, publish, or merge question, complete an artifact review gate. Surface every produced or materially changed artifact with an exact path or identifier. Render human-readable Markdown artifacts when reasonably sized, summarize machine-readable artifacts with their key fields and decisions, and say when an expected artifact type was not produced.
+Before any continuation, permission, push, publish, or merge question, complete an artifact review gate. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show what was created or revised for every produced or materially changed artifact with an exact path or identifier. Render human-readable Markdown artifacts when reasonably sized, including the chosen brainstorm design/spec, the full plan task and step list, and the full issue mirror or created issue body. For implementation or issue-resolution work, show the full changed-artifact inventory before push, plus verification commands, exact test values/results, cleanup evidence, branch state, push/PR proof when present, and any machine-readable ledgers with their key fields and decisions. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative diff or snippet, and the reason the full render is omitted. Say when an expected artifact type was not produced.
 
-After the artifact review gate, add a findings summary that states what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and what next steps are now recommended.
+After the artifact review gate, add a separate findings summary that states what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and what next steps are now recommended.
 
 Push, publish, and merge approval questions are invalid until the artifact review gate and findings summary have been shown.
 
@@ -149,7 +149,7 @@ If observed behavior conflicts with repo-owned workflow contracts, treat it as a
 
 Revisit is non-terminal. Yes must start the selected progress route or ask the blocking child question. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can end an intermediate continuation loop before a verified final Done gate. The agent must not get out of the loop by itself, and ending a turn after a governed workflow action is invalid until the next native continuation or permission question is answered. Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion. Do not recommend Stop merely because a clean forward route exists, because the current branch is already healthy, or because the original request was narrower than the selected workflow route when the user has not asked to stop.
 
-This model is the first prompt for every project workflow closeout. Ask exactly three top-level options: Yes, Revisit, and Stop. If Yes has multiple possible next skills, ask a nested route menu after Yes; for example, Write Plan -> Yes -> Create Issues or Implement Plan. If Revisit has multiple possible reiteration routes, ask a nested review menu after Revisit. Do not put Continue children beside Revisit and No in the same top-level question. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question.
+This model is the first prompt for every project workflow closeout. Ask exactly three top-level options: Yes, Revisit, and Stop. If Yes has multiple possible next skills, ask a nested route menu after Yes; for example, Write Plan -> Yes -> Create Issues or Implement Plan. If Revisit has multiple possible reiteration routes, ask a nested review menu after Revisit. Do not put Continue children beside Revisit and Stop in the same top-level question. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question.
 
 Do not end a loop until the user chooses Stop or reaches a verified final Done gate through a built-in terminal option. Custom Other never terminates a workflow directly. If a Custom answer appears to ask for Stop or Done, ask a fresh confirmation question instead of terminating from Other. Do not infer terminal intent from a Custom answer. Custom answers that request revision, review, repair, more evidence, a different route, or stronger loop behavior are Revisit behavior. Custom answers that ask for another route, review, revision, repair, explanation, or continued work are non-terminal and must continue through the next follow-up question or route. Custom answers that claim completion before proof exists are invalid terminal claims; report the remaining lifecycle state and continue with the next follow-up question instead of converting them to Stop. Executable routes run, then ask the next native continuation or permission question instead of closing the turn.
 
@@ -237,5 +237,3 @@ If a large native prompt fails because of runtime validation:
 | Treating Review First as a stopping point | Show evidence, ask follow-up questions, then return to the originating continuation gate. |
 | Omitting the terminal gate option | Keep `Stop` available at intermediate top-level closeout gates and `Done` available only at verified final gates. |
 | Proceeding after a rejected native prompt | Fail loudly, then retry sequentially without losing routes. |
-
-

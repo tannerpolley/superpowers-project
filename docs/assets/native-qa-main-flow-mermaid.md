@@ -7,12 +7,12 @@ This is the simplified Mermaid companion to `native-qa-main-flow.svg`. It shows 
 flowchart TB
     start(["Start"])
     rule["First-level gate rule<br/>Continue? = Yes / Revisit / Stop<br/>Stop means pause. Done means complete."]
-    initiate["Initiate Workflow<br/>Nested routes: setup, spec, plan, issue, implementation, merge, Doctor"]
+    initiate["Initiate Workflow<br/>Nested routes: setup, spec/audit, plan, issue, implementation, merge, align"]
     d_initiate{"Continue?<br/>from router<br/>Yes / Revisit / Stop"}
     revisit_initiate["Revisit Route<br/>review routing and choose another entry"]
     stop_initiate["Stop"]
 
-    setup["Setup Project<br/>Nested routes: roadmap, milestones, tracker, GitHub Project board, Doctor"]
+    setup["Setup Project<br/>Nested routes: roadmap, milestones, tracker, GitHub Project board, align"]
     d_setup{"Continue?<br/>from setup<br/>Yes / Revisit / Stop"}
     revisit_setup["Revisit Setup<br/>repair roadmap, tracker, board, or context"]
     stop_setup["Stop"]
@@ -21,6 +21,12 @@ flowchart TB
     d_brainstorm{"Continue?<br/>from brainstorm<br/>Yes / Revisit / Stop"}
     revisit_brainstorm["Revisit Spec<br/>review assumptions, grill, or revise scope"]
     stop_brainstorm["Stop"]
+
+    d_spec_or_audit{"Choose spec route?<br/>new direction or existing findings"}
+    audit_project["Audit Project<br/>Review existing code/workflows and write P-coded findings spec"]
+    d_audit_project{"Continue?<br/>from audit findings<br/>Yes / Revisit / Stop"}
+    revisit_audit["Revisit Audit<br/>review findings, gather evidence, or rerun focused audit"]
+    stop_audit_project["Stop"]
 
     plan["Write Plan<br/>Nested revisit routes: review, grill, rescope"]
     d_plan{"Continue?<br/>from plan<br/>Yes / Revisit / Stop"}
@@ -52,11 +58,11 @@ flowchart TB
     revisit_merge["Revisit Merge<br/>review checks, cleanup, or closeout proof"]
     stop_merge["Stop"]
 
-    audit["Audit Project<br/>Optional Doctor check for drift, sync, trackers, and artifacts"]
-    d_audit{"Healthy?<br/>Done = complete<br/>Revisit = repair<br/>Stop = pause"}
-    revisit_audit["Revisit Audit<br/>repair drift and run Doctor again"]
-    stop_audit["Stop"]
-    done(["Done"])
+    align["Align Project<br/>Optional alignment check for drift, sync, trackers, and artifacts"]
+    d_align{"Continue?<br/>from alignment<br/>Yes / Revisit / Stop"}
+    align_repair["Repair Route<br/>apply repair or prepare planning work"]
+    revisit_align["Revisit Align<br/>repair drift and run Align again"]
+    stop_align["Stop"]
 
     subgraph gate_initiate[" "]
         direction LR
@@ -71,6 +77,16 @@ flowchart TB
     subgraph gate_brainstorm[" "]
         direction LR
         revisit_brainstorm ~~~ d_brainstorm ~~~ stop_brainstorm
+    end
+
+    subgraph spec_choices[" "]
+        direction LR
+        brainstorm ~~~ d_spec_or_audit ~~~ audit_project
+    end
+
+    subgraph gate_audit_project[" "]
+        direction LR
+        revisit_audit ~~~ d_audit_project ~~~ stop_audit_project
     end
 
     subgraph gate_plan[" "]
@@ -108,9 +124,9 @@ flowchart TB
         revisit_merge ~~~ d_merge ~~~ stop_merge
     end
 
-    subgraph gate_audit[" "]
+    subgraph gate_align[" "]
         direction LR
-        revisit_audit ~~~ d_audit ~~~ stop_audit
+        revisit_align ~~~ d_align ~~~ stop_align
     end
 
     start --> rule --> initiate --> d_initiate
@@ -119,14 +135,22 @@ flowchart TB
     d_initiate -->|Stop| stop_initiate
 
     setup --> d_setup
-    d_setup -->|Yes| brainstorm
+    d_setup -->|Yes| d_spec_or_audit
     d_setup -->|Revisit| revisit_setup --> setup
     d_setup -->|Stop| stop_setup
+
+    d_spec_or_audit -->|Brainstorm Spec| brainstorm
+    d_spec_or_audit -->|Audit Project| audit_project
 
     brainstorm --> d_brainstorm
     d_brainstorm -->|Yes| plan
     d_brainstorm -->|Revisit| revisit_brainstorm --> brainstorm
     d_brainstorm -->|Stop| stop_brainstorm
+
+    audit_project --> d_audit_project
+    d_audit_project -->|Yes| plan
+    d_audit_project -->|Revisit| revisit_audit --> audit_project
+    d_audit_project -->|Stop| stop_audit_project
 
     plan --> d_plan
     d_plan -->|Yes| d_work_route
@@ -154,14 +178,14 @@ flowchart TB
     d_ready -->|Stop| stop_ready
 
     merge --> d_merge
-    d_merge -->|Yes| audit
+    d_merge -->|Yes| align
     d_merge -->|Revisit| revisit_merge --> merge
     d_merge -->|Stop| stop_merge
 
-    audit --> d_audit
-    d_audit -->|Done| done
-    d_audit -->|Revisit| revisit_audit --> audit
-    d_audit -->|Stop| stop_audit
+    align --> d_align
+    d_align -->|Yes| align_repair --> align
+    d_align -->|Revisit| revisit_align --> align
+    d_align -->|Stop| stop_align
 
     classDef start fill:#0f172a,stroke:#020617,color:#ffffff,stroke-width:2px
     classDef skill fill:#dbeafe,stroke:#2563eb,color:#111827,stroke-width:2px
@@ -171,15 +195,16 @@ flowchart TB
     classDef done fill:#dcfce7,stroke:#16a34a,color:#166534,stroke-width:2px
 
     class start start
-    class initiate,setup,brainstorm,plan,implement,create_issues,orchestrate,resolve,merge,audit skill
-    class d_initiate,d_setup,d_brainstorm,d_plan,d_work_route,d_implement,d_create,d_issue_route,d_ready,d_merge,d_audit decision
-    class rule,revisit_initiate,revisit_setup,revisit_brainstorm,revisit_plan,revisit_implement,revisit_create,revisit_ready,revisit_merge,revisit_audit revisit
-    class stop_initiate,stop_setup,stop_brainstorm,stop_plan,stop_implement,stop_create,stop_ready,stop_merge,stop_audit stop
-    class done done
+    class initiate,setup,brainstorm,audit_project,plan,implement,create_issues,orchestrate,resolve,merge,align skill
+    class d_initiate,d_setup,d_spec_or_audit,d_brainstorm,d_audit_project,d_plan,d_work_route,d_implement,d_create,d_issue_route,d_ready,d_merge,d_align decision
+    class rule,align_repair,revisit_initiate,revisit_setup,revisit_brainstorm,revisit_audit,revisit_plan,revisit_implement,revisit_create,revisit_ready,revisit_merge,revisit_align revisit
+    class stop_initiate,stop_setup,stop_brainstorm,stop_audit_project,stop_plan,stop_implement,stop_create,stop_ready,stop_merge,stop_align stop
 
     style gate_initiate fill:transparent,stroke:transparent
     style gate_setup fill:transparent,stroke:transparent
     style gate_brainstorm fill:transparent,stroke:transparent
+    style spec_choices fill:transparent,stroke:transparent
+    style gate_audit_project fill:transparent,stroke:transparent
     style gate_plan fill:transparent,stroke:transparent
     style work_choices fill:transparent,stroke:transparent
     style gate_implement fill:transparent,stroke:transparent
@@ -187,5 +212,5 @@ flowchart TB
     style issue_choices fill:transparent,stroke:transparent
     style gate_ready fill:transparent,stroke:transparent
     style gate_merge fill:transparent,stroke:transparent
-    style gate_audit fill:transparent,stroke:transparent
+    style gate_align fill:transparent,stroke:transparent
 ```

@@ -43,7 +43,7 @@ Shared closeout semantics:
 
 - `skills/advanced-user-input/SKILL.md:12` and `skills/advanced-user-input/SKILL.md:128`: native question shape, top-level `Continue?`, `Yes` / `Revisit` / `Stop`, Custom answer, and terminal `Done` rules.
 - `skills/advanced-user-input/agents/openai.yaml:5`: YAML summary of the same shared closeout contract.
-- Per-skill closeout-contract paragraphs: `skills/initiate-workflow/SKILL.md:65`, `skills/setup-project/SKILL.md:115`, `skills/brainstorm-spec/SKILL.md:83`, `skills/write-plan/SKILL.md:137`, `skills/implement-plan/SKILL.md:100`, `skills/create-issues/SKILL.md:206`, `skills/resolve-issue/SKILL.md:198`, `skills/orchestrate-issues/SKILL.md:94`, `skills/merge-changes/SKILL.md:111`, and `skills/audit-project/SKILL.md:120`.
+- Per-skill closeout-contract paragraphs: `skills/initiate-workflow/SKILL.md:65`, `skills/setup-project/SKILL.md:115`, `skills/brainstorm-spec/SKILL.md:83`, `skills/audit-project/SKILL.md:91`, `skills/write-plan/SKILL.md:137`, `skills/implement-plan/SKILL.md:100`, `skills/create-issues/SKILL.md:206`, `skills/resolve-issue/SKILL.md:198`, `skills/orchestrate-issues/SKILL.md:94`, `skills/merge-changes/SKILL.md:111`, and `skills/align-project/SKILL.md:120`.
 
 Route-specific source ranges:
 
@@ -56,7 +56,8 @@ Route-specific source ranges:
 - Resolve issue: `skills/resolve-issue/SKILL.md:187`, `skills/resolve-issue/SKILL.md:204`, `skills/resolve-issue/SKILL.md:216`, `skills/resolve-issue/SKILL.md:227`, `skills/resolve-issue/SKILL.md:238`, `skills/resolve-issue/SKILL.md:249`; YAML summary at `skills/resolve-issue/agents/openai.yaml:5`.
 - Orchestrate issues: `skills/orchestrate-issues/SKILL.md:100`, `skills/orchestrate-issues/SKILL.md:112`, `skills/orchestrate-issues/SKILL.md:123`, `skills/orchestrate-issues/SKILL.md:134`, `skills/orchestrate-issues/SKILL.md:145`; YAML summary at `skills/orchestrate-issues/agents/openai.yaml:5`.
 - Merge changes: `skills/merge-changes/SKILL.md:80`, `skills/merge-changes/SKILL.md:117`, `skills/merge-changes/SKILL.md:129`, `skills/merge-changes/SKILL.md:141`, `skills/merge-changes/SKILL.md:152`, `skills/merge-changes/SKILL.md:163`, `skills/merge-changes/SKILL.md:174`, `skills/merge-changes/SKILL.md:185`, `skills/merge-changes/SKILL.md:196`; YAML summary at `skills/merge-changes/agents/openai.yaml:5`.
-- Audit project: `skills/audit-project/SKILL.md:128`, `skills/audit-project/SKILL.md:140`, `skills/audit-project/SKILL.md:151`, `skills/audit-project/SKILL.md:162`, `skills/audit-project/SKILL.md:173`, `skills/audit-project/SKILL.md:184`; YAML summary at `skills/audit-project/agents/openai.yaml:5`.
+- Audit project: `skills/audit-project/SKILL.md:99`, `skills/audit-project/SKILL.md:111`, `skills/audit-project/SKILL.md:121`; YAML summary at `skills/audit-project/agents/openai.yaml:5`.
+- Align project: `skills/align-project/SKILL.md:128`, `skills/align-project/SKILL.md:140`, `skills/align-project/SKILL.md:151`, `skills/align-project/SKILL.md:162`, `skills/align-project/SKILL.md:173`, `skills/align-project/SKILL.md:184`; YAML summary at `skills/align-project/agents/openai.yaml:5`.
 
 ## Router Startup
 
@@ -65,9 +66,12 @@ Route-specific source ranges:
 - Startup route mapping:
   - Project setup, roadmap context, tracker board setup, or large-scope project map
     - START `$superpowers-project:setup-project`.
-  - Brainstorming, specs, PRDs, product design, architecture design, or unresolved early project decisions
+  - Brainstorming, specs, PRDs, product design, architecture design, or unresolved early project decisions for new work
     - START `$superpowers-project:brainstorm-spec`.
       - Companion method: `superpowers:brainstorming`.
+  - Codebase audit, workflow review, diagnosis findings, maintainability findings, architecture findings, or existing behavior that should become a repair spec
+    - START `$superpowers-project:audit-project`.
+      - Companion methods: `diagnose`, `thermo-nuclear-code-quality-review`, `improve-codebase-architecture`, or framework doctors such as `react-doctor` when applicable.
   - Implementation planning from a spec, issue mirror, or approved direct request
     - START `$superpowers-project:write-plan`.
       - Companion method: `superpowers:writing-plans`.
@@ -89,8 +93,8 @@ Route-specific source ranges:
   - PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof
     - START `$superpowers-project:merge-changes`.
       - Companion method: `superpowers:finishing-a-development-branch`, with upstream verification proof already satisfied.
-  - Drift audit, migration, label review, milestone review, or live sync review
-    - START `$superpowers-project:audit-project`.
+  - Structure alignment, migration, label review, milestone review, tracker alignment, issue mirror alignment, or live sync review
+    - START `$superpowers-project:align-project`.
 
 - `project_issue_resolution_route`
   - Prompt: not specified in current `initiate-workflow` or `resolve-issue` skill text.
@@ -151,8 +155,8 @@ Route-specific source ranges:
                 - `Revise Setup`
                   - Update setup artifacts from follow-up answers.
                   - LOOP `project_setup_next_step`.
-          - `Run Doctor`
-            - START `$superpowers-project:audit-project`.
+          - `Run Align`
+            - START `$superpowers-project:align-project`.
     - Stop
       - STOP.
 
@@ -567,8 +571,8 @@ Premerge proof is clean for <PR URL or local branch>. Merge now?
             - `project_merge_repair_route`
               - Prompt: `Which closeout repair route should run?`
               - Options:
-                - `Run Doctor`
-                  - START `$superpowers-project:audit-project` for post-merge drift audit or live sync review.
+                - `Run Align`
+                  - START `$superpowers-project:align-project` for post-merge drift alignment or live sync review.
                 - `Repair Or Cleanup`
                   - ASK `project_merge_repair_cleanup_route`.
                   - `project_merge_repair_cleanup_route`
@@ -583,6 +587,37 @@ Premerge proof is clean for <PR URL or local branch>. Merge now?
 
 ## Audit Project
 
+- `project_audit_next_step`
+  - Prompt: `Should I continue on with the workflow?`
+  - Options:
+    - Yes (`Prepare Repair Work`)
+      - ASK `project_audit_progress_route`.
+      - `project_audit_progress_route`
+        - Prompt: `Which repair route should start from the findings spec?`
+        - Options:
+          - `Write Plan`
+            - START `$superpowers-project:write-plan` from the P-coded findings spec.
+          - `Create Issues`
+            - START `$superpowers-project:create-issues` only when the findings are issue-ready.
+    - Revisit (`Review Or Extend Findings`)
+      - ASK `project_audit_revisit_route`.
+      - `project_audit_revisit_route`
+        - Prompt: `How should I revisit these findings?`
+        - Options:
+          - `Review First`
+            - Show the findings spec and evidence summary.
+            - LOOP `project_audit_next_step`.
+          - `Gather More Evidence`
+            - Inspect the requested source or load another companion review skill.
+            - LOOP `project_audit_next_step`.
+          - `Rerun Focused Audit`
+            - Rerun the applicable companion skill on a narrower scope.
+            - LOOP `project_audit_next_step`.
+    - Stop
+      - STOP.
+
+## Align Project
+
 - Final Done eligibility:
   - `Done` is valid only when:
     - The audit result is healthy.
@@ -596,50 +631,50 @@ Premerge proof is clean for <PR URL or local branch>. Merge now?
   - If findings remain:
     - `Stop` remains the terminal option.
 
-- `project_doctor_next_step`
+- `project_align_next_step`
   - Prompt: `Should I continue on with the workflow?`
   - Options:
     - Yes (`Apply Or Prepare Repair`)
-      - ASK `project_doctor_repair_group`.
-      - `project_doctor_repair_group`
+      - ASK `project_align_repair_group`.
+      - `project_align_repair_group`
         - Prompt: `How should this audit turn into repair work?`
         - Options:
           - `Apply Repair`
             - APPLY an approved, exact repair plan.
           - `Prepare Repair Work`
-            - ASK `project_doctor_prepare_route`.
-            - `project_doctor_prepare_route`
+            - ASK `project_align_prepare_route`.
+            - `project_align_prepare_route`
               - Prompt: `Which repair artifact should be prepared?`
               - Options:
                 - `Create Planning Spec`
                   - START `$superpowers-project:brainstorm-spec` for a larger repair design.
                 - `Plan Or Issue Repair`
-                  - ASK `project_doctor_plan_issue_route`.
-                  - `project_doctor_plan_issue_route`
+                  - ASK `project_align_plan_issue_route`.
+                  - `project_align_plan_issue_route`
                     - Prompt: `Should I plan the repair or create an issue?`
                     - Options:
                       - `Plan Repair`
                         - START `$superpowers-project:write-plan` from the audit findings.
                       - `Create Issue`
                         - START `$superpowers-project:create-issues` only when the repair is already issue-ready.
-    - Revisit (`Rerun / Review Audit`)
-      - ASK `project_doctor_reiteration_route`.
-      - `project_doctor_reiteration_route`
+    - Revisit (`Rerun / Review Alignment`)
+      - ASK `project_align_reiteration_route`.
+      - `project_align_reiteration_route`
         - Prompt: `How should I revisit this audit?`
         - Options:
-          - `Run Audit Again`
-            - START `$superpowers-project:audit-project` after changes or new GitHub evidence.
+          - `Run Align Again`
+            - START `$superpowers-project:align-project` after changes or new GitHub evidence.
           - `Review Or Gather Evidence`
-            - ASK `project_doctor_review_evidence_route`.
-            - `project_doctor_review_evidence_route`
+            - ASK `project_align_review_evidence_route`.
+            - `project_align_review_evidence_route`
               - Prompt: `Should I review the audit or gather more evidence?`
               - Options:
                 - `Review First`
                   - Show the audit summary and rendered artifacts for user review.
-                  - LOOP `project_doctor_next_step`.
+                  - LOOP `project_align_next_step`.
                 - `Gather More Evidence`
                   - Inspect the requested source.
-                  - LOOP `project_doctor_next_step`.
+                  - LOOP `project_align_next_step`.
     - Stop
       - STOP.
 
@@ -651,7 +686,7 @@ All `Stop` leaves are terminal pause leaves, not proof of completed workflow suc
 
 - `project_merge_final_health_gate` after clean merge closeout proof.
 
-`audit-project` defines Done eligibility but the current `SKILL.md` block lists `project_doctor_next_step` with `Stop`, not an explicit `Done` option. Treat an audit `Done` UI as valid only if a healthy audit final gate is explicitly asked and the clean-worktree guard passes.
+`align-project` defines Done eligibility but the current `SKILL.md` block lists `project_align_next_step` with `Stop`, not an explicit `Done` option. Treat an alignment `Done` UI as valid only if a healthy audit final gate is explicitly asked and the clean-worktree guard passes.
 
 `Hold` leaves are terminal hold leaves:
 

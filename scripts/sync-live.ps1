@@ -73,6 +73,7 @@ $retiredSkillNames = @(
     "create-issues",
     "resolve-issue",
     "merge-changes",
+    "align-project",
     "audit-project"
 )
 

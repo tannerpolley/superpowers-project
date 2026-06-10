@@ -50,7 +50,7 @@ try {
     try {
         Assert-Contains -Text $metadata -Needle 'setup' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers/PROJECT_CONTEXT.md' -Reason "metadata missing project context path"
-        foreach ($needle in @('summarize','project_setup_next_step','Brainstorm New Spec','Write Plan','Create Issues','Run Doctor','Stop','start the selected next skill')) {
+        foreach ($needle in @('summarize','project_setup_next_step','Brainstorm New Spec','Write Plan','Create Issues','Run Align','Stop','start the selected next skill')) {
             Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing continuation route: $needle"
         }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"
@@ -72,7 +72,7 @@ try {
             'Brainstorm New Spec',
             'Write Plan',
             'Create Issues',
-            'Run Doctor',
+            'Run Align',
             'Stop'
         )) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing continuation gate text: $needle"
@@ -189,8 +189,8 @@ try {
     
     try {
         foreach ($needle in @(
-            "Nested Yes-route menus must not include Stop / Done",
-            "Nested Revisit-route menus must not include Stop / Done",
+            "Nested Yes-route menus must not include terminal options",
+            "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
@@ -205,9 +205,9 @@ try {
             $block = $skill.Substring($current.Index, $nextStart - $current.Index)
             $questionId = $current.Groups[1].Value
             if ($questionId.EndsWith("_next_step")) { continue }
-            if ($block.Contains('Right: `Stop / Done`: break the continuation loop.')) { throw "nested question $questionId must not repeat Stop / Done" }
+            if ($block.Contains('Right: terminal option: break the continuation loop.')) { throw "nested question $questionId must not repeat stale terminal label" }
         }
-        if ($metadata.Contains("Right Stop / Done")) { throw "metadata must not use old Right Stop / Done wording" }
+        if ($metadata.Contains("Right terminal label")) { throw "metadata must not use old Right terminal label wording" }
         Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $false -Reason $_.Exception.Message }
 $failed = @($results | Where-Object { -not $_.ok })
@@ -218,4 +218,3 @@ $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
-

@@ -50,7 +50,7 @@
 
 - Active governed `SKILL.md` closeout gates no longer expose `Down`, `Left`, or `Right` as user-visible route labels.
 - Active governed `agents/openai.yaml` files no longer advertise old closeout route wording such as `with Down`, `Down Continue`, `Down Merge`, or `Right Stop`.
-- Nested Yes-route and Revisit-route question blocks no longer contain `Right: Stop`, `Stop / Done`, or equivalent terminal wording.
+- Nested Yes-route and Revisit-route question blocks no longer contain `Right: Stop`, `stale terminal label`, or equivalent terminal wording.
 - Governed skill text states that the agent must not get out of the loop by itself before a user-selected top-level Stop or verified final Done gate.
 - Governed skill text treats custom review, revision, repair, evidence, route-change, or stronger-loop answers as non-terminal Revisit behavior.
 - Governed skill text forbids recommending Stop before verified final completion.
@@ -85,7 +85,7 @@ Run these commands before claiming the implementation complete:
 ```powershell
 rg -n '^- (Down|Left|Right):' skills -g SKILL.md
 rg -n 'with Down|Down Continue|Down Merge|Right Stop|Down default progress' skills -g openai.yaml
-rg -n 'Right: `Stop|Right: Stop|Stop / Done|No / Stop / Done' skills README.md docs/assets docs/superpowers/closeout-startup-decision-tree*.md
+rg -n 'Right: `Stop|Right: Stop|stale terminal label|stale terminal option' skills README.md docs/assets docs/superpowers/closeout-startup-decision-tree*.md
 rg -n 'Recommend Stop only|recommended.*Stop.*blocker|Stop.*recommended.*locally complete|Stop.*recommended.*validation passed' skills README.md docs/superpowers/closeout-startup-decision-tree*.md
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
@@ -170,8 +170,8 @@ Update the nested block scanner so any non-top-level route question fails if it 
 ```text
 Right: `Stop`
 Right: Stop
-Stop / Done
-No / Stop / Done
+stale terminal label
+stale terminal option
 ```
 
 Top-level closeout gates and verified final health gates should be identified explicitly, not guessed loosely.
@@ -343,7 +343,7 @@ Mirror the source skill rule that the agent must not exit the loop by itself and
 
 - [ ] **Step 1: Update README stale recommendation wording**
 
-Replace `No / Stop / Done` recommendation text with phase-specific wording:
+Replace `stale terminal option` recommendation text with phase-specific wording:
 
 ```text
 The recommended option should be Yes when a safe forward route exists and Revisit when review, repair, evidence, source alignment, validation, or clarification is still needed. Stop remains selectable for user control but should not be recommended before verified final completion. Done is reserved for verified final gates.
@@ -370,7 +370,7 @@ Maintain:
 
 - [ ] **Step 4: Update asset tests**
 
-Extend `scripts/test-native-qa-svg.ps1` so README/SVG/Mermaid checks reject stale `No / Stop / Done` recommendation wording and old direction labels in user-facing workflow docs.
+Extend `scripts/test-native-qa-svg.ps1` so README/SVG/Mermaid checks reject stale `stale terminal option` recommendation wording and old direction labels in user-facing workflow docs.
 
 ## Task 6: Update Scenario Tests
 
@@ -382,8 +382,8 @@ Extend `scripts/test-native-qa-svg.ps1` so README/SVG/Mermaid checks reject stal
 Each governed scenario suite should assert the relevant skill and metadata contain:
 
 ```text
-Nested Yes-route menus must not include Stop / Done
-Nested Revisit-route menus must not include Stop / Done
+Nested Yes-route menus must not include terminal options
+Nested Revisit-route menus must not include terminal options
 the agent must not get out of the loop by itself
 must not recommend Stop before verified final completion
 ```
@@ -395,8 +395,8 @@ Each suite should inspect its owned nested route blocks and fail on:
 ```text
 Right: `Stop`
 Right: Stop
-Stop / Done
-No / Stop / Done
+stale terminal label
+stale terminal option
 ```
 
 - [ ] **Step 3: Run all scenario suites**

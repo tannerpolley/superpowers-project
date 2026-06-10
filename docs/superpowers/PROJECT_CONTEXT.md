@@ -40,11 +40,13 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 - `setup-project`
 - `brainstorm-spec`
 - `write-plan`
+- `implement-plan`
 - `create-issues`
 - `resolve-issue`
 - `orchestrate-issues`
 - `merge-changes`
 - `audit-project`
+- `align-project`
 
 ## Current Open Questions
 

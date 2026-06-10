@@ -80,8 +80,8 @@
     <text x="100" y="3996" class="depth-label">Depth 6</text>
     <line id="depth-7-line" x1="260" y1="4720" x2="2940" y2="4720" class="depth-line" stroke-dasharray="12 14" />
     <text x="100" y="4726" class="depth-label">Depth 7</text>
-    <line id="depth-done-line" x1="260" y1="5190" x2="2940" y2="5190" class="depth-line" stroke-dasharray="12 14" />
-    <text x="100" y="5196" class="depth-label">Done</text>
+    <line id="depth-8-line" x1="260" y1="5190" x2="2940" y2="5190" class="depth-line" stroke-dasharray="12 14" />
+    <text x="100" y="5196" class="depth-label">Depth 8</text>
   </g>
 
   <rect x="1405" y="140" width="190" height="58" rx="29" class="start" />
@@ -91,7 +91,7 @@
   <rect id="skill-initiate" x="1240" y="250" width="520" height="100" rx="5" class="skill main-skill" />
   <text x="1500" y="286" class="node-title">Initiate Workflow</text>
   <text x="1500" y="314" class="node-text">route setup, spec, plan, issue,</text>
-  <text x="1500" y="337" class="node-text">implementation, merge, or Doctor work</text>
+  <text x="1500" y="337" class="node-text">implementation, merge, audit, or align work</text>
   <line id="down-initiate-d1" x1="1500" y1="350" x2="1500" y2="420" class="arrow down-route" />
   <polygon id="decision-initiate" points="1500,420 1650,480 1500,540 1350,480" class="decision" />
   <text x="1500" y="474" class="decision-title">Continue?</text>
@@ -128,12 +128,18 @@
   <polyline id="stop-setup" points="1650,960 2540,960" class="arrow stop-route" />
   <text x="2095" y="936" class="label">Stop</text>
   <line id="down-d2-brainstorm" x1="1500" y1="1020" x2="1500" y2="1210" class="arrow down-route" />
+  <polyline id="route-setup-audit-project" points="1500,1020 2210,1020 2210,1210" class="arrow down-route peer-route" />
   <text x="1610" y="1130" class="label">Yes</text>
+  <text x="2060" y="1010" class="small-label">Audit</text>
 
   <rect id="skill-brainstorm" x="1240" y="1210" width="520" height="100" rx="5" class="skill main-skill" />
   <text x="1500" y="1246" class="node-title">Brainstorm Spec</text>
   <text x="1500" y="1274" class="node-text">inspect context, grill assumptions,</text>
   <text x="1500" y="1297" class="node-text">manual planning or Auto Mode</text>
+  <rect id="skill-audit-project" x="1940" y="1210" width="540" height="100" rx="5" class="skill" />
+  <text x="2210" y="1246" class="node-title">Audit Project</text>
+  <text x="2210" y="1274" class="node-text">review existing code/workflows</text>
+  <text x="2210" y="1297" class="node-text">and write P-coded findings</text>
   <line id="down-brainstorm-d3" x1="1500" y1="1310" x2="1500" y2="1380" class="arrow down-route" />
   <polygon id="decision-brainstorm" points="1500,1380 1650,1440 1500,1500 1350,1440" class="decision" />
   <text x="1500" y="1434" class="decision-title">Continue?</text>
@@ -271,26 +277,27 @@
   <line id="down-d9-audit" x1="1500" y1="4555" x2="1500" y2="4885" class="arrow down-route" />
   <text x="1610" y="4720" class="label">Yes</text>
 
-  <rect id="skill-audit" x="1240" y="4885" width="520" height="100" rx="5" class="skill main-skill" />
-  <text x="1500" y="4921" class="node-title">Audit Project</text>
-  <text x="1500" y="4949" class="node-text">optional Doctor check for drift,</text>
+  <rect id="skill-align" x="1240" y="4885" width="520" height="100" rx="5" class="skill main-skill" />
+  <text x="1500" y="4921" class="node-title">Align Project</text>
+  <text x="1500" y="4949" class="node-text">optional alignment check for drift,</text>
   <text x="1500" y="4972" class="node-text">sync, trackers, and artifacts</text>
-  <line id="down-audit-d10" x1="1500" y1="4985" x2="1500" y2="5045" class="arrow down-route" />
-  <polygon id="decision-audit" points="1500,5045 1650,5105 1500,5165 1350,5105" class="decision" />
-  <text x="1500" y="5099" class="decision-title">Healthy?</text>
-  <text x="1500" y="5123" class="decision-text">verified final gate</text>
-  <rect id="side-audit" x="140" y="5070" width="470" height="70" rx="5" class="side" />
-  <text x="375" y="5099" class="node-title">Revisit Audit</text>
+  <line id="down-align-d10" x1="1500" y1="4985" x2="1500" y2="5045" class="arrow down-route" />
+  <polygon id="decision-align" points="1500,5045 1650,5105 1500,5165 1350,5105" class="decision" />
+  <text x="1500" y="5099" class="decision-title">Continue?</text>
+  <text x="1500" y="5123" class="decision-text">from alignment</text>
+  <rect id="side-align" x="140" y="5070" width="470" height="70" rx="5" class="side" />
+  <text x="375" y="5099" class="node-title">Revisit Align</text>
   <text x="375" y="5126" class="node-text">repair or create new plan</text>
-  <polyline id="choice-audit" points="1350,5105 610,5105" class="arrow revise-choice" />
-  <polyline id="return-audit" points="375,5070 375,4935 1240,4935" class="arrow revise-return" />
+  <polyline id="choice-align" points="1350,5105 610,5105" class="arrow revise-choice" />
+  <polyline id="return-align" points="375,5070 375,4935 1240,4935" class="arrow revise-return" />
   <text x="980" y="5081" class="small-label">Revisit</text>
   <rect x="2540" y="5073" width="260" height="64" rx="32" class="stop" />
   <text x="2670" y="5105" class="stop-text">Stop</text>
-  <polyline id="stop-audit" points="1650,5105 2540,5105" class="arrow stop-route" />
+  <polyline id="stop-align" points="1650,5105 2540,5105" class="arrow stop-route" />
   <text x="2095" y="5081" class="label">Stop</text>
-  <line id="down-d10-done" x1="1500" y1="5165" x2="1500" y2="5205" class="arrow down-route final-done-route" />
-  <text x="1625" y="5190" class="label">Done</text>
-  <rect x="1415" y="5205" width="170" height="50" rx="25" class="done" />
-  <text x="1500" y="5230" class="done-text">Done</text>
+  <line id="down-d10-align-repair" x1="1500" y1="5165" x2="1500" y2="5205" class="arrow down-route" />
+  <text x="1625" y="5190" class="label">Yes</text>
+  <rect id="align-repair-route" x="1240" y="5205" width="520" height="74" rx="5" class="side" />
+  <text x="1500" y="5237" class="node-title">Repair Route</text>
+  <text x="1500" y="5263" class="node-text">apply or prepare repair, then rerun Align</text>
 </svg>

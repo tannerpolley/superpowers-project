@@ -243,7 +243,7 @@ Invoke-Scenario "merge contract text is present" {
         "machine-readable artifacts",
         "Do not ask for approval first and explain later",
         "project_merge_next_step",
-        "Run Doctor",
+        "Run Align",
         "Resolve Another",
         "Review Closeout",
         "Stop",
@@ -265,7 +265,7 @@ Invoke-Scenario "metadata is present" {
     Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
     Assert-Contains $metadata "issue-backed PR URL" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
-    foreach ($needle in @("summarize", "artifact review gate", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_merge_next_step", "Run Doctor", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
+    foreach ($needle in @("summarize", "artifact review gate", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_merge_next_step", "Run Align", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
         Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
     }
     foreach ($needle in @("pr-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "preauthorized-after-clean-premerge")) {
@@ -705,8 +705,8 @@ Invoke-Scenario "merge terminal closeout accepts verified final done" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         $metadataText = Get-Content -LiteralPath $metadataFile -Raw
         foreach ($needle in @(
-            "Nested Yes-route menus must not include Stop / Done",
-            "Nested Revisit-route menus must not include Stop / Done",
+            "Nested Yes-route menus must not include terminal options",
+            "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
@@ -721,13 +721,12 @@ Invoke-Scenario "merge terminal closeout accepts verified final done" {
             $block = $text.Substring($current.Index, $nextStart - $current.Index)
             $questionId = $current.Groups[1].Value
             if ($questionId.EndsWith("_next_step")) { continue }
-            if ($block.Contains('Right: `Stop / Done`: break the continuation loop.')) { throw "nested question $questionId must not repeat Stop / Done" }
+            if ($block.Contains('Right: terminal option: break the continuation loop.')) { throw "nested question $questionId must not repeat stale terminal label" }
         }
-        if ($metadataText.Contains("Right Stop / Done")) { throw "metadata must not use old Right Stop / Done wording" }
+        if ($metadataText.Contains("Right terminal label")) { throw "metadata must not use old Right terminal label wording" }
         Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $true -Reason "passed"
     } catch { Add-Result -Name "native continuation policy avoids nested stop routes" -Ok $false -Reason $_.Exception.Message }
 $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
-

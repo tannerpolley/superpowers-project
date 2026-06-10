@@ -20,6 +20,7 @@ try {
         "advanced-user-input",
         "initiate-workflow",
         "setup-project",
+        "align-project",
         "audit-project",
         "brainstorm-spec",
         "write-plan",
@@ -49,7 +50,7 @@ try {
     Add-Check -Name "frontmatter names" -Ok $true -Reason "passed"
 
     $readme = Get-Content -LiteralPath (Join-Path $repoRoot "README.md") -Raw
-    foreach ($needle in @('$superpowers-project:initiate-workflow', '$superpowers-project:setup-project', '$superpowers-project:write-plan', '$superpowers-project:create-issues', '$superpowers-project:resolve-issue', '$superpowers-project:orchestrate-issues', '$superpowers-project:merge-changes', '$superpowers-project:audit-project')) {
+    foreach ($needle in @('$superpowers-project:initiate-workflow', '$superpowers-project:setup-project', '$superpowers-project:write-plan', '$superpowers-project:create-issues', '$superpowers-project:resolve-issue', '$superpowers-project:orchestrate-issues', '$superpowers-project:merge-changes', '$superpowers-project:audit-project', '$superpowers-project:align-project')) {
         Assert-Contains -Text $readme -Needle $needle -Reason "README missing migrated prompt: $needle"
     }
     Add-Check -Name "README prompt surface" -Ok $true -Reason "passed"

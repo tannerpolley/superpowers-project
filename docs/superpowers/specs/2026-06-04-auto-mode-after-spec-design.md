@@ -7,7 +7,7 @@ Add an Auto Mode option after a Superpowers Project spec is created so an agent 
 ## Project Context Evidence
 
 - `docs/superpowers/PROJECT_CONTEXT.md` defines the durable lifecycle as `spec -> plan -> issue`, with execution handled by native `/goal` or goal tools plus Superpowers execution skills.
-- `README.md` documents native continuation gates where each skill asks `Continue?` with `Yes`, `Revisit`, and `No / Stop / Done`, then asks nested route questions.
+- `README.md` documents native continuation gates where each skill asks `Continue?` with `Yes`, `Revisit`, and `stale terminal option`, then asks nested route questions.
 - `skills/brainstorm-spec/SKILL.md` owns spec creation and currently routes from a saved spec into planning choices.
 - `skills/write-plan/SKILL.md` requires planning grills and native user input when material decisions remain before a plan is saved.
 - `skills/implement-plan/SKILL.md` provides non-issue execution from an approved plan, requires native `/goal`, development branch execution, publish permission, and merge-ready proof.
@@ -30,7 +30,7 @@ Implement Auto Mode as a workflow contract over existing skills, not as a new ex
 
 - `Yes`
 - `Revisit`
-- `No / Stop / Done`
+- `stale terminal option`
 
 When the user selects `Yes`, the nested route should offer Auto Mode as the path that starts continuous execution from the saved spec. Selecting Auto Mode asks one native authorization question, tentatively named `project_auto_mode_authorization`, and writes or carries a structured authorization ledger.
 

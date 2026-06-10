@@ -24,7 +24,7 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/orchestrate-issues/scripts/validate-worker-handoff.ps1") -Destination (Join-Path $temp "skills/orchestrate-issues/scripts/validate-worker-handoff.ps1")
     Set-Content -LiteralPath (Join-Path $temp "docs/superpowers/plans/2026-06-03-audit-project-audit-gate-plan.md") -Value "# Plan`n" -Encoding utf8NoBOM
     $issueText = @(
-        "# Project Doctor Audit Gate",
+        "# Project Align Audit Gate",
         "",
         "**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/10",
         "**GitHub Milestone:** M1 - Source Of Truth",
@@ -108,8 +108,8 @@ try {
     
     Invoke-Scenario "native continuation policy avoids nested stop routes" {
         foreach ($needle in @(
-            "Nested Yes-route menus must not include Stop / Done",
-            "Nested Revisit-route menus must not include Stop / Done",
+            "Nested Yes-route menus must not include terminal options",
+            "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
@@ -124,9 +124,9 @@ try {
             $block = $skill.Substring($current.Index, $nextStart - $current.Index)
             $questionId = $current.Groups[1].Value
             if ($questionId.EndsWith("_next_step")) { continue }
-            if ($block.Contains('Right: `Stop / Done`: break the continuation loop.')) { throw "nested question $questionId must not repeat Stop / Done" }
+            if ($block.Contains('Right: terminal option: break the continuation loop.')) { throw "nested question $questionId must not repeat stale terminal label" }
         }
-        if ($metadata.Contains("Right Stop / Done")) { throw "metadata must not use old Right Stop / Done wording" }
+        if ($metadata.Contains("Right terminal label")) { throw "metadata must not use old Right terminal label wording" }
     }
 $results | ConvertTo-Json -Depth 8
     if (@($results | Where-Object { -not $_.ok }).Count -gt 0) { exit 1 }
@@ -135,4 +135,3 @@ $results | ConvertTo-Json -Depth 8
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
-

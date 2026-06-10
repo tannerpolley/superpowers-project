@@ -115,8 +115,8 @@ $scenarios = @(
         $text = Get-Content -LiteralPath $skillFile -Raw
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
         foreach ($needle in @(
-            "Nested Yes-route menus must not include Stop / Done",
-            "Nested Revisit-route menus must not include Stop / Done",
+            "Nested Yes-route menus must not include terminal options",
+            "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.",
             "Do not recommend Stop merely because the branch is clean, validated, or already pushed"
@@ -132,12 +132,12 @@ $scenarios = @(
             $block = $text.Substring($current.Index, $nextStart - $current.Index)
             $questionId = $current.Groups[1].Value
             if ($questionId.EndsWith("_next_step")) { continue }
-            if ($block.Contains('Right: `Stop / Done`: break the continuation loop.')) {
-                throw "nested question $questionId must not repeat Stop / Done"
+            if ($block.Contains('Right: terminal option: break the continuation loop.')) {
+                throw "nested question $questionId must not repeat stale terminal label"
             }
         }
 
-        if ($metadata.Contains("Right Stop / Done")) { throw "metadata must not use old Right Stop / Done wording" }
+        if ($metadata.Contains("Right terminal label")) { throw "metadata must not use old Right terminal label wording" }
     }
     Invoke-Scenario "contract rejects issue mirror and closure claims" {
         $repo = New-FixtureRepo

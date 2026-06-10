@@ -77,6 +77,7 @@ $workflowSkillNames = @(
     "create-issues",
     "resolve-issue",
     "merge-changes",
+    "align-project",
     "audit-project"
 )
 $intermediateSkillNames = @(
@@ -87,9 +88,10 @@ $intermediateSkillNames = @(
     "write-plan",
     "implement-plan",
     "create-issues",
-    "resolve-issue"
+    "resolve-issue",
+    "audit-project"
 )
-$finalCapableSkillNames = @("merge-changes", "audit-project")
+$finalCapableSkillNames = @("merge-changes", "align-project")
 
 foreach ($skillName in $workflowSkillNames) {
     $skillPath = Join-Path $skillRoot "$skillName\SKILL.md"
@@ -125,17 +127,15 @@ foreach ($skillName in $workflowSkillNames) {
         '## Native Continuation Gate',
         'Continue?',
         'Yes',
-        'No',
         'Revisit',
         'Stop',
         'top-level closeout question must use exactly three trajectory options',
         'Do not show Continue children as peer top-level options',
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
         'Custom Other',
-        'rendered Markdown artifacts',
         'return to the originating continuation gate',
-        'Nested Yes-route menus must not include Stop / Done',
-        'Nested Revisit-route menus must not include Stop / Done',
+        'Nested Yes-route menus must not include terminal options',
+        'Nested Revisit-route menus must not include terminal options',
         'Recommend Yes when at least one safe forward route exists',
         'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
         'Custom Other never terminates a workflow directly',
@@ -145,6 +145,13 @@ foreach ($skillName in $workflowSkillNames) {
     }
 
     Add-Check $checks "$skillName contains artifact review gate" ($text.Contains('artifact review gate')) "$skillPath must contain closeout artifact review wording"
+    Add-Check $checks "$skillName contains rendered artifact wording" (
+        $text.Contains('rendered Markdown artifacts') -or
+        $text.Contains('render created or revised Markdown artifacts')
+    ) "$skillPath must require rendering or showing created/revised Markdown artifacts at closeout"
+    Add-Check $checks "$skillName contains strict artifact display" ($text.Contains('Strict artifact display is mandatory')) "$skillPath must force strict artifact display before closeout"
+    Add-Check $checks "$skillName forbids path-only artifact claims" ($text.Contains('Do not merely say something changed')) "$skillPath must forbid path-only or prose-only artifact closeout claims"
+    Add-Check $checks "$skillName contains agent judgment summary" ($text.Contains("what remains unsatisfactory or risky") -and $text.Contains("the agent's own feedback/opinion")) "$skillPath must require the agent's own post-artifact judgment summary"
     Add-Check $checks "$skillName contains machine-readable artifact summary" ($text.Contains('machine-readable artifacts')) "$skillPath must summarize machine-readable artifacts at closeout"
     Add-Check $checks "$skillName contains broader project context closeout wording" ($text.Contains('broader project context')) "$skillPath must connect closeout findings to the broader project context"
     Add-Check $checks "$skillName contains recommended next route wording" (
@@ -181,17 +188,15 @@ foreach ($skillName in $workflowSkillNames) {
         'must not recommend Stop before verified final completion',
         'Continue?',
         'Yes',
-        'No',
         'Revisit',
         'Stop',
         'top-level closeout question must use exactly three trajectory options',
         'Do not show Continue children as peer top-level options',
         'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
         'Custom Other',
-        'rendered Markdown artifacts',
         'return to the originating continuation gate',
-        'Nested Yes-route menus must not include Stop / Done',
-        'Nested Revisit-route menus must not include Stop / Done',
+        'Nested Yes-route menus must not include terminal options',
+        'Nested Revisit-route menus must not include terminal options',
         'Recommend Yes when at least one safe forward route exists',
         'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
         'fresh confirmation question instead of terminating from Other'
@@ -199,6 +204,13 @@ foreach ($skillName in $workflowSkillNames) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
     }
     Add-Check $checks "$skillName metadata contains artifact review gate" ($agentText.Contains('artifact review gate')) "$agentPath must contain closeout artifact review wording"
+    Add-Check $checks "$skillName metadata contains rendered artifact wording" (
+        $agentText.Contains('rendered Markdown artifacts') -or
+        $agentText.Contains('created or revised')
+    ) "$agentPath must require rendering or showing created/revised Markdown artifacts at closeout"
+    Add-Check $checks "$skillName metadata contains strict artifact display" ($agentText.Contains('Strict artifact display is mandatory')) "$agentPath must force strict artifact display before closeout"
+    Add-Check $checks "$skillName metadata forbids path-only artifact claims" ($agentText.Contains('do not merely say something changed')) "$agentPath must forbid path-only or prose-only artifact closeout claims"
+    Add-Check $checks "$skillName metadata contains agent judgment summary" ($agentText.Contains("what remains unsatisfactory or risky") -and $agentText.Contains("the agent's own feedback/opinion")) "$agentPath must require the agent's own post-artifact judgment summary"
     Add-Check $checks "$skillName metadata contains machine-readable artifact summary" ($agentText.Contains('machine-readable artifacts')) "$agentPath must summarize machine-readable artifacts at closeout"
     Add-Check $checks "$skillName metadata contains broader project context closeout wording" ($agentText.Contains('broader project context')) "$agentPath must connect closeout findings to the broader project context"
     Add-Check $checks "$skillName metadata contains recommended next route wording" (
@@ -229,7 +241,7 @@ foreach ($skillName in $workflowSkillNames) {
     }
 
     if ($intermediateSkillNames -contains $skillName) {
-        $usesCombinedRouteLabel = $text.Contains('Right: `Stop / Done`') -or $agentText.Contains('Right: `Stop / Done`') -or $text.Contains('and No / Stop / Done') -or $agentText.Contains('and No / Stop / Done')
+        $usesCombinedRouteLabel = $text.Contains('Right: `stale terminal label`') -or $agentText.Contains('Right: `stale terminal label`') -or $text.Contains('and stale terminal option') -or $agentText.Contains('and stale terminal option')
         Add-Check $checks "$skillName uses Stop for intermediate terminal routes" (-not $usesCombinedRouteLabel) "$skillName must use Stop for intermediate terminal routes"
     }
     if ($finalCapableSkillNames -contains $skillName) {
@@ -237,18 +249,34 @@ foreach ($skillName in $workflowSkillNames) {
         Add-Check $checks "$skillName final Done requires clean worktree in SKILL.md" ($text.Contains("git status --short") -or $text.Contains("worktree is clean")) "$skillPath must state that final Done requires a clean worktree"
         Add-Check $checks "$skillName final Done requires clean worktree in metadata" ($agentText.Contains("git status --short") -or $agentText.Contains("worktree is clean")) "$agentPath must state that final Done requires a clean worktree"
     }
+    if ($skillName -eq 'brainstorm-spec') {
+        Add-Check $checks "$skillName shows chosen design artifact" ($text.Contains('chosen design plan')) "$skillPath must show the chosen brainstorm design/spec before closeout"
+        Add-Check $checks "$skillName metadata shows chosen design artifact" ($agentText.Contains('chosen brainstorm design/specs')) "$agentPath must show the chosen brainstorm design/spec before closeout"
+    }
+    if ($skillName -eq 'write-plan') {
+        Add-Check $checks "$skillName shows plan tasks and steps" ($text.Contains('full task list') -and $text.Contains('full step list')) "$skillPath must show plan tasks and steps before closeout"
+        Add-Check $checks "$skillName metadata shows plan tasks and steps" ($agentText.Contains('full plan tasks and steps')) "$agentPath must show plan tasks and steps before closeout"
+    }
+    if ($skillName -eq 'create-issues') {
+        Add-Check $checks "$skillName shows created issue bodies" ($text.Contains('full issue body')) "$skillPath must show created issue bodies before closeout"
+        Add-Check $checks "$skillName metadata shows created issue bodies" ($agentText.Contains('created issue bodies or mirrors')) "$agentPath must show created issue bodies before closeout"
+    }
+    if ($skillName -in @('implement-plan', 'resolve-issue')) {
+        Add-Check $checks "$skillName shows pre-push changed artifacts and tests" ($text.Contains('before push') -and $text.Contains('full changed-artifact inventory') -and $text.Contains('exact test values/results')) "$skillPath must show changed artifacts and exact test values/results before push"
+        Add-Check $checks "$skillName metadata shows pre-push changed artifacts and tests" ($agentText.Contains('full changed-artifact inventory') -and $agentText.Contains('exact test values/results')) "$agentPath must show changed artifacts and exact test values/results before push"
+    }
 
     foreach ($forbidden in @(
-        'Right: `Stop / Done`: break the continuation loop.',
-        'Right Stop / Done'
+        'Right: terminal option: break the continuation loop.',
+        'Right terminal label'
     )) {
         Add-Check $checks "$skillName nested routes avoid $forbidden" (Test-NestedContinuationBlocks -Text $text -Forbidden $forbidden) "$skillPath contains nested continuation wording that repeats terminal stop: $forbidden"
         Add-Check $checks "$skillName metadata nested routes avoid $forbidden" (Test-NestedContinuationBlocks -Text $agentText -Forbidden $forbidden) "$agentPath contains nested continuation wording that repeats terminal stop: $forbidden"
     }
     foreach ($forbiddenPattern in @(
         '(?m)^\s*-\s+Right:\s*`?Stop`?',
-        '(?m)^\s*-\s+(?:Right:\s*)?`?Stop / Done`?',
-        '(?m)^\s*-\s+(?:Right:\s*)?`?No / Stop / Done`?'
+        '(?m)^\s*-\s+(?:Right:\s*)?`?stale terminal label`?',
+        '(?m)^\s*-\s+(?:Right:\s*)?`?stale terminal option`?'
     )) {
         Add-Check $checks "$skillName nested routes avoid pattern $forbiddenPattern" (Test-NestedContinuationBlocksRegex -Text $text -ForbiddenPattern $forbiddenPattern) "$skillPath contains nested continuation wording that repeats terminal stop: $forbiddenPattern"
         Add-Check $checks "$skillName metadata nested routes avoid pattern $forbiddenPattern" (Test-NestedContinuationBlocksRegex -Text $agentText -ForbiddenPattern $forbiddenPattern) "$agentPath contains nested continuation wording that repeats terminal stop: $forbiddenPattern"
@@ -264,7 +292,7 @@ foreach ($skillName in $workflowSkillNames) {
         'show all real peer routes when clearer',
         'Show four or more native options when they are real peer routes',
         'including more than three peer options or independent questions when useful',
-        'Recommend No / Stop / Done only for explicit terminal, blocker, or user-requested stop states',
+        'Recommend terminal option only for explicit terminal, blocker, or user-requested stop states',
         'Recommend Stop only for explicit mid-loop terminal or blocker states. Recommend Done only at a verified final Done gate.',
         'Custom answers that mean a mid-loop exit are treated as Stop',
         'Custom answers that claim completion before proof exists are treated as Stop',

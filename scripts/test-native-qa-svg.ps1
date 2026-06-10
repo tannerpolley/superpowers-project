@@ -106,7 +106,7 @@ Add-Check $checks "README references Mermaid companion" ($readme.Contains("[Nati
 Add-Check $checks "README archived Mermaid removed" (-not $readme.Contains("Archived full setup, Doctor, and router flow")) "README must not keep the archived full Mermaid flowchart"
 Add-Check $checks "README lists implement-plan skill" ($readme.Contains('$superpowers-project:implement-plan')) "README must list the non-issue implement route"
 Add-Check $checks "README omits removed Quick Apply path" (-not $readme.Contains("Quick Apply") -and -not $readme.Contains("project_quick_apply_approval")) "README must route direct plan execution through Implement Plan, not Quick Apply"
-Add-Check $checks "README explains nested route stop policy" ($readme.Contains("is not repeated inside those nested route menus")) "README must explain that nested Yes/Revisit menus do not repeat Stop / Done"
+Add-Check $checks "README explains nested route stop policy" ($readme.Contains("terminal options are not repeated inside those nested route menus")) "README must explain that nested Yes/Revisit menus do not repeat terminal options"
 Add-Check $checks "README explains recommendation policy" (
     $readme.Contains("recommended option should be") -and
     $readme.Contains("safe forward route exists") -and
@@ -131,6 +131,7 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
         'Resolve Issue',
         'Merge Changes',
         'Audit Project',
+        'Align Project',
         'Choose work route?',
         'Choose issue route?',
         'select the next blue skill',
@@ -142,7 +143,7 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
         '-->|Yes|',
         '-->|Revisit|',
         '-->|Stop|',
-        '-->|Done|',
+        'Repair Route',
         'Stop means pause',
         'Done means complete',
         'Revisit Route',
@@ -154,6 +155,7 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
         'Revisit Output',
         'Revisit Merge',
         'Revisit Audit',
+        'Revisit Align',
         'classDef skill fill:#dbeafe',
         'classDef decision fill:#fef3c7',
         'classDef revisit fill:#f3f4f6',
@@ -161,6 +163,8 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
     )) {
         Add-Check $checks "Mermaid companion contains $needle" ($mermaidText.Contains($needle)) "Mermaid companion must contain: $needle"
     }
+
+    Add-Check $checks "Mermaid companion omits align Done edge" (-not $mermaidText.Contains('-->|Done|')) "Align Project must not advertise an explicit Done branch unless the skill source defines that final gate"
 
     foreach ($forbidden in @(
         'project_setup_next_step',
@@ -196,6 +200,7 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Orchestrate Issues",
         "Merge Changes",
         "Audit Project",
+        "Align Project",
         "Depth 0",
         "Depth 1",
         "Depth 2",
@@ -204,9 +209,12 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Depth 5",
         "Depth 6",
         "Depth 7",
+        "Depth 8",
         "Done",
         "Yes",
         "Stop",
+        "from alignment",
+        "Repair Route",
         "Auto Mode",
         "Revisit Route",
         "Revisit Setup",
@@ -216,10 +224,9 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Revisit Issues",
         "Revisit Output",
         "Revisit Merge",
-        "Revisit Audit",
+        "Revisit Align",
         "Stop means pause",
-        "Done means complete",
-        "verified final gate"
+        "Done means complete"
     )) {
         Add-Check $checks "SVG contains label $needle" ($svgText.Contains($needle)) "SVG must show workflow label: $needle"
     }
@@ -229,8 +236,8 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         "Down: merge branch",
         "Left: review",
         "Left: repair",
-        "Stop / Done",
-        "Right: Stop / Done",
+        "stale terminal label",
+        "Right: terminal label",
         "Final down: Done",
         "Choose Work Route",
         "Branch Ready?",
@@ -451,7 +458,7 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
         }
         Add-Check $checks "implement direct route avoids issue execution boxes" (-not $crossesIssueExecution) "Implement Plan direct route must not pass through Resolve Issue or Orchestrate Issues"
     }
-    Add-Check $checks "final down done route exists" ($svgText.Contains('id="down-d10-done"') -and $svgText.Contains('final-done-route')) "Only the final health gate should have the explicit down-to-Done route"
+    Add-Check $checks "align flow omits direct done route" (-not $svgText.Contains('id="down-d10-done"') -and -not $svgText.Contains('final-done-route')) "Align Project must not show a direct down-to-Done route unless the skill source defines that final gate"
 }
 
 $failed = @($checks | Where-Object { -not $_.ok })

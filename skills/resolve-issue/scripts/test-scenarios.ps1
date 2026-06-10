@@ -510,8 +510,8 @@ try {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
         $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
         foreach ($needle in @(
-            "Nested Yes-route menus must not include Stop / Done",
-            "Nested Revisit-route menus must not include Stop / Done",
+            "Nested Yes-route menus must not include terminal options",
+            "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
@@ -526,9 +526,9 @@ try {
             $block = $text.Substring($current.Index, $nextStart - $current.Index)
             $questionId = $current.Groups[1].Value
             if ($questionId.EndsWith("_next_step")) { continue }
-            Assert-True (-not $block.Contains('Right: `Stop / Done`: break the continuation loop.')) "nested question $questionId must not repeat Stop / Done"
+            Assert-True (-not $block.Contains('Right: terminal option: break the continuation loop.')) "nested question $questionId must not repeat stale terminal label"
         }
-        Assert-True (-not $metadata.Contains("Right Stop / Done")) "metadata must not use old Right Stop / Done wording"
+        Assert-True (-not $metadata.Contains("Right terminal label")) "metadata must not use old Right terminal label wording"
     }
 $failed = @($results | Where-Object { -not $_.ok })
     $results | ConvertTo-Json -Depth 8

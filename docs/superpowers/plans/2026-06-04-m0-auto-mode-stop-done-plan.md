@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an Auto Mode route after spec creation and make continuation terminal labels phase-sensitive so `Stop` means mid-loop exit and `Done` means verified workflow completion.
+**Goal:** Add an Auto Mode route after spec creation and make continuation terminal labels lifecycle-specific so `Stop` means mid-loop exit and `Done` means verified workflow completion.
 
 **Architecture:** Implement this as contract-first skill work: add a shared Auto Mode authorization validator, update native continuation policy in shared docs and validators, then propagate the new route and terminal-label semantics through active skill docs, metadata, scenario scripts, README, and workflow assets. Keep execution on existing project routes (`write-plan`, `implement-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, and `merge-changes`) instead of adding a new execution engine.
 
@@ -42,7 +42,7 @@
 - Intermediate continuation gates use `Yes`, `Revisit`, and `Stop`.
 - `Done` appears only after verified final closeout: clean merge closeout followed by a healthy-style gate, or healthy audit with no remaining repair route.
 - Active contract validation excludes historical specs and plans from old-label scans.
-- README, Mermaid, SVG, and asset validation match the new Auto Mode and phase-sensitive Stop/Done semantics.
+- README, Mermaid, SVG, and asset validation match the new Auto Mode and lifecycle-specific Stop/Done semantics.
 - `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, and the user-level cleanup hook pass before implementation closeout.
 
 ## Non-Goals
@@ -127,7 +127,7 @@ Expected final state:
 
 - Every command exits `0`.
 - `git status --short --branch` shows the implementation branch with no unstaged or untracked changes after final commit.
-- Active skill docs and metadata use phase-sensitive terminal labels.
+- Active skill docs and metadata use lifecycle-specific terminal labels.
 - Historical specs and plans may still mention old labels as history.
 
 ### Task 1: Add Shared Auto Mode Authorization Contract
@@ -356,7 +356,7 @@ git commit -m "Add auto mode authorization contract"
 
 - [ ] **Step 1: Add failing shared policy assertions**
 
-In `scripts/test-advanced-user-input-policy.ps1`, replace checks that require `No / Stop / Done` as a universal terminal label with checks for:
+In `scripts/test-advanced-user-input-policy.ps1`, replace checks that require `stale terminal option` as a universal terminal label with checks for:
 
 ```powershell
 foreach ($needle in @(
@@ -369,9 +369,9 @@ foreach ($needle in @(
     Add-Check $checks "advanced-user-input contains $needle" ($text.Contains($needle)) "$skillPath must contain policy: $needle"
 }
 foreach ($forbidden in @(
-    "Right is shown to the user as No / Stop / Done",
-    "Only No / Stop / Done can end a continuation loop",
-    "Ask exactly three top-level options: Yes, Revisit, and No / Stop / Done"
+    "Right is shown to the user as stale terminal option",
+    "Only stale terminal option can end a continuation loop",
+    "Ask exactly three top-level options: Yes, Revisit, and stale terminal option"
 )) {
     Add-Check $checks "advanced-user-input omits $forbidden" (-not $text.Contains($forbidden)) "$skillPath must not contain old terminal label policy: $forbidden"
 }
@@ -402,7 +402,7 @@ foreach ($skillName in $intermediateSkills) {
     $text = Get-Content -LiteralPath (Join-Path $skillRoot "$skillName\SKILL.md") -Raw
     $agentText = Get-Content -LiteralPath (Join-Path $skillRoot "$skillName\agents\openai.yaml") -Raw
     Add-Check $checks "$skillName uses Stop for intermediate terminal route" ($text.Contains("Stop") -and $agentText.Contains("Stop")) "$skillName must expose Stop on intermediate gates"
-    Add-Check $checks "$skillName omits Stop Done combined label" (-not $text.Contains("Stop / Done") -and -not $agentText.Contains("Stop / Done")) "$skillName must not use combined Stop / Done"
+    Add-Check $checks "$skillName omits Stop Done combined label" (-not $text.Contains("stale terminal label") -and -not $agentText.Contains("stale terminal label")) "$skillName must not use combined stale terminal label"
 }
 foreach ($skillName in $finalCapableSkills) {
     $text = Get-Content -LiteralPath (Join-Path $skillRoot "$skillName\SKILL.md") -Raw
@@ -419,11 +419,11 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-i
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
 ```
 
-Expected: both exit `1`; failures name missing phase-sensitive policy and old `Stop / Done` text still present.
+Expected: both exit `1`; failures name missing lifecycle-specific policy and old `stale terminal label` text still present.
 
 - [ ] **Step 4: Update `advanced-user-input` skill text and metadata**
 
-In `skills/advanced-user-input/SKILL.md`, replace the `## Continuation Gates` section with a phase-sensitive version:
+In `skills/advanced-user-input/SKILL.md`, replace the `## Continuation Gates` section with a lifecycle-specific version:
 
 ```markdown
 ## Continuation Gates
@@ -432,7 +432,7 @@ For workflow closeout, preserve the user's direction model:
 
 - Down is shown to the user as Yes and means progress or default move-on.
 - Left is shown to the user as Revisit and means revise, review, repair, rerun, recover, or gather more evidence.
-- Right is terminal and is phase-sensitive.
+- Right is shown as Stop during unfinished workflow closeout and Done only at proven final closeout.
 
 Use Stop for mid-loop exits. Use Done only for verified final states.
 
@@ -493,7 +493,7 @@ Invoke-Scenario "auto mode route after spec creation is present" {
     )) {
         Assert-Contains $text $needle "missing Auto Mode brainstorm route: $needle"
     }
-    Assert-NotContains $text "Stop / Done" "brainstorm-spec must use Stop for intermediate closeouts"
+    Assert-NotContains $text "stale terminal label" "brainstorm-spec must use Stop for intermediate closeouts"
 }
 ```
 
@@ -513,7 +513,7 @@ foreach ($needle in @(
 )) {
     Assert-Contains -Text $skill -Needle $needle -Reason "missing Auto Mode router contract: $needle"
 }
-Assert-NotContains -Text $skill -Needle "Stop / Done" -Reason "router must use phase-sensitive terminal labels"
+Assert-NotContains -Text $skill -Needle "stale terminal label" -Reason "router must use lifecycle-specific terminal labels"
 ```
 
 - [ ] **Step 3: Run scenarios to verify failure**
@@ -545,7 +545,7 @@ Options:
 - Right: `Stop`: stop with the saved spec as the current artifact.
 ```
 
-Then move the existing one-plan and multi-spec question under `Manual Planning`. Replace intermediate `Stop / Done` labels with `Stop`.
+Then move the existing one-plan and multi-spec question under `Manual Planning`. Replace intermediate `stale terminal label` labels with `Stop`.
 
 - [ ] **Step 5: Add Auto Mode authorization question contract**
 
@@ -599,13 +599,13 @@ git commit -m "Add auto mode route after spec creation"
 
 - [ ] **Step 1: Update intermediate skill scenario tests first**
 
-For each intermediate skill scenario script (`setup-project`, `brainstorm-spec`, `write-plan`, `implement-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `initiate-workflow`), replace assertions requiring `Stop / Done` with assertions requiring `Stop` and rejecting `Stop / Done`.
+For each intermediate skill scenario script (`setup-project`, `brainstorm-spec`, `write-plan`, `implement-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `initiate-workflow`), replace assertions requiring `stale terminal label` with assertions requiring `Stop` and rejecting `stale terminal label`.
 
 Use this pattern:
 
 ```powershell
 Assert-Contains $text "Stop" "missing intermediate Stop label"
-Assert-NotContains $text "Stop / Done" "intermediate skill must not use combined Stop / Done label"
+Assert-NotContains $text "stale terminal label" "intermediate skill must not use combined stale terminal label label"
 ```
 
 For metadata tests, apply the same assertions to `$metadata`.
@@ -655,14 +655,14 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
 ```
 
-Expected: at least the intermediate skills fail because active docs still contain combined terminal labels.
+Expected: at least the intermediate skills fail because active docs still contain stale terminal labels.
 
 - [ ] **Step 4: Replace shared loop wording in active skills**
 
 In each active project skill and metadata file, replace the generic text:
 
 ```text
-Only No / Stop / Done can break the loop before that final Done gate.
+Only stale terminal option can break the loop before that final Done gate.
 ```
 
 with:
@@ -674,7 +674,7 @@ Only Stop can break an intermediate loop. Done is valid only at a verified final
 Replace:
 
 ```text
-No / Stop / Done
+stale terminal option
 ```
 
 with `Stop` for intermediate routes and with `Done` only in verified final gate sections.
@@ -725,7 +725,7 @@ Run:
 
 ```powershell
 git add skills scripts/test-native-continuation-loop.ps1
-git commit -m "Apply phase-sensitive terminal labels"
+git commit -m "Apply lifecycle-specific terminal labels"
 ```
 
 ### Task 5: Teach Planning And Execution Skills To Consume Auto Mode Authorization
@@ -879,8 +879,8 @@ foreach ($needle in @(
     Add-Check $checks "Mermaid companion contains $needle" ($mermaidText.Contains($needle)) "Mermaid must describe: $needle"
 }
 foreach ($forbidden in @(
-    "top-level closeout options are always `Yes`, `Revisit`, and `No / Stop / Done`",
-    "Only `No / Stop / Done`"
+    "top-level closeout options are always `Yes`, `Revisit`, and `stale terminal option`",
+    "Only `stale terminal option`"
 )) {
     Add-Check $checks "README omits $forbidden" (-not $readme.Contains($forbidden)) "README must not describe old terminal contract: $forbidden"
 }
@@ -892,7 +892,7 @@ Add SVG checks:
 foreach ($needle in @("Auto Mode", "Stop means pause", "Done means complete")) {
     Add-Check $checks "SVG contains label $needle" ($svgText.Contains($needle)) "SVG must show workflow label: $needle"
 }
-Add-Check $checks "SVG omits Stop Done combined label" (-not $svgText.Contains("Stop / Done")) "SVG must not show combined Stop / Done"
+Add-Check $checks "SVG omits Stop Done combined label" (-not $svgText.Contains("stale terminal label")) "SVG must not show combined stale terminal label"
 ```
 
 - [ ] **Step 2: Run asset test to verify failure**
@@ -903,7 +903,7 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
 ```
 
-Expected: exits `1` with missing Auto Mode and phase-sensitive label assertions.
+Expected: exits `1` with missing Auto Mode and lifecycle-specific label assertions.
 
 - [ ] **Step 3: Update README text**
 
@@ -934,7 +934,7 @@ Edit `docs/assets/native-qa-main-flow.svg` so visible labels include:
 - `Auto Mode`
 - `Stop means pause`
 - `Done means complete`
-- no `Stop / Done`
+- no `stale terminal label`
 
 Keep the existing centered skill rail and right-side stop node geometry intact.
 

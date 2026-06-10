@@ -39,7 +39,7 @@ function Convert-SlugToTitle {
         "pr" = "PR"
         "tdd" = "TDD"
         "project" = "Project"
-        "doctor" = "Doctor"
+        "align" = "Align"
         "codex" = "Codex"
     }
     $out = [System.Collections.Generic.List[string]]::new()
@@ -94,4 +94,3 @@ try {
 } catch {
     Complete -Ok $false -Reason $_.Exception.Message
 }
-

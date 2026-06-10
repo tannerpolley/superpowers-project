@@ -6,11 +6,11 @@ Improve Superpowers Project continuation gates so `Stop` is used while a workflo
 
 ## Project Context Evidence
 
-- `README.md` currently says top-level closeout options are always `Yes`, `Revisit`, and `No / Stop / Done`.
-- `README.md` also says only `No / Stop / Done` or the explicit final `Healthy? -> Done` route ends the continuation loop.
-- `skills/advanced-user-input/SKILL.md` defines the reusable native Q&A shape and currently describes `No / Stop / Done` as the right-side terminal option.
-- `skills/initiate-workflow/SKILL.md` repeats the top-level `No / Stop / Done` contract and treats `Stop` and `Done` together as terminal answers.
-- Every primary project skill repeats the same continuation loop language and uses `Right: Stop / Done` in intermediate nested routes.
+- `README.md` currently says top-level closeout options are always `Yes`, `Revisit`, and `stale terminal option`.
+- `README.md` also says only `stale terminal option` or the explicit final `Healthy? -> Done` route ends the continuation loop.
+- `skills/advanced-user-input/SKILL.md` defines the reusable native Q&A shape and currently describes `stale terminal option` as the right-side terminal option.
+- `skills/initiate-workflow/SKILL.md` repeats the top-level `stale terminal option` contract and treats `Stop` and `Done` together as terminal answers.
+- Every primary project skill repeats the same continuation loop language and uses `Right: terminal label` in intermediate nested routes.
 - `skills/merge-changes/SKILL.md` has the strongest final closeout proof contract: merged PR or local branch merge, default branch sync, branch/worktree cleanup, prune, cleanup hook, issue mirror cleanup when applicable, milestone summary when applicable, and clean repo state.
 - `skills/audit-project/SKILL.md` already has the concept of a final healthy path where `Healthy -> Done` is allowed.
 
@@ -18,11 +18,11 @@ Improve Superpowers Project continuation gates so `Stop` is used while a workflo
 
 - `Done` should mean clean closeout only: a verified final state, not merely a completed intermediate artifact.
 - Intermediate workflow exits should be labeled `Stop`.
-- The preferred design is a phase-sensitive contract: intermediate gates use `Yes / Revisit / Stop`; final clean gates may use `Yes / Revisit / Done`.
+- The preferred design is a lifecycle-specific contract: intermediate gates use `Yes / Revisit / Stop`; final clean gates may use `Yes / Revisit / Done`.
 
 ## Problem Statement
 
-The current `No / Stop / Done` label combines three meanings:
+The current `stale terminal option` label combines three meanings:
 
 - no, do not continue this branch
 - stop, pause this workflow before final completion
@@ -32,7 +32,7 @@ That wording is too loose for a workflow that treats specs, plans, issue mirrors
 
 ## Recommended Approach
 
-Adopt a shared phase-sensitive terminal label contract.
+Adopt a shared lifecycle-specific terminal label contract.
 
 The new contract:
 
@@ -40,7 +40,7 @@ The new contract:
 - Use `Done` only when the current skill can prove a final terminal state.
 - Keep `Yes` as the progress route and `Revisit` as the review/revision route.
 - Do not show `Done` on intermediate closeouts.
-- Do not show `Stop / Done` as a combined label.
+- Do not show `stale terminal label` as a combined label.
 
 Final terminal states should be explicit. The two expected first-class final states are:
 
@@ -112,13 +112,13 @@ Likely files:
 
 Scenario and repo validation should prove:
 
-- intermediate skill docs no longer contain `Right: Stop / Done`
+- intermediate skill docs no longer contain `Right: terminal label`
 - shared policy docs explain `Stop` and `Done` separately
 - `Done` appears only in final clean completion contracts
 - `merge-changes` allows `Done` only after closeout proof passes
 - `audit-project` allows `Done` only through a healthy final gate
-- README no longer says top-level closeout options are always `No / Stop / Done`
-- native workflow assets do not present `Stop / Done` as a single universal terminal label
+- README no longer says top-level closeout options are always `stale terminal option`
+- native workflow assets do not present `stale terminal label` as a single universal terminal label
 - custom answers that mean a mid-loop exit are treated as `Stop`
 - custom answers that claim completion before proof exists are treated as invalid or as `Stop`, not `Done`
 
@@ -139,7 +139,7 @@ The agent should report the current lifecycle state and the next valid resume ro
 
 ## Tradeoffs
 
-The phase-sensitive contract is more precise than the current universal label, but it requires coordinated wording changes across every skill and workflow asset. That coordination is worthwhile because it makes the native UI reflect actual project state.
+The lifecycle-specific contract is more precise than the current universal label, but it requires coordinated wording changes across every skill and workflow asset. That coordination is worthwhile because it makes the native UI reflect actual project state.
 
 Keeping the existing combined label and only tightening prose would be easier, but users would still see `Done` at points where the workflow is not done. Removing `Done` everywhere would be simpler, but it would lose the useful final-completion signal after a clean merge or healthy audit.
 
@@ -159,8 +159,8 @@ Keeping the existing combined label and only tightening prose would be easier, b
 
 ## Proof Oracle Candidates
 
-- `rg -n "Stop / Done" skills README.md docs/assets` returns no universal continuation labels after implementation, except historical specs or plans that are intentionally not active contracts.
-- Scenario tests for intermediate skills require `Stop` and reject `Stop / Done`.
+- `rg -n "stale terminal label" skills README.md docs/assets` returns no universal continuation labels after implementation, except historical specs or plans that are intentionally not active contracts.
+- Scenario tests for intermediate skills require `Stop` and reject `stale terminal label`.
 - `merge-changes` scenario tests require `Done` only in clean closeout wording.
 - `audit-project` scenario tests require `Done` only in healthy final wording.
 - `scripts/validate.ps1` passes.
@@ -169,7 +169,7 @@ Keeping the existing combined label and only tightening prose would be easier, b
 
 ## Open Questions For Planning
 
-- Should historical specs and plans be excluded from the text-level `Stop / Done` scan, or should the validator scan only active docs, README, skill docs, and assets?
+- Should historical specs and plans be excluded from the text-level `stale terminal label` scan, or should the validator scan only active docs, README, skill docs, and assets?
 - Should `merge-changes` use `Done` immediately after closeout proof, or should it ask an explicit final `Healthy?` gate similar to Doctor?
 - Should the public SVG/Mermaid update be part of the first implementation plan or a follow-up documentation task?
 
