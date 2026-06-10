@@ -133,7 +133,8 @@ $scenarios = @(
             "configured tracker vocabulary",
             "External GitHub Issue Hydration",
             "external GitHub issues are intake",
-            "hydrate-external-issue.ps1"
+            "hydrate-external-issue.ps1",
+            "Missing or malformed workflow metadata is blocking for every issue mirror"
         )) {
             Assert-Contains $text $needle "missing create-issues contract: $needle"
         }
@@ -177,6 +178,7 @@ $scenarios = @(
         Assert-Contains $metadata "vertical slices" "missing metadata slice policy"
         Assert-Contains $metadata "flat canonical roots" "missing metadata flat root policy"
         Assert-Contains $metadata "issue mirrors include the GitHub issue number" "missing metadata issue filename policy"
+        Assert-Contains $metadata "missing or malformed workflow metadata is blocking for every issue mirror" "missing metadata strict workflow metadata policy"
         foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }
@@ -253,6 +255,48 @@ $scenarios = @(
             if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
         }
     }
+    Invoke-Scenario "issue mirror validator blocks missing workflow metadata" {
+        if (-not (Test-Path -LiteralPath $validatorFile -PathType Leaf)) { throw "missing validate-issue-mirror.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("create-issues-missing-workflow-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\issues") -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\plans") -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $root "docs\superpowers\plans\2026-06-02-sample-plan.md") -Value "# Sample Plan" -Encoding utf8NoBOM
+            $issuePath = Join-Path $root "docs\superpowers\issues\14-missing-workflow.md"
+            @"
+# Missing Workflow Metadata
+
+**GitHub Issue:** https://github.com/example/repo/issues/14
+**GitHub Milestone:** M1 - Source Of Truth
+**Issue Type:** task
+**Source Plan:** docs/superpowers/plans/2026-06-02-sample-plan.md
+**Classification:** AFK
+**Goal Command:** /goal Resolve sample issue
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
+
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
+## Acceptance Criteria
+
+- [ ] Sample issue can be resolved by an agent
+"@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
+            $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
+            if ($result.ok -or $result.reason -ne "Execution Mode is required") { throw "expected Execution Mode to be required" }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
     Invoke-Scenario "bug issue mirror requires repro or feedback loop" {
         if (-not (Test-Path -LiteralPath $validatorFile -PathType Leaf)) { throw "missing validate-issue-mirror.ps1" }
         $root = Join-Path ([IO.Path]::GetTempPath()) ("create-issues-bug-" + [guid]::NewGuid().ToString("N"))
@@ -270,6 +314,13 @@ $scenarios = @(
 **Source Spec:** docs/superpowers/specs/2026-06-02-bug-design.md
 **Classification:** AFK
 **Goal Command:** /goal Resolve bug issue
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
 
 ## Project Merge
 
@@ -424,4 +475,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

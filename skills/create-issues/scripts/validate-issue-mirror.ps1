@@ -114,8 +114,7 @@ try {
     foreach ($fieldName in $workflowFields.Keys) {
         $value = Get-FieldValue -Text $text -Name $fieldName
         if ([string]::IsNullOrWhiteSpace($value)) {
-            Add-Check -Name "workflow metadata: $fieldName" -Ok $false -Reason "advisory: missing"
-            continue
+            Complete -Ok $false -Reason "$fieldName is required"
         }
         if ($workflowFields[$fieldName] -notcontains $value) {
             Complete -Ok $false -Reason "$fieldName must be one of: $($workflowFields[$fieldName] -join ', ')"

@@ -34,7 +34,7 @@ New issue mirrors should include:
 **Script Gate Mode:** Safety only
 ```
 
-These fields tell `$superpowers-project:resolve-issue` how to ask the runtime execution question and who owns integration. Missing fields are migration drift; malformed values should be fixed before GitHub publication.
+These fields tell `$superpowers-project:resolve-issue` how to ask the runtime execution question and who owns integration. Missing or malformed workflow metadata is blocking for every issue mirror.
 
 ## Project Merge Metadata
 

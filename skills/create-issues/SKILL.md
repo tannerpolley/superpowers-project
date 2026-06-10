@@ -103,7 +103,7 @@ Each mirror must include:
 - Proof oracle
 - GitHub body text or a close mirror of it
 
-Workflow metadata guides `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues`. Missing metadata is advisory during migration, but malformed metadata should be corrected before publication because it creates ambiguous execution instructions. Issue metadata must keep downstream routing compatible with the mandatory Superpowers companion skills used by those execution routes. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
+Workflow metadata guides `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues`. Missing or malformed workflow metadata is blocking for every issue mirror because it creates ambiguous execution instructions. Issue metadata must keep downstream routing compatible with the mandatory Superpowers companion skills used by those execution routes. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -175,7 +175,7 @@ Validation must prove:
 - AFK/HITL classification is present
 - Goal Command is present for AFK issues
 - bug mirrors include Reproduction or Feedback Loop evidence
-- workflow metadata is present or reported as advisory migration drift
+- workflow metadata is present and valid
 - Project Merge metadata is present and valid
 
 ## External GitHub Issue Hydration
@@ -275,5 +275,4 @@ Options:
 - `Repair Issue Mirrors`: repair local mirror drift, then return to `project_issue_next_step`.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
-
 
