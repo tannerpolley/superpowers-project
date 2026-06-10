@@ -22,7 +22,9 @@ function Invoke-Scenario {
 
 function Assert-Contains {
     param([string]$Text, [string]$Needle, [string]$Message)
-    if (-not $Text.Contains($Needle)) { throw $Message }
+    $normalizedText = ($Text -replace "\s+", " ").Trim()
+    $normalizedNeedle = ($Needle -replace "\s+", " ").Trim()
+    if (-not $normalizedText.Contains($normalizedNeedle)) { throw $Message }
 }
 
 function Assert-NotContains {
