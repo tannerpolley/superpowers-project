@@ -65,12 +65,32 @@ function Test-NestedContinuationBlocksRegex {
     return $true
 }
 
+function Get-QuestionBlock {
+    param(
+        [string]$Text,
+        [string]$QuestionId
+    )
+
+    $questionIds = [regex]::Matches($Text, 'Question id:\s*`([^`]+)`')
+    for ($index = 0; $index -lt $questionIds.Count; $index++) {
+        $current = $questionIds[$index]
+        if ($current.Groups[1].Value -ne $QuestionId) { continue }
+        $nextStart = if ($index + 1 -lt $questionIds.Count) { $questionIds[$index + 1].Index } else { $Text.Length }
+        return $Text.Substring($current.Index, $nextStart - $current.Index)
+    }
+    return ""
+}
+
 $checks = [System.Collections.Generic.List[object]]::new()
 $skillRoot = Join-Path $RepoRoot "skills"
 . (Join-Path $RepoRoot "scripts\lib\project-skills.ps1")
 $workflowSkillNames = @(Get-ProjectWorkflowSkillNames -RepoRoot $RepoRoot)
 $finalCapableSkillNames = @(Get-ProjectFinalCapableSkillNames)
 $intermediateSkillNames = @($workflowSkillNames | Where-Object { $finalCapableSkillNames -notcontains $_ })
+$finalHealthGateIds = @{
+    "align-project" = "project_align_final_health_gate"
+    "merge-changes" = "project_merge_final_health_gate"
+}
 
 foreach ($skillName in $workflowSkillNames) {
     $skillPath = Join-Path $skillRoot "$skillName\SKILL.md"
@@ -118,7 +138,7 @@ foreach ($skillName in $workflowSkillNames) {
         'Recommend Yes when at least one safe forward route exists',
         'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
         'Custom Other never terminates a workflow directly',
-        'fresh confirmation question instead of terminating from Other'
+        'fresh confirmation question with separate built-in labels instead of terminating from Other'
     )) {
         Add-Check $checks "$skillName contains flowchart contract $needle" ($text.Contains($needle)) "$skillPath must contain native flowchart contract: $needle"
     }
@@ -178,7 +198,7 @@ foreach ($skillName in $workflowSkillNames) {
         'Nested Revisit-route menus must not include terminal options',
         'Recommend Yes when at least one safe forward route exists',
         'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
-        'fresh confirmation question instead of terminating from Other'
+        'fresh confirmation question with separate built-in labels instead of terminating from Other'
     )) {
         Add-Check $checks "$skillName metadata contains $needle" ($agentText.Contains($needle)) "$agentPath must contain continuation-loop metadata: $needle"
     }
@@ -227,6 +247,14 @@ foreach ($skillName in $workflowSkillNames) {
         Add-Check $checks "$skillName defines verified final Done semantics" ($text.Contains("verified final") -and $agentText.Contains("verified final")) "$skillName must define verified final Done semantics"
         Add-Check $checks "$skillName final Done requires clean worktree in SKILL.md" ($text.Contains("git status --short") -or $text.Contains("worktree is clean")) "$skillPath must state that final Done requires a clean worktree"
         Add-Check $checks "$skillName final Done requires clean worktree in metadata" ($agentText.Contains("git status --short") -or $agentText.Contains("worktree is clean")) "$agentPath must state that final Done requires a clean worktree"
+        $finalGateId = $finalHealthGateIds[$skillName]
+        $finalGateBlock = Get-QuestionBlock -Text $text -QuestionId $finalGateId
+        Add-Check $checks "$skillName defines $finalGateId" (-not [string]::IsNullOrWhiteSpace($finalGateBlock)) "$skillPath must define final health gate $finalGateId"
+        foreach ($label in @("Done", "Revisit", "Stop")) {
+            Add-Check $checks "$skillName final gate contains $label" ($finalGateBlock.Contains($label)) "$finalGateId must contain $label"
+            Add-Check $checks "$skillName metadata final gate contains $label" ($agentText.Contains($finalGateId) -and $agentText.Contains($label)) "$agentPath must mention $finalGateId and $label"
+        }
+        Add-Check $checks "$skillName final gate omits Yes" (-not [regex]::IsMatch($finalGateBlock, '(?m)^\s*-\s+`?Yes`?:')) "$finalGateId must not offer Yes"
     }
     if ($skillName -eq 'brainstorm-spec') {
         Add-Check $checks "$skillName shows chosen design artifact" ($text.Contains('chosen design plan')) "$skillPath must show the chosen brainstorm design/spec before closeout"

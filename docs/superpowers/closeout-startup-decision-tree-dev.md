@@ -19,7 +19,7 @@ Every project workflow closeout follows the same visible route model:
 - Use `Stop` for intermediate exits.
 - Use `Done` only after verified final proof and a clean worktree.
 - `Review First` is non-terminal: show evidence, ask follow-up questions, then return to the originating gate.
-- Custom Other never terminates directly. If it appears to ask for Stop or Done, ask a fresh confirmation question.
+- Custom Other never terminates directly. If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels.
 - Nested Yes-route menus must not include `Stop` or `Done` when they are pure forward-route menus.
 - Nested Revisit-route menus must not include `Stop` or `Done` when they are pure revisit-route menus.
 
@@ -682,11 +682,10 @@ Premerge proof is clean for <PR URL or local branch>. Merge now?
 
 All `Stop` leaves are terminal pause leaves, not proof of completed workflow success.
 
-`Done` exists only at verified final health gates. In current repo-owned source, the explicit final `Done` gate is:
+`Done` exists only at verified final health gates. Repo-owned final health gates use `Done`, `Revisit`, and `Stop`.
 
 - `project_merge_final_health_gate` after clean merge closeout proof.
-
-`align-project` defines Done eligibility but the current `SKILL.md` block lists `project_align_next_step` with `Stop`, not an explicit `Done` option. Treat an alignment `Done` UI as valid only if a healthy audit final gate is explicitly asked and the clean-worktree guard passes.
+- `project_align_final_health_gate` after a healthy alignment audit with no blocking or repairable findings, no remaining repair route, cleanup proof, and clean worktree proof.
 
 `Hold` leaves are terminal hold leaves:
 
@@ -708,5 +707,5 @@ These are source gaps or tensions found while building the tree:
 - The global closeout contract says top-level prompt text is `Continue?`, while most skill-specific prompt blocks say `Should I continue on with the workflow?`.
 - Top-level option labels are `Yes`, `Revisit`, and `Stop`; parenthesized text preserves the source detail for that route.
 - Nested Yes/Revisit route menus omit `Stop` and `Done`; only top-level closeout and final health gates include terminal options.
-- The global final-clean-gate contract says final gates may use `Yes`, `Revisit`, and `Done`, while `project_merge_final_health_gate` uses `Done`, `Revisit`, and `Stop`.
+- Intermediate gates use `Yes`, `Revisit`, and `Stop`; verified final health gates use `Done`, `Revisit`, and `Stop`.
 - Most `agents/openai.yaml` files compress the route tree into one folded line, which preserves the broad contract but does not carry every exact prompt, child question id, or option description from `SKILL.md`.
