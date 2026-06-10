@@ -23,6 +23,26 @@ If the active runtime rejects a large prompt, fail loudly, explain the rejected 
 
 Observed Codex Desktop behavior accepted native prompts larger than the visible guidance, including at least 20 questions in one call and 20 options on one question. Use that capability when it improves workflow correctness, but keep the rejection path above because future runtimes may validate more strictly.
 
+## Native Question Debug Mode
+
+`debug_question_mode` is not a normal workflow path. Use it only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
+
+Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include:
+
+- `skill_name`
+- `thread_id`
+- `observed_status: waitingOnUserInput`
+- `question_id`
+- `prompt`
+- `options`
+- `recommended_option`
+- `selected_answer`
+- `answer_source: recommended-default | user-provided-debug-answer`
+- `no_answer_tool_available: true`
+- `mutation_allowed: false`
+
+`debug_question_mode` must not approve mutation, substitute for a live user decision in normal work, publish, push, merge, create worker threads, grant scope approval, or grant route approval. If the route would mutate external state or rely on live user permission, stop with the exact pending state or ask the next native question instead.
+
 ## Input Choice
 
 | Need | Use |

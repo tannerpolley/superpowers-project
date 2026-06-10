@@ -143,7 +143,8 @@ try {
     if (-not $syncText.Contains("plugins\superpowers-project")) { throw "sync-live.ps1 must deploy to plugins/superpowers-project" }
     if (-not $syncText.Contains("plugins\milestones")) { throw "sync-live.ps1 must clean up retired plugins/milestones path" }
     $alignAuditText = Get-Content -LiteralPath (Join-Path $repoRoot "skills/align-project/scripts/align-project.ps1") -Raw
-    if (-not $alignAuditText.Contains("plugins/superpowers-project/skills/align-project/SKILL.md")) { throw "align-project audit must inspect plugins/superpowers-project" }
+    if (-not $alignAuditText.Contains("Compare-SuperpowersProjectLiveInstall")) { throw "align-project audit must use the shared live install comparer" }
+    if (-not $alignAuditText.Contains("LivePluginRoot")) { throw "align-project audit must parameterize the live plugin root" }
     Add-Check -Name "public readiness paths" -Ok $true -Reason "passed"
 
     $roadmap = Get-Content -LiteralPath (Join-Path $repoRoot "docs/agents/project-roadmap.json") -Raw | ConvertFrom-Json
@@ -172,10 +173,21 @@ try {
             "## Native Question Debug Mode",
             "debug_question_mode",
             "waitingOnUserInput",
+            "no tool exists to answer the modal prompt",
             "Native Question Debug Ledger",
+            "skill_name",
+            "thread_id",
+            "observed_status: waitingOnUserInput",
+            "question_id",
+            "recommended_option",
+            "selected_answer",
+            "answer_source: recommended-default | user-provided-debug-answer",
+            "no_answer_tool_available: true",
+            "mutation_allowed: false",
             "recommended-default",
             "user-provided-debug-answer",
-            "Debug mode must not"
+            "Debug mode must not",
+            "must not approve mutation"
         )) {
             if (-not $skillText.Contains($needle)) {
                 throw "$skillName is missing native question debug mode contract: $needle"

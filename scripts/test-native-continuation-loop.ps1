@@ -176,6 +176,32 @@ foreach ($skillName in $workflowSkillNames) {
     if (-not $agentExists) { continue }
 
     $agentText = Get-Content -LiteralPath $agentPath -Raw
+    $debugNeedles = @(
+        'Native Question Debug Ledger',
+        'no tool exists to answer the modal prompt',
+        'skill_name',
+        'thread_id',
+        'observed_status: waitingOnUserInput',
+        'question_id',
+        'prompt',
+        'options',
+        'recommended_option',
+        'selected_answer',
+        'answer_source: recommended-default | user-provided-debug-answer',
+        'no_answer_tool_available: true',
+        'mutation_allowed: false',
+        'must not approve mutation'
+    )
+    if ($text.Contains('debug_question_mode')) {
+        foreach ($needle in $debugNeedles) {
+            Add-Check $checks "$skillName debug policy contains $needle" ($text.Contains($needle)) "$skillPath must contain debug-mode policy: $needle"
+        }
+    }
+    if ($agentText.Contains('debug_question_mode')) {
+        foreach ($needle in $debugNeedles) {
+            Add-Check $checks "$skillName metadata debug policy contains $needle" ($agentText.Contains($needle)) "$agentPath must contain debug-mode policy: $needle"
+        }
+    }
     foreach ($needle in @(
         'After every completed action, ask the next native continuation or permission question',
         'Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate',
