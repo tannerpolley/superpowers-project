@@ -183,6 +183,48 @@ $scenarios = @(
         if ($audit.mutation_allowed -ne $false) { throw "Align audit must not allow mutation" }
         Assert-Contains ($audit.repair_policy | ConvertTo-Json -Depth 8) "request_user_input" "missing native repair approval policy"
     }
+    Invoke-Scenario "LocalDocs reports full plugin live drift" {
+        $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ("align-live-sync-" + [guid]::NewGuid().ToString("N"))
+        try {
+            $livePluginRoot = Join-Path $fixtureRoot "plugins\superpowers-project"
+            $userSkillsRoot = Join-Path $fixtureRoot "user-skills"
+            $marketplacePath = Join-Path $fixtureRoot "marketplace.json"
+            New-Item -ItemType Directory -Path $livePluginRoot -Force | Out-Null
+            New-Item -ItemType Directory -Path $userSkillsRoot -Force | Out-Null
+
+            Copy-Item -LiteralPath (Join-Path $repoRoot ".codex-plugin") -Destination (Join-Path $livePluginRoot ".codex-plugin") -Recurse
+            if (Test-Path -LiteralPath (Join-Path $repoRoot "assets") -PathType Container) {
+                Copy-Item -LiteralPath (Join-Path $repoRoot "assets") -Destination (Join-Path $livePluginRoot "assets") -Recurse
+            }
+            New-Item -ItemType Directory -Path (Join-Path $livePluginRoot "scripts") -Force | Out-Null
+            Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\lib") -Destination (Join-Path $livePluginRoot "scripts\lib") -Recurse
+            Copy-Item -LiteralPath (Join-Path $repoRoot "skills") -Destination (Join-Path $livePluginRoot "skills") -Recurse
+            Copy-Item -LiteralPath (Join-Path $repoRoot "skills\advanced-user-input") -Destination (Join-Path $userSkillsRoot "advanced-user-input") -Recurse
+
+            [pscustomobject]@{
+                name = "personal"
+                interface = [pscustomobject]@{ displayName = "Personal" }
+                plugins = @(
+                    [pscustomobject]@{
+                        name = "superpowers-project"
+                        source = [pscustomobject]@{ source = "local"; path = "./plugins/superpowers-project" }
+                        policy = [pscustomobject]@{ installation = "AVAILABLE"; authentication = "ON_INSTALL" }
+                        category = "Productivity"
+                    }
+                )
+            } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $marketplacePath -Encoding utf8NoBOM
+
+            Add-Content -LiteralPath (Join-Path $livePluginRoot "skills\merge-changes\agents\openai.yaml") -Value "# fixture drift"
+            $raw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $auditScript -RepoRoot $repoRoot -Mode LocalDocs -LivePluginRoot $livePluginRoot -UserSkillsRoot $userSkillsRoot -MarketplacePath $marketplacePath
+            if ($LASTEXITCODE -ne 0) { throw "LocalDocs audit failed: $raw" }
+            $audit = $raw | ConvertFrom-Json
+            $repairableText = [string]($audit.findings.repairable | ConvertTo-Json -Depth 20)
+            Assert-Contains $repairableText "live-sync" "full live sync drift was not reported"
+            Assert-Contains $repairableText "plugin skill merge-changes" "non-Align plugin skill drift was not reported"
+        } finally {
+            if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
+        }
+    }
     Invoke-Scenario "dirty worktree is repairable drift" {
         $repo = New-TestRepo
         try {

@@ -12,6 +12,7 @@ $retiredCanonicalSkillRoot = Join-Path $repoRoot "canonical-skills"
 $pluginRoot = $repoRoot
 $quickValidate = Join-Path $PSScriptRoot "quick-validate-skill.py"
 $pluginValidate = Join-Path $PSScriptRoot "validate-plugin.py"
+. (Join-Path $PSScriptRoot "lib\project-skills.ps1")
 
 function Resolve-PythonForValidators {
     $candidates = @(
@@ -117,20 +118,7 @@ function Assert-TextContains {
 }
 
 function Get-ActiveSkillNames {
-    @(
-        "advanced-user-input",
-        "initiate-workflow",
-        "setup-project",
-        "orchestrate-issues",
-        "brainstorm-spec",
-        "write-plan",
-        "implement-plan",
-        "create-issues",
-        "resolve-issue",
-        "merge-changes",
-        "align-project",
-        "audit-project"
-    )
+    @(Get-ProjectActiveSkillNames -RepoRoot $repoRoot)
 }
 function Test-SkillSourceContracts {
     $activeNames = @(Get-ActiveSkillNames)

@@ -67,31 +67,10 @@ function Test-NestedContinuationBlocksRegex {
 
 $checks = [System.Collections.Generic.List[object]]::new()
 $skillRoot = Join-Path $RepoRoot "skills"
-$workflowSkillNames = @(
-    "initiate-workflow",
-    "setup-project",
-    "orchestrate-issues",
-    "brainstorm-spec",
-    "write-plan",
-    "implement-plan",
-    "create-issues",
-    "resolve-issue",
-    "merge-changes",
-    "align-project",
-    "audit-project"
-)
-$intermediateSkillNames = @(
-    "initiate-workflow",
-    "setup-project",
-    "orchestrate-issues",
-    "brainstorm-spec",
-    "write-plan",
-    "implement-plan",
-    "create-issues",
-    "resolve-issue",
-    "audit-project"
-)
-$finalCapableSkillNames = @("merge-changes", "align-project")
+. (Join-Path $RepoRoot "scripts\lib\project-skills.ps1")
+$workflowSkillNames = @(Get-ProjectWorkflowSkillNames -RepoRoot $RepoRoot)
+$finalCapableSkillNames = @(Get-ProjectFinalCapableSkillNames)
+$intermediateSkillNames = @($workflowSkillNames | Where-Object { $finalCapableSkillNames -notcontains $_ })
 
 foreach ($skillName in $workflowSkillNames) {
     $skillPath = Join-Path $skillRoot "$skillName\SKILL.md"

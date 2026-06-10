@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $checks = [System.Collections.Generic.List[object]]::new()
+. (Join-Path $PSScriptRoot "lib\project-skills.ps1")
 
 function Add-Check {
     param([string]$Name, [bool]$Ok, [string]$Reason)
@@ -16,20 +17,7 @@ function Assert-Contains {
 }
 
 try {
-    $targetSkills = @(
-        "advanced-user-input",
-        "initiate-workflow",
-        "setup-project",
-        "align-project",
-        "audit-project",
-        "brainstorm-spec",
-        "write-plan",
-        "create-issues",
-        "implement-plan",
-        "resolve-issue",
-        "orchestrate-issues",
-        "merge-changes"
-    ) | Sort-Object
+    $targetSkills = @(Get-ProjectActiveSkillNames -RepoRoot $repoRoot | Sort-Object)
     $sourceSkills = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "skills") -Directory | Select-Object -ExpandProperty Name | Sort-Object)
     $missing = @($targetSkills | Where-Object { $sourceSkills -notcontains $_ })
     $extra = @($sourceSkills | Where-Object { $targetSkills -notcontains $_ })

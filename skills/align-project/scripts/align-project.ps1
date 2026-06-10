@@ -7,10 +7,20 @@ param(
     [string]$LabelFixturePath,
     [string]$ProjectFixturePath,
     [switch]$TrackerHygiene,
-    [switch]$ApplyTrackerRepairs
+    [switch]$ApplyTrackerRepairs,
+    [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\superpowers-project"),
+    [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills"),
+    [string]$MarketplacePath = (Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json")
 )
 
 $ErrorActionPreference = "Stop"
+
+$repoHelperRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path
+$liveInstallHelper = Join-Path $repoHelperRoot "scripts\lib\live-install.ps1"
+if (-not (Test-Path -LiteralPath $liveInstallHelper -PathType Leaf)) {
+    throw "missing live install helper required by Align: $liveInstallHelper"
+}
+. $liveInstallHelper
 
 function Resolve-RepoRoot {
     param([string]$Path)
@@ -251,16 +261,6 @@ function Test-GitIgnored {
     $exit = $LASTEXITCODE
     $null = $output
     $exit -eq 0
-}
-
-function Compare-LiveFile {
-    param([string]$SourcePath, [string]$TargetPath)
-    if (-not (Test-Path -LiteralPath $TargetPath -PathType Leaf)) {
-        return [pscustomobject]@{ checked = $false; equal = $false; reason = "target file not inspected"; target = $TargetPath }
-    }
-    $sourceHash = (Get-FileHash -LiteralPath $SourcePath -Algorithm SHA256).Hash
-    $targetHash = (Get-FileHash -LiteralPath $TargetPath -Algorithm SHA256).Hash
-    [pscustomobject]@{ checked = $true; equal = ($sourceHash -eq $targetHash); source_hash = $sourceHash; target_hash = $targetHash; target = $TargetPath }
 }
 
 function Get-RepoSlug {
@@ -519,27 +519,21 @@ function Invoke-LocalDocsAudit {
     }
 
     $sourceSkill = Get-RepoFile -Root $Root -RelativePath "skills/align-project/SKILL.md"
-    if (Test-Path -LiteralPath $sourceSkill -PathType Leaf) {
-        $liveTargets = @(
-            Join-Path $env:USERPROFILE "plugins/superpowers-project/skills/align-project/SKILL.md"
-            Join-Path $env:USERPROFILE ".agents/skills/align-project/SKILL.md"
-        )
-        $liveChecks = @($liveTargets | ForEach-Object { Compare-LiveFile -SourcePath $sourceSkill -TargetPath $_ })
-        $checked = @($liveChecks | Where-Object { $_.checked })
-        $drifted = @($checked | Where-Object { -not $_.equal })
-        if ($drifted.Count -gt 0) {
-            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "live-sync" -Severity "repairable" -Dimension "live-sync" -Message "Live deployed Align skill differs from source." -Artifact "skills/align-project/SKILL.md" -Evidence @{ targets = @($drifted.target) })
-        } elseif ($checked.Count -gt 0) {
-            Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "live-sync" -Severity "healthy" -Dimension "live-sync" -Message "Checked live Align skill target matches source." -Artifact "skills/align-project/SKILL.md" -Evidence @{ targets = @($checked.target) })
+    $sourceManifest = Get-RepoFile -Root $Root -RelativePath ".codex-plugin/plugin.json"
+    $sourceSkillsRoot = Get-RepoFile -Root $Root -RelativePath "skills"
+    if (
+        (Test-Path -LiteralPath $sourceSkill -PathType Leaf) -and
+        (Test-Path -LiteralPath $sourceManifest -PathType Leaf) -and
+        (Test-Path -LiteralPath $sourceSkillsRoot -PathType Container)
+    ) {
+        $liveDrift = @(Compare-SuperpowersProjectLiveInstall -SourceRoot $Root -LivePluginRoot $LivePluginRoot -UserSkillsRoot $UserSkillsRoot -MarketplacePath $MarketplacePath)
+        if ($liveDrift.Count -gt 0) {
+            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "live-sync" -Severity "repairable" -Dimension "live-sync" -Message "Live Superpowers Project install differs from source." -Artifact $Root -Evidence @{ drift = @($liveDrift) })
         } else {
-            Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live deployed Align skill target was not inspected." -Artifact "skills/align-project/SKILL.md" -Evidence @{ targets = $liveTargets })
-        }
-        $retiredLiveRoot = Join-Path $env:USERPROFILE "plugins/milestones"
-        if (Test-Path -LiteralPath $retiredLiveRoot -PathType Container) {
-            Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "retired-live-plugin-root" -Severity "repairable" -Dimension "live-sync" -Message "Retired Milestones live plugin root still exists; sync-live should remove the owned retired copy." -Artifact $retiredLiveRoot)
+            Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "live-sync" -Severity "healthy" -Dimension "live-sync" -Message "Live Superpowers Project install matches source." -Artifact $Root -Evidence @{ live_plugin_root = $LivePluginRoot; user_skills_root = $UserSkillsRoot; marketplace = $MarketplacePath })
         }
     } else {
-        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live sync comparison skipped because the source Align skill file is absent." -Artifact "skills/align-project/SKILL.md")
+        Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "live-sync" -Severity "informational" -Dimension "live-sync" -Message "Live sync comparison skipped because this repo does not own the Superpowers Project plugin source." -Artifact "skills/align-project/SKILL.md")
     }
 }
 

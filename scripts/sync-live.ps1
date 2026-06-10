@@ -8,11 +8,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "lib\sync-tree.ps1")
+. (Join-Path $PSScriptRoot "lib\project-skills.ps1")
+. (Join-Path $PSScriptRoot "lib\live-install.ps1")
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
 $sourceSkillsRoot = Join-Path $repoRoot "skills"
 $sourceAssetsRoot = Join-Path $repoRoot "assets"
+$sourceScriptsLibRoot = Join-Path $repoRoot "scripts\lib"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
 $marketplacePathResolved = [IO.Path]::GetFullPath($MarketplacePath)
@@ -40,42 +43,9 @@ if (-not (Test-Path -LiteralPath $sourceSkillsRoot -PathType Container)) {
     throw "missing source skills root: $sourceSkillsRoot"
 }
 
-$activeSkillNames = @(Get-SkillDirectoryNames -Root $sourceSkillsRoot)
-$userSkillNames = @("advanced-user-input")
-$retiredSkillNames = @(
-    "using-milestones",
-    "setup-project-milestones",
-    "explore-ideas",
-    "milestone-writing-issue-plan",
-    "convert-idea-to-issue",
-    "project-writing-plan",
-    "plan-to-issue",
-    "resolve-issue-with-goal",
-    "milestones-doctor",
-    "project-context",
-    "superpowers-project",
-    "project-setup",
-    "project-orchestrate",
-    "project-brainstorm",
-    "project-plan",
-    "project-issue",
-    "project-resolve",
-    "project-merge",
-    "project-doctor",
-    "workflow",
-    "setup",
-    "initiate-workflow",
-    "setup-project",
-    "orchestrate-issues",
-    "brainstorm-spec",
-    "write-plan",
-    "implement-plan",
-    "create-issues",
-    "resolve-issue",
-    "merge-changes",
-    "align-project",
-    "audit-project"
-)
+$activeSkillNames = @(Get-ProjectActiveSkillNames -RepoRoot $repoRoot)
+$userSkillNames = @(Get-ProjectUserSkillNames)
+$retiredSkillNames = @(Get-ProjectRetiredSkillNames)
 
 function Remove-RetiredLivePluginRoot {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -189,6 +159,7 @@ if ($Validate) {
 $livePluginManifestDir = Join-Path $livePluginRootResolved ".codex-plugin"
 $livePluginSkillsRoot = Join-Path $livePluginRootResolved "skills"
 $livePluginAssetsRoot = Join-Path $livePluginRootResolved "assets"
+$livePluginScriptsLibRoot = Join-Path $livePluginRootResolved "scripts\lib"
 New-Item -ItemType Directory -Path $livePluginManifestDir -Force | Out-Null
 New-Item -ItemType Directory -Path $livePluginSkillsRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $userSkillsRootResolved -Force | Out-Null
@@ -205,25 +176,22 @@ if (Test-Path -LiteralPath $sourceAssetsRoot -PathType Container) {
     Remove-Item -LiteralPath $livePluginAssetsRoot -Recurse -Force
 }
 
+Assert-ChildDirectory -Parent $livePluginRootResolved -Child $livePluginScriptsLibRoot
+if (Test-Path -LiteralPath $livePluginScriptsLibRoot -PathType Container) {
+    Remove-Item -LiteralPath $livePluginScriptsLibRoot -Recurse -Force
+}
+Copy-Item -LiteralPath $sourceScriptsLibRoot -Destination $livePluginScriptsLibRoot -Recurse
+
 Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $livePluginSkillsRoot
 $removedPluginSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $livePluginSkillsRoot -ActiveSkillNames $activeSkillNames -RetiredSkillNames $retiredSkillNames)
 
 Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved -SkillNames $userSkillNames
 $removedUserSkills = @(Remove-StaleOwnedSkillDirectories -TargetRoot $userSkillsRootResolved -ActiveSkillNames $userSkillNames -RetiredSkillNames $retiredSkillNames)
 
-Assert-NoTreeDrift -SourceRoot (Split-Path $sourcePluginManifest -Parent) -TargetRoot $livePluginManifestDir -Label "plugin manifest"
-if (Test-Path -LiteralPath $sourceAssetsRoot -PathType Container) {
-    Assert-NoTreeDrift -SourceRoot $sourceAssetsRoot -TargetRoot $livePluginAssetsRoot -Label "plugin assets"
-}
-foreach ($skillName in $activeSkillNames) {
-    Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $livePluginSkillsRoot $skillName) -Label "plugin skill $skillName"
-}
-foreach ($skillName in $userSkillNames) {
-    Assert-NoTreeDrift -SourceRoot (Join-Path $sourceSkillsRoot $skillName) -TargetRoot (Join-Path $userSkillsRootResolved $skillName) -Label "user skill $skillName"
-}
-
 $removedRetiredLivePluginRoots = @($retiredLivePluginRoots | ForEach-Object { Remove-RetiredLivePluginRoot -Path $_ })
 $marketplaceEntry = Sync-PersonalMarketplaceEntry -Path $marketplacePathResolved
+
+Assert-SuperpowersProjectLiveInstallInSync -SourceRoot $repoRoot -LivePluginRoot $livePluginRootResolved -UserSkillsRoot $userSkillsRootResolved -MarketplacePath $marketplacePathResolved -RetiredLivePluginRoots $retiredLivePluginRoots
 
 $deployedPluginSkills = @($activeSkillNames | ForEach-Object {
     [pscustomobject]@{
@@ -245,6 +213,7 @@ $deployedUserSkills = @($userSkillNames | ForEach-Object {
     user_skills_root = $userSkillsRootResolved
     marketplace = $marketplaceEntry
     assets_target = if (Test-Path -LiteralPath $livePluginAssetsRoot -PathType Container) { $livePluginAssetsRoot } else { $null }
+    scripts_lib_target = $livePluginScriptsLibRoot
     deployed_plugin_skills = $deployedPluginSkills
     deployed_user_skills = $deployedUserSkills
     removed_plugin_skills = $removedPluginSkills
