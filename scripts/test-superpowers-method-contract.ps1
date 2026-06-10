@@ -15,6 +15,11 @@ function Assert-Contains {
     if (-not $Text.Contains($Needle)) { throw $Message }
 }
 
+function Normalize-ContractText {
+    param([string]$Text)
+    ($Text -replace "\s+", " ").Trim()
+}
+
 function Test-Contract {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -27,11 +32,13 @@ function Test-Contract {
     try {
         $skill = Get-Content -LiteralPath (Join-Path $repoRoot $SkillPath) -Raw
         $metadata = Get-Content -LiteralPath (Join-Path $repoRoot $MetadataPath) -Raw
+        $normalizedSkill = Normalize-ContractText -Text $skill
+        $normalizedMetadata = Normalize-ContractText -Text $metadata
         foreach ($needle in $SkillNeedles) {
-            Assert-Contains -Text $skill -Needle $needle -Message "$Name skill missing: $needle"
+            Assert-Contains -Text $normalizedSkill -Needle (Normalize-ContractText -Text $needle) -Message "$Name skill missing: $needle"
         }
         foreach ($needle in $MetadataNeedles) {
-            Assert-Contains -Text $metadata -Needle $needle -Message "$Name metadata missing: $needle"
+            Assert-Contains -Text $normalizedMetadata -Needle (Normalize-ContractText -Text $needle) -Message "$Name metadata missing: $needle"
         }
         Add-Check -Name $Name -Ok $true -Reason "passed"
     } catch {

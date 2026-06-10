@@ -202,6 +202,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Advanced user input policy contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Skill metadata readability contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-skill-metadata-readability.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Skill metadata readability contract failed" }
+    }))
+
     $results.Add((Invoke-Step "Superpowers method contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-method-contract.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Superpowers method contract failed" }
