@@ -14,10 +14,13 @@ function Add-Check {
 try {
     $projectSkillsPath = Join-Path $repoRoot "scripts/lib/project-skills.ps1"
     $liveInstallPath = Join-Path $repoRoot "scripts/lib/live-install.ps1"
+    $pluginCachePath = Join-Path $repoRoot "scripts/lib/plugin-cache.ps1"
     if (-not (Test-Path -LiteralPath $projectSkillsPath -PathType Leaf)) { throw "missing shared project skill registry: $projectSkillsPath" }
     if (-not (Test-Path -LiteralPath $liveInstallPath -PathType Leaf)) { throw "missing live install comparer: $liveInstallPath" }
+    if (-not (Test-Path -LiteralPath $pluginCachePath -PathType Leaf)) { throw "missing plugin cache sync helper: $pluginCachePath" }
     . $projectSkillsPath
     . $liveInstallPath
+    . $pluginCachePath
 
     $syncText = Get-Content -LiteralPath $syncPath -Raw
     foreach ($needle in @(
@@ -25,6 +28,9 @@ try {
         'assets',
         'scripts\lib',
         'get-agent-plugin-version.ps1',
+        'plugin-cache.ps1',
+        'Sync-ProjectPluginCacheCandidates',
+        'refreshed_cache_plugin_roots',
         '$userSkillNames = @(Get-ProjectUserSkillNames)',
         'Assert-SuperpowersProjectLiveInstallInSync',
         'Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved -SkillNames $userSkillNames'
@@ -100,6 +106,59 @@ try {
         if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
     }
     Add-Check -Name "full live install comparer detects drift" -Ok $true -Reason "passed"
+
+    $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ("plugin-cache-sync-" + [guid]::NewGuid().ToString("N"))
+    try {
+        $livePluginRoot = Join-Path $fixtureRoot "plugins\superpowers-project"
+        $cacheRoot = Join-Path $fixtureRoot "cache"
+        $cachedPluginRoot = Join-Path $cacheRoot "tanner-local\project\0.2.0+fixture"
+        New-Item -ItemType Directory -Path $livePluginRoot -Force | Out-Null
+        New-Item -ItemType Directory -Path $cachedPluginRoot -Force | Out-Null
+
+        Copy-Item -LiteralPath (Join-Path $repoRoot ".codex-plugin") -Destination (Join-Path $livePluginRoot ".codex-plugin") -Recurse
+        Copy-Item -LiteralPath (Join-Path $repoRoot ".codex-plugin") -Destination (Join-Path $cachedPluginRoot ".codex-plugin") -Recurse
+        if (Test-Path -LiteralPath (Join-Path $repoRoot "assets") -PathType Container) {
+            Copy-Item -LiteralPath (Join-Path $repoRoot "assets") -Destination (Join-Path $livePluginRoot "assets") -Recurse
+            Copy-Item -LiteralPath (Join-Path $repoRoot "assets") -Destination (Join-Path $cachedPluginRoot "assets") -Recurse
+        }
+        New-Item -ItemType Directory -Path (Join-Path $livePluginRoot "scripts") -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $cachedPluginRoot "scripts") -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") -Destination (Join-Path $livePluginRoot "scripts\get-agent-plugin-version.ps1")
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") -Destination (Join-Path $cachedPluginRoot "scripts\get-agent-plugin-version.ps1")
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\lib") -Destination (Join-Path $livePluginRoot "scripts\lib") -Recurse
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\lib") -Destination (Join-Path $cachedPluginRoot "scripts\lib") -Recurse
+        Copy-SkillDirectories -SourceRoot (Join-Path $repoRoot "skills") -TargetRoot (Join-Path $livePluginRoot "skills")
+        Copy-SkillDirectories -SourceRoot (Join-Path $repoRoot "skills") -TargetRoot (Join-Path $cachedPluginRoot "skills")
+        Add-Content -LiteralPath (Join-Path $cachedPluginRoot "skills\brainstorm-spec\SKILL.md") -Value "# fixture cache drift"
+
+        $staleRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") `
+            -RepoRoot $repoRoot `
+            -LivePluginRoot $livePluginRoot `
+            -CacheRoot $cacheRoot `
+            -ObservedPluginRoot $cachedPluginRoot `
+            -RequireCurrent 2>&1
+        if ($LASTEXITCODE -eq 0) { throw "stale cached observed plugin should fail before refresh: $($staleRaw | Out-String)" }
+
+        $refreshed = @(Sync-ProjectPluginCacheCandidates -SourceRoot $repoRoot -CacheRoot $cacheRoot)
+        if ($refreshed.Count -ne 1) { throw "expected one refreshed cache root, got $($refreshed.Count)" }
+        if ([IO.Path]::GetFullPath($refreshed[0].path) -ne [IO.Path]::GetFullPath($cachedPluginRoot)) {
+            throw "refreshed wrong cache root: $($refreshed[0].path)"
+        }
+
+        $freshRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") `
+            -RepoRoot $repoRoot `
+            -LivePluginRoot $livePluginRoot `
+            -CacheRoot $cacheRoot `
+            -ObservedPluginRoot $cachedPluginRoot `
+            -RequireCurrent 2>&1
+        $fresh = (($freshRaw | Out-String).Trim() | ConvertFrom-Json)
+        if ($LASTEXITCODE -ne 0 -or $fresh.ok -ne $true -or $fresh.observed.matches_source -ne $true) {
+            throw "refreshed cached observed plugin should pass: $($freshRaw | Out-String)"
+        }
+    } finally {
+        if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
+    }
+    Add-Check -Name "cache candidate refresh updates observed threads" -Ok $true -Reason "passed"
 
     [pscustomobject]@{ ok = $true; phase = "plugin-only-live-sync"; checks = $checks } | ConvertTo-Json -Depth 8
 } catch {

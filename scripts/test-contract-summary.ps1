@@ -38,8 +38,11 @@ try {
         'debug_question_mode',
         'scripts/sync-live.ps1 -Validate',
         'get-agent-plugin-version.ps1',
+        '-Banner -RequireCurrent',
+        'Startup Version Check',
         'contract_hash',
         'ObservedSkillRoot',
+        'matching local plugin cache roots',
         'Plugin cache paths are not durable contracts'
     )) {
         Add-Check -Name "summary contains $needle" -Ok $current.Contains($needle) -Reason "contract summary missing $needle"

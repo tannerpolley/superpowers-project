@@ -47,7 +47,25 @@ function Invoke-VersionCheck {
     }
 }
 
+function Invoke-VersionCheckRaw {
+    param([string[]]$Arguments)
+    $scriptPath = Join-Path $RepoRoot "scripts\get-agent-plugin-version.ps1"
+    if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) {
+        throw "missing version checker: $scriptPath"
+    }
+    $raw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath @Arguments 2>&1
+    [pscustomobject]@{ exit_code = $LASTEXITCODE; raw = (($raw | Out-String).Trim()) }
+}
+
 try {
+    $manifest = Get-Content -LiteralPath (Join-Path $RepoRoot ".codex-plugin\plugin.json") -Raw | ConvertFrom-Json
+    $startupPrompt = (($manifest.interface.defaultPrompt | ForEach-Object { [string]$_ }) -join "`n")
+    Add-Check -Name "plugin startup prompt requires version banner" -Ok (
+        $startupPrompt.Contains("At Superpowers Project startup") -and
+        $startupPrompt.Contains("get-agent-plugin-version.ps1 -Banner -RequireCurrent") -and
+        $startupPrompt.Contains("print the banner")
+    ) -Reason "plugin defaultPrompt must require agents to print a startup version banner"
+
     $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("agent-plugin-version-" + [guid]::NewGuid().ToString("N"))
     $liveRoot = Join-Path $tempRoot "live\superpowers-project"
     $cacheRoot = Join-Path $tempRoot "cache"
@@ -68,6 +86,23 @@ try {
     Add-Check -Name "fresh observed plugin passes" -Ok ($fresh.exit_code -eq 0 -and $fresh.json.ok -eq $true -and $fresh.json.observed.matches_source -eq $true) -Reason ([string]$fresh.json.reason)
     Add-Check -Name "cache candidates are reported" -Ok (@($fresh.json.cache_candidates).Count -eq 2) -Reason "expected fresh and stale cache candidates"
     Add-Check -Name "stale unobserved cache is visible" -Ok (@($fresh.json.cache_candidates | Where-Object { $_.matches_source -eq $false }).Count -eq 1) -Reason "expected stale cache candidate to be reported"
+
+    $banner = Invoke-VersionCheckRaw -Arguments @(
+        "-RepoRoot", $RepoRoot,
+        "-LivePluginRoot", $liveRoot,
+        "-CacheRoot", $cacheRoot,
+        "-ObservedPluginRoot", $freshCacheRoot,
+        "-Banner",
+        "-RequireCurrent"
+    )
+    Add-Check -Name "startup banner prints exact current version" -Ok (
+        $banner.exit_code -eq 0 -and
+        $banner.raw.Contains("Superpowers Project plugin") -and
+        $banner.raw.Contains("manifest_version:") -and
+        $banner.raw.Contains("contract_hash:") -and
+        $banner.raw.Contains("source/live: current") -and
+        $banner.raw.Contains("observed: current")
+    ) -Reason "expected -Banner to print current human-readable startup status"
 
     $staleObserved = Invoke-VersionCheck -Arguments @(
         "-RepoRoot", $RepoRoot,

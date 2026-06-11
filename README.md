@@ -91,7 +91,13 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 
 ## Agent Version Tracking
 
-Use the version tracker when an agent needs to prove the exact Superpowers Project plugin copy it is using:
+At Superpowers Project startup, agents should print a concise version banner before selecting a workflow route:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent
+```
+
+Use the JSON version tracker when an agent needs machine-readable proof of the exact Superpowers Project plugin copy it is using:
 
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent
@@ -103,7 +109,7 @@ The checker reports the manifest version, source commit, and runtime `contract_h
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
 ```
 
-If source and live are current but the observed surface differs, run validated live sync and start a fresh agent session so Codex reloads the plugin cache.
+If source and live are current but the observed surface differs, run validated live sync. Live sync refreshes the live user install and matching local plugin cache roots that already exist, so existing threads can see updated files when they re-read plugin skill bodies. It cannot rewrite prompt text already loaded into an agent context; if the observed surface still differs after sync, start a fresh agent session.
 
 ## CI And Releases
 
@@ -128,6 +134,8 @@ The sync script deploys this repo's plugin manifest and full skill implementatio
 It also deploys only the shared helper skill to:
 
 - `C:\Users\Tanner\.agents\skills\advanced-user-input`
+
+By default, the same command also refreshes matching existing local plugin cache candidates for this plugin. Use `-SkipCacheRefresh` only when intentionally validating the live install without updating already-materialized cache copies.
 
 ## Install
 

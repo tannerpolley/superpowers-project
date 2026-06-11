@@ -3,13 +3,16 @@ param(
     [switch]$Validate,
     [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\superpowers-project"),
     [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills"),
-    [string]$MarketplacePath = (Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json")
+    [string]$MarketplacePath = (Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json"),
+    [string]$CacheRoot = (Join-Path $env:USERPROFILE ".codex\plugins\cache"),
+    [switch]$SkipCacheRefresh
 )
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "lib\sync-tree.ps1")
 . (Join-Path $PSScriptRoot "lib\project-skills.ps1")
 . (Join-Path $PSScriptRoot "lib\live-install.ps1")
+. (Join-Path $PSScriptRoot "lib\plugin-cache.ps1")
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
@@ -20,8 +23,10 @@ $sourceScriptsLibRoot = Join-Path $repoRoot "scripts\lib"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
 $marketplacePathResolved = [IO.Path]::GetFullPath($MarketplacePath)
+$cacheRootResolved = [IO.Path]::GetFullPath($CacheRoot)
 $expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
 $expectedMarketplacePath = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json"))
+$expectedCacheRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".codex\plugins\cache"))
 $retiredLivePluginRoots = @(
     [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones")),
     [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\project"))
@@ -36,6 +41,9 @@ if ($userSkillsRootResolved -ne $expectedUserSkillsRoot) {
 }
 if ($marketplacePathResolved -ne $expectedMarketplacePath) {
     throw "MarketplacePath must be the personal plugin marketplace path: $expectedMarketplacePath"
+}
+if ($cacheRootResolved -ne $expectedCacheRoot) {
+    throw "CacheRoot must be the Codex plugin cache path: $expectedCacheRoot"
 }
 if (-not (Test-Path -LiteralPath $sourcePluginManifest -PathType Leaf)) {
     throw "missing source plugin manifest: $sourcePluginManifest"
@@ -200,6 +208,11 @@ $marketplaceEntry = Sync-PersonalMarketplaceEntry -Path $marketplacePathResolved
 
 Assert-SuperpowersProjectLiveInstallInSync -SourceRoot $repoRoot -LivePluginRoot $livePluginRootResolved -UserSkillsRoot $userSkillsRootResolved -MarketplacePath $marketplacePathResolved -RetiredLivePluginRoots $retiredLivePluginRoots
 
+$refreshedCachePluginRoots = @()
+if (-not $SkipCacheRefresh) {
+    $refreshedCachePluginRoots = @(Sync-ProjectPluginCacheCandidates -SourceRoot $repoRoot -CacheRoot $cacheRootResolved)
+}
+
 $deployedPluginSkills = @($activeSkillNames | ForEach-Object {
     [pscustomobject]@{
         skill = $_
@@ -221,6 +234,7 @@ $deployedUserSkills = @($userSkillNames | ForEach-Object {
     marketplace = $marketplaceEntry
     assets_target = if (Test-Path -LiteralPath $livePluginAssetsRoot -PathType Container) { $livePluginAssetsRoot } else { $null }
     scripts_lib_target = $livePluginScriptsLibRoot
+    refreshed_cache_plugin_roots = $refreshedCachePluginRoots
     deployed_plugin_skills = $deployedPluginSkills
     deployed_user_skills = $deployedUserSkills
     removed_plugin_skills = $removedPluginSkills

@@ -5,6 +5,7 @@ param(
     [string]$CacheRoot = (Join-Path $env:USERPROFILE ".codex\plugins\cache"),
     [string]$ObservedPluginRoot,
     [string]$ObservedSkillRoot,
+    [switch]$Banner,
     [switch]$RequireCurrent
 )
 
@@ -134,7 +135,11 @@ function Get-CachePluginRoots {
             $manifest = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
             $pluginRoot = Split-Path -Parent (Split-Path -Parent $file.FullName)
             $normalizedRoot = Normalize-RelativePath $pluginRoot
-            if ([string]$manifest.name -eq $ExpectedManifestName -or $normalizedRoot -match '/tanner-local/project/') {
+            if (
+                [string]$manifest.name -eq $ExpectedManifestName -or
+                $normalizedRoot -match '/tanner-local/project/' -or
+                $normalizedRoot -match '/tanner-local/superpowers-project/'
+            ) {
                 $roots.Add([IO.Path]::GetFullPath($pluginRoot)) | Out-Null
             }
         } catch {
@@ -142,6 +147,30 @@ function Get-CachePluginRoots {
         }
     }
     @($roots | Sort-Object -Unique)
+}
+
+function Format-VersionBanner {
+    param([Parameter(Mandatory = $true)]$Report)
+
+    $sourceLiveStatus = if ($Report.live.matches_source -eq $true) { "current" } else { "stale" }
+    $observedStatus = if ($null -eq $Report.observed) {
+        "not supplied"
+    } elseif ($Report.observed.matches_source -eq $true) {
+        "current"
+    } else {
+        "stale"
+    }
+    @(
+        "Superpowers Project plugin",
+        "manifest_version: $($Report.source.manifest_version)",
+        "git_commit: $($Report.source.git_commit)",
+        "source_dirty: $($Report.source.dirty)",
+        "contract_hash: $($Report.source.contract_hash)",
+        "source/live: $sourceLiveStatus",
+        "observed: $observedStatus",
+        "cache_candidates: $(@($Report.cache_candidates).Count) total, $($Report.stale_cache_candidate_count) stale",
+        "reason: $($Report.reason)"
+    ) -join [Environment]::NewLine
 }
 
 try {
@@ -184,7 +213,7 @@ try {
         "plugin version check failed"
     }
 
-    [pscustomobject]@{
+    $report = [pscustomobject]@{
         ok = $ok
         phase = "agent-plugin-version"
         reason = $reason
@@ -194,14 +223,34 @@ try {
         cache_candidates = $cacheCandidates
         stale_cache_candidate_count = $staleCacheCandidates.Count
         current_agent_known = ($null -ne $observed)
-        recommended_recovery = "Run scripts/sync-live.ps1 -Validate from source. If observed or cache surfaces still differ, start a fresh agent session so it reloads the plugin cache."
-    } | ConvertTo-Json -Depth 16
+        recommended_recovery = "Run scripts/sync-live.ps1 -Validate from source to refresh live install and matching local plugin cache roots. If the observed surface still differs, start a fresh agent session so it reloads the plugin cache."
+    }
+
+    if ($Banner) {
+        Format-VersionBanner -Report $report
+    } else {
+        $report | ConvertTo-Json -Depth 16
+    }
     if (-not $ok) { exit 1 }
 } catch {
-    [pscustomobject]@{
+    $report = [pscustomobject]@{
         ok = $false
         phase = "agent-plugin-version"
         reason = $_.Exception.Message
-    } | ConvertTo-Json -Depth 8
+        source = [pscustomobject]@{
+            manifest_version = ""
+            git_commit = ""
+            contract_hash = ""
+        }
+        live = [pscustomobject]@{ matches_source = $false }
+        observed = $null
+        cache_candidates = @()
+        stale_cache_candidate_count = 0
+    }
+    if ($Banner) {
+        Format-VersionBanner -Report $report
+    } else {
+        $report | ConvertTo-Json -Depth 8
+    }
     exit 1
 }
