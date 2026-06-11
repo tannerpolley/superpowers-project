@@ -1,0 +1,67 @@
+# Superpowers Project Contract Summary
+
+> Generated from repo source by `scripts/generate-contract-summary.ps1`. Do not edit by hand.
+
+## Canonical Identity
+
+- Plugin manifest name: `superpowers-project`
+- User-facing prompt namespace: `$superpowers-project:*`
+- Source repo: `tannerpolley/superpowers-project`
+
+## Artifact Roots
+
+- Specs: `docs/superpowers/specs/`
+- Plans: `docs/superpowers/plans/`
+- Issue mirrors: `docs/superpowers/issues/`
+- Milestone index pages: `docs/superpowers/milestones/`
+
+## Terminal Model
+
+- Intermediate workflow gates use `Yes`, `Revisit`, and `Stop`.
+- Verified final health gates use `Done`, `Revisit`, and `Stop`.
+- `Done` is valid only after final proof and a clean worktree.
+- Custom Other never terminates directly; re-ask with built-in terminal labels when needed.
+- A saved spec, saved plan, created issue set, pushed branch, merged branch, completed audit, or synced live plugin is not terminal by itself.
+
+## Workflow Skills
+
+| Skill | Purpose | Native Question IDs | Final Health Gate |
+|---|---|---|---|
+| `align-project` | Use when a Superpowers Project repo needs structure alignment, migration review, tracker alignment, live sync verification, or repair planning. | `project_align_final_health_gate`<br>`project_align_next_step`<br>`project_align_plan_issue_route`<br>`project_align_prepare_route`<br>`project_align_reiteration_route`<br>`project_align_repair_group`<br>`project_align_review_evidence_route` | `project_align_final_health_gate` |
+| `audit-project` | Use when code, workflows, tests, skills, or repo behavior need evidence-backed review findings before repair planning. | `project_audit_next_step`<br>`project_audit_progress_route`<br>`project_audit_revisit_route` | `None` |
+| `brainstorm-spec` | Use when repo-backed ideas, specs, PRDs, architecture concepts, or broad feature requests need Superpowers brainstorming plus project context and native user-input grilling. | `project_auto_mode_authorization`<br>`project_brainstorm_multi_spec_route`<br>`project_brainstorm_next_step`<br>`project_brainstorm_plan_route`<br>`project_brainstorm_reiteration_route`<br>`project_brainstorm_review_restart_route`<br>`project_brainstorm_start_route` | `None` |
+| `create-issues` | Use when a Superpowers Project spec, plan, PRD, or approved scope needs vertical-slice GitHub issues and synced issue mirrors. | `project_issue_execution_route`<br>`project_issue_next_step`<br>`project_issue_orchestrate_route`<br>`project_issue_reiteration_route`<br>`project_issue_resolve_route`<br>`project_issue_review_repair_route` | `None` |
+| `implement-plan` | Use when an approved Superpowers Project plan should be implemented without creating a GitHub issue, using a native goal, development branch, verification, and merge-ready proof. | `implement_plan_push_permission`<br>`implement_plan_topology`<br>`project_implement_next_step`<br>`project_implement_reiteration_route` | `None` |
+| `initiate-workflow` | Route Superpowers Project extension requests to project setup, brainstorming, audits, planning, issue creation, issue triage, alignment, or goal-backed resolution workflows. | None | `None` |
+| `merge-changes` | Use when a Superpowers Project issue-backed PR, worker handoff, or approved local branch must be reviewed, approved, merged, cleaned up, and recorded with clean repo proof. | `project_merge_approval`<br>`project_merge_continue_group`<br>`project_merge_final_health_gate`<br>`project_merge_issue_route`<br>`project_merge_next_step`<br>`project_merge_planning_route`<br>`project_merge_reiteration_group`<br>`project_merge_repair_cleanup_route`<br>`project_merge_repair_route` | `project_merge_final_health_gate` |
+| `orchestrate-issues` | Use when a ready Superpowers Project issue should be delegated to a Codex worktree worker thread while the current thread acts as orchestrator and reviewer. | `project_orchestrate_integration_route`<br>`project_orchestrate_more_worker_route`<br>`project_orchestrate_next_step`<br>`project_orchestrate_reiteration_route`<br>`project_orchestrate_worker_communication_route` | `None` |
+| `resolve-issue` | Use when one ready GitHub issue mirror under docs/superpowers/issues must be implemented directly in the current thread through native goal activation, Superpowers execution, pushed branch, opened PR, and PR-ready handoff. | `project_resolve_another_issue_route`<br>`project_resolve_fix_route`<br>`project_resolve_integration_route`<br>`project_resolve_next_step`<br>`project_resolve_push_permission`<br>`project_resolve_reiteration_route` | `None` |
+| `setup-project` | Create or maintain the Superpowers Project setup, milestone map, GitHub tracker configuration, GitHub Project board configuration, and roadmap artifacts under docs/superpowers. | `project_setup_next_step`<br>`project_setup_reiteration_group`<br>`project_setup_reiteration_route`<br>`project_setup_work_route` | `None` |
+| `write-plan` | Use when an approved Superpowers Project spec or issue mirror needs a detailed implementation plan before code changes. | `project_plan_issue_count`<br>`project_plan_issue_count_multiple`<br>`project_plan_issue_execution_route`<br>`project_plan_next_step`<br>`project_plan_review_grill_route`<br>`project_plan_review_route`<br>`project_plan_work_route` | `None` |
+
+## Approval Boundaries
+
+- Push, publish, merge, board creation, GitHub mutation, and final `Done` require explicit proof and the owning native gate.
+- `project_merge_approval` is the merge approval gate.
+- `project_auto_mode_authorization` can authorize bounded Auto Mode only when the repo Auto Mode contract helper passes.
+- Helper scripts may prepare evidence, but they must not convert missing approval into approval.
+
+## Debug Mode
+
+- `debug_question_mode` is only for explicit non-interactive smoke tests or proven stuck background prompts.
+- Required ledger fields include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source`, `no_answer_tool_available: true`, and `mutation_allowed: false`.
+- Debug mode must not approve mutation.
+
+## Live Sync
+
+- Source repo is authoritative.
+- Live deployed plugin copy is checked by `scripts/sync-live.ps1 -Validate`.
+- Plugin cache paths are not durable contracts.
+
+## Validation Commands
+
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`
+

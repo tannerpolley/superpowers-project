@@ -1,0 +1,126 @@
+[CmdletBinding()]
+param(
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path,
+    [string]$OutputPath = (Join-Path (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path "docs\superpowers\CONTRACT_SUMMARY.md")
+)
+
+$ErrorActionPreference = "Stop"
+. (Join-Path $RepoRoot "scripts\lib\project-skills.ps1")
+
+function Get-FrontmatterValue {
+    param([string]$Text, [string]$Name)
+    $match = [regex]::Match($Text, "(?m)^$([regex]::Escape($Name)):\s*(.+?)\s*$")
+    if ($match.Success) { return $match.Groups[1].Value.Trim() }
+    ""
+}
+
+function Get-QuestionIds {
+    param([string]$Text)
+    @([regex]::Matches($Text, 'Question id:\s*`([^`]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+}
+
+function Get-FirstLine {
+    param([string]$Text)
+    $line = ($Text -split "\r?\n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1)
+    if ($null -eq $line) { return "" }
+    $line.Trim()
+}
+
+$workflowSkills = @(Get-ProjectWorkflowSkillNames -RepoRoot $RepoRoot)
+$finalCapable = @(Get-ProjectFinalCapableSkillNames)
+$canonicalNamespace = Get-ProjectCanonicalPromptNamespace
+$lines = [System.Collections.Generic.List[string]]::new()
+
+foreach ($line in @(
+    '# Superpowers Project Contract Summary',
+    '',
+    '> Generated from repo source by `scripts/generate-contract-summary.ps1`. Do not edit by hand.',
+    '',
+    '## Canonical Identity',
+    '',
+    '- Plugin manifest name: `superpowers-project`',
+    ("- User-facing prompt namespace: ``" + $canonicalNamespace + ":*``"),
+    '- Source repo: `tannerpolley/superpowers-project`',
+    '',
+    '## Artifact Roots',
+    '',
+    '- Specs: `docs/superpowers/specs/`',
+    '- Plans: `docs/superpowers/plans/`',
+    '- Issue mirrors: `docs/superpowers/issues/`',
+    '- Milestone index pages: `docs/superpowers/milestones/`',
+    '',
+    '## Terminal Model',
+    '',
+    '- Intermediate workflow gates use `Yes`, `Revisit`, and `Stop`.',
+    '- Verified final health gates use `Done`, `Revisit`, and `Stop`.',
+    '- `Done` is valid only after final proof and a clean worktree.',
+    '- Custom Other never terminates directly; re-ask with built-in terminal labels when needed.',
+    '- A saved spec, saved plan, created issue set, pushed branch, merged branch, completed audit, or synced live plugin is not terminal by itself.',
+    '',
+    '## Workflow Skills',
+    '',
+    '| Skill | Purpose | Native Question IDs | Final Health Gate |',
+    '|---|---|---|---|'
+)) {
+    [void]$lines.Add($line)
+}
+
+foreach ($skillName in $workflowSkills) {
+    $skillPath = Join-Path $RepoRoot "skills\$skillName\SKILL.md"
+    $text = Get-Content -LiteralPath $skillPath -Raw
+    $description = Get-FrontmatterValue -Text $text -Name "description"
+    if ([string]::IsNullOrWhiteSpace($description)) { $description = Get-FirstLine -Text $text }
+    $questionIds = @(Get-QuestionIds -Text $text)
+    $finalGate = if ($finalCapable -contains $skillName) {
+        @($questionIds | Where-Object { $_ -like "*_final_health_gate" }) -join ", "
+    } else {
+        ""
+    }
+    if ([string]::IsNullOrWhiteSpace($finalGate)) { $finalGate = "None" }
+    $questionText = if ($questionIds.Count -gt 0) { ($questionIds | ForEach-Object { "``$_``" }) -join "<br>" } else { "None" }
+    [void]$lines.Add("| ``$skillName`` | $description | $questionText | ``$finalGate`` |")
+}
+
+foreach ($line in @(
+    '',
+    '## Approval Boundaries',
+    '',
+    '- Push, publish, merge, board creation, GitHub mutation, and final `Done` require explicit proof and the owning native gate.',
+    '- `project_merge_approval` is the merge approval gate.',
+    '- `project_auto_mode_authorization` can authorize bounded Auto Mode only when the repo Auto Mode contract helper passes.',
+    '- Helper scripts may prepare evidence, but they must not convert missing approval into approval.',
+    '',
+    '## Debug Mode',
+    '',
+    '- `debug_question_mode` is only for explicit non-interactive smoke tests or proven stuck background prompts.',
+    '- Required ledger fields include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source`, `no_answer_tool_available: true`, and `mutation_allowed: false`.',
+    '- Debug mode must not approve mutation.',
+    '',
+    '## Live Sync',
+    '',
+    '- Source repo is authoritative.',
+    '- Live deployed plugin copy is checked by `scripts/sync-live.ps1 -Validate`.',
+    '- Plugin cache paths are not durable contracts.',
+    '',
+    '## Validation Commands',
+    '',
+    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`',
+    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`',
+    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1`',
+    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`'
+)) {
+    [void]$lines.Add($line)
+}
+
+$output = ($lines -join [Environment]::NewLine) + [Environment]::NewLine
+$targetPath = if ([IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $RepoRoot $OutputPath }
+$targetDir = Split-Path -Parent $targetPath
+New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+Set-Content -LiteralPath $targetPath -Value $output -Encoding utf8NoBOM
+
+[pscustomobject]@{
+    ok = $true
+    phase = "generate-contract-summary"
+    output_path = [IO.Path]::GetFullPath($targetPath)
+    workflow_skill_count = $workflowSkills.Count
+} | ConvertTo-Json -Depth 8

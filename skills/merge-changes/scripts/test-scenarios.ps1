@@ -700,6 +700,116 @@ Invoke-Scenario "merge terminal closeout accepts verified final done" {
     if ($result.evidence.selected_option_id -ne "done") { throw "merge terminal closeout did not preserve done evidence" }
 }
 
+Invoke-Scenario "local branch closeout helper dry run requires native merge decision" {
+    $repo = New-TestRepo
+    $origin = Join-Path $tempRoot ("origin-" + [guid]::NewGuid().ToString("N") + ".git")
+    & git init --bare $origin | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "git init --bare failed" }
+    & git -C $repo remote add origin $origin | Out-Null
+    & git -C $repo push -u origin main | Out-Null
+    & git -C $repo checkout -b codex/local-helper | Out-Null
+    Set-Content -LiteralPath (Join-Path $repo "helper.txt") -Value "helper`n" -Encoding utf8NoBOM
+    & git -C $repo add . | Out-Null
+    & git -C $repo commit -m "helper branch" | Out-Null
+    & git -C $repo push -u origin codex/local-helper | Out-Null
+    & git -C $repo checkout main | Out-Null
+    $planPath = Join-Path $repo "docs/superpowers/plans"
+    New-Item -ItemType Directory -Path $planPath -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $planPath "helper-plan.md") -Value "# Helper Plan`n" -Encoding utf8NoBOM
+    & git -C $repo add . | Out-Null
+    & git -C $repo commit -m "add plan" | Out-Null
+    & git -C $repo push origin main | Out-Null
+
+    $setupPath = Join-Path $tempRoot "local-helper-setup.json"
+    @{
+        merge_mode = "local-branch"
+        source_plan = "docs/superpowers/plans/helper-plan.md"
+        branch = "codex/local-helper"
+    } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+    $outputDir = Join-Path $tempRoot "local-helper-output"
+    $prepared = Invoke-JsonScript -ScriptName "prepare-local-branch-closeout.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-ValidationCommand", "exit 0",
+        "-OutputDir", $outputDir
+    )
+    if (-not $prepared.ok) { throw $prepared.reason }
+    $decisionPath = Join-Path $tempRoot "local-helper-decision.json"
+    New-MergeDecision | Set-Content -LiteralPath $decisionPath -Encoding utf8NoBOM
+    $applied = Invoke-JsonScript -ScriptName "apply-local-branch-closeout.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-PremergeResultPath", ([string]$prepared.evidence.premerge_result_path),
+        "-MergeDecisionPath", $decisionPath,
+        "-ValidationCommand", "exit 0",
+        "-CleanupHookCommand", "exit 0",
+        "-BranchCleanupTarget", "codex/local-helper",
+        "-DryRun"
+    )
+    if (-not $applied.ok) { throw $applied.reason }
+    if ($applied.evidence.would_delete_branch -ne "codex/local-helper") { throw "dry run did not preserve setup branch target" }
+}
+
+Invoke-Scenario "local branch closeout helper refuses malformed approval and wrong cleanup target" {
+    $repo = New-TestRepo
+    $origin = Join-Path $tempRoot ("origin-" + [guid]::NewGuid().ToString("N") + ".git")
+    & git init --bare $origin | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "git init --bare failed" }
+    & git -C $repo remote add origin $origin | Out-Null
+    & git -C $repo push -u origin main | Out-Null
+    & git -C $repo checkout -b codex/local-helper-bad | Out-Null
+    Set-Content -LiteralPath (Join-Path $repo "bad-helper.txt") -Value "helper`n" -Encoding utf8NoBOM
+    & git -C $repo add . | Out-Null
+    & git -C $repo commit -m "bad helper branch" | Out-Null
+    & git -C $repo push -u origin codex/local-helper-bad | Out-Null
+    & git -C $repo checkout main | Out-Null
+    $planPath = Join-Path $repo "docs/superpowers/plans"
+    New-Item -ItemType Directory -Path $planPath -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $planPath "bad-helper-plan.md") -Value "# Bad Helper Plan`n" -Encoding utf8NoBOM
+    & git -C $repo add . | Out-Null
+    & git -C $repo commit -m "add bad helper plan" | Out-Null
+    & git -C $repo push origin main | Out-Null
+
+    $setupPath = Join-Path $tempRoot "local-helper-bad-setup.json"
+    @{
+        merge_mode = "local-branch"
+        source_plan = "docs/superpowers/plans/bad-helper-plan.md"
+        branch = "codex/local-helper-bad"
+    } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+    $prepared = Invoke-JsonScript -ScriptName "prepare-local-branch-closeout.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-ValidationCommand", "exit 0",
+        "-OutputDir", (Join-Path $tempRoot "local-helper-bad-output")
+    )
+    if (-not $prepared.ok) { throw $prepared.reason }
+    $declinedPath = Join-Path $tempRoot "local-helper-declined.json"
+    New-MergeDecision -SelectedAction "decline" | Set-Content -LiteralPath $declinedPath -Encoding utf8NoBOM
+    $declined = Invoke-JsonScript -ScriptName "apply-local-branch-closeout.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-PremergeResultPath", ([string]$prepared.evidence.premerge_result_path),
+        "-MergeDecisionPath", $declinedPath,
+        "-ValidationCommand", "exit 0",
+        "-CleanupHookCommand", "exit 0",
+        "-DryRun"
+    )
+    if ($declined.ok -or $declined.reason -notmatch "declined") { throw "expected declined native approval to block" }
+    $approvedPath = Join-Path $tempRoot "local-helper-approved.json"
+    New-MergeDecision | Set-Content -LiteralPath $approvedPath -Encoding utf8NoBOM
+    $wrongTarget = Invoke-JsonScript -ScriptName "apply-local-branch-closeout.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-PremergeResultPath", ([string]$prepared.evidence.premerge_result_path),
+        "-MergeDecisionPath", $approvedPath,
+        "-ValidationCommand", "exit 0",
+        "-CleanupHookCommand", "exit 0",
+        "-BranchCleanupTarget", "main",
+        "-DryRun"
+    )
+    if ($wrongTarget.ok -or $wrongTarget.reason -notmatch "branch cleanup target") { throw "expected wrong cleanup target to block" }
+}
+
 
     try {
         $text = Get-Content -LiteralPath $skillFile -Raw

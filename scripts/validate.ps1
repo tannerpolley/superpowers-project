@@ -217,6 +217,26 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Auto Mode authorization contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Contract summary generation" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-contract-summary.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Contract summary generation failed" }
+    }))
+
+    $results.Add((Invoke-Step "Stale skill contract detector" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-stale-skill-contract.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Stale skill contract detector failed" }
+    }))
+
+    $results.Add((Invoke-Step "Release preparation receipt" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-prepare-release.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Release preparation receipt failed" }
+    }))
+
+    $results.Add((Invoke-Step "Local project workflow smoke" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-e2e-project-workflow.ps1") -LocalOnly | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Local project workflow smoke failed" }
+    }))
+
     $results.Add((Invoke-Step "PowerShell parser check" {
         $scripts = @(Get-ChildItem -LiteralPath $repoRoot -Recurse -Filter "*.ps1")
         foreach ($script in $scripts) {

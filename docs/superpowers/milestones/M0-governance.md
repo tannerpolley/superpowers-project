@@ -13,6 +13,7 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 - `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
 - `docs/superpowers/specs/2026-06-02-project-workflow-hardening-design.md`
 - `docs/superpowers/specs/2026-06-03-project-implement-and-integration-workflow-design.md`
+- `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md`
 
 ## Related Plans
 

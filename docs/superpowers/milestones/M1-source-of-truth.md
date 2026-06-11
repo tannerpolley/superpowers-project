@@ -16,6 +16,7 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - `docs/superpowers/specs/2026-06-03-setup-orchestration-design.md`
 - `docs/superpowers/specs/2026-06-03-project-plugin-namespace-skill-naming-design.md`
 - `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
+- `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md`
 
 ## Related Plans
 

@@ -12,6 +12,7 @@ Package, validate, sync, and release the Superpowers Project extension after dum
 
 - `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
 - `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
+- `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md`
 
 ## Related Plans
 

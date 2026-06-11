@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added source-owned operational maturity tooling for contract summaries, stale skill detection, release receipts, local branch closeout, and local workflow smoke coverage.
+- Strengthened plugin validation wiring and CI entry points for manual and pull-request validation.
+
 ## 0.2.0 - 2026-06-02
 
 - Started the Superpowers Project migration.
