@@ -37,6 +37,9 @@ try {
         'project_merge_final_health_gate',
         'debug_question_mode',
         'scripts/sync-live.ps1 -Validate',
+        'get-agent-plugin-version.ps1',
+        'contract_hash',
+        'ObservedSkillRoot',
         'Plugin cache paths are not durable contracts'
     )) {
         Add-Check -Name "summary contains $needle" -Ok $current.Contains($needle) -Reason "contract summary missing $needle"

@@ -58,10 +58,18 @@
 - Live deployed plugin copy is checked by `scripts/sync-live.ps1 -Validate`.
 - Plugin cache paths are not durable contracts.
 
+## Agent Version Tracking
+
+- Exact runtime identity is the plugin manifest version plus the runtime `contract_hash`.
+- `scripts/get-agent-plugin-version.ps1 -RequireCurrent` compares source, live install, optional observed plugin or skill root, and local cache candidates.
+- Use `-ObservedPluginRoot` or `-ObservedSkillRoot` when an agent needs to prove the exact loaded copy it is using.
+- If source and live are current but the observed surface differs, run validated live sync and start a fresh agent session so it reloads plugin cache.
+
 ## Validation Commands
 
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`
 

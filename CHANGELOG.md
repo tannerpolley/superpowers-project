@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added source-owned operational maturity tooling for contract summaries, stale skill detection, release receipts, local branch closeout, and local workflow smoke coverage.
+- Added agent plugin version tracking with manifest version plus runtime content hashes for source, live install, observed plugin roots, and local cache candidates.
 - Strengthened plugin validation wiring and CI entry points for manual and pull-request validation.
 
 ## 0.2.0 - 2026-06-02

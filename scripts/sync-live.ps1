@@ -15,6 +15,7 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $sourcePluginManifest = Join-Path $repoRoot ".codex-plugin\plugin.json"
 $sourceSkillsRoot = Join-Path $repoRoot "skills"
 $sourceAssetsRoot = Join-Path $repoRoot "assets"
+$sourceVersionChecker = Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1"
 $sourceScriptsLibRoot = Join-Path $repoRoot "scripts\lib"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
@@ -41,6 +42,9 @@ if (-not (Test-Path -LiteralPath $sourcePluginManifest -PathType Leaf)) {
 }
 if (-not (Test-Path -LiteralPath $sourceSkillsRoot -PathType Container)) {
     throw "missing source skills root: $sourceSkillsRoot"
+}
+if (-not (Test-Path -LiteralPath $sourceVersionChecker -PathType Leaf)) {
+    throw "missing source version checker: $sourceVersionChecker"
 }
 
 $activeSkillNames = @(Get-ProjectActiveSkillNames -RepoRoot $repoRoot)
@@ -159,12 +163,15 @@ if ($Validate) {
 $livePluginManifestDir = Join-Path $livePluginRootResolved ".codex-plugin"
 $livePluginSkillsRoot = Join-Path $livePluginRootResolved "skills"
 $livePluginAssetsRoot = Join-Path $livePluginRootResolved "assets"
+$livePluginScriptsRoot = Join-Path $livePluginRootResolved "scripts"
 $livePluginScriptsLibRoot = Join-Path $livePluginRootResolved "scripts\lib"
 New-Item -ItemType Directory -Path $livePluginManifestDir -Force | Out-Null
 New-Item -ItemType Directory -Path $livePluginSkillsRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $livePluginScriptsRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $userSkillsRootResolved -Force | Out-Null
 
 Copy-Item -LiteralPath $sourcePluginManifest -Destination (Join-Path $livePluginManifestDir "plugin.json") -Force
+Copy-Item -LiteralPath $sourceVersionChecker -Destination (Join-Path $livePluginScriptsRoot "get-agent-plugin-version.ps1") -Force
 
 Assert-ChildDirectory -Parent $livePluginRootResolved -Child $livePluginAssetsRoot
 if (Test-Path -LiteralPath $sourceAssetsRoot -PathType Container) {

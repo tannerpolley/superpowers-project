@@ -24,6 +24,7 @@ try {
         'plugins\superpowers-project',
         'assets',
         'scripts\lib',
+        'get-agent-plugin-version.ps1',
         '$userSkillNames = @(Get-ProjectUserSkillNames)',
         'Assert-SuperpowersProjectLiveInstallInSync',
         'Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved -SkillNames $userSkillNames'
@@ -68,6 +69,7 @@ try {
             Copy-Item -LiteralPath (Join-Path $repoRoot "assets") -Destination (Join-Path $livePluginRoot "assets") -Recurse
         }
         New-Item -ItemType Directory -Path (Join-Path $livePluginRoot "scripts") -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") -Destination (Join-Path $livePluginRoot "scripts\get-agent-plugin-version.ps1")
         Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\lib") -Destination (Join-Path $livePluginRoot "scripts\lib") -Recurse
         Copy-SkillDirectories -SourceRoot (Join-Path $repoRoot "skills") -TargetRoot (Join-Path $livePluginRoot "skills")
         Copy-SkillDirectories -SourceRoot (Join-Path $repoRoot "skills") -TargetRoot $userSkillsRoot -SkillNames @(Get-ProjectUserSkillNames)
@@ -87,11 +89,13 @@ try {
 
         Add-Content -LiteralPath (Join-Path $livePluginRoot "skills\merge-changes\agents\openai.yaml") -Value "# fixture drift"
         Add-Content -LiteralPath (Join-Path $userSkillsRoot "advanced-user-input\SKILL.md") -Value "# fixture drift"
+        Add-Content -LiteralPath (Join-Path $livePluginRoot "scripts\get-agent-plugin-version.ps1") -Value "# fixture drift"
 
         $drift = @(Compare-SuperpowersProjectLiveInstall -SourceRoot $repoRoot -LivePluginRoot $livePluginRoot -UserSkillsRoot $userSkillsRoot -MarketplacePath $marketplacePath -RetiredLivePluginRoots @())
         $labels = @($drift | ForEach-Object { $_.label })
         if ($labels -notcontains "plugin skill merge-changes") { throw "live comparer missed merge-changes plugin drift: $($labels -join ', ')" }
         if ($labels -notcontains "user skill advanced-user-input") { throw "live comparer missed advanced-user-input user skill drift: $($labels -join ', ')" }
+        if ($labels -notcontains "plugin version checker") { throw "live comparer missed version checker drift: $($labels -join ', ')" }
     } finally {
         if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
     }

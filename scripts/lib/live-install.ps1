@@ -50,6 +50,32 @@ function Compare-LiveTree {
     })
 }
 
+function Compare-LiveFile {
+    param(
+        [Parameter(Mandatory = $true)][string]$Label,
+        [Parameter(Mandatory = $true)][string]$SourcePath,
+        [Parameter(Mandatory = $true)][string]$TargetPath
+    )
+
+    $sourceExists = Test-Path -LiteralPath $SourcePath -PathType Leaf
+    $targetExists = Test-Path -LiteralPath $TargetPath -PathType Leaf
+    if (-not $sourceExists -and -not $targetExists) {
+        return @(New-LiveInstallDrift -Label $Label -Source $SourcePath -Target $TargetPath -Drift "missing-source-and-target")
+    }
+    if (-not $sourceExists) {
+        return @(New-LiveInstallDrift -Label $Label -Source $SourcePath -Target $TargetPath -Drift "missing-in-source")
+    }
+    if (-not $targetExists) {
+        return @(New-LiveInstallDrift -Label $Label -Source $SourcePath -Target $TargetPath -Drift "missing-in-target")
+    }
+    $sourceHash = (Get-FileHash -LiteralPath $SourcePath -Algorithm SHA256).Hash
+    $targetHash = (Get-FileHash -LiteralPath $TargetPath -Algorithm SHA256).Hash
+    if ($sourceHash -ne $targetHash) {
+        return @(New-LiveInstallDrift -Label $Label -Source $SourcePath -Target $TargetPath -Drift "content-diff" -Path ([IO.Path]::GetFileName($SourcePath)) -Evidence @{ source_hash = $sourceHash; target_hash = $targetHash })
+    }
+    @()
+}
+
 function Compare-MarketplaceEntry {
     param(
         [Parameter(Mandatory = $true)][string]$MarketplacePath,
@@ -124,6 +150,9 @@ function Compare-SuperpowersProjectLiveInstall {
         $drift.Add($item) | Out-Null
     }
     foreach ($item in @(Compare-LiveTree -Label "plugin scripts lib" -SourceRoot (Join-Path $sourceRootResolved "scripts\lib") -TargetRoot (Join-Path $livePluginRootResolved "scripts\lib") -OptionalSource)) {
+        $drift.Add($item) | Out-Null
+    }
+    foreach ($item in @(Compare-LiveFile -Label "plugin version checker" -SourcePath (Join-Path $sourceRootResolved "scripts\get-agent-plugin-version.ps1") -TargetPath (Join-Path $livePluginRootResolved "scripts\get-agent-plugin-version.ps1"))) {
         $drift.Add($item) | Out-Null
     }
 

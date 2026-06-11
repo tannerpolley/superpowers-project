@@ -89,6 +89,22 @@ The retired Milestones artifact model is migration history only. New Superpowers
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
+## Agent Version Tracking
+
+Use the version tracker when an agent needs to prove the exact Superpowers Project plugin copy it is using:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent
+```
+
+The checker reports the manifest version, source commit, and runtime `contract_hash` for source, live install, local cache candidates, and an optional observed plugin or skill root. If an agent has an observed skill root from its loaded context, pass it explicitly:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
+```
+
+If source and live are current but the observed surface differs, run validated live sync and start a fresh agent session so Codex reloads the plugin cache.
+
 ## CI And Releases
 
 GitHub Actions runs the same validation command used locally:
