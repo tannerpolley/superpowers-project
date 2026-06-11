@@ -60,6 +60,20 @@ When the project is scientific or engineering-oriented, ask for numerical metric
 
 Do not route to `Continue Into Work` until the test-complete and metrics answers exist or are explicitly marked not applicable with a clear reason.
 
+## Task # Use Cases Gate
+
+Task # Use Cases are a strict requirement for every actual implementation plan. Every numbered `Task N` section MUST include a `**Use Cases:**` block before files and checkbox steps. Each block must list concrete user, system, issue-acceptance, failure, recovery, validation, or workflow cases that the task is responsible for covering.
+
+The use-case block is not optional context. It is the bridge from plan making to implementation. A plan is not ready if any numbered task lacks use cases, has an empty use-case block, or only describes generic intent without concrete cases.
+
+Before saving or presenting a plan as ready, run the repo-root validator:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <saved-plan-path>
+```
+
+If the validator fails, revise the plan before artifact review. Do not route to `$superpowers-project:create-issues`, `$superpowers-project:implement-plan`, `$superpowers-project:resolve-issue`, or `$superpowers-project:orchestrate-issues` until the saved plan passes.
+
 ## Native Question Debug Mode
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
@@ -123,6 +137,9 @@ Use the Superpowers task shape:
 ````markdown
 ### Task N: [Component Name]
 
+**Use Cases:**
+- [Concrete behavior, acceptance scenario, failure/recovery path, validation case, or workflow case this task must cover]
+
 **Files:**
 - Create: `exact/path/to/file.ext`
 - Modify: `exact/path/to/existing.ext`
@@ -139,7 +156,7 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 ## Native Continuation Gate
 
-After saving and self-reviewing the plan, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the planning run. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show every produced or materially changed planning artifact, including the saved plan, the full task list, the full step list, the source spec or issue mirror linkage, acceptance coverage, proof oracle, TDD/debug policy, and what counts as test complete. Show exact artifact paths and links, render created or revised Markdown artifacts in chat when reasonably sized, and summarize machine-readable artifacts with exact path plus key fields. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative excerpt, and why the full render is omitted. After artifacts are shown, add a separate findings summary that names the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, what counts as test complete, whether scientific or engineering numerical metrics were required, what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the result means for the active goal, what it means for the broader project context, and the recommended next route.
+After saving and self-reviewing the plan, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the planning run. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show every produced or materially changed planning artifact, including the saved plan, the full task list, every Task # Use Cases block, the full step list, the source spec or issue mirror linkage, acceptance coverage, proof oracle, TDD/debug policy, and what counts as test complete. Show exact artifact paths and links, render created or revised Markdown artifacts in chat when reasonably sized, and summarize machine-readable artifacts with exact path plus key fields. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative excerpt, and why the full render is omitted. After artifacts are shown, add a separate findings summary that names the saved plan path, source spec or issue mirror, acceptance coverage, proof oracle, TDD/debug policy, Task # Use Cases validation, what counts as test complete, whether scientific or engineering numerical metrics were required, what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the result means for the active goal, what it means for the broader project context, and the recommended next route.
 
 Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and Stop in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include terminal options; they include only real forward routes. Nested Revisit-route menus must not include terminal options; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
@@ -245,8 +262,8 @@ Before reporting the plan ready:
 2. Confirm the source spec, source issue mirror, or direct-plan approval is named.
 3. Confirm every acceptance criterion maps to at least one task.
 4. Confirm each task names exact files and exact verification.
-5. Confirm feature and bug work uses `superpowers:test-driven-development` or records the user's explicit opt-out.
-6. Confirm bug work uses `superpowers:systematic-debugging` or diagnose discipline.
-7. Confirm completion requires `superpowers:verification-before-completion`.
-
+5. Confirm every numbered task has a non-empty `**Use Cases:**` block and `scripts/validate-plan-task-use-cases.ps1 -PlanPath <saved-plan-path>` passes.
+6. Confirm feature and bug work uses `superpowers:test-driven-development` or records the user's explicit opt-out.
+7. Confirm bug work uses `superpowers:systematic-debugging` or diagnose discipline.
+8. Confirm completion requires `superpowers:verification-before-completion`.
 

@@ -15,6 +15,12 @@
 - Issue mirrors: `docs/superpowers/issues/`
 - Milestone index pages: `docs/superpowers/milestones/`
 
+## Plan Task Use Cases
+
+- `Task # Use Cases` is a strict requirement for plan making, plan implementation, and issue resolution.
+- Every numbered `Task N` in an implementation plan must include a non-empty `**Use Cases:**` block before files and steps.
+- `scripts/validate-plan-task-use-cases.ps1 -PlanPath <plan>` is mandatory before a plan is ready, before `$superpowers-project:implement-plan` edits code, and before `$superpowers-project:resolve-issue` executes a linked source plan.
+
 ## Terminal Model
 
 - Intermediate workflow gates use `Yes`, `Revisit`, and `Stop`.

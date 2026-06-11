@@ -58,6 +58,14 @@ Before any closeout, push, publish, or merge question, the agent must show the a
 | `project_align_next_step` | After an alignment check | Yes, Revisit, Stop | Apply Repair, Create Planning Spec, Run Align Again |
 | `project_align_final_health_gate` | After verified healthy alignment proof | Done, Revisit, Stop | Terminal Done only after clean audit proof |
 
+## Task # Use Cases
+
+Implementation plans must include `Task # Use Cases`: every numbered `Task N` needs a non-empty `**Use Cases:**` block before files and steps. This is a strict requirement before a plan is ready, before `$superpowers-project:implement-plan` starts code work, and before `$superpowers-project:resolve-issue` executes a linked source plan.
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <plan>
+```
+
 ## Implement Plan
 
 `$superpowers-project:implement-plan` is the direct execution path after `$superpowers-project:write-plan` when an approved plan without a GitHub issue should be implemented without GitHub issue mirrors.

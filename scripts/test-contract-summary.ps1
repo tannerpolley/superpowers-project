@@ -37,6 +37,8 @@ try {
         'project_merge_final_health_gate',
         'debug_question_mode',
         'scripts/sync-live.ps1 -Validate',
+        'Task # Use Cases',
+        'validate-plan-task-use-cases.ps1',
         'get-agent-plugin-version.ps1',
         '-Banner -RequireCurrent',
         'Startup Version Check',

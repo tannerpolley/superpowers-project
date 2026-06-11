@@ -237,6 +237,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Agent plugin version tracker failed" }
     }))
 
+    $results.Add((Invoke-Step "Plan task use cases" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-plan-task-use-cases.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Plan task use cases failed" }
+    }))
+
     $results.Add((Invoke-Step "Local project workflow smoke" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-e2e-project-workflow.ps1") -LocalOnly | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Local project workflow smoke failed" }

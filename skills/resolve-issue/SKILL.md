@@ -31,6 +31,16 @@ Project Resolve executes the `spec -> plan -> issue` lifecycle from flat canonic
 
 Before implementation, block or route to `$superpowers-project:align-project` when an issue mirror, source plan, or related spec is presented from `docs/superpowers/milestones/<milestone>/issues`, `docs/superpowers/milestones/<milestone>/plans`, or `docs/superpowers/milestones/<milestone>/specs`. Those nested canonical milestone artifact folders are drift unless explicitly marked as generated index/view output. Keep milestone identity in frontmatter plus milestone indexes, filenames where applicable, and GitHub milestone fields.
 
+## Task # Use Cases Gate
+
+Task # Use Cases are a strict requirement for issue resolution because this skill executes the linked source plan. After source plan validation and before native goal activation, branch setup, or code edits, run the repo-root validator against the linked source plan:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <source-plan-path>
+```
+
+Every numbered `Task N` in the linked source plan MUST include a non-empty `**Use Cases:**` block with concrete user, system, acceptance, failure/recovery, validation, or workflow cases. If validation fails, stop issue execution and route back to `$superpowers-project:write-plan` with `Revise Plan` for the source plan. Do not treat issue acceptance criteria alone as a substitute for Task # Use Cases.
+
 ## Hard Failures
 
 Stop immediately when any of these are true:
@@ -40,6 +50,7 @@ Stop immediately when any of these are true:
 - The issue mirror is outside `docs/superpowers/issues`.
 - The issue mirror has no linked source plan under `docs/superpowers/plans`.
 - The linked source plan does not exist.
+- The linked source plan fails `scripts/validate-plan-task-use-cases.ps1`.
 - The issue mirror lacks acceptance criteria, proof oracle, or AFK/HITL classification.
 - Native goal proof is missing, a plain string, inactive, or not from `get_goal`.
 - Setup ledger contains `goal_board_path`, `goalbuddy_checker`, or `docs/goals`.
@@ -55,17 +66,18 @@ Follow this order exactly:
 1. `repo gate`: verify the active repo and explicit target when needed.
 2. `issue mirror validation`: inspect `docs/superpowers/issues/<issue>.md`.
 3. `source plan validation`: read the linked `docs/superpowers/plans/<plan>.md`.
-4. `preflight`: verify the repo is ready for one issue execution.
-5. `route check`: if worker-thread execution is requested, stop and route to `$superpowers-project:orchestrate-issues`.
-6. `native goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
-7. `setup validation`: write and validate the setup ledger for direct current-thread execution.
-8. `worktree and branch setup`: create or verify the current-thread worktree/branch.
-9. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
-10. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
-11. `push permission`: ask native push permission before pushing the branch or opening the PR.
-12. `PR-ready validation`: validate push permission, branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
-13. `handoff`: send or record the worker/main-thread handoff and route final integration to `$superpowers-project:merge-changes`.
-14. `terminal closeout`: before ending this skill as complete, collect a continuation decision ledger and validate that the user explicitly selected `Stop`. Any non-terminal route must keep the workflow running.
+4. `Task # Use Cases validation`: run `scripts/validate-plan-task-use-cases.ps1` against the linked source plan.
+5. `preflight`: verify the repo is ready for one issue execution.
+6. `route check`: if worker-thread execution is requested, stop and route to `$superpowers-project:orchestrate-issues`.
+7. `native goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
+8. `setup validation`: write and validate the setup ledger for direct current-thread execution.
+9. `worktree and branch setup`: create or verify the current-thread worktree/branch.
+10. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
+11. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
+12. `push permission`: ask native push permission before pushing the branch or opening the PR.
+13. `PR-ready validation`: validate push permission, branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+14. `handoff`: send or record the worker/main-thread handoff and route final integration to `$superpowers-project:merge-changes`.
+15. `terminal closeout`: before ending this skill as complete, collect a continuation decision ledger and validate that the user explicitly selected `Stop`. Any non-terminal route must keep the workflow running.
 
 ## Route Check
 

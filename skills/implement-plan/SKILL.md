@@ -21,6 +21,16 @@ Require an approved plan path under `docs/superpowers/plans`. If the request nam
 
 Require native `/goal` activation before code changes. The goal must name the approved plan path and the intended execution route. Record proof as structured evidence, not a prose claim.
 
+## Task # Use Cases Gate
+
+Task # Use Cases are a strict requirement before actual plan implementation. Before creating branches, activating worker handoffs, or editing code, run the repo-root validator against the approved plan:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <approved-plan-path>
+```
+
+Every numbered `Task N` in the approved plan MUST include a non-empty `**Use Cases:**` block with concrete user, system, acceptance, failure/recovery, validation, or workflow cases. If validation fails, stop before implementation and route back to `$superpowers-project:write-plan` with `Revise Plan`. Do not convert missing use cases into an implementation assumption, worker note, or deferred cleanup item.
+
 ## Auto Mode Input
 
 When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before execution. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
@@ -129,5 +139,4 @@ After the user selects an option, start the selected next skill in the same turn
 ## Contract Helper
 
 Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, native `/goal` activation, a development branch, topology selection, passed verification, native push permission, branch push proof, merge-ready evidence, and no issue closure claim.
-
 
