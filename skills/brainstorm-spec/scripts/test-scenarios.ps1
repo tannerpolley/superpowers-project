@@ -79,6 +79,46 @@ $scenarios = @(
             Assert-Contains $text $needle "missing native UI/grill pressure contract: $needle"
         }
     }
+    Invoke-Scenario "upstream brainstorming checklist gate is mandatory" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            "## Upstream Brainstorming Checklist Gate",
+            'The upstream `superpowers:brainstorming` checklist is mandatory',
+            "MUST create checklist tasks",
+            "complete them in order",
+            "Explore project context",
+            "Offer visual companion",
+            "Ask clarifying questions one at a time",
+            "Design 1",
+            "Design 2",
+            "2-3 approaches",
+            "present design sections",
+            "approval after each section",
+            "architecture, components, data flow, error handling, and testing",
+            "Write design doc",
+            "Spec self-review",
+            "User reviews written spec",
+            'Transition only to `$superpowers-project:write-plan`',
+            "Do NOT invoke implementation",
+            "Auto Mode authorization is forbidden"
+        )) {
+            Assert-Contains $text $needle "missing upstream brainstorming checklist gate in SKILL.md: $needle"
+        }
+        foreach ($needle in @(
+            "Upstream Brainstorming Checklist Gate",
+            "The upstream superpowers:brainstorming checklist is mandatory",
+            "Design 1",
+            "Design 2",
+            "2-3 approaches",
+            "approval after each section",
+            "architecture, components, data flow, error handling, and testing",
+            "User reviews written spec",
+            "Auto Mode authorization is forbidden"
+        )) {
+            Assert-Contains $metadata $needle "missing upstream brainstorming checklist gate in metadata: $needle"
+        }
+    }
     Invoke-Scenario "old milestone idea target is retired" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         Assert-NotContains $text "docs/milestones/<milestone-folder>/ideas" "old milestone ideas path must not be active"
@@ -114,7 +154,7 @@ $scenarios = @(
             "bounded-auto-merge",
             "recorded-defaults",
             "issue-backed-orchestrate-only",
-            "the repo-root Auto Mode contract helper",
+            "the plugin-provided Auto Mode validator",
             "project_brainstorm_plan_route",
             "Create One Plan",
             "Multi-Spec Planning",
@@ -189,4 +229,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

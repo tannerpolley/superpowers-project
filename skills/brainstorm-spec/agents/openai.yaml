@@ -4,6 +4,11 @@ interface:
   default_prompt: >-
     Use $superpowers-project:brainstorm-spec for repo-backed ideas, specs, PRDs, architecture concepts, or broad feature requests.
     Use superpowers:brainstorming as the base workflow, inspect docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, relevant docs, and code before asking;
+    Upstream Brainstorming Checklist Gate: The upstream superpowers:brainstorming checklist is mandatory. Agents MUST create checklist tasks and complete them in order:
+    Explore project context, Offer visual companion when visual or spatial questions are ahead, Ask clarifying questions one at a time, propose 2-3 approaches named Design 1, Design 2,
+    and optional Design 3 with tradeoffs and a recommendation, present design sections and get approval after each section for architecture, components, data flow, error handling, and testing,
+    Write design doc, run Spec self-review, ensure User reviews written spec, then transition only to $superpowers-project:write-plan or superpowers:writing-plans.
+    Do NOT invoke implementation, issue creation, branch work, PR work, merge work, planning, or automation before this gate. Auto Mode authorization is forbidden until the saved spec has passed artifact review and user review;
     use request_user_input in Default mode for any unresolved brainstorming decision when callable; carry grill-me wording and pressure into assumption checks; report evidence, decision points, and assumptions to remove;
     save loose specs under docs/superpowers/specs in flat canonical roots. Specs use docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md;
     milestone identity is optional, and milestone/category views use frontmatter plus milestone indexes because Milestone pages are index views. Treat nested canonical milestone artifact folders are drift.
@@ -12,7 +17,7 @@ interface:
     show rendered Markdown artifacts when applicable, summarize machine-readable artifacts with exact path plus key fields, ask project_brainstorm_next_step with Yes Continue From Spec, Revisit Revise / Review Brainstorm,
     and Stop; after Continue From Spec ask project_brainstorm_start_route with Manual Planning, Auto Mode, and Stop;
     Manual Planning uses nested project_brainstorm_plan_route children including Create One Plan and Multi-Spec Planning; Auto Mode asks project_auto_mode_authorization with Bounded Auto Merge, Manual Planning, and Stop,
-    records an Auto Mode authorization ledger with bounded-auto-merge, recorded-defaults, issue-backed-orchestrate-only, and the repo-root Auto Mode contract helper proof before continuing,
+    records an Auto Mode authorization ledger with bounded-auto-merge, recorded-defaults, issue-backed-orchestrate-only, and the plugin-provided Auto Mode validator proof before continuing,
     plus project_brainstorm_reiteration_route children including Revise Spec, then start the selected next skill in the same turn when tools and state allow it.
     If a saved-spec closeout appears to omit project_brainstorm_start_route, project_auto_mode_authorization, or Bounded Auto Merge, treat that as stale-thread recovery:
     warn that the loaded thread may still be using older skill text, re-ask the missed native route, and continue from the corrected path instead of stopping or inferring approval from the stale behavior.

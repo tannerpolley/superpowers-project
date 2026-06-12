@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $helper = Join-Path $repoRoot "scripts\lib\auto-mode-contract.ps1"
+$validator = Join-Path $repoRoot "scripts\validate-auto-mode-authorization.ps1"
 $results = [System.Collections.Generic.List[object]]::new()
 
 function Add-Result {
@@ -25,16 +26,22 @@ Invoke-Scenario "helper exists" {
     if (-not (Test-Path -LiteralPath $helper -PathType Leaf)) { throw "missing helper: $helper" }
 }
 
+Invoke-Scenario "validator exists" {
+    if (-not (Test-Path -LiteralPath $validator -PathType Leaf)) { throw "missing validator: $validator" }
+}
+
 if (Test-Path -LiteralPath $helper -PathType Leaf) {
     . $helper
 }
 
 function New-HappyAuthorization {
+    param([string]$SourceSpec = "docs/superpowers/specs/2026-06-04-auto-mode-after-spec-design.md")
+
     @{
         question_id = "project_auto_mode_authorization"
         source = "request_user_input"
         selected_authority = "bounded-auto-merge"
-        source_spec = "docs/superpowers/specs/2026-06-04-auto-mode-after-spec-design.md"
+        source_spec = $SourceSpec
         route_policy = @{
             selected_mode = "agent-chooses"
             direct_route = "implement-plan"
@@ -82,6 +89,31 @@ Invoke-Scenario "direct worker mode blocks" {
     $auth.route_policy.worker_route = "direct-implement-worker"
     $result = Test-AutoModeAuthorization -Authorization $auth -RepoRoot $repoRoot
     if ($result.ok) { throw "direct Auto Mode workers are out of first-pass scope" }
+}
+
+Invoke-Scenario "plugin validator accepts external project repo" {
+    $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ("auto-mode-project-" + [guid]::NewGuid().ToString("N"))
+    try {
+        $specRel = "docs/superpowers/specs/2026-06-11-auto-mode-fixture.md"
+        $specPath = Join-Path $fixtureRoot $specRel
+        New-Item -ItemType Directory -Path (Split-Path -Parent $specPath) -Force | Out-Null
+        Set-Content -LiteralPath $specPath -Value "# Auto Mode fixture" -Encoding utf8NoBOM
+        $auth = New-HappyAuthorization -SourceSpec $specRel
+        $json = $auth | ConvertTo-Json -Depth 16 -Compress
+        $raw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $validator -RepoRoot $fixtureRoot -AuthorizationJson $json 2>&1
+        $result = (($raw | Out-String).Trim() | ConvertFrom-Json)
+        if ($LASTEXITCODE -ne 0 -or $result.ok -ne $true) {
+            throw "validator rejected external project repo: $($raw | Out-String)"
+        }
+    } finally {
+        if (Test-Path -LiteralPath $fixtureRoot) {
+            $resolvedFixture = [IO.Path]::GetFullPath($fixtureRoot)
+            $resolvedTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+            if ($resolvedFixture.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnoreCase)) {
+                Remove-Item -LiteralPath $resolvedFixture -Recurse -Force
+            }
+        }
+    }
 }
 
 $failed = @($results | Where-Object { -not $_.ok })

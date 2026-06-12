@@ -10,12 +10,17 @@ interface:
     Use $superpowers-project:align-project instead for Superpowers Project structure, tracker, milestone, issue mirror, migration, or live install drift.
     Every finding must be evidence-backed and priority-coded as P0, P1, P2, or P3 with file and line evidence when available, impact, repair requirement, and proof oracle candidate. Do not create findings from vibes;
     record missing evidence as a revisit route or open question.
-    After saving the findings spec, route to $superpowers-project:write-plan by default, or to $superpowers-project:create-issues only when findings are already issue-ready. At closeout, complete the artifact review gate,
+    After saving the findings spec, route to $superpowers-project:write-plan by default, offer Auto Mode when the user wants bounded automation from the saved source spec,
+    or route to $superpowers-project:create-issues only when findings are already issue-ready. Auto Mode asks project_auto_mode_authorization with Bounded Auto Merge and Manual Planning,
+    validates the Auto Mode authorization ledger with scripts/validate-auto-mode-authorization.ps1, carries the audit findings source spec into $superpowers-project:write-plan,
+    and stops outside policy if validation fails or a decision falls outside recorded defaults.
+    At closeout, complete the artifact review gate,
     inventory every produced or materially changed artifact owned by the audit run, summarize P0, P1, P2, and P3 findings plus healthy and skipped checks,
     explain what the results mean for the active goal and broader project context, and state the recommended next route.
     Show exact artifact paths and links, show rendered Markdown artifacts when applicable, and summarize machine-readable artifacts with exact path plus key fields.
     Ask project_audit_next_step with Yes Prepare Repair Work, Revisit Review Or Extend Findings, and Stop;
-    use nested children including Write Plan, Create Issues, Review First, Gather More Evidence, and Rerun Focused Audit, then start the selected next skill in the same turn when tools and state allow it.
+    use nested children including Write Plan, Auto Mode, Create Issues, Review First, Gather More Evidence, and Rerun Focused Audit,
+    then start the selected next skill in the same turn when tools and state allow it.
     After every completed action, ask the next native continuation or permission question. Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate.
     A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question.
     Final completion must use an explicit final health gate with `Done`, not a `Yes` option.

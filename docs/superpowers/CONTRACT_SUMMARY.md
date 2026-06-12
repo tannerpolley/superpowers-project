@@ -15,6 +15,12 @@
 - Issue mirrors: `docs/superpowers/issues/`
 - Milestone index pages: `docs/superpowers/milestones/`
 
+## Plan Task Use Cases
+
+- `Task # Use Cases` is a strict requirement for plan making, plan implementation, and issue resolution.
+- Every numbered `Task N` in an implementation plan must include a non-empty `**Use Cases:**` block before files and steps.
+- `scripts/validate-plan-task-use-cases.ps1 -PlanPath <plan>` is mandatory before a plan is ready, before `$superpowers-project:implement-plan` edits code, and before `$superpowers-project:resolve-issue` executes a linked source plan.
+
 ## Terminal Model
 
 - Intermediate workflow gates use `Yes`, `Revisit`, and `Stop`.
@@ -28,7 +34,7 @@
 | Skill | Purpose | Native Question IDs | Final Health Gate |
 |---|---|---|---|
 | `align-project` | Use when a Superpowers Project repo needs structure alignment, migration review, tracker alignment, live sync verification, or repair planning. | `project_align_final_health_gate`<br>`project_align_next_step`<br>`project_align_plan_issue_route`<br>`project_align_prepare_route`<br>`project_align_reiteration_route`<br>`project_align_repair_group`<br>`project_align_review_evidence_route` | `project_align_final_health_gate` |
-| `audit-project` | Use when code, workflows, tests, skills, or repo behavior need evidence-backed review findings before repair planning. | `project_audit_next_step`<br>`project_audit_progress_route`<br>`project_audit_revisit_route` | `None` |
+| `audit-project` | Use when code, workflows, tests, skills, or repo behavior need evidence-backed review findings before repair planning. | `project_audit_next_step`<br>`project_audit_progress_route`<br>`project_audit_revisit_route`<br>`project_auto_mode_authorization` | `None` |
 | `brainstorm-spec` | Use when repo-backed ideas, specs, PRDs, architecture concepts, or broad feature requests need Superpowers brainstorming plus project context and native user-input grilling. | `project_auto_mode_authorization`<br>`project_brainstorm_multi_spec_route`<br>`project_brainstorm_next_step`<br>`project_brainstorm_plan_route`<br>`project_brainstorm_reiteration_route`<br>`project_brainstorm_review_restart_route`<br>`project_brainstorm_start_route` | `None` |
 | `create-issues` | Use when a Superpowers Project spec, plan, PRD, or approved scope needs vertical-slice GitHub issues and synced issue mirrors. | `project_issue_execution_route`<br>`project_issue_next_step`<br>`project_issue_orchestrate_route`<br>`project_issue_reiteration_route`<br>`project_issue_resolve_route`<br>`project_issue_review_repair_route` | `None` |
 | `implement-plan` | Use when an approved Superpowers Project plan should be implemented without creating a GitHub issue, using a native goal, development branch, verification, and merge-ready proof. | `implement_plan_push_permission`<br>`implement_plan_topology`<br>`project_implement_next_step`<br>`project_implement_reiteration_route` | `None` |
@@ -43,7 +49,8 @@
 
 - Push, publish, merge, board creation, GitHub mutation, and final `Done` require explicit proof and the owning native gate.
 - `project_merge_approval` is the merge approval gate.
-- `project_auto_mode_authorization` can authorize bounded Auto Mode only when the repo Auto Mode contract helper passes.
+- `project_auto_mode_authorization` can authorize bounded Auto Mode only when the plugin-provided Auto Mode validator passes.
+- Validate Auto Mode ledgers with `scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>` from the loaded Superpowers Project plugin surface.
 - Helper scripts may prepare evidence, but they must not convert missing approval into approval.
 
 ## Debug Mode
@@ -57,11 +64,26 @@
 - Source repo is authoritative.
 - Live deployed plugin copy is checked by `scripts/sync-live.ps1 -Validate`.
 - Plugin cache paths are not durable contracts.
+- Validated live sync refreshes matching local plugin cache roots when they already exist, so existing threads can see updated files when they re-read plugin skill bodies.
+- Already-loaded prompt text cannot be rewritten inside an existing agent context; a stale observed root after sync still requires a fresh agent session.
+
+## Startup Version Check
+
+- At Superpowers Project startup, agents must run `scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent` and print the banner before selecting a project workflow route.
+- If the active agent knows its loaded plugin or skill root, it must also pass `-ObservedPluginRoot` or `-ObservedSkillRoot`.
+- The banner reports the manifest version, source commit, source dirty state, `contract_hash`, source/live freshness, observed-root freshness, and stale cache candidate count.
+
+## Agent Version Tracking
+
+- Exact runtime identity is the plugin manifest version plus the runtime `contract_hash`.
+- `scripts/get-agent-plugin-version.ps1 -RequireCurrent` compares source, live install, optional observed plugin or skill root, and local cache candidates.
+- Use `-ObservedPluginRoot` or `-ObservedSkillRoot` when an agent needs to prove the exact loaded copy it is using.
+- If source and live are current but the observed surface differs, run validated live sync to refresh live install and matching local plugin cache roots, then start a fresh agent session if the observed surface still differs.
 
 ## Validation Commands
 
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1`
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`
-

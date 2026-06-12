@@ -50,7 +50,7 @@ $scenarios = @(
             "request_user_input",
             "Auto Mode authorization ledger",
             "project_auto_mode_authorization",
-            "the repo-root Auto Mode contract helper",
+            "the plugin-provided Auto Mode validator",
             "bounded-auto-merge",
             "recorded defaults",
             "stop outside policy",
@@ -270,4 +270,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

@@ -66,7 +66,7 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     Invoke-Scenario "skill frontmatter and metadata are valid" {
-        foreach ($needle in @("name: orchestrate-issues", "worker-thread", "project_orchestrate_next_step", "project_issue_resolution_route", "debug_question_mode", "Native Question Debug Ledger", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the repo-root Auto Mode contract helper", "bounded-auto-merge", "recorded defaults", "issue-backed-orchestrate-only", "stop outside policy", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts")) {
+        foreach ($needle in @("name: orchestrate-issues", "worker-thread", "project_orchestrate_next_step", "project_issue_resolution_route", "debug_question_mode", "Native Question Debug Ledger", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the plugin-provided Auto Mode validator", "bounded-auto-merge", "recorded defaults", "issue-backed-orchestrate-only", "stop outside policy", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts")) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing orchestrate skill contract: $needle"
         }
         foreach ($needle in @("orchestrate-issues", "derive-worker-identity.ps1", "merge-changes", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts")) {

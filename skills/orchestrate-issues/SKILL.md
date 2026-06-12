@@ -46,7 +46,7 @@ Stop before creating a worker thread when any of these are true:
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
 
 Auto Mode may delegate worker-thread execution only for a ready issue mirror derived from the authorized source spec or plan. It may choose the first ready worker-suitable issue, derive worker identity, prepare the handoff, monitor the worker, validate PR-ready evidence, and route to merge without additional user input when the route stays inside the ledger policy. Do not create direct Auto Mode workers outside issue-backed orchestration. If worker recovery, reassignment, GitHub auth, missing proof, failed validation, or scope expansion needs a decision outside recorded defaults, stop outside policy and report the resume target.
 
@@ -153,5 +153,3 @@ Options:
 - `Reassign Work`: stop the current worker route and reassign the issue through an approved route.
 
 Treat selected native answers as executable routing, not advisory text. Start the selected next skill in the same turn when tools and state allow it.
-
-

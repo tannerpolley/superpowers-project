@@ -54,9 +54,23 @@ Before any closeout, push, publish, or merge question, the agent must show the a
 | `project_orchestrate_next_step` | After worker-thread issue work is PR-ready | Yes, Revisit, Stop | Merge, Recover Worker |
 | `project_merge_approval` | Before merge | Merge, Decline | Premerge evidence review |
 | `project_merge_next_step` | After merge closeout | Yes, Revisit, Stop; `project_merge_final_health_gate` uses Done, Revisit, Stop | Align, Resolve Another, Re-run Cleanup |
-| `project_audit_next_step` | After a findings audit | Yes, Revisit, Stop | Write Plan, Create Issues, Review Findings |
+| `project_audit_next_step` | After a findings audit | Yes, Revisit, Stop | Write Plan, Auto Mode, Create Issues, Review Findings |
 | `project_align_next_step` | After an alignment check | Yes, Revisit, Stop | Apply Repair, Create Planning Spec, Run Align Again |
 | `project_align_final_health_gate` | After verified healthy alignment proof | Done, Revisit, Stop | Terminal Done only after clean audit proof |
+
+Auto Mode ledgers are validated by the plugin-provided validator:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```
+
+## Task # Use Cases
+
+Implementation plans must include `Task # Use Cases`: every numbered `Task N` needs a non-empty `**Use Cases:**` block before files and steps. This is a strict requirement before a plan is ready, before `$superpowers-project:implement-plan` starts code work, and before `$superpowers-project:resolve-issue` executes a linked source plan.
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <plan>
+```
 
 ## Implement Plan
 
@@ -89,6 +103,28 @@ The retired Milestones artifact model is migration history only. New Superpowers
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
+## Agent Version Tracking
+
+At Superpowers Project startup, agents should print a concise version banner before selecting a workflow route:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent
+```
+
+Use the JSON version tracker when an agent needs machine-readable proof of the exact Superpowers Project plugin copy it is using:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent
+```
+
+The checker reports the manifest version, source commit, and runtime `contract_hash` for source, live install, local cache candidates, and an optional observed plugin or skill root. If an agent has an observed skill root from its loaded context, pass it explicitly:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
+```
+
+If source and live are current but the observed surface differs, run validated live sync. Live sync refreshes the live user install and matching local plugin cache roots that already exist, so existing threads can see updated files when they re-read plugin skill bodies. It cannot rewrite prompt text already loaded into an agent context; if the observed surface still differs after sync, start a fresh agent session.
+
 ## CI And Releases
 
 GitHub Actions runs the same validation command used locally:
@@ -112,6 +148,8 @@ The sync script deploys this repo's plugin manifest and full skill implementatio
 It also deploys only the shared helper skill to:
 
 - `C:\Users\Tanner\.agents\skills\advanced-user-input`
+
+By default, the same command also refreshes matching existing local plugin cache candidates for this plugin. Use `-SkipCacheRefresh` only when intentionally validating the live install without updating already-materialized cache copies.
 
 ## Install
 

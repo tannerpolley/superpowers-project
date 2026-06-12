@@ -112,6 +112,15 @@ function Test-SkillScriptContracts {
         return @($failures)
     }
 
+    $rootScriptContracts = @{}
+    $rootScriptsDir = Join-Path $Root "scripts"
+    if (Test-Path -LiteralPath $rootScriptsDir -PathType Container) {
+        foreach ($scriptFile in @(Get-ChildItem -LiteralPath $rootScriptsDir -Filter "*.ps1" -File -Recurse)) {
+            $relative = Normalize-ContractPath ([IO.Path]::GetRelativePath($Root, $scriptFile.FullName))
+            $rootScriptContracts[$relative] = Get-ScriptParameterContract -ScriptPath $scriptFile.FullName
+        }
+    }
+
     foreach ($skillDir in @(Get-ChildItem -LiteralPath $skillsRoot -Directory | Sort-Object Name)) {
         $references = Get-SkillDocScriptReferences -SkillDir $skillDir.FullName
         if ($references.Count -eq 0) { continue }
@@ -126,7 +135,14 @@ function Test-SkillScriptContracts {
         }
 
         foreach ($script in @($references.Keys | Sort-Object)) {
-            if (-not $scriptContracts.ContainsKey($script)) {
+            $contract = $null
+            if ($scriptContracts.ContainsKey($script)) {
+                $contract = $scriptContracts[$script]
+            } elseif ($rootScriptContracts.ContainsKey($script)) {
+                $contract = $rootScriptContracts[$script]
+            }
+
+            if ($null -eq $contract) {
                 $failures.Add([pscustomobject]@{
                     skill = $skillDir.Name
                     script = $script
@@ -135,7 +151,7 @@ function Test-SkillScriptContracts {
                 continue
             }
 
-            $declared = $scriptContracts[$script].parameters
+            $declared = $contract.parameters
             $documentedParams = $references[$script].params
             foreach ($documented in @($documentedParams)) {
                 if (-not $declared.Contains($documented)) {

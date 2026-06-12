@@ -37,10 +37,21 @@ try {
         'project_merge_final_health_gate',
         'debug_question_mode',
         'scripts/sync-live.ps1 -Validate',
+        'Task # Use Cases',
+        'validate-plan-task-use-cases.ps1',
+        'get-agent-plugin-version.ps1',
+        '-Banner -RequireCurrent',
+        'Startup Version Check',
+        'contract_hash',
+        'ObservedSkillRoot',
+        'matching local plugin cache roots',
         'Plugin cache paths are not durable contracts'
     )) {
         Add-Check -Name "summary contains $needle" -Ok $current.Contains($needle) -Reason "contract summary missing $needle"
     }
+
+    $auditRowPattern = '(?m)^\| `audit-project` \| .+ \| .*`project_auto_mode_authorization`'
+    Add-Check -Name "audit-project summary lists Auto Mode authorization" -Ok ([regex]::IsMatch($current, $auditRowPattern)) -Reason "audit-project summary row missing project_auto_mode_authorization"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "contract-summary"; checks = $checks } | ConvertTo-Json -Depth 8

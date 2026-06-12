@@ -31,6 +31,7 @@
       "Workflow"
     ],
     "defaultPrompt": [
+      "At Superpowers Project startup before using any $superpowers-project:* route, run `scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent`, include `-ObservedSkillRoot` or `-ObservedPluginRoot` when the loaded root is known, and print the banner before routing.",
       "Use $superpowers-project:initiate-workflow to choose the next Superpowers Project route.",
       "Use $superpowers-project:setup-project to set up this repo's project context and tracker.",
       "Use $superpowers-project:audit-project to turn code and workflow review findings into a repair spec.",

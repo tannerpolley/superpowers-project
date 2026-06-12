@@ -37,6 +37,11 @@ try {
         "project_audit_next_step",
         "project_audit_progress_route",
         "project_audit_revisit_route",
+        "Auto Mode",
+        "project_auto_mode_authorization",
+        "Bounded Auto Merge",
+        "validate-auto-mode-authorization.ps1",
+        "source spec",
         "Native Question Debug Ledger",
         "debug_question_mode",
         "recommended-default",
@@ -59,6 +64,11 @@ try {
         "project_audit_next_step",
         "Yes Prepare Repair Work",
         "Revisit Review Or Extend Findings",
+        "Auto Mode",
+        "project_auto_mode_authorization",
+        "Bounded Auto Merge",
+        "validate-auto-mode-authorization.ps1",
+        "source spec",
         "Nested Yes-route menus must not include terminal options",
         "Custom Other never terminates a workflow directly"
     )) {

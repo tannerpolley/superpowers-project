@@ -204,7 +204,7 @@ Invoke-Scenario "merge contract text is present" {
         "request_user_input",
         "Auto Mode authorization ledger",
         "project_auto_mode_authorization",
-        "the repo-root Auto Mode contract helper",
+        "the plugin-provided Auto Mode validator",
         "bounded-auto-merge",
         "recorded defaults",
         "preauthorized-after-clean-premerge",
