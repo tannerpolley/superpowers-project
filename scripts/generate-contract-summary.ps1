@@ -135,7 +135,7 @@ foreach ($line in @(
     [void]$lines.Add($line)
 }
 
-$output = ($lines -join [Environment]::NewLine) + [Environment]::NewLine
+$output = $lines -join [Environment]::NewLine
 $targetPath = if ([IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $RepoRoot $OutputPath }
 $targetDir = Split-Path -Parent $targetPath
 New-Item -ItemType Directory -Path $targetDir -Force | Out-Null

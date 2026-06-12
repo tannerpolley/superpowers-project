@@ -54,7 +54,7 @@ Before any closeout, push, publish, or merge question, the agent must show the a
 | `project_orchestrate_next_step` | After worker-thread issue work is PR-ready | Yes, Revisit, Stop | Merge, Recover Worker |
 | `project_merge_approval` | Before merge | Merge, Decline | Premerge evidence review |
 | `project_merge_next_step` | After merge closeout | Yes, Revisit, Stop; `project_merge_final_health_gate` uses Done, Revisit, Stop | Align, Resolve Another, Re-run Cleanup |
-| `project_audit_next_step` | After a findings audit | Yes, Revisit, Stop | Write Plan, Create Issues, Review Findings |
+| `project_audit_next_step` | After a findings audit | Yes, Revisit, Stop | Write Plan, Auto Mode, Create Issues, Review Findings |
 | `project_align_next_step` | After an alignment check | Yes, Revisit, Stop | Apply Repair, Create Planning Spec, Run Align Again |
 | `project_align_final_health_gate` | After verified healthy alignment proof | Done, Revisit, Stop | Terminal Done only after clean audit proof |
 

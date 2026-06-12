@@ -107,7 +107,43 @@ Prompt: `Which repair route should start from the findings spec?`
 Options:
 
 - `Write Plan`: start `$superpowers-project:write-plan` from the findings spec.
+- `Auto Mode`: authorize bounded Auto Mode for the saved findings spec.
 - `Create Issues`: start `$superpowers-project:create-issues` only when the findings are issue-ready.
+
+If the user selects `Auto Mode`, ask:
+
+Question id: `project_auto_mode_authorization`
+
+Prompt: `Authorize bounded Auto Mode for this saved audit findings spec?`
+
+Options:
+
+- `Bounded Auto Merge`: create an Auto Mode authorization ledger and continue without more user input through planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
+- `Manual Planning`: return to `project_audit_progress_route`.
+
+Auto Mode starts only after the findings spec is saved, self-reviewed, and shown through the artifact review gate. `Bounded Auto Merge` is the only valid Auto Mode approval. It must record an Auto Mode authorization ledger before `$superpowers-project:write-plan` starts. The ledger must include:
+
+- `question_id: project_auto_mode_authorization`
+- `source: request_user_input`
+- `selected_authority: bounded-auto-merge`
+- `source_spec: docs/superpowers/specs/<yyyy-mm-dd>-<slug>-audit-findings.md`
+- `route_policy.selected_mode: agent-chooses`
+- `route_policy.worker_route: issue-backed-orchestrate-only`
+- `decision_policy.selected_mode: recorded-defaults`
+- `decision_policy.stop_outside_policy: true`
+- `merge_permission.selected_mode: preauthorized-after-clean-premerge`
+- `merge_permission.require_clean_premerge: true`
+- `mutation_scope` containing `current-repo` and `development-branch`
+- `required_proof` containing `plan-proof-oracle`, `verification-receipts`, `cleanup-hook`, `premerge-proof`, and `closeout-proof`
+- `stop_conditions` containing `missing-proof`, `dirty-unsafe-state`, `failed-validation`, and `decision-outside-policy`
+
+Validate the ledger with the plugin-provided Auto Mode validator:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```
+
+If the ledger passes, continue into `$superpowers-project:write-plan` with the audit findings spec as the source spec. If validation fails or a needed decision falls outside the ledger policy, stop outside policy and return to manual planning instead of inventing approval.
 
 If the user selects `Review Or Extend Findings`, ask:
 
