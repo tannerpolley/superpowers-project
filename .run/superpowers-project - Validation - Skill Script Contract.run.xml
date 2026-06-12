@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="superpowers-project: Validation - Skill Script Contract" type="PowerShellRunType" factoryName="PowerShell" folderName="superpowers-project" scriptUrl="$PROJECT_DIR$/scripts/validate-skill-script-contract.ps1" workingDirectory="$PROJECT_DIR$" commandOptions="-NoProfile -ExecutionPolicy Bypass">
+    <method v="2" />
+  </configuration>
+</component>
