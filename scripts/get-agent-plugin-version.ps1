@@ -37,7 +37,7 @@ function Get-RuntimeContractEntries {
 
     $root = [IO.Path]::GetFullPath($PluginRoot)
     $entries = [System.Collections.Generic.List[string]]::new()
-    foreach ($relative in @(".codex-plugin\plugin.json", "skills", "assets", "scripts\lib", "scripts\get-agent-plugin-version.ps1", "scripts\validate-auto-mode-authorization.ps1")) {
+    foreach ($relative in @(".codex-plugin\plugin.json", "skills", "assets", "scripts\lib", "scripts\get-agent-plugin-version.ps1", "scripts\validate-auto-mode-authorization.ps1", "scripts\validate-plan-task-use-cases.ps1")) {
         $path = Join-Path $root $relative
         if (Test-Path -LiteralPath $path -PathType Leaf) {
             $rel = Normalize-RelativePath ([IO.Path]::GetRelativePath($root, $path))

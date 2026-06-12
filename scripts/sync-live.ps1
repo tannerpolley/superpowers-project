@@ -20,6 +20,7 @@ $sourceSkillsRoot = Join-Path $repoRoot "skills"
 $sourceAssetsRoot = Join-Path $repoRoot "assets"
 $sourceVersionChecker = Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1"
 $sourceAutoModeValidator = Join-Path $repoRoot "scripts\validate-auto-mode-authorization.ps1"
+$sourcePlanTaskUseCasesValidator = Join-Path $repoRoot "scripts\validate-plan-task-use-cases.ps1"
 $sourceScriptsLibRoot = Join-Path $repoRoot "scripts\lib"
 $livePluginRootResolved = [IO.Path]::GetFullPath($LivePluginRoot)
 $userSkillsRootResolved = [IO.Path]::GetFullPath($UserSkillsRoot)
@@ -57,6 +58,9 @@ if (-not (Test-Path -LiteralPath $sourceVersionChecker -PathType Leaf)) {
 }
 if (-not (Test-Path -LiteralPath $sourceAutoModeValidator -PathType Leaf)) {
     throw "missing source Auto Mode validator: $sourceAutoModeValidator"
+}
+if (-not (Test-Path -LiteralPath $sourcePlanTaskUseCasesValidator -PathType Leaf)) {
+    throw "missing source plan task use-case validator: $sourcePlanTaskUseCasesValidator"
 }
 
 $activeSkillNames = @(Get-ProjectActiveSkillNames -RepoRoot $repoRoot)
@@ -185,6 +189,7 @@ New-Item -ItemType Directory -Path $userSkillsRootResolved -Force | Out-Null
 Copy-Item -LiteralPath $sourcePluginManifest -Destination (Join-Path $livePluginManifestDir "plugin.json") -Force
 Copy-Item -LiteralPath $sourceVersionChecker -Destination (Join-Path $livePluginScriptsRoot "get-agent-plugin-version.ps1") -Force
 Copy-Item -LiteralPath $sourceAutoModeValidator -Destination (Join-Path $livePluginScriptsRoot "validate-auto-mode-authorization.ps1") -Force
+Copy-Item -LiteralPath $sourcePlanTaskUseCasesValidator -Destination (Join-Path $livePluginScriptsRoot "validate-plan-task-use-cases.ps1") -Force
 
 Assert-ChildDirectory -Parent $livePluginRootResolved -Child $livePluginAssetsRoot
 if (Test-Path -LiteralPath $sourceAssetsRoot -PathType Container) {
@@ -240,6 +245,7 @@ $deployedUserSkills = @($userSkillNames | ForEach-Object {
     assets_target = if (Test-Path -LiteralPath $livePluginAssetsRoot -PathType Container) { $livePluginAssetsRoot } else { $null }
     scripts_lib_target = $livePluginScriptsLibRoot
     auto_mode_validator_target = Join-Path $livePluginScriptsRoot "validate-auto-mode-authorization.ps1"
+    plan_task_use_cases_validator_target = Join-Path $livePluginScriptsRoot "validate-plan-task-use-cases.ps1"
     refreshed_cache_plugin_roots = $refreshedCachePluginRoots
     deployed_plugin_skills = $deployedPluginSkills
     deployed_user_skills = $deployedUserSkills

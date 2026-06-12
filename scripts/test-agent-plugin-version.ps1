@@ -35,6 +35,11 @@ function Copy-RuntimeSurface {
         New-Item -ItemType Directory -Path (Join-Path $TargetRoot "scripts") -Force | Out-Null
         Copy-Item -LiteralPath $validator -Destination (Join-Path $TargetRoot "scripts\validate-auto-mode-authorization.ps1")
     }
+    $planTaskUseCaseValidator = Join-Path $SourceRoot "scripts\validate-plan-task-use-cases.ps1"
+    if (Test-Path -LiteralPath $planTaskUseCaseValidator -PathType Leaf) {
+        New-Item -ItemType Directory -Path (Join-Path $TargetRoot "scripts") -Force | Out-Null
+        Copy-Item -LiteralPath $planTaskUseCaseValidator -Destination (Join-Path $TargetRoot "scripts\validate-plan-task-use-cases.ps1")
+    }
 }
 
 function Invoke-VersionCheck {
@@ -117,6 +122,18 @@ try {
         "-RequireCurrent"
     )
     Add-Check -Name "stale observed plugin fails strict check" -Ok ($staleObserved.exit_code -ne 0 -and $staleObserved.json.ok -eq $false -and [string]$staleObserved.json.reason -match "observed") -Reason "stale observed plugin should fail"
+
+    $validatorDriftRoot = Join-Path $cacheRoot "tanner-local\project\validator-drift"
+    Copy-RuntimeSurface -SourceRoot $RepoRoot -TargetRoot $validatorDriftRoot
+    Add-Content -LiteralPath (Join-Path $validatorDriftRoot "scripts\validate-plan-task-use-cases.ps1") -Value "`n# validator drift fixture"
+    $validatorDrift = Invoke-VersionCheck -Arguments @(
+        "-RepoRoot", $RepoRoot,
+        "-LivePluginRoot", $liveRoot,
+        "-CacheRoot", $cacheRoot,
+        "-ObservedPluginRoot", $validatorDriftRoot,
+        "-RequireCurrent"
+    )
+    Add-Check -Name "observed validator drift fails strict check" -Ok ($validatorDrift.exit_code -ne 0 -and $validatorDrift.json.ok -eq $false -and [string]$validatorDrift.json.reason -match "observed") -Reason "observed plugin with validator drift should fail"
 
     Add-Content -LiteralPath (Join-Path $liveRoot "skills\brainstorm-spec\SKILL.md") -Value "`n# live drift fixture"
     $staleLive = Invoke-VersionCheck -Arguments @(
