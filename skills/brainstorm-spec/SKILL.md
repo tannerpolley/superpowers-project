@@ -23,6 +23,24 @@ Native UI is mandatory for brainstorming decisions. If there is the slightest hi
 
 Use the smallest native question shape that preserves the real decision tree. Batch independent questions; ask dependent branches sequentially. Use more than three options only inside a selected branch, for data-backed selections, or for independent bulk decisions. Put the recommended option first when codebase evidence supports one, but still ask unless the user explicitly authorized automatic recommended defaults.
 
+## Upstream Brainstorming Checklist Gate
+
+The upstream `superpowers:brainstorming` checklist is mandatory. The project adapter may add repo context, native questions, artifact display, and continuation routing, but it must not weaken, reorder, compress, or skip the upstream design-first gate.
+
+For every brainstorm run, the agent MUST create checklist tasks and complete them in order before moving to the next phase:
+
+1. Explore project context before asking user-facing questions unless the repo cannot be read.
+2. Offer visual companion in its own message when visual or spatial questions are ahead.
+3. Ask clarifying questions one at a time until the decision shape is sharp enough to design.
+4. Propose 2-3 approaches named `Design 1`, `Design 2`, and optional `Design 3`, each with tradeoffs and a recommendation. At least Design 1 and Design 2 must be real alternatives; do not collapse them into one preferred answer.
+5. The agent must present design sections and get approval after each section. Required sections include architecture, components, data flow, error handling, and testing.
+6. Write design doc to `docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md` or the user-selected repo-local Superpowers Project spec path.
+7. Spec self-review for placeholders, contradictions, unclear scope, ambiguous wording, and missing proof oracles; fix issues before calling the spec ready.
+8. User reviews written spec before proceeding. Do not infer approval from silence, prior enthusiasm, a custom `Other` answer, or a stale thread state.
+9. Transition only to `$superpowers-project:write-plan` or `superpowers:writing-plans` after the checklist, written spec, self-review, artifact display, and user review are complete.
+
+Do NOT invoke implementation, issue creation, branch work, PR work, merge work, or planning before this gate is satisfied. Auto Mode authorization is forbidden until the same gate is satisfied and the saved spec has passed the artifact review and user-review checks.
+
 ## Native Question Debug Mode
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
