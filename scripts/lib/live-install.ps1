@@ -155,6 +155,9 @@ function Compare-SuperpowersProjectLiveInstall {
     foreach ($item in @(Compare-LiveFile -Label "plugin version checker" -SourcePath (Join-Path $sourceRootResolved "scripts\get-agent-plugin-version.ps1") -TargetPath (Join-Path $livePluginRootResolved "scripts\get-agent-plugin-version.ps1"))) {
         $drift.Add($item) | Out-Null
     }
+    foreach ($item in @(Compare-LiveFile -Label "plugin Auto Mode validator" -SourcePath (Join-Path $sourceRootResolved "scripts\validate-auto-mode-authorization.ps1") -TargetPath (Join-Path $livePluginRootResolved "scripts\validate-auto-mode-authorization.ps1"))) {
+        $drift.Add($item) | Out-Null
+    }
 
     foreach ($skillName in $activeSkillNames) {
         foreach ($item in @(Compare-LiveTree -Label "plugin skill $skillName" -SourceRoot (Join-Path $sourceRootResolved "skills\$skillName") -TargetRoot (Join-Path $livePluginRootResolved "skills\$skillName"))) {

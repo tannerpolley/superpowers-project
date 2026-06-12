@@ -114,7 +114,7 @@ $scenarios = @(
             "bounded-auto-merge",
             "recorded-defaults",
             "issue-backed-orchestrate-only",
-            "the repo-root Auto Mode contract helper",
+            "the plugin-provided Auto Mode validator",
             "project_brainstorm_plan_route",
             "Create One Plan",
             "Multi-Spec Planning",
@@ -189,4 +189,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-

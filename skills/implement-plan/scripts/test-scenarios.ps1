@@ -70,7 +70,7 @@ $scenarios = @(
             'request_user_input',
             'Auto Mode authorization ledger',
             'project_auto_mode_authorization',
-            'the repo-root Auto Mode contract helper',
+            'the plugin-provided Auto Mode validator',
             'bounded-auto-merge',
             'recorded defaults',
             'preauthorized-after-clean-premerge',
@@ -192,4 +192,3 @@ $scenarios | ConvertTo-Json -Depth 6
 if ($failedScenarios.Count -gt 0) {
     throw "implement-plan scenario tests failed: $($failedScenarios.name -join ', ')"
 }
-

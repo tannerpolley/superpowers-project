@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a deployed Auto Mode authorization validator script so project repos can validate bounded Auto Mode ledgers through the plugin surface instead of requiring a repo-local helper.
 - Added source-owned operational maturity tooling for contract summaries, stale skill detection, release receipts, local branch closeout, and local workflow smoke coverage.
 - Added agent plugin version tracking with manifest version plus runtime content hashes for source, live install, observed plugin roots, and local cache candidates.
 - Added a startup version banner contract and validated sync propagation for matching existing local plugin cache candidates.

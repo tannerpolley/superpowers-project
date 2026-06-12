@@ -58,6 +58,12 @@ Before any closeout, push, publish, or merge question, the agent must show the a
 | `project_align_next_step` | After an alignment check | Yes, Revisit, Stop | Apply Repair, Create Planning Spec, Run Align Again |
 | `project_align_final_health_gate` | After verified healthy alignment proof | Done, Revisit, Stop | Terminal Done only after clean audit proof |
 
+Auto Mode ledgers are validated by the plugin-provided validator:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```
+
 ## Task # Use Cases
 
 Implementation plans must include `Task # Use Cases`: every numbered `Task N` needs a non-empty `**Use Cases:**` block before files and steps. This is a strict requirement before a plan is ready, before `$superpowers-project:implement-plan` starts code work, and before `$superpowers-project:resolve-issue` executes a linked source plan.

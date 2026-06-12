@@ -30,6 +30,11 @@ function Copy-RuntimeSurface {
         New-Item -ItemType Directory -Path (Join-Path $TargetRoot "scripts") -Force | Out-Null
         Copy-Item -LiteralPath $checker -Destination (Join-Path $TargetRoot "scripts\get-agent-plugin-version.ps1")
     }
+    $validator = Join-Path $SourceRoot "scripts\validate-auto-mode-authorization.ps1"
+    if (Test-Path -LiteralPath $validator -PathType Leaf) {
+        New-Item -ItemType Directory -Path (Join-Path $TargetRoot "scripts") -Force | Out-Null
+        Copy-Item -LiteralPath $validator -Destination (Join-Path $TargetRoot "scripts\validate-auto-mode-authorization.ps1")
+    }
 }
 
 function Invoke-VersionCheck {

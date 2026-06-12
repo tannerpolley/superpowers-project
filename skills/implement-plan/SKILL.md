@@ -33,7 +33,7 @@ Every numbered `Task N` in the approved plan MUST include a non-empty `**Use Cas
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before execution. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before execution. Validate it with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
 
 Auto Mode may select inline execution, create or verify native goal proof, use the approved plan proof oracle, run verification, run the cleanup hook, and prepare merge-ready output without additional user input when those actions stay inside the ledger policy. Auto Mode must still record the topology, verification receipts, cleanup evidence, and merge-ready proof. If the plan needs a decision outside the recorded defaults policy, verification fails, the repo is dirty in an unsafe way, or merge-ready proof is missing, stop outside policy before code changes, publish, or merge handoff.
 
@@ -139,4 +139,3 @@ After the user selects an option, start the selected next skill in the same turn
 ## Contract Helper
 
 Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, native `/goal` activation, a development branch, topology selection, passed verification, native push permission, branch push proof, merge-ready evidence, and no issue closure claim.
-

@@ -3,7 +3,7 @@ interface:
   short_description: "Write implementation plans from approved specs or issues with native grilling gates."
   default_prompt: >-
     Use $superpowers-project:write-plan when an approved Superpowers Project spec or issue mirror needs an implementation plan. Auto Mode requires an Auto Mode authorization ledger from project_auto_mode_authorization,
-    validated by the repo-root Auto Mode contract helper, with bounded-auto-merge, recorded defaults, and stop outside policy before planning without more user input. Use superpowers:writing-plans as the base workflow,
+    validated by the plugin-provided Auto Mode validator, with bounded-auto-merge, recorded defaults, and stop outside policy before planning without more user input. Use superpowers:writing-plans as the base workflow,
     save plans under docs/superpowers/plans in flat canonical roots, link one or more loose specs or a raw approved idea plus docs/superpowers/issues when present, and keep the lifecycle spec -> plan -> issue.
     plans include creation date and milestone identity where applicable, for example docs/superpowers/plans/<yyyy-mm-dd>-<milestone-or-category>-<slug>-plan.md. Milestone pages are index views;
     represent milestone/category views through frontmatter plus milestone indexes and treat nested canonical milestone artifact folders are drift. Before saving a plan, use the Planning Grill Gate: apply grill-me behavior,

@@ -9,7 +9,7 @@ interface:
     This route does not create issue mirrors, must not open pull requests, and must not claim GitHub issue closure. Require native `/goal` activation, a development branch,
     and Task # Use Cases as a strict requirement before actual implementation. Run validate-plan-task-use-cases.ps1 against the approved plan and block before branches, worker handoffs,
     or code edits if any numbered Task N lacks a non-empty **Use Cases:** block.
-    request_user_input for implement_plan_topology when callable, or an Auto Mode authorization ledger from project_auto_mode_authorization validated by the repo-root Auto Mode contract helper with bounded-auto-merge,
+    request_user_input for implement_plan_topology when callable, or an Auto Mode authorization ledger from project_auto_mode_authorization validated by the plugin-provided Auto Mode validator with bounded-auto-merge,
     recorded defaults, preauthorized-after-clean-premerge, and stop outside policy, the approved plan proof oracle, cleanup evidence, implement_plan_push_permission with push-branch or hold only,
     explicit branch push proof before merge-ready output, and merge-ready output routed to merge-changes in local-branch mode.
     Before asking push permission, complete the artifact review gate, show verification evidence, explain what the results mean for the active goal and broader project context, and state the recommended next route.

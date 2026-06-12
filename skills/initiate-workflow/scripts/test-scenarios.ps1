@@ -20,7 +20,7 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     try {
-        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the repo-root Auto Mode contract helper','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route')) {
+        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the plugin-provided Auto Mode validator','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
         foreach ($needle in @('## Native Continuation Gate','artifact review gate','Review First','stop','start the selected next skill','selected native answers','executable routing','what the agent thinks those results mean','machine-readable artifacts')) {

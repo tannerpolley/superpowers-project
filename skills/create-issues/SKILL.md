@@ -29,7 +29,7 @@ Use `request_user_input` when callable to approve granularity, dependencies, mil
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.worker_route: issue-backed-orchestrate-only`, and `stop_outside_policy: true`.
 
 Auto Mode may create issue mirrors and GitHub issues only from the authorized source spec or a plan derived from that source spec. It may classify AFK/HITL, choose issue count, assign proof oracles, and choose resolve or orchestrate routing through recorded defaults when repo evidence supports the choice. Worker execution under Auto Mode is allowed only through issue-backed orchestration; do not create direct worker tasks outside issue mirrors. If issue boundaries, labels, milestone, dependencies, publication, GitHub auth, or proof policy require a decision outside the ledger, stop outside policy before publishing or handing issues to execution.
 
@@ -278,4 +278,3 @@ Options:
 - `Repair Issue Mirrors`: repair local mirror drift, then return to `project_issue_next_step`.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
-

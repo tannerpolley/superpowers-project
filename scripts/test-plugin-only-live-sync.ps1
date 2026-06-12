@@ -28,6 +28,7 @@ try {
         'assets',
         'scripts\lib',
         'get-agent-plugin-version.ps1',
+        'validate-auto-mode-authorization.ps1',
         'plugin-cache.ps1',
         'Sync-ProjectPluginCacheCandidates',
         'refreshed_cache_plugin_roots',
@@ -76,6 +77,7 @@ try {
         }
         New-Item -ItemType Directory -Path (Join-Path $livePluginRoot "scripts") -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") -Destination (Join-Path $livePluginRoot "scripts\get-agent-plugin-version.ps1")
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\validate-auto-mode-authorization.ps1") -Destination (Join-Path $livePluginRoot "scripts\validate-auto-mode-authorization.ps1")
         Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\lib") -Destination (Join-Path $livePluginRoot "scripts\lib") -Recurse
         Copy-SkillDirectories -SourceRoot (Join-Path $repoRoot "skills") -TargetRoot (Join-Path $livePluginRoot "skills")
         Copy-SkillDirectories -SourceRoot (Join-Path $repoRoot "skills") -TargetRoot $userSkillsRoot -SkillNames @(Get-ProjectUserSkillNames)
@@ -96,12 +98,14 @@ try {
         Add-Content -LiteralPath (Join-Path $livePluginRoot "skills\merge-changes\agents\openai.yaml") -Value "# fixture drift"
         Add-Content -LiteralPath (Join-Path $userSkillsRoot "advanced-user-input\SKILL.md") -Value "# fixture drift"
         Add-Content -LiteralPath (Join-Path $livePluginRoot "scripts\get-agent-plugin-version.ps1") -Value "# fixture drift"
+        Add-Content -LiteralPath (Join-Path $livePluginRoot "scripts\validate-auto-mode-authorization.ps1") -Value "# fixture drift"
 
         $drift = @(Compare-SuperpowersProjectLiveInstall -SourceRoot $repoRoot -LivePluginRoot $livePluginRoot -UserSkillsRoot $userSkillsRoot -MarketplacePath $marketplacePath -RetiredLivePluginRoots @())
         $labels = @($drift | ForEach-Object { $_.label })
         if ($labels -notcontains "plugin skill merge-changes") { throw "live comparer missed merge-changes plugin drift: $($labels -join ', ')" }
         if ($labels -notcontains "user skill advanced-user-input") { throw "live comparer missed advanced-user-input user skill drift: $($labels -join ', ')" }
         if ($labels -notcontains "plugin version checker") { throw "live comparer missed version checker drift: $($labels -join ', ')" }
+        if ($labels -notcontains "plugin Auto Mode validator") { throw "live comparer missed Auto Mode validator drift: $($labels -join ', ')" }
     } finally {
         if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
     }
@@ -125,6 +129,8 @@ try {
         New-Item -ItemType Directory -Path (Join-Path $cachedPluginRoot "scripts") -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") -Destination (Join-Path $livePluginRoot "scripts\get-agent-plugin-version.ps1")
         Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\get-agent-plugin-version.ps1") -Destination (Join-Path $cachedPluginRoot "scripts\get-agent-plugin-version.ps1")
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\validate-auto-mode-authorization.ps1") -Destination (Join-Path $livePluginRoot "scripts\validate-auto-mode-authorization.ps1")
+        Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\validate-auto-mode-authorization.ps1") -Destination (Join-Path $cachedPluginRoot "scripts\validate-auto-mode-authorization.ps1")
         Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\lib") -Destination (Join-Path $livePluginRoot "scripts\lib") -Recurse
         Copy-Item -LiteralPath (Join-Path $repoRoot "scripts\lib") -Destination (Join-Path $cachedPluginRoot "scripts\lib") -Recurse
         Copy-SkillDirectories -SourceRoot (Join-Path $repoRoot "skills") -TargetRoot (Join-Path $livePluginRoot "skills")

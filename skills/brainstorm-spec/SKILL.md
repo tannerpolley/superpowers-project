@@ -150,7 +150,7 @@ Options:
 
 If a saved-spec closeout appears to omit `project_brainstorm_start_route`, `project_auto_mode_authorization`, or `Bounded Auto Merge`, treat that as stale-thread recovery. Warn that the loaded thread may still be using older skill text, re-ask the missed native route, and continue from the corrected path instead of stopping or inferring approval from the stale behavior.
 
-Validate the ledger with `the repo-root Auto Mode contract helper`. If the ledger does not pass, do not continue into Auto Mode.
+Validate the ledger with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`). If the ledger does not pass, do not continue into Auto Mode.
 
 If the user selects `Multi-Spec Planning`, ask:
 

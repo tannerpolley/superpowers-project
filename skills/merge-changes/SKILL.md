@@ -22,7 +22,7 @@ Merge-changes requires upstream `superpowers:verification-before-completion` pro
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `merge_permission.selected_mode: preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
 
 Auto Mode merge approval is satisfied only after premerge proof passes cleanly and the ledger includes `preauthorized-after-clean-premerge`. Record that ledger as the merge approval source, then merge, run branch/worktree cleanup, prune, cleanup hook, closeout proof, and final clean repo proof without additional user input. If premerge proof fails, checks are pending or missing, issue closure evidence is wrong, local branch proof is incomplete, cleanup proof is missing, or any merge decision falls outside recorded defaults, stop outside policy before merging or final Done.
 

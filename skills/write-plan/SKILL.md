@@ -27,7 +27,7 @@ Require one of these inputs before planning:
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before planning. Validate it with `the repo-root Auto Mode contract helper`; the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before planning. Validate it with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
 
 Auto Mode may choose the recommended planning route and record defaults for scope, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, and live mutation choices only when the source spec and repo evidence make the choice inside the ledger policy. Carry the Auto Mode authorization ledger into the plan intake/source evidence. If a required planning decision is outside the recorded defaults policy, proof is missing, validation fails, or the source spec is not under `docs/superpowers/specs`, stop outside policy and do not save a ready plan.
 
@@ -266,4 +266,3 @@ Before reporting the plan ready:
 6. Confirm feature and bug work uses `superpowers:test-driven-development` or records the user's explicit opt-out.
 7. Confirm bug work uses `superpowers:systematic-debugging` or diagnose discipline.
 8. Confirm completion requires `superpowers:verification-before-completion`.
-

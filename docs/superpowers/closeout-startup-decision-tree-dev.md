@@ -210,7 +210,7 @@ Route-specific source ranges:
                 - `Manual Planning`
                   - ASK `project_brainstorm_plan_route`.
               - Guard:
-                - Validate the ledger with the repo-root Auto Mode contract helper before continuing.
+                - Validate the ledger with the plugin-provided Auto Mode validator: `scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`.
               - Recovery:
                 - If a saved-spec closeout omitted `project_brainstorm_start_route`, `project_auto_mode_authorization`, or `Bounded Auto Merge`, warn about stale loaded skill text and re-ask the missed native route.
     - Revisit (`Revise / Review Brainstorm`)

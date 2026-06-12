@@ -65,9 +65,10 @@ function Copy-ProjectPluginRuntimeSurface {
     $sourceSkillsRoot = Join-Path $sourceRootResolved "skills"
     $sourceAssetsRoot = Join-Path $sourceRootResolved "assets"
     $sourceVersionChecker = Join-Path $sourceRootResolved "scripts\get-agent-plugin-version.ps1"
+    $sourceAutoModeValidator = Join-Path $sourceRootResolved "scripts\validate-auto-mode-authorization.ps1"
     $sourceScriptsLibRoot = Join-Path $sourceRootResolved "scripts\lib"
 
-    foreach ($requiredPath in @($sourceManifest, $sourceSkillsRoot, $sourceVersionChecker, $sourceScriptsLibRoot)) {
+    foreach ($requiredPath in @($sourceManifest, $sourceSkillsRoot, $sourceVersionChecker, $sourceAutoModeValidator, $sourceScriptsLibRoot)) {
         if (-not (Test-Path -LiteralPath $requiredPath)) {
             throw "missing source runtime surface: $requiredPath"
         }
@@ -85,6 +86,7 @@ function Copy-ProjectPluginRuntimeSurface {
     New-Item -ItemType Directory -Path $targetScriptsRoot -Force | Out-Null
     Copy-Item -LiteralPath $sourceManifest -Destination (Join-Path $targetManifestDir "plugin.json") -Force
     Copy-Item -LiteralPath $sourceVersionChecker -Destination (Join-Path $targetScriptsRoot "get-agent-plugin-version.ps1") -Force
+    Copy-Item -LiteralPath $sourceAutoModeValidator -Destination (Join-Path $targetScriptsRoot "validate-auto-mode-authorization.ps1") -Force
 
     Assert-ChildDirectory -Parent $targetRootResolved -Child $targetScriptsLibRoot
     if (Test-Path -LiteralPath $targetScriptsLibRoot -PathType Container) {

@@ -21,7 +21,7 @@ interface:
     external GitHub issues are intake until local mirror and source plan validation passes.
     The issue-backed $superpowers-project:create-issues plus $superpowers-project:resolve-issue or $superpowers-project:orchestrate-issues path remains the default for non-trivial work.
     After $superpowers-project:brainstorm-spec saves a spec, Auto Mode is authorized only through project_auto_mode_authorization with Bounded Auto Merge;
-    record an Auto Mode authorization ledger validated by the repo-root Auto Mode contract helper, then choose planning, issue-backed orchestration, direct plan implementation, verification, merge,
+    record an Auto Mode authorization ledger validated by the plugin-provided Auto Mode validator, then choose planning, issue-backed orchestration, direct plan implementation, verification, merge,
     and closeout proof within recorded defaults, and stop outside policy when proof, validation, GitHub state, or decision scope is outside the ledger. Canonical artifacts live under docs/superpowers.
     Use request_user_input when callable for concise Default-mode decisions, including nested branch menus when useful; complete the artifact review gate before closeout;
     inventory produced or materially changed artifacts including machine-readable artifacts when present; show exact artifact paths and links; show rendered Markdown artifacts when applicable;

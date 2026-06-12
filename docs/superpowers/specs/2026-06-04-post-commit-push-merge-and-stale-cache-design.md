@@ -17,7 +17,7 @@ Tighten the Superpowers Project workflow contract so branch-producing work canno
 - `skills/brainstorm-spec/SKILL.md`, `skills/brainstorm-spec/agents/openai.yaml`, and `skills/brainstorm-spec/scripts/test-scenarios.ps1` all define and assert the nested Auto Mode route after brainstorming: `project_brainstorm_start_route`, `project_auto_mode_authorization`, and `Bounded Auto Merge`.
 - The live installed plugin copy under `C:\Users\Tanner\plugins\superpowers-project\skills\brainstorm-spec\` also contains the Auto Mode route.
 - The exact cached bundle path that the user invoked for `brainstorm-spec` did not contain those Auto Mode strings, which is concrete evidence that at least one loaded cache surface is stale or unsynced relative to source and live install.
-- The repo-root Auto Mode contract helper currently rejects an `[ordered]@{}` authorization ledger with `missing question_id` because its property probe recognizes `Hashtable` and `PSObject` but not ordered dictionaries. That means a valid ledger shape can fail validation depending on how the caller constructs it.
+- The plugin-provided Auto Mode validator currently rejects an `[ordered]@{}` authorization ledger with `missing question_id` because its property probe recognizes `Hashtable` and `PSObject` but not ordered dictionaries. That means a valid ledger shape can fail validation depending on how the caller constructs it.
 
 ## User Decisions
 
