@@ -34,6 +34,7 @@ function Remove-FixtureReport {
 try {
     $sessionScript = Join-Path $RepoRoot "skills\companion-interface\scripts\new-report-session.ps1"
     $appendScript = Join-Path $RepoRoot "skills\companion-interface\scripts\append-event.ps1"
+    $renderScript = Join-Path $RepoRoot "skills\companion-interface\scripts\render-report.ps1"
     $session = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $sessionScript -RepoRoot $RepoRoot -WorkflowName "brainstorm-spec" -Title "Fixture Report" | ConvertFrom-Json
     Add-Check -Name "session creates manifest" -Ok (Test-Path -LiteralPath $session.manifest_path) -Reason "manifest missing"
     Add-Check -Name "session creates events file" -Ok (Test-Path -LiteralPath $session.events_path) -Reason "events file missing"
@@ -42,6 +43,18 @@ try {
     $event = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "summary_added" -Title "Fixture Summary" -Summary "Report evidence was added." | ConvertFrom-Json
     Add-Check -Name "append event succeeds" -Ok ($event.ok -eq $true) -Reason "append failed"
     Add-Check -Name "manifest event count increments" -Ok ($event.event_count -eq 2) -Reason "unexpected event count"
+
+    $validationPayload = '{"command":"pwsh -File test.ps1","working_directory":".","exit_code":0,"status":"passed","excerpt":"fixture validation passed"}'
+    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "validation_result" -Title "Fixture Validation" -Summary "Validation passed." -PayloadJson $validationPayload | ConvertFrom-Json | Out-Null
+    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "decision_needed" -Title "Next Decision" -Summary "Review the report." | ConvertFrom-Json | Out-Null
+    $rendered = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $renderScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root | ConvertFrom-Json
+    Add-Check -Name "render report succeeds" -Ok ($rendered.ok -eq $true) -Reason "render failed"
+    Add-Check -Name "index exists" -Ok (Test-Path -LiteralPath $rendered.index_path) -Reason "index.html missing"
+    $html = Get-Content -LiteralPath $rendered.index_path -Raw
+    foreach ($section in @("Run Overview", "Workflow Timeline", "Artifact Browser", "Evidence Feed", "Decision Dock", "Interpretation Summary")) {
+        Add-Check -Name "html contains $section" -Ok $html.Contains($section) -Reason "missing section $section"
+    }
+    Add-Check -Name "html has no network dependencies" -Ok (-not ($html.Contains("https://") -or $html.Contains("http://"))) -Reason "html contains external URL"
 
     $failedAppend = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot "..\outside" -Type "summary_added" -Title "Bad" -Summary "Bad" 2>&1
     Add-Check -Name "outside report root is rejected" -Ok ($LASTEXITCODE -ne 0 -and (($failedAppend | Out-String) -match "outside repo root|report root")) -Reason "outside root was accepted"
