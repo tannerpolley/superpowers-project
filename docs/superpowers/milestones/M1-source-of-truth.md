@@ -25,13 +25,12 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
 
 ## Related Issues
-
-- `docs/superpowers/issues/45-companion-interface-foundation.md`
 - `docs/superpowers/issues/46-companion-rich-artifact-rendering.md`
 - `docs/superpowers/issues/47-companion-planning-workflow-integration.md`
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/45](https://github.com/tannerpolley/superpowers-project/issues/45) closed by [https://github.com/tannerpolley/superpowers-project/pull/49](https://github.com/tannerpolley/superpowers-project/pull/49) on 06/13/2026 06:30:26
 - [#39 Fix audit-project repo detection and concise issue mirror drift checks](https://github.com/tannerpolley/superpowers-project/issues/39) closed by [PR #41](https://github.com/tannerpolley/superpowers-project/pull/41).
 - [#40 Use GitHub GraphQL for native issue type setup and audit](https://github.com/tannerpolley/superpowers-project/issues/40) closed by [PR #41](https://github.com/tannerpolley/superpowers-project/pull/41).
 - [#23 Project Doctor flags absent source skill file as repairable in product repos](https://github.com/tannerpolley/superpowers-project/issues/23) closed by [PR #37](https://github.com/tannerpolley/superpowers-project/pull/37).
@@ -48,3 +47,4 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - [#5 Validate skill docs against script parameters](https://github.com/tannerpolley/superpowers-project/issues/5) closed by [PR #11](https://github.com/tannerpolley/superpowers-project/pull/11).
 - [#6 Normalize GitHub check states consistently](https://github.com/tannerpolley/superpowers-project/issues/6) closed by [PR #12](https://github.com/tannerpolley/superpowers-project/pull/12).
 - [#7 Generate resolve and merge evidence ledgers](https://github.com/tannerpolley/superpowers-project/issues/7) closed by [PR #14](https://github.com/tannerpolley/superpowers-project/pull/14).
+
