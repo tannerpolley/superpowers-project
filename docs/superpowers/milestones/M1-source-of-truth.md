@@ -25,11 +25,11 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
 
 ## Related Issues
-- `docs/superpowers/issues/46-companion-rich-artifact-rendering.md`
 - `docs/superpowers/issues/47-companion-planning-workflow-integration.md`
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/46](https://github.com/tannerpolley/superpowers-project/issues/46) closed by [https://github.com/tannerpolley/superpowers-project/pull/50](https://github.com/tannerpolley/superpowers-project/pull/50) on 06/13/2026 13:21:46
 - [https://github.com/tannerpolley/superpowers-project/issues/45](https://github.com/tannerpolley/superpowers-project/issues/45) closed by [https://github.com/tannerpolley/superpowers-project/pull/49](https://github.com/tannerpolley/superpowers-project/pull/49) on 06/13/2026 06:30:26
 - [#39 Fix audit-project repo detection and concise issue mirror drift checks](https://github.com/tannerpolley/superpowers-project/issues/39) closed by [PR #41](https://github.com/tannerpolley/superpowers-project/pull/41).
 - [#40 Use GitHub GraphQL for native issue type setup and audit](https://github.com/tannerpolley/superpowers-project/issues/40) closed by [PR #41](https://github.com/tannerpolley/superpowers-project/pull/41).
