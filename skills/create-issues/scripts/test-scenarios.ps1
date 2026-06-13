@@ -129,7 +129,7 @@ $scenarios = @(
             "the plugin-provided Auto Mode validator",
             "bounded-auto-merge",
             "recorded defaults",
-            "issue-backed-orchestrate-only",
+            "direct-inline-resolve-issue",
             "stop outside policy",
             "docs/agents/triage-labels.md",
             "configured tracker vocabulary",

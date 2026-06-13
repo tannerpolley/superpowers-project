@@ -8,7 +8,8 @@ interface:
     or unclear failure modes, require superpowers:verification-before-completion before PR-ready claims, and require superpowers:finishing-a-development-branch after verification and before PR creation.
     Do not collapse this into generic Superpowers execution or treat the companion skills as optional.
     Auto Mode requires an Auto Mode authorization ledger from project_auto_mode_authorization validated by the plugin-provided Auto Mode validator with bounded-auto-merge, recorded defaults,
-    and stop outside policy before direct issue execution without more user input. Do not create worker threads from this skill; use $superpowers-project:orchestrate-issues for delegated worker worktree execution.
+    direct-inline-resolve-issue routing, and stop outside policy before direct issue execution without more user input.
+    Do not create worker threads from this skill; use $superpowers-project:orchestrate-issues for delegated worker worktree execution.
     Enforce flat canonical roots for spec -> plan -> issue; Milestone pages are index views, and nested canonical milestone artifact folders are drift unless explicitly generated index/view output.
     Treat Task # Use Cases as a strict requirement for issue resolution: run validate-plan-task-use-cases.ps1 against the linked source plan before native goal activation, branch setup, or code edits,
     and block if any numbered Task N lacks a non-empty **Use Cases:** block; issue acceptance criteria alone are not a substitute.

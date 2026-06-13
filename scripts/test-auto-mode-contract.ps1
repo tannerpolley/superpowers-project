@@ -45,8 +45,7 @@ function New-HappyAuthorization {
         route_policy = @{
             selected_mode = "agent-chooses"
             direct_route = "implement-plan"
-            issue_route = "create-issues"
-            worker_route = "issue-backed-orchestrate-only"
+            issue_route = "direct-inline-resolve-issue"
         }
         decision_policy = @{
             selected_mode = "recorded-defaults"
@@ -84,11 +83,18 @@ foreach ($field in @("question_id", "source_spec", "route_policy", "decision_pol
     }
 }
 
-Invoke-Scenario "direct worker mode blocks" {
+Invoke-Scenario "orchestrate-only issue route blocks" {
     $auth = New-HappyAuthorization
-    $auth.route_policy.worker_route = "direct-implement-worker"
+    $auth.route_policy.issue_route = "issue-backed-orchestrate-only"
     $result = Test-AutoModeAuthorization -Authorization $auth -RepoRoot $repoRoot
-    if ($result.ok) { throw "direct Auto Mode workers are out of first-pass scope" }
+    if ($result.ok) { throw "orchestrate-only Auto Mode issue routing should fail" }
+}
+
+Invoke-Scenario "legacy worker_route field blocks" {
+    $auth = New-HappyAuthorization
+    $auth.route_policy.worker_route = "issue-backed-orchestrate-only"
+    $result = Test-AutoModeAuthorization -Authorization $auth -RepoRoot $repoRoot
+    if ($result.ok) { throw "legacy worker_route field should fail" }
 }
 
 Invoke-Scenario "plugin validator accepts external project repo" {

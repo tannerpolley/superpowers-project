@@ -157,7 +157,7 @@ Options:
 - `selected_authority: bounded-auto-merge`
 - `source_spec: docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md`
 - `route_policy.selected_mode: agent-chooses`
-- `route_policy.worker_route: issue-backed-orchestrate-only`
+- `route_policy.issue_route: direct-inline-resolve-issue`
 - `decision_policy.selected_mode: recorded-defaults`
 - `decision_policy.stop_outside_policy: true`
 - `merge_permission.selected_mode: preauthorized-after-clean-premerge`

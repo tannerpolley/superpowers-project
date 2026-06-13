@@ -4,7 +4,7 @@ interface:
   default_prompt: >-
     Use $superpowers-project:create-issues when a Superpowers Project spec, plan, PRD, approved scope, or external GitHub issue hydration request needs vertical slices published as GitHub issues and synced mirrors.
     Auto Mode requires an Auto Mode authorization ledger from project_auto_mode_authorization validated by the plugin-provided Auto Mode validator with bounded-auto-merge, recorded defaults,
-    issue-backed-orchestrate-only worker routing, and stop outside policy before issue publication or execution handoff without more user input.
+    direct-inline-resolve-issue routing, and stop outside policy before issue publication or execution handoff without more user input.
     Read docs/superpowers/specs, docs/superpowers/plans, docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, docs/superpowers/issues, and tracker label vocabulary from docs/agents when present;
     keep flat canonical roots for spec -> plan -> issue; classify each slice as AFK or HITL; capture Blocked by relationships, Acceptance Criteria, GitHub Issue, GitHub Milestone, configured type/status labels, proof oracle,
     Goal Command for AFK issues, Execution Mode, Worktree Policy, Integration Policy, TDD Policy, Parallelization Plan, Reviewer Role, and Script Gate Mode;

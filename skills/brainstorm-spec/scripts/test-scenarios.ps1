@@ -153,7 +153,7 @@ $scenarios = @(
             "Auto Mode authorization ledger",
             "bounded-auto-merge",
             "recorded-defaults",
-            "issue-backed-orchestrate-only",
+            "direct-inline-resolve-issue",
             "the plugin-provided Auto Mode validator",
             "project_brainstorm_plan_route",
             "Create One Plan",
