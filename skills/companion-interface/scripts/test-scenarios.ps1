@@ -48,15 +48,57 @@ try {
 
     $validationPayload = '{"command":"pwsh -File test.ps1","working_directory":".","exit_code":0,"status":"passed","excerpt":"fixture validation passed"}'
     & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "validation_result" -Title "Fixture Validation" -Summary "Validation passed." -PayloadJson $validationPayload | ConvertFrom-Json | Out-Null
+
+    $fixtureMarkdown = Join-Path $session.artifact_root "fixture-spec.md"
+    Set-Content -LiteralPath $fixtureMarkdown -Encoding utf8NoBOM -Value @'
+---
+title: Fixture Spec
+---
+
+# Fixture Spec
+
+Inline math: $x^2 + y^2 = z^2$.
+
+| item | status |
+| --- | --- |
+| markdown | pass |
+
+```powershell
+Write-Output "hello"
+```
+'@
+
+    $fixtureCsv = Join-Path $session.artifact_root "results.csv"
+    Set-Content -LiteralPath $fixtureCsv -Encoding utf8NoBOM -Value @'
+name,status,count
+unit,pass,3
+integration,fail,1
+'@
+
+    $fixtureSvg = Join-Path $session.artifact_root "plot.svg"
+    Set-Content -LiteralPath $fixtureSvg -Encoding utf8NoBOM -Value '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><rect width="200" height="80" fill="#f8fafc"/><circle cx="40" cy="40" r="24" fill="#0f766e"/></svg>'
+
+    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "markdown_rendered" -Title "Fixture Spec" -Summary "Rendered Markdown fixture." -ArtifactPath $fixtureMarkdown | ConvertFrom-Json | Out-Null
+    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "table_added" -Title "Fixture CSV" -Summary "Rendered CSV table fixture." -ArtifactPath $fixtureCsv | ConvertFrom-Json | Out-Null
+    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "plot_added" -Title "Fixture Plot" -Summary "Rendered SVG plot fixture." -ArtifactPath $fixtureSvg | ConvertFrom-Json | Out-Null
+
     & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "decision_needed" -Title "Next Decision" -Summary "Review the report." | ConvertFrom-Json | Out-Null
     $rendered = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $renderScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root | ConvertFrom-Json
-    Add-Check -Name "render report succeeds" -Ok ($rendered.ok -eq $true) -Reason "render failed"
-    Add-Check -Name "index exists" -Ok (Test-Path -LiteralPath $rendered.index_path) -Reason "index.html missing"
-    $html = Get-Content -LiteralPath $rendered.index_path -Raw
-    foreach ($section in @("Run Overview", "Workflow Timeline", "Artifact Browser", "Evidence Feed", "Decision Dock", "Interpretation Summary")) {
-        Add-Check -Name "html contains $section" -Ok $html.Contains($section) -Reason "missing section $section"
+    $renderOk = $rendered.ok -eq $true
+    Add-Check -Name "render report succeeds" -Ok $renderOk -Reason "render failed: $($rendered.reason)"
+    if ($renderOk) {
+        Add-Check -Name "index exists" -Ok (Test-Path -LiteralPath $rendered.index_path) -Reason "index.html missing"
+        $html = Get-Content -LiteralPath $rendered.index_path -Raw
+        foreach ($section in @("Run Overview", "Workflow Timeline", "Artifact Browser", "Evidence Feed", "Decision Dock", "Interpretation Summary")) {
+            Add-Check -Name "html contains $section" -Ok $html.Contains($section) -Reason "missing section $section"
+        }
+        Add-Check -Name "markdown frontmatter is separated" -Ok ($html.Contains("YAML Frontmatter") -and $html.Contains("title") -and $html.Contains("Fixture Spec")) -Reason "markdown frontmatter missing"
+        Add-Check -Name "markdown math renders as MathML" -Ok ($html.Contains("<math")) -Reason "MathML markup missing"
+        Add-Check -Name "csv table rows render" -Ok ($html.Contains("integration") -and $html.Contains("fail") -and $html.Contains("unit")) -Reason "CSV table rows missing"
+        Add-Check -Name "svg plot path renders" -Ok ($html.Contains("plot.svg") -and $html.Contains("<img")) -Reason "SVG image markup missing"
+        Add-Check -Name "validation receipt renders status evidence" -Ok ($html.Contains("pwsh -File test.ps1") -and $html.Contains("Exit code") -and $html.Contains("fixture validation passed")) -Reason "validation receipt missing"
+        Add-Check -Name "html has no network dependencies" -Ok (-not ($html.Contains("https://") -or $html.Contains("http://"))) -Reason "html contains external URL"
     }
-    Add-Check -Name "html has no network dependencies" -Ok (-not ($html.Contains("https://") -or $html.Contains("http://"))) -Reason "html contains external URL"
 
     $failedAppend = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot "..\outside" -Type "summary_added" -Title "Bad" -Summary "Bad" 2>&1
     Add-Check -Name "outside report root is rejected" -Ok ($LASTEXITCODE -ne 0 -and (($failedAppend | Out-String) -match "outside repo root|report root")) -Reason "outside root was accepted"
