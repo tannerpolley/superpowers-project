@@ -84,18 +84,21 @@ integration,fail,1
 
     & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "decision_needed" -Title "Next Decision" -Summary "Review the report." | ConvertFrom-Json | Out-Null
     $rendered = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $renderScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root | ConvertFrom-Json
-    Add-Check -Name "render report succeeds" -Ok ($rendered.ok -eq $true) -Reason "render failed"
-    Add-Check -Name "index exists" -Ok (Test-Path -LiteralPath $rendered.index_path) -Reason "index.html missing"
-    $html = Get-Content -LiteralPath $rendered.index_path -Raw
-    foreach ($section in @("Run Overview", "Workflow Timeline", "Artifact Browser", "Evidence Feed", "Decision Dock", "Interpretation Summary")) {
-        Add-Check -Name "html contains $section" -Ok $html.Contains($section) -Reason "missing section $section"
+    $renderOk = $rendered.ok -eq $true
+    Add-Check -Name "render report succeeds" -Ok $renderOk -Reason "render failed: $($rendered.reason)"
+    if ($renderOk) {
+        Add-Check -Name "index exists" -Ok (Test-Path -LiteralPath $rendered.index_path) -Reason "index.html missing"
+        $html = Get-Content -LiteralPath $rendered.index_path -Raw
+        foreach ($section in @("Run Overview", "Workflow Timeline", "Artifact Browser", "Evidence Feed", "Decision Dock", "Interpretation Summary")) {
+            Add-Check -Name "html contains $section" -Ok $html.Contains($section) -Reason "missing section $section"
+        }
+        Add-Check -Name "markdown frontmatter is separated" -Ok ($html.Contains("YAML Frontmatter") -and $html.Contains("title") -and $html.Contains("Fixture Spec")) -Reason "markdown frontmatter missing"
+        Add-Check -Name "markdown math renders as MathML" -Ok ($html.Contains("<math")) -Reason "MathML markup missing"
+        Add-Check -Name "csv table rows render" -Ok ($html.Contains("integration") -and $html.Contains("fail") -and $html.Contains("unit")) -Reason "CSV table rows missing"
+        Add-Check -Name "svg plot path renders" -Ok ($html.Contains("plot.svg") -and $html.Contains("<img")) -Reason "SVG image markup missing"
+        Add-Check -Name "validation receipt renders status evidence" -Ok ($html.Contains("pwsh -File test.ps1") -and $html.Contains("Exit code") -and $html.Contains("fixture validation passed")) -Reason "validation receipt missing"
+        Add-Check -Name "html has no network dependencies" -Ok (-not ($html.Contains("https://") -or $html.Contains("http://"))) -Reason "html contains external URL"
     }
-    Add-Check -Name "markdown frontmatter is separated" -Ok ($html.Contains("YAML Frontmatter") -and $html.Contains("title") -and $html.Contains("Fixture Spec")) -Reason "markdown frontmatter missing"
-    Add-Check -Name "markdown math renders as MathML" -Ok ($html.Contains("<math")) -Reason "MathML markup missing"
-    Add-Check -Name "csv table rows render" -Ok ($html.Contains("integration") -and $html.Contains("fail") -and $html.Contains("unit")) -Reason "CSV table rows missing"
-    Add-Check -Name "svg plot path renders" -Ok ($html.Contains("plot.svg") -and $html.Contains("<img")) -Reason "SVG image markup missing"
-    Add-Check -Name "validation receipt renders status evidence" -Ok ($html.Contains("pwsh -File test.ps1") -and $html.Contains("Exit code") -and $html.Contains("fixture validation passed")) -Reason "validation receipt missing"
-    Add-Check -Name "html has no network dependencies" -Ok (-not ($html.Contains("https://") -or $html.Contains("http://"))) -Reason "html contains external URL"
 
     $failedAppend = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot "..\outside" -Type "summary_added" -Title "Bad" -Summary "Bad" 2>&1
     Add-Check -Name "outside report root is rejected" -Ok ($LASTEXITCODE -ne 0 -and (($failedAppend | Out-String) -match "outside repo root|report root")) -Reason "outside root was accepted"
