@@ -108,6 +108,69 @@ pre {
   background: #111827;
   color: #e5e7eb;
 }
+.markdown-artifact {
+  overflow-wrap: anywhere;
+}
+.frontmatter {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 12px 0;
+  padding: 10px;
+}
+.frontmatter h4 {
+  margin: 0 0 8px;
+}
+.artifact-table {
+  border-collapse: collapse;
+  margin: 12px 0;
+  width: 100%;
+}
+.artifact-table th,
+.artifact-table td {
+  border: 1px solid var(--border);
+  padding: 8px;
+  text-align: left;
+}
+.artifact-table th {
+  background: var(--bg);
+}
+.plot-artifact {
+  margin: 12px 0;
+}
+.plot-artifact img {
+  border: 1px solid var(--border);
+  max-width: 100%;
+}
+.plot-artifact figcaption {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+.receipt dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 12px;
+}
+.receipt dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+.receipt dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.status-pass {
+  color: var(--pass);
+  font-weight: 700;
+}
+.status-fail {
+  color: var(--fail);
+  font-weight: 700;
+}
+.status-warn {
+  color: var(--warn);
+  font-weight: 700;
+}
 button {
   border: 1px solid var(--border);
   border-radius: 6px;

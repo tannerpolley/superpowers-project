@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 
 function ConvertTo-HtmlText {
     param([AllowNull()][object]$Value)
-    [System.Net.WebUtility]::HtmlEncode([string]$Value)
+    ConvertTo-CompanionHtmlText $Value
 }
 
 function ConvertTo-ManifestJsonForHtml {
@@ -18,15 +18,17 @@ function ConvertTo-ManifestJsonForHtml {
 }
 
 function ConvertTo-EventDetailsHtml {
-    param([object[]]$Events)
+    param([object[]]$Events, [string]$RepoRoot, [string]$ReportRoot)
     if ($Events.Count -eq 0) { return '<p class="empty">No events recorded.</p>' }
     $parts = foreach ($event in $Events) {
         $payload = ConvertTo-HtmlText (($event.payload | ConvertTo-Json -Depth 12) -replace "(\r?\n)+$", "")
+        $richHtml = ConvertTo-EventRichHtml -Event $event -RepoRoot $RepoRoot -ReportRoot $ReportRoot
         @"
 <details>
   <summary>$(ConvertTo-HtmlText $event.title)</summary>
   <p class="event-type">$(ConvertTo-HtmlText $event.type) · $(ConvertTo-HtmlText $event.timestamp)</p>
   <p class="event-summary">$(ConvertTo-HtmlText $event.summary)</p>
+  $richHtml
   <pre>$payload</pre>
 </details>
 "@
@@ -34,17 +36,42 @@ function ConvertTo-EventDetailsHtml {
     $parts -join "`n"
 }
 
+function ConvertTo-EventRichHtml {
+    param([object]$Event, [string]$RepoRoot, [string]$ReportRoot)
+    switch ([string]$Event.type) {
+        "markdown_rendered" {
+            $artifact = Resolve-CompanionArtifactFile -RepoRoot $RepoRoot -ArtifactPath ([string]$Event.artifact_path)
+            return (Convert-CompanionMarkdownToHtml -MarkdownPath ([string]$artifact.full_path))
+        }
+        "table_added" {
+            $artifact = Resolve-CompanionArtifactFile -RepoRoot $RepoRoot -ArtifactPath ([string]$Event.artifact_path)
+            return (Convert-CompanionTableToHtml -TablePath ([string]$artifact.full_path))
+        }
+        "plot_added" {
+            return (Convert-CompanionArtifactPathToHtml -RepoRoot $RepoRoot -ReportRoot $ReportRoot -ArtifactPath ([string]$Event.artifact_path) -Caption ([string]$Event.summary))
+        }
+        { $_ -in @("command_result", "validation_result", "test_result") } {
+            return (Convert-CompanionValidationToHtml -Payload $Event.payload)
+        }
+        default {
+            return ""
+        }
+    }
+}
+
 function ConvertTo-ArtifactHtml {
-    param([object[]]$Events)
+    param([object[]]$Events, [string]$RepoRoot, [string]$ReportRoot)
     $artifactEvents = @($Events | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.artifact_path) })
     if ($artifactEvents.Count -eq 0) { return '<p class="empty">No artifacts recorded yet.</p>' }
     $parts = foreach ($event in $artifactEvents) {
+        $richHtml = ConvertTo-EventRichHtml -Event $event -RepoRoot $RepoRoot -ReportRoot $ReportRoot
         @"
 <details>
   <summary>$(ConvertTo-HtmlText $event.title)</summary>
   <p class="event-type">$(ConvertTo-HtmlText $event.type)</p>
   <p><code>$(ConvertTo-HtmlText $event.artifact_path)</code></p>
   <p class="event-summary">$(ConvertTo-HtmlText $event.summary)</p>
+  $richHtml
 </details>
 "@
     }
@@ -100,21 +127,21 @@ try {
   $overview
   <section>
     <h2>Artifact Browser</h2>
-    $(ConvertTo-ArtifactHtml -Events $events)
+    $(ConvertTo-ArtifactHtml -Events $events -RepoRoot $root -ReportRoot $resolvedReportRoot)
   </section>
 </div>
 <div class="content">
   <section>
     <h2>Workflow Timeline</h2>
-    $(ConvertTo-EventDetailsHtml -Events $events)
+    $(ConvertTo-EventDetailsHtml -Events $events -RepoRoot $root -ReportRoot $resolvedReportRoot)
   </section>
   <section>
     <h2>Evidence Feed</h2>
-    $(ConvertTo-EventDetailsHtml -Events $evidenceEvents)
+    $(ConvertTo-EventDetailsHtml -Events $evidenceEvents -RepoRoot $root -ReportRoot $resolvedReportRoot)
   </section>
   <section>
     <h2>Decision Dock</h2>
-    $(ConvertTo-EventDetailsHtml -Events $decisionEvents)
+    $(ConvertTo-EventDetailsHtml -Events $decisionEvents -RepoRoot $root -ReportRoot $resolvedReportRoot)
   </section>
   <section>
     <h2>Interpretation Summary</h2>
