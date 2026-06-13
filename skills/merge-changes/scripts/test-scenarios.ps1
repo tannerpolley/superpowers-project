@@ -27,7 +27,7 @@ function Invoke-JsonScript {
 }
 
 function New-SetupLedger {
-    param([string]$Mode = "pr-issue", [switch]$Orchestrated)
+    param([string]$Mode = "pr-issue", [switch]$Orchestrated, [switch]$InlineNullWorkerFields)
     $ledger = @{
         merge_mode = $Mode
         issue_url = "https://github.com/example/repo/issues/12"
@@ -45,6 +45,9 @@ function New-SetupLedger {
             branch = "codex/sample-issue"
             worktree_path = "C:/tmp/sample-worktree"
         }
+    } elseif ($InlineNullWorkerFields) {
+        $ledger.dynamic_work_packet_map = $null
+        $ledger.worker_handoff = $null
     }
     $ledger | ConvertTo-Json -Depth 12 -Compress
 }
@@ -384,6 +387,28 @@ Invoke-Scenario "happy closeout records clean proof" {
     $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", $completion, "-PrJson", $pr, "-IssueJson", $issue)
     if (-not $result.ok) { throw $result.reason }
     if ($result.evidence.repo_clean -ne $true) { throw "clean proof was not recorded" }
+}
+
+Invoke-Scenario "inline closeout ignores null worker fields" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $completion = @{
+        pr_url = "https://github.com/example/repo/pull/5"
+        issue_url = "https://github.com/example/repo/issues/12"
+        merge_decision = (New-MergeDecision | ConvertFrom-Json)
+        merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+        linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+        default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+        branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+        worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+        fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+        cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+        clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+        resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        mirror_cleanup_confirmation = New-MirrorCleanupConfirmation
+    } | ConvertTo-Json -Depth 16 -Compress
+    $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger -InlineNullWorkerFields), "-CompletionLedgerJson", $completion, "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $result.ok) { throw $result.reason }
 }
 
 Invoke-Scenario "orchestrated closeout requires worker archival before folder removal" {

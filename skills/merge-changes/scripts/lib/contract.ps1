@@ -314,10 +314,19 @@ function Test-OrchestratedMergeContext {
     param($Setup, $Completion)
     if ((Test-Property -Object $Setup -Name "merge_context") -and [string]$Setup.merge_context -eq "orchestrated") { return $true }
     if ((Test-Property -Object $Completion -Name "merge_context") -and [string]$Completion.merge_context -eq "orchestrated") { return $true }
-    if (Test-Property -Object $Setup -Name "worker_identity") { return $true }
-    if (Test-Property -Object $Setup -Name "worker_handoff") { return $true }
-    if (Test-Property -Object $Setup -Name "worker_thread_id") { return $true }
+    if (Test-NonEmptyContextValue -Object $Setup -Name "worker_identity") { return $true }
+    if (Test-NonEmptyContextValue -Object $Setup -Name "worker_handoff") { return $true }
+    if (Test-NonEmptyContextValue -Object $Setup -Name "worker_thread_id") { return $true }
     $false
+}
+
+function Test-NonEmptyContextValue {
+    param($Object, [string]$Name)
+    if (-not (Test-Property -Object $Object -Name $Name)) { return $false }
+    $value = $Object.$Name
+    if ($null -eq $value) { return $false }
+    if ($value -is [string]) { return -not [string]::IsNullOrWhiteSpace($value) }
+    $true
 }
 
 function Assert-OrchestratedWorkerCloseout {
