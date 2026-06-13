@@ -41,6 +41,7 @@ try {
         "project_auto_mode_authorization",
         "Bounded Auto Merge",
         "validate-auto-mode-authorization.ps1",
+        "direct-inline-resolve-issue",
         "source spec",
         "Native Question Debug Ledger",
         "debug_question_mode",
@@ -68,6 +69,7 @@ try {
         "project_auto_mode_authorization",
         "Bounded Auto Merge",
         "validate-auto-mode-authorization.ps1",
+        "direct-inline-resolve-issue",
         "source spec",
         "Nested Yes-route menus must not include terminal options",
         "Custom Other never terminates a workflow directly"

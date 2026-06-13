@@ -15,7 +15,7 @@ GoalBuddy boards are outside the default execution model. Do not create `docs/go
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.issue_route: direct-inline-resolve-issue`, and `stop_outside_policy: true`.
 
 Auto Mode may choose direct current-thread issue resolution, create or verify native goal proof, execute the source plan, run verification, push PR-ready work, and route to merge without additional user input when the ready issue mirror came from the authorized source spec or derived plan. Carry the Auto Mode authorization ledger into PR-ready handoff evidence. If the issue mirror is not ready, proof is missing, checks fail, branch state is unsafe, or implementation needs a decision outside recorded defaults, stop outside policy before pushing or handoff.
 

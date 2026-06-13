@@ -56,8 +56,11 @@ function Test-AutoModeAuthorization {
     if ([string]$Authorization.route_policy.selected_mode -ne "agent-chooses") {
         return [pscustomobject]@{ ok = $false; phase = "auto-mode-authorization"; reason = "route_policy.selected_mode must be agent-chooses" }
     }
-    if ([string]$Authorization.route_policy.worker_route -ne "issue-backed-orchestrate-only") {
-        return [pscustomobject]@{ ok = $false; phase = "auto-mode-authorization"; reason = "worker_route must be issue-backed-orchestrate-only" }
+    if (Has-AuthProperty -Object $Authorization.route_policy -Name "worker_route") {
+        return [pscustomobject]@{ ok = $false; phase = "auto-mode-authorization"; reason = "route_policy.worker_route is obsolete; use route_policy.issue_route" }
+    }
+    if ([string]$Authorization.route_policy.issue_route -ne "direct-inline-resolve-issue") {
+        return [pscustomobject]@{ ok = $false; phase = "auto-mode-authorization"; reason = "route_policy.issue_route must be direct-inline-resolve-issue" }
     }
     if ([string]$Authorization.decision_policy.selected_mode -ne "recorded-defaults" -or $Authorization.decision_policy.stop_outside_policy -ne $true) {
         return [pscustomobject]@{ ok = $false; phase = "auto-mode-authorization"; reason = "decision_policy must use recorded-defaults and stop_outside_policy true" }
