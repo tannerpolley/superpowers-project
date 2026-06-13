@@ -40,6 +40,7 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 - `setup-project`
 - `brainstorm-spec`
 - `write-plan`
+- `companion-interface`
 - `implement-plan`
 - `create-issues`
 - `resolve-issue`

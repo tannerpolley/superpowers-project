@@ -20,6 +20,7 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:setup-project`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
 - `$superpowers-project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
 - `$superpowers-project:write-plan`: writes Superpowers implementation plans with project context.
+- `$superpowers-project:companion-interface`: creates and refreshes a local HTML companion report for rich artifact review in the Codex in-app browser.
 - `$superpowers-project:implement-plan`: implements an approved plan on a development branch without creating GitHub issue mirrors.
 - `$superpowers-project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
 - `$superpowers-project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.

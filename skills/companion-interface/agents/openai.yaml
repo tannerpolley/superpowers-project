@@ -1,0 +1,28 @@
+interface:
+  display_name: "Companion Interface"
+  short_description: "Render Superpowers Project workflow artifacts into a local HTML companion report."
+  default_prompt: >-
+    Use $superpowers-project:companion-interface to create or refresh a local HTML companion report for rich artifact review while keeping native Codex chat and request_user_input as the approval channel.
+    The companion-interface report is an evidence surface for summaries, changed artifacts, validation receipts, plots, tables, screenshots, diagrams, and long rendered Markdown.
+    It must not record approval, push, publish, merge, live sync, GitHub mutation, or final Done.
+    After every completed action, ask the next native continuation or permission question.
+    Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate.
+    Revisit is non-terminal. Only Stop can break an intermediate loop before a verified final Done gate.
+    Review First is not a terminal answer. The agent must not get out of the loop by itself.
+    ending a turn after a governed workflow action is invalid, and the agent must not recommend Stop before verified final completion.
+    A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal.
+    The closeout question is Continue? with Yes, Revisit, and Stop.
+    The top-level closeout question must use exactly three trajectory options.
+    Do not show Continue children as peer top-level options.
+    Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires.
+    Custom Other never terminates a workflow directly.
+    If Custom Other requests Stop or Done, ask a fresh confirmation question with separate built-in labels instead of terminating from Other.
+    Nested Yes-route menus must not include terminal options.
+    Nested Revisit-route menus must not include terminal options.
+    Recommend Yes when at least one safe forward route exists.
+    Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.
+    Revisit routes must gather evidence and return to the originating continuation gate.
+    Before any closeout or permission question, complete the artifact review gate.
+    Strict artifact display is mandatory; do not merely say something changed.
+    Show created or revised report sessions, rendered Markdown artifacts, generated HTML, manifest JSON, events JSONL, and machine-readable artifacts with exact paths plus key fields.
+    Add a findings summary with what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, active-goal impact, broader project context, and the recommended next route.

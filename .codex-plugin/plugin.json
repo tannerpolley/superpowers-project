@@ -39,6 +39,7 @@
       "Use $superpowers-project:brainstorm-spec to brainstorm a project idea with native grilling.",
       "Use $superpowers-project:create-issues to convert a plan into GitHub issue mirrors.",
       "Use $superpowers-project:write-plan to write the project implementation plan.",
+      "Use $superpowers-project:companion-interface to create or refresh the local HTML companion report for rich artifact review while native Codex input remains the approval channel.",
       "Use $superpowers-project:implement-plan to implement an approved plan on a development branch without creating issue mirrors.",
       "Use $superpowers-project:resolve-issue to resolve one GitHub issue directly with a native goal.",
       "Use $superpowers-project:orchestrate-issues to delegate issue work to a worker worktree thread.",
