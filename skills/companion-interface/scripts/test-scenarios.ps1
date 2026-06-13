@@ -38,6 +38,8 @@ try {
     $session = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $sessionScript -RepoRoot $RepoRoot -WorkflowName "brainstorm-spec" -Title "Fixture Report" | ConvertFrom-Json
     Add-Check -Name "session creates manifest" -Ok (Test-Path -LiteralPath $session.manifest_path) -Reason "manifest missing"
     Add-Check -Name "session creates events file" -Ok (Test-Path -LiteralPath $session.events_path) -Reason "events file missing"
+    Add-Check -Name "session creates index file" -Ok (Test-Path -LiteralPath $session.index_path) -Reason "index.html missing"
+    Add-Check -Name "session creates artifact root" -Ok (Test-Path -LiteralPath $session.artifact_root -PathType Container) -Reason "artifact root missing"
     Add-Check -Name "session stays under .superpowers reports" -Ok ($session.relative_report_root -like ".superpowers/reports/*") -Reason "wrong report root"
 
     $event = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "summary_added" -Title "Fixture Summary" -Summary "Report evidence was added." | ConvertFrom-Json
