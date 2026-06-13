@@ -1,0 +1,7 @@
+interface:
+  display_name: "Companion Interface"
+  short_description: "Render Superpowers Project workflow artifacts into a local HTML companion report."
+  default_prompt: >-
+    Use $superpowers-project:companion-interface to create or refresh a local HTML companion report for rich artifact review while keeping native Codex chat and request_user_input as the approval channel.
+    The companion-interface report is an evidence surface for summaries, changed artifacts, validation receipts, plots, tables, screenshots, diagrams, and long rendered Markdown.
+    It must not record approval, push, publish, merge, live sync, GitHub mutation, or final Done.
