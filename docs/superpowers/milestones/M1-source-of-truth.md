@@ -26,7 +26,9 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Related Issues
 
-- None.
+- `docs/superpowers/issues/45-companion-interface-foundation.md`
+- `docs/superpowers/issues/46-companion-rich-artifact-rendering.md`
+- `docs/superpowers/issues/47-companion-planning-workflow-integration.md`
 
 ## Closed Issues
 
