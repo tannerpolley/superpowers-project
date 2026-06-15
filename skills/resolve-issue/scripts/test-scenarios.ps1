@@ -408,6 +408,28 @@ try {
         Assert-True (-not $result.ok -and $result.reason -match "push[_ ]permission") "expected missing push permission failure"
     }
 
+    Invoke-Scenario "resolve terminal closeout blocks missing continuation ledger" {
+        $prReady = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", (@{
+            pr_url = "https://github.com/example/repo/pull/5"
+            issue_url = "https://github.com/example/repo/issues/12"
+            branch = "codex/sample-issue"
+            branch_pushed = $true
+            pr_closes_issue = $true
+            push_permission = (New-PushPermission | ConvertFrom-Json)
+            branch_push_proof = @{ source = "PR evidence"; pr_url = "https://github.com/example/repo/pull/5" }
+            acceptance_criteria_covered = $true
+            verification_passed = $true
+            handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
+            goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        } | ConvertTo-Json -Depth 16 -Compress))
+        Assert-True ($prReady.ok) $prReady.reason
+        $result = Invoke-JsonScript -ScriptName "validate-terminal-closeout.ps1" -Arguments @(
+            "-RepoRoot", $repo,
+            "-PrReadyResultJson", ($prReady | ConvertTo-Json -Depth 16 -Compress)
+        )
+        Assert-True (-not $result.ok -and $result.reason -match "continuation decision") "expected missing continuation ledger to block resolve termination"
+    }
+
     Invoke-Scenario "resolve terminal closeout blocks non-terminal continuation" {
         $prReady = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", (@{
             pr_url = "https://github.com/example/repo/pull/5"

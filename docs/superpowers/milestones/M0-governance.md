@@ -23,6 +23,7 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 ## Related Issues
 
+- `docs/superpowers/issues/44-resolve-issue-can-stop-at-pr-ready-without-forced-merge-changes-gate.md`
 - `docs/superpowers/issues/smoke-test-workflow.md`
 
 ## Closed Issues
