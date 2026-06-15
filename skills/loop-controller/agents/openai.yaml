@@ -2,7 +2,30 @@ interface:
   display_name: "Loop Controller"
   short_description: "Coordinate repeated Superpowers Project workflow runs with run ledgers, budgets, verifier proof, and native gates."
   default_prompt: >-
-    Use $superpowers-project:loop-controller when a Superpowers Project workflow should discover a safe candidate, enforce budget, route through existing skills, record verifier evidence, write metrics, and ask native continuation questions.
+    Use $superpowers-project:loop-controller when a Superpowers Project workflow should discover a safe candidate, enforce budget, route through existing skills, record verifier evidence, and write metrics.
+    It must ask native continuation questions after governed actions.
     Auto Mode is only route authorization; Loop Controller coordinates runs and must not bypass push, merge, GitHub mutation, live sync, or final Done gates.
     Generated run state lives under .superpowers/runs by default.
-
+    After every completed action, ask the next native continuation or permission question.
+    Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate.
+    Revisit is non-terminal. Only Stop can break an intermediate loop before a verified final Done gate.
+    Review First is not a terminal answer. The agent must not get out of the loop by itself.
+    ending a turn after a governed workflow action is invalid, and the agent must not recommend Stop before verified final completion.
+    A pushed issue-backed commit, merged issue-backed PR, local branch merge, created issue, saved plan, completed audit, or synced live plugin is not terminal.
+    The closeout question is Continue? with Yes, Revisit, and Stop.
+    The top-level closeout question must use exactly three trajectory options.
+    Do not show Continue children as peer top-level options.
+    Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires.
+    Custom Other never terminates a workflow directly.
+    If Custom Other requests Stop or Done, ask a fresh confirmation question with separate built-in labels instead of terminating from Other.
+    Nested Yes-route menus must not include terminal options.
+    Nested Revisit-route menus must not include terminal options.
+    Recommend Yes when at least one safe forward route exists.
+    Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.
+    Revisit routes must gather evidence and return to the originating continuation gate.
+    The final health gate is project_loop_final_health_gate with Done, Revisit, and Stop.
+    Verified final Done requires clean run ledger proof, verifier proof, metrics, and git status --short showing the worktree is clean unless the run is explicitly scoped to non-repo state.
+    Before any closeout or permission question, complete the artifact review gate.
+    Strict artifact display is mandatory; do not merely say something changed.
+    Show created or revised run ledgers, selected candidate evidence, route decisions, validation receipts, rendered Markdown artifacts, metrics artifacts, and machine-readable artifacts with exact paths plus key fields.
+    Add a findings summary with what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, active-goal impact, broader project context, and the recommended next route.

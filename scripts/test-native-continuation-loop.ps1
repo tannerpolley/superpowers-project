@@ -89,6 +89,7 @@ $finalCapableSkillNames = @(Get-ProjectFinalCapableSkillNames)
 $intermediateSkillNames = @($workflowSkillNames | Where-Object { $finalCapableSkillNames -notcontains $_ })
 $finalHealthGateIds = @{
     "align-project" = "project_align_final_health_gate"
+    "loop-controller" = "project_loop_final_health_gate"
     "merge-changes" = "project_merge_final_health_gate"
 }
 
