@@ -14,16 +14,22 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 - `docs/superpowers/specs/2026-06-02-project-workflow-hardening-design.md`
 - `docs/superpowers/specs/2026-06-03-project-implement-and-integration-workflow-design.md`
 - `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md`
+- `docs/superpowers/specs/2026-06-15-auto-mode-loop-controller-design.md`
 
 ## Related Plans
 
 - `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
 - `docs/superpowers/plans/2026-06-02-project-workflow-hardening-plan.md`
 - `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
+- `docs/superpowers/plans/2026-06-15-auto-mode-loop-controller-plan.md`
 
 ## Related Issues
 
 - `docs/superpowers/issues/smoke-test-workflow.md`
+- `docs/superpowers/issues/53-loop-controller-skill-and-run-ledger-contract.md`
+- `docs/superpowers/issues/54-loop-controller-budget-and-candidate-selection-contracts.md`
+- `docs/superpowers/issues/55-loop-controller-verifier-terminal-closeout-and-metrics-contracts.md`
+- `docs/superpowers/issues/56-validate-loop-controller-contract-summary-and-live-sync-readiness.md`
 
 ## Closed Issues
 
