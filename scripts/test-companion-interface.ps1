@@ -30,6 +30,13 @@ try {
     Assert-Contains -Path "README.md" -Needle '$superpowers-project:companion-interface' -Name "README lists companion"
     Assert-Contains -Path "docs\superpowers\PROJECT_CONTEXT.md" -Needle "companion-interface" -Name "project context lists companion"
     Assert-Contains -Path ".github\workflows\validate.yml" -Needle "pandoc --version" -Name "CI verifies Pandoc dependency"
+    Assert-Contains -Path "skills\brainstorm-spec\SKILL.md" -Needle "companion-interface" -Name "brainstorm mentions companion"
+    Assert-Contains -Path "skills\brainstorm-spec\SKILL.md" -Needle "native approval" -Name "brainstorm preserves native approval"
+    Assert-Contains -Path "skills\write-plan\SKILL.md" -Needle "companion-interface" -Name "write-plan mentions companion"
+    Assert-Contains -Path "skills\write-plan\SKILL.md" -Needle "native continuation" -Name "write-plan preserves native continuation"
+    Assert-Contains -Path "skills\brainstorm-spec\agents\openai.yaml" -Needle "companion-interface" -Name "brainstorm metadata mentions companion"
+    Assert-Contains -Path "skills\write-plan\agents\openai.yaml" -Needle "companion-interface" -Name "write-plan metadata mentions companion"
+    Assert-Contains -Path "skills\write-plan\SKILL.md" -Needle "issue creation, implementation, push, publish, merge, and final Done decisions" -Name "write-plan keeps governed decisions native"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "companion-interface-contract"; checks = $checks } | ConvertTo-Json -Depth 8
