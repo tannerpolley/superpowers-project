@@ -41,14 +41,15 @@ Existing skills own work:
 
 Default generated run state lives under `.superpowers/runs/<run-id>`. Do not commit generated run ledgers unless a later approved plan explicitly requests durable committed run history.
 
-## Required Gates
+## Current Required Gate
 
-- Validate run ledgers with `skills/loop-controller/scripts/validate-run-ledger.ps1`.
-- Validate budget ledgers with `skills/loop-controller/scripts/validate-budget.ps1`.
-- Select candidates with `skills/loop-controller/scripts/select-candidate.ps1`.
-- Validate verifier evidence with `skills/loop-controller/scripts/validate-verifier-ledger.ps1`.
-- Validate terminal closeout with `skills/loop-controller/scripts/validate-terminal-closeout.ps1`.
-- Write metrics with `skills/loop-controller/scripts/write-metrics-report.ps1`.
+Validate run ledgers with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-run-ledger.ps1 -RepoRoot <repo-root> -RunLedgerPath <ledger-path>
+```
+
+Later issue slices add budget, candidate selection, verifier, terminal closeout, and metrics validators before those phases can be enabled.
 
 ## Native Continuation Gate
 
@@ -76,4 +77,4 @@ Options:
 - Revisit: review or repair evidence before terminal closeout.
 - Stop: pause with run state recorded, without claiming final completion.
 
-Terminal Done requires `validate-terminal-closeout.ps1` to pass. A saved plan, pushed branch, created issue, synced live plugin, or completed validator run is not terminal by itself.
+Terminal Done requires the terminal closeout validator from the later closeout slice to pass. A saved plan, pushed branch, created issue, synced live plugin, or completed validator run is not terminal by itself.
