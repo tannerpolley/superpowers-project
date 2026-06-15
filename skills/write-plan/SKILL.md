@@ -130,6 +130,12 @@ Required plan content:
 
 Feature and bug plans require `superpowers:test-driven-development` unless the user explicitly opts out in the plan. Bug, regression, CI, or performance plans require `superpowers:systematic-debugging` or equivalent diagnose discipline before proposing the fix. Completion tasks require `superpowers:verification-before-completion` before any worker claims the plan is complete.
 
+## Companion Interface Opt-In
+
+When the user asks for the HTML companion, or when the saved plan is too large for chat rendering, use `$superpowers-project:companion-interface` to create or refresh a local report. Include source spec linkage, task list, Task # Use Cases blocks, proof oracle, test-complete definition, plan validation receipt, and recommended next route.
+
+The companion is an evidence surface only. Native continuation, issue creation, implementation, push, publish, merge, and final Done decisions still happen through chat or `request_user_input`.
+
 ## Task Shape
 
 Use the Superpowers task shape:

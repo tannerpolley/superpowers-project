@@ -81,6 +81,12 @@ Use the smallest supporting set:
 - `improve-codebase-architecture` for module boundaries, package layout, dependency direction, duplicated paths, or testability concerns
 - `diagnose` or `superpowers:systematic-debugging` when the request is actually a bug or regression, then return to brainstorming once the failure shape is understood
 
+## Companion Interface Opt-In
+
+When the user asks for the HTML companion, or when rendered specs, design alternatives, project-context evidence, or saved spec previews would be too large for chat, use `$superpowers-project:companion-interface` to create or refresh a local report. Include project context evidence, design alternatives, user decisions, open questions, saved spec path, and recommended next route.
+
+The companion is an evidence surface only; native approval, user review, and continuation decisions still happen through chat or `request_user_input`.
+
 ## Output Contract
 
 Save approved specs to `docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md` unless the user explicitly chooses a different repo-local Superpowers Project destination. A `-design`, `-prd`, or similar suffix is allowed when it clarifies the artifact type, but the date and slug are the required filename parts.

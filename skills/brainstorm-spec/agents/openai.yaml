@@ -3,6 +3,8 @@ interface:
   short_description: "Brainstorm project specs with Superpowers, codebase context, and native user input."
   default_prompt: >-
     Use $superpowers-project:brainstorm-spec for repo-backed ideas, specs, PRDs, architecture concepts, or broad feature requests.
+    Use $superpowers-project:companion-interface on opt-in runs or when large design artifacts, project evidence, alternatives,
+    decisions, or saved spec previews need rich local review while native approval remains in chat or request_user_input.
     Use superpowers:brainstorming as the base workflow, inspect docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, relevant docs, and code before asking;
     Upstream Brainstorming Checklist Gate: The upstream superpowers:brainstorming checklist is mandatory. Agents MUST create checklist tasks and complete them in order:
     Explore project context, Offer visual companion when visual or spatial questions are ahead, Ask clarifying questions one at a time, propose 2-3 approaches named Design 1, Design 2,
