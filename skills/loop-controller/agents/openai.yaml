@@ -1,0 +1,8 @@
+interface:
+  display_name: "Loop Controller"
+  short_description: "Coordinate repeated Superpowers Project workflow runs with run ledgers, budgets, verifier proof, and native gates."
+  default_prompt: >-
+    Use $superpowers-project:loop-controller when a Superpowers Project workflow should discover a safe candidate, enforce budget, route through existing skills, record verifier evidence, write metrics, and ask native continuation questions.
+    Auto Mode is only route authorization; Loop Controller coordinates runs and must not bypass push, merge, GitHub mutation, live sync, or final Done gates.
+    Generated run state lives under .superpowers/runs by default.
+
