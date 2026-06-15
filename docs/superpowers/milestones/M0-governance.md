@@ -23,7 +23,6 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 ## Related Issues
 
-- `docs/superpowers/issues/44-resolve-issue-can-stop-at-pr-ready-without-forced-merge-changes-gate.md`
 - `docs/superpowers/issues/smoke-test-workflow.md`
 
 ## Closed Issues
@@ -34,3 +33,4 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 - [#25 Bundle Advanced User Input With Flexible Native Prompt Policy](https://github.com/tannerpolley/superpowers-project/issues/25) closed by commit [`13fb8dc`](https://github.com/tannerpolley/superpowers-project/commit/13fb8dc8e4fb62d1c28805a310ae6b41bcd27459).
 - [#27 Implement Plan Non-Issue Execution Route](https://github.com/tannerpolley/superpowers-project/issues/27) closed by [PR #36](https://github.com/tannerpolley/superpowers-project/pull/36).
 - [#29 Merge Non-Issue And Local Branch Modes](https://github.com/tannerpolley/superpowers-project/issues/29) closed by [PR #35](https://github.com/tannerpolley/superpowers-project/pull/35).
+- [#44 resolve-issue can stop at PR-ready without forced merge-changes gate](https://github.com/tannerpolley/superpowers-project/issues/44) closed by [PR #51](https://github.com/tannerpolley/superpowers-project/pull/51).
