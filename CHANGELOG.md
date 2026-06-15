@@ -7,6 +7,7 @@
 - Added agent plugin version tracking with manifest version plus runtime content hashes for source, live install, observed plugin roots, and local cache candidates.
 - Added a startup version banner contract and validated sync propagation for matching existing local plugin cache candidates.
 - Added a strict Task # Use Cases gate for plan creation, plan implementation, and linked issue resolution.
+- Added the source contract for `$superpowers-project:loop-controller`.
 - Strengthened plugin validation wiring and CI entry points for manual and pull-request validation.
 
 ## 0.2.0 - 2026-06-02

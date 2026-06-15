@@ -222,6 +222,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Auto Mode authorization contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Loop Controller contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-loop-controller.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Loop Controller contract failed" }
+    }))
+
     $results.Add((Invoke-Step "Contract summary generation" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-contract-summary.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Contract summary generation failed" }

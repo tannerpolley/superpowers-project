@@ -41,6 +41,7 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 - `brainstorm-spec`
 - `write-plan`
 - `companion-interface`
+- `loop-controller`
 - `implement-plan`
 - `create-issues`
 - `resolve-issue`

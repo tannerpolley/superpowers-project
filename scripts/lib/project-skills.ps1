@@ -26,7 +26,7 @@ function Get-ProjectWorkflowSkillNames {
 }
 
 function Get-ProjectFinalCapableSkillNames {
-    @("align-project", "merge-changes")
+    @("align-project", "loop-controller", "merge-changes")
 }
 
 function Get-ProjectUserSkillNames {
