@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="3200" height="5340" viewBox="0 0 3200 5340" role="img" aria-labelledby="title desc">
   <title id="title">Native Q&amp;A main workflow flowchart</title>
-  <desc id="desc">A fixed-layout flowchart for Superpowers Project. Main workflow boxes are stacked on a centered rail. Implement Plan and Create Issues are peer routes. Orchestrate Issues and Resolve Issue are balanced under Create Issues as worker and direct routes. Revisit choices loop back to their originating skill. Stop pauses a continuation loop, while Done is reserved for verified final completion.</desc>
+  <desc id="desc">A fixed-layout flowchart for Superpowers Project. Initiate Workflow first asks project_workflow_mode with Manual Mode, Auto Mode, or Looping Mode. Looping Mode enters Loop Controller before re-entering normal routes. Main workflow boxes are stacked on a centered rail. Implement Plan and Create Issues are peer routes. Orchestrate Issues and Resolve Issue are balanced under Create Issues as worker and direct routes. Revisit choices loop back to their originating skill. Stop pauses a continuation loop, while Done is reserved for verified final completion.</desc>
   <defs>
     <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L0,7 L10,3.5 z" class="arrow-head" />
@@ -51,7 +51,7 @@
 
   <rect x="0" y="0" width="3200" height="5340" class="canvas" />
   <text x="1600" y="56" class="title">Native Q&amp;A Workflow</text>
-  <text x="1600" y="92" class="subtitle">Yes continues into the next depth. Revisit loops back. Stop means pause. Done means complete.</text>
+  <text x="1600" y="92" class="subtitle">Initiate chooses Manual, Auto, or Looping Mode. Yes continues. Revisit loops back. Stop means pause. Done means complete.</text>
 
   <rect x="110" y="120" width="520" height="90" rx="5" class="side" />
   <text x="370" y="154" class="node-title">Native Menu Rule</text>
@@ -60,8 +60,8 @@
 
   <rect x="2570" y="120" width="500" height="90" rx="5" class="note" />
   <text x="2820" y="154" class="node-title">Break Rule</text>
-  <text x="2820" y="181" class="node-text">Stop means pause.</text>
-  <text x="2820" y="204" class="node-text">Done means complete.</text>
+  <text x="2820" y="181" class="node-text">Stop means pause. Done means complete.</text>
+  <text x="2820" y="204" class="node-text">Auto Mode is one-route autonomy.</text>
 
   <g id="depth-guides">
     <line id="depth-0-line" x1="260" y1="224" x2="2940" y2="224" class="depth-line" stroke-dasharray="12 14" />
@@ -90,8 +90,14 @@
 
   <rect id="skill-initiate" x="1240" y="250" width="520" height="100" rx="5" class="skill main-skill" />
   <text x="1500" y="286" class="node-title">Initiate Workflow</text>
-  <text x="1500" y="314" class="node-text">route setup, spec, plan, issue,</text>
-  <text x="1500" y="337" class="node-text">implementation, merge, audit, or align work</text>
+  <text x="1500" y="314" class="node-text">project_workflow_mode first</text>
+  <text x="1500" y="337" class="node-text">Manual Mode, Auto Mode, or Looping Mode</text>
+  <polyline id="route-initiate-loop-controller" points="1760,300 1940,300" class="arrow down-route peer-route" />
+  <text x="1850" y="274" class="small-label">Looping Mode</text>
+  <rect id="skill-loop-controller" x="1940" y="250" width="540" height="100" rx="5" class="skill" />
+  <text x="2210" y="286" class="node-title">Loop Controller</text>
+  <text x="2210" y="314" class="node-text">select one ready candidate</text>
+  <text x="2210" y="337" class="node-text">route owning skill and repeat by budget</text>
   <line id="down-initiate-d1" x1="1500" y1="350" x2="1500" y2="420" class="arrow down-route" />
   <polygon id="decision-initiate" points="1500,420 1650,480 1500,540 1350,480" class="decision" />
   <text x="1500" y="474" class="decision-title">Continue?</text>

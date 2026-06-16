@@ -7,7 +7,11 @@ This is the simplified Mermaid companion to `native-qa-main-flow.svg`. It shows 
 flowchart TB
     start(["Start"])
     rule["First-level gate rule<br/>Continue? = Yes / Revisit / Stop<br/>Stop means pause. Done means complete."]
-    initiate["Initiate Workflow<br/>Nested routes: setup, spec/audit, plan, issue, implementation, merge, align"]
+    initiate["Initiate Workflow<br/>Ask project_workflow_mode before task routing"]
+    mode_gate{"project_workflow_mode<br/>Manual Mode / Auto Mode / Looping Mode"}
+    mode_manual["Manual Mode<br/>ask at each material decision"]
+    mode_auto["Auto Mode<br/>one-route autonomy only"]
+    loop_controller["Loop Controller<br/>Looping Mode selects one maintenance candidate, routes to the owning skill, and repeats by budget"]
     d_initiate{"Continue?<br/>from router<br/>Yes / Revisit / Stop"}
     revisit_initiate["Revisit Route<br/>review routing and choose another entry"]
     stop_initiate["Stop"]
@@ -17,7 +21,7 @@ flowchart TB
     revisit_setup["Revisit Setup<br/>repair roadmap, tracker, board, or context"]
     stop_setup["Stop"]
 
-    brainstorm["Brainstorm Spec<br/>Nested routes: manual planning, Auto Mode, revise spec"]
+    brainstorm["Brainstorm Spec<br/>Nested routes: manual planning, write plan, revise spec"]
     d_brainstorm{"Continue?<br/>from brainstorm<br/>Yes / Revisit / Stop"}
     revisit_brainstorm["Revisit Spec<br/>review assumptions, grill, or revise scope"]
     stop_brainstorm["Stop"]
@@ -67,6 +71,11 @@ flowchart TB
     subgraph gate_initiate[" "]
         direction LR
         revisit_initiate ~~~ d_initiate ~~~ stop_initiate
+    end
+
+    subgraph mode_choices[" "]
+        direction LR
+        mode_manual ~~~ mode_gate ~~~ mode_auto ~~~ loop_controller
     end
 
     subgraph gate_setup[" "]
@@ -129,7 +138,10 @@ flowchart TB
         revisit_align ~~~ d_align ~~~ stop_align
     end
 
-    start --> rule --> initiate --> d_initiate
+    start --> rule --> initiate --> mode_gate
+    mode_gate -->|Manual Mode| mode_manual --> d_initiate
+    mode_gate -->|Auto Mode| mode_auto --> d_initiate
+    mode_gate -->|Looping Mode| loop_controller --> d_initiate
     d_initiate -->|Yes| setup
     d_initiate -->|Revisit| revisit_initiate --> initiate
     d_initiate -->|Stop| stop_initiate
@@ -195,12 +207,13 @@ flowchart TB
     classDef done fill:#dcfce7,stroke:#16a34a,color:#166534,stroke-width:2px
 
     class start start
-    class initiate,setup,brainstorm,audit_project,plan,implement,create_issues,orchestrate,resolve,merge,align skill
-    class d_initiate,d_setup,d_spec_or_audit,d_brainstorm,d_audit_project,d_plan,d_work_route,d_implement,d_create,d_issue_route,d_ready,d_merge,d_align decision
-    class rule,align_repair,revisit_initiate,revisit_setup,revisit_brainstorm,revisit_audit,revisit_plan,revisit_implement,revisit_create,revisit_ready,revisit_merge,revisit_align revisit
+    class initiate,loop_controller,setup,brainstorm,audit_project,plan,implement,create_issues,orchestrate,resolve,merge,align skill
+    class mode_gate,d_initiate,d_setup,d_spec_or_audit,d_brainstorm,d_audit_project,d_plan,d_work_route,d_implement,d_create,d_issue_route,d_ready,d_merge,d_align decision
+    class rule,mode_manual,mode_auto,align_repair,revisit_initiate,revisit_setup,revisit_brainstorm,revisit_audit,revisit_plan,revisit_implement,revisit_create,revisit_ready,revisit_merge,revisit_align revisit
     class stop_initiate,stop_setup,stop_brainstorm,stop_audit_project,stop_plan,stop_implement,stop_create,stop_ready,stop_merge,stop_align stop
 
     style gate_initiate fill:transparent,stroke:transparent
+    style mode_choices fill:transparent,stroke:transparent
     style gate_setup fill:transparent,stroke:transparent
     style gate_brainstorm fill:transparent,stroke:transparent
     style spec_choices fill:transparent,stroke:transparent

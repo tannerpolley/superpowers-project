@@ -107,6 +107,12 @@ Add-Check $checks "README archived Mermaid removed" (-not $readme.Contains("Arch
 Add-Check $checks "README lists implement-plan skill" ($readme.Contains('$superpowers-project:implement-plan')) "README must list the non-issue implement route"
 Add-Check $checks "README omits removed Quick Apply path" (-not $readme.Contains("Quick Apply") -and -not $readme.Contains("project_quick_apply_approval")) "README must route direct plan execution through Implement Plan, not Quick Apply"
 Add-Check $checks "README explains nested route stop policy" ($readme.Contains("terminal options are not repeated inside those nested route menus")) "README must explain that nested Yes/Revisit menus do not repeat terminal options"
+Add-Check $checks "README explains workflow mode gate" (
+    $readme.Contains("project_workflow_mode") -and
+    $readme.Contains("Manual Mode") -and
+    $readme.Contains("Looping Mode") -and
+    $readme.Contains("validate-workflow-mode-ledger.ps1")
+) "README must document the startup mode gate and workflow mode ledger validator"
 Add-Check $checks "README explains recommendation policy" (
     $readme.Contains("recommended option should be") -and
     $readme.Contains("safe forward route exists") -and
@@ -122,6 +128,8 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
         'flowchart TB',
         'curve": "linear"',
         'Initiate Workflow',
+        'project_workflow_mode',
+        'Manual Mode',
         'Setup Project',
         'Brainstorm Spec',
         'Write Plan',
@@ -132,6 +140,9 @@ if (Test-Path -LiteralPath $mermaidPath -PathType Leaf) {
         'Merge Changes',
         'Audit Project',
         'Align Project',
+        'Loop Controller',
+        'Looping Mode',
+        'one-route autonomy',
         'Choose work route?',
         'Choose issue route?',
         'select the next blue skill',
@@ -191,6 +202,10 @@ if (Test-Path -LiteralPath $svgPath -PathType Leaf) {
 
     foreach ($needle in @(
         "Initiate Workflow",
+        "project_workflow_mode",
+        "Manual Mode",
+        "Looping Mode",
+        "Loop Controller",
         "Setup Project",
         "Brainstorm Spec",
         "Write Plan",

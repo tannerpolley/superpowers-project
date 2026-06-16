@@ -15,6 +15,8 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 
 ## Workflow Mode Gate
 
+Question id: `project_workflow_mode`
+
 Before task routing, ask native question `project_workflow_mode`.
 
 Prompt: `How should I run this Superpowers Project workflow?`

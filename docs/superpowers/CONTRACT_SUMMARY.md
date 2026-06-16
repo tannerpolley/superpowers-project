@@ -29,6 +29,15 @@
 - Custom Other never terminates directly; re-ask with built-in terminal labels when needed.
 - A saved spec, saved plan, created issue set, pushed branch, merged branch, completed audit, or synced live plugin is not terminal by itself.
 
+## Workflow Modes
+
+- `project_workflow_mode` is mandatory in `$superpowers-project:initiate-workflow` before task routing.
+- `Manual Mode` asks at each material route, mutation, and closeout decision.
+- `Auto Mode` is one-route autonomy only; it must stop at route closeout and must not continue to another candidate.
+- `Looping Mode` is bounded repeated maintenance autonomy; it routes through `$superpowers-project:loop-controller` to select one ready candidate at a time, route the actual work to the owning skill, and re-check budget before another candidate.
+- Workflow mode ledgers record `selected_mode`, repo identity, plugin manifest version, `contract_hash`, autonomy scope, mutation scope, route policy, proof policy, stop conditions, and downstream ledger paths.
+- Validate workflow mode ledgers with `scripts/validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>`.
+
 ## Workflow Skills
 
 | Skill | Purpose | Native Question IDs | Final Health Gate |
@@ -39,7 +48,7 @@
 | `companion-interface` | Use when a Superpowers Project workflow should create or update the local HTML companion report for rich artifact review. | None | `None` |
 | `create-issues` | Use when a Superpowers Project spec, plan, PRD, or approved scope needs vertical-slice GitHub issues and synced issue mirrors. | `project_issue_execution_route`<br>`project_issue_next_step`<br>`project_issue_orchestrate_route`<br>`project_issue_reiteration_route`<br>`project_issue_resolve_route`<br>`project_issue_review_repair_route` | `None` |
 | `implement-plan` | Use when an approved Superpowers Project plan should be implemented without creating a GitHub issue, using a native goal, development branch, verification, and merge-ready proof. | `implement_plan_push_permission`<br>`implement_plan_topology`<br>`project_implement_next_step`<br>`project_implement_reiteration_route` | `None` |
-| `initiate-workflow` | Route Superpowers Project extension requests to project setup, brainstorming, audits, planning, issue creation, issue triage, alignment, or goal-backed resolution workflows. | None | `None` |
+| `initiate-workflow` | Route Superpowers Project extension requests to project setup, brainstorming, audits, planning, issue creation, issue triage, alignment, or goal-backed resolution workflows. | `project_workflow_mode` | `None` |
 | `loop-controller` | Use when Superpowers Project should coordinate repeated workflow runs across candidates while preserving Auto Mode authorization and native approval gates. | `project_loop_final_health_gate`<br>`project_loop_next_step` | `project_loop_final_health_gate` |
 | `merge-changes` | Use when a Superpowers Project issue-backed PR, worker handoff, or approved local branch must be reviewed, approved, merged, cleaned up, and recorded with clean repo proof. | `project_merge_approval`<br>`project_merge_continue_group`<br>`project_merge_final_health_gate`<br>`project_merge_issue_route`<br>`project_merge_next_step`<br>`project_merge_planning_route`<br>`project_merge_reiteration_group`<br>`project_merge_repair_cleanup_route`<br>`project_merge_repair_route` | `project_merge_final_health_gate` |
 | `orchestrate-issues` | Use when a ready Superpowers Project issue should be delegated to a Codex worktree worker thread while the current thread acts as orchestrator and reviewer. | `project_orchestrate_integration_route`<br>`project_orchestrate_more_worker_route`<br>`project_orchestrate_next_step`<br>`project_orchestrate_reiteration_route`<br>`project_orchestrate_worker_communication_route` | `None` |

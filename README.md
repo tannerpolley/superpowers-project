@@ -34,6 +34,8 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 
 The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `Stop`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected. Nested Yes menus list only forward routes, nested Revisit menus list only review, revision, repair, recovery, rerun, or evidence routes, and terminal options are not repeated inside those nested route menus.
 
+At startup, `$superpowers-project:initiate-workflow` first asks `project_workflow_mode` with `Manual Mode`, `Auto Mode`, and `Looping Mode`. Manual Mode asks at each material decision. Auto Mode is one-route autonomy only and stops at route closeout instead of continuing to another candidate. Looping Mode routes to `$superpowers-project:loop-controller`, which selects one ready maintenance candidate at a time, routes the actual work to the owning skill, and re-checks budget before another candidate.
+
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
 GitHub can also render the simplified Mermaid companion: [Native Q&A main flow Mermaid](docs/assets/native-qa-main-flow-mermaid.md).
@@ -46,8 +48,9 @@ Before any closeout, push, publish, or merge question, the agent must show the a
 
 | Native question | Where it appears | Top-level choices | Nested examples |
 | --- | --- | --- | --- |
+| `project_workflow_mode` | Before Initiate Workflow task routing | Manual Mode, Auto Mode, Looping Mode | Looping Mode enters Loop Controller; Manual and Auto enter the existing route flow |
 | `project_setup_next_step` | After Setup Project | Yes, Revisit, Stop | Brainstorm Spec, Write Plan, Create Issues, Run Align |
-| `project_brainstorm_next_step` | After Brainstorm Spec | Yes, Revisit, Stop | Manual Planning, Auto Mode, Revise Spec |
+| `project_brainstorm_next_step` | After Brainstorm Spec | Yes, Revisit, Stop | Manual Planning, Write Plan, Revise Spec |
 | `project_plan_next_step` | After Write Plan | Yes, Revisit, Stop | Create Issues, Implement Plan, Resolve Issue, Orchestrate Issues |
 | `project_implement_next_step` | After Implement Plan | Yes, Revisit, Stop | Merge Changes, Review Evidence, Revise Branch |
 | `project_issue_next_step` | After Create Issues | Yes, Revisit, Stop | Resolve Issues, Orchestrate Issues, Repair Issue Mirrors |
@@ -64,6 +67,12 @@ Auto Mode ledgers are validated by the plugin-provided validator:
 
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```
+
+Workflow mode ledgers are validated before mode-driven routing:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
 ```
 
 ## Task # Use Cases

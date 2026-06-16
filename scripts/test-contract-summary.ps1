@@ -45,7 +45,13 @@ try {
         'contract_hash',
         'ObservedSkillRoot',
         'matching local plugin cache roots',
-        'Plugin cache paths are not durable contracts'
+        'Plugin cache paths are not durable contracts',
+        'project_workflow_mode',
+        'Workflow Modes',
+        'Manual Mode',
+        'Looping Mode',
+        'selected_mode',
+        'validate-workflow-mode-ledger.ps1'
     )) {
         Add-Check -Name "summary contains $needle" -Ok $current.Contains($needle) -Reason "contract summary missing $needle"
     }
