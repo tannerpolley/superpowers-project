@@ -300,7 +300,14 @@ $scenarios = @(
                 [ordered]@{ name = "status:obsolete" }
             ) | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $labelFixture -Encoding utf8NoBOM
 
-            $raw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $auditScript -RepoRoot $repoRoot -Mode GitHubAware -IssueFixturePath $issueFixture -MilestoneFixturePath $milestoneFixture -LabelFixturePath $labelFixture
+            New-Item -ItemType Directory -Path (Join-Path $fixtureRoot "docs/superpowers/issues") -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $fixtureRoot "docs/superpowers/milestones") -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/PROJECT_CONTEXT.md") -Value "# Project Context`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/milestones/M1-source-of-truth.md") -Value "# M1 - Source Of Truth`n`n## Related Issues`n`n- ``docs/superpowers/issues/10-fixture.md```n- ``docs/superpowers/issues/404-closed-fixture.md```n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/issues/10-fixture.md") -Value "# Local Fixture Title`n`n**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/10`n**GitHub Milestone:** Local Milestone`n**Labels:** status:ready`n`n## Acceptance Criteria`n`n- [ ] Fixture remains intentionally drifted.`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/issues/404-closed-fixture.md") -Value "# Closed Mirror Fixture`n`n**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/404`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:feature, status:ready`n`n## Acceptance Criteria`n`n- [x] Fixture remains closed.`n" -Encoding utf8NoBOM
+
+            $raw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $auditScript -RepoRoot $fixtureRoot -Mode GitHubAware -IssueFixturePath $issueFixture -MilestoneFixturePath $milestoneFixture -LabelFixturePath $labelFixture
             if ($LASTEXITCODE -ne 0) { throw "GitHubAware audit failed: $raw" }
             $audit = $raw | ConvertFrom-Json
             foreach ($category in @("blocking", "repairable", "informational", "healthy")) {

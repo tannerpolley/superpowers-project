@@ -52,5 +52,8 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 
 ## Current Open Questions
 
-- Decide whether smoke-test issue mirrors should remain pre-publication fixtures or be published as real GitHub issues.
 - Decide whether GitHub Projects should stay dashboard-only or become a required project-management surface.
+
+## Decisions
+
+- The pre-publication smoke-test issue mirror was resolved locally and should not be published as a real GitHub issue unless a future workflow explicitly needs a new smoke fixture.

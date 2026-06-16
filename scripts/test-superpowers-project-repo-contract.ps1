@@ -226,7 +226,6 @@ try {
     Add-Check -Name "project audit and align wiring" -Ok $true -Reason "passed"
 
     $issueFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "docs/superpowers/issues") -Filter "*.md" -File | Where-Object { $_.Name -ne "README.md" })
-    if ($issueFiles.Count -lt 1) { throw "docs/superpowers/issues must contain at least one issue mirror for smoke validation" }
     $validator = Join-Path $repoRoot "skills/create-issues/scripts/validate-issue-mirror.ps1"
     foreach ($issueFile in $issueFiles) {
         $relative = [IO.Path]::GetRelativePath($repoRoot, $issueFile.FullName) -replace '\\', '/'
