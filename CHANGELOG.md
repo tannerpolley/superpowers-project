@@ -8,6 +8,7 @@
 - Added a startup version banner contract and validated sync propagation for matching existing local plugin cache candidates.
 - Added a strict Task # Use Cases gate for plan creation, plan implementation, and linked issue resolution.
 - Added the source contract for `$superpowers-project:loop-controller`.
+- Added Loop Controller budget validation and deterministic candidate selection contracts.
 - Strengthened plugin validation wiring and CI entry points for manual and pull-request validation.
 
 ## 0.2.0 - 2026-06-02
