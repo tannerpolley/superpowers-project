@@ -1,5 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="superpowers-project: Maintenance - Sync Live Validate" type="PowerShellRunType" factoryName="PowerShell" folderName="superpowers-project" scriptUrl="$PROJECT_DIR$/scripts/sync-live.ps1" workingDirectory="$PROJECT_DIR$" scriptParameters="-Validate" commandOptions="-NoProfile -ExecutionPolicy Bypass">
-    <method v="2" />
-  </configuration>
-</component>
