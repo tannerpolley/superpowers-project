@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="superpowers-project: Docs - Companion Preview" type="PowerShellRunType" factoryName="PowerShell" folderName="superpowers-project" scriptUrl="$PROJECT_DIR$/scripts/serve-companion-report.ps1" workingDirectory="$PROJECT_DIR$" scriptParameters="-Port 57219" commandOptions="-NoProfile -ExecutionPolicy Bypass">
+    <method v="2" />
+  </configuration>
+</component>
