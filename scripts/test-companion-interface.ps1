@@ -37,6 +37,10 @@ try {
     Assert-Contains -Path "skills\brainstorm-spec\agents\openai.yaml" -Needle "companion-interface" -Name "brainstorm metadata mentions companion"
     Assert-Contains -Path "skills\write-plan\agents\openai.yaml" -Needle "companion-interface" -Name "write-plan metadata mentions companion"
     Assert-Contains -Path "skills\write-plan\SKILL.md" -Needle "issue creation, implementation, push, publish, merge, and final Done decisions" -Name "write-plan keeps governed decisions native"
+    Assert-Contains -Path "scripts\serve-companion-report.ps1" -Needle "Companion report preview" -Name "companion preview server script exists"
+    Assert-Contains -Path ".run\superpowers-project - Docs - Companion Preview.run.xml" -Needle "superpowers-project: Docs - Companion Preview" -Name "companion preview run config exists"
+    Assert-Contains -Path ".run\superpowers-project - Docs - Companion Preview.run.xml" -Needle 'folderName="superpowers-project"' -Name "companion preview run config is repo grouped"
+    Assert-Contains -Path ".run\superpowers-project - Docs - Companion Preview.run.xml" -Needle "scripts/serve-companion-report.ps1" -Name "companion preview run config uses server script"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "companion-interface-contract"; checks = $checks } | ConvertTo-Json -Depth 8
