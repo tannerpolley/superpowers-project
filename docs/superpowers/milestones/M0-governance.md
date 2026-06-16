@@ -26,10 +26,10 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 ## Related Issues
 
 - `docs/superpowers/issues/smoke-test-workflow.md`
-- `docs/superpowers/issues/56-validate-loop-controller-contract-summary-and-live-sync-readiness.md`
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/56](https://github.com/tannerpolley/superpowers-project/issues/56) closed after [validation-only closeout](https://github.com/tannerpolley/superpowers-project/issues/56#issuecomment-4715948404) on 06/16/2026 07:16:38
 - [https://github.com/tannerpolley/superpowers-project/issues/55](https://github.com/tannerpolley/superpowers-project/issues/55) closed by [https://github.com/tannerpolley/superpowers-project/pull/59](https://github.com/tannerpolley/superpowers-project/pull/59) on 06/16/2026 06:39:26
 - [https://github.com/tannerpolley/superpowers-project/issues/54](https://github.com/tannerpolley/superpowers-project/issues/54) closed by [https://github.com/tannerpolley/superpowers-project/pull/58](https://github.com/tannerpolley/superpowers-project/pull/58) on 06/16/2026 00:42:37
 - [https://github.com/tannerpolley/superpowers-project/issues/53](https://github.com/tannerpolley/superpowers-project/issues/53) closed by [https://github.com/tannerpolley/superpowers-project/pull/57](https://github.com/tannerpolley/superpowers-project/pull/57) on 06/15/2026 23:55:17
