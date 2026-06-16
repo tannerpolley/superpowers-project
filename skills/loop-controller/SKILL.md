@@ -61,7 +61,23 @@ Select deterministic safe candidates with:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\select-candidate.ps1 -RepoRoot <repo-root> -InventoryPath <inventory-path>
 ```
 
-Later issue slices add verifier, terminal closeout, and metrics validators before those phases can be enabled.
+Validate verifier ledgers with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-verifier-ledger.ps1 -RepoRoot <repo-root> -VerifierLedgerPath <ledger-path>
+```
+
+Validate terminal closeout with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-terminal-closeout.ps1 -RepoRoot <repo-root> -RunResultPath <run-result-path>
+```
+
+Write metrics reports with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\write-metrics-report.ps1 -RepoRoot <repo-root> -MetricsInputPath <input-path> -OutputPath <output-path>
+```
 
 ## Native Continuation Loop
 

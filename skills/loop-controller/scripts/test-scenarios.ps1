@@ -4,6 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "lib\loop-controller.ps1")
 $checks = [System.Collections.Generic.List[object]]::new()
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("loop-controller-" + [guid]::NewGuid().ToString("N"))
 
@@ -123,6 +124,127 @@ try {
     $selection = Invoke-JsonScript -Path $selectorScript -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $inventoryPath)
     Add-Check -Name "selector chooses low-risk ready candidate" -Ok ($selection.exit_code -eq 0 -and $selection.json.selected_candidate_id -eq "approved-spec-plan") -Reason $selection.raw
     Add-Check -Name "selector records skipped candidates" -Ok ($selection.json.skipped.Count -ge 1) -Reason "skipped candidates missing"
+
+    $verifierScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-verifier-ledger.ps1"
+    $terminalScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-terminal-closeout.ps1"
+    $metricsScript = Join-Path $RepoRoot "skills\loop-controller\scripts\write-metrics-report.ps1"
+
+    $verifierPath = Join-Path $tempRoot "verifier-ledger.json"
+    @{
+        candidate_id = "approved-spec-plan"
+        route = "write-plan"
+        risk = "low"
+        verifier_type = "script"
+        independent = $false
+        proof = @(
+            @{ command = "pwsh -File scripts/validate-plan-task-use-cases.ps1"; ok = $true; artifact = "docs/superpowers/plans/fixture.md" }
+        )
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $verifierPath -Encoding utf8NoBOM
+    $verifierOk = Invoke-JsonScript -Path $verifierScript -Arguments @("-RepoRoot", $RepoRoot, "-VerifierLedgerPath", $verifierPath)
+    Add-Check -Name "low-risk verifier proof passes" -Ok ($verifierOk.exit_code -eq 0 -and $verifierOk.json.ok -eq $true) -Reason $verifierOk.raw
+
+    $highRiskVerifierPath = Join-Path $tempRoot "high-risk-verifier-ledger.json"
+    @{
+        candidate_id = "high-risk-merge"
+        route = "merge-changes"
+        risk = "high"
+        verifier_type = "script"
+        independent = $false
+        proof = @(
+            @{ command = "pwsh -File scripts/validate.ps1"; ok = $true; artifact = "validation-output" }
+        )
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $highRiskVerifierPath -Encoding utf8NoBOM
+    $highRiskVerifier = Invoke-JsonScript -Path $verifierScript -Arguments @("-RepoRoot", $RepoRoot, "-VerifierLedgerPath", $highRiskVerifierPath)
+    Add-Check -Name "high-risk verifier requires independent proof" -Ok ($highRiskVerifier.exit_code -ne 0 -and $highRiskVerifier.json.reason.Contains("independent verifier proof")) -Reason "high-risk verifier should fail without independent proof"
+
+    $terminalPath = Join-Path $tempRoot "terminal-closeout.json"
+    @{
+        run_ledger_valid = $true
+        verifier_valid = $true
+        metrics_valid = $true
+        clean_repo_required = $false
+        continuation_decision = @{
+            question_id = "project_loop_final_health_gate"
+            selected_option = "Done"
+            terminal_state = "done"
+        }
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $terminalPath -Encoding utf8NoBOM
+    $terminalOk = Invoke-JsonScript -Path $terminalScript -Arguments @("-RepoRoot", $RepoRoot, "-RunResultPath", $terminalPath)
+    Add-Check -Name "terminal done proof passes" -Ok ($terminalOk.exit_code -eq 0 -and $terminalOk.json.ok -eq $true -and $terminalOk.json.selected_option -eq "Done") -Reason $terminalOk.raw
+
+    $terminalStopPath = Join-Path $tempRoot "terminal-stop.json"
+    @{
+        run_ledger_valid = $true
+        verifier_valid = $true
+        metrics_valid = $true
+        clean_repo_required = $false
+        continuation_decision = @{
+            question_id = "project_loop_final_health_gate"
+            selected_option = "Stop"
+            terminal_state = "stop"
+        }
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $terminalStopPath -Encoding utf8NoBOM
+    $terminalStop = Invoke-JsonScript -Path $terminalScript -Arguments @("-RepoRoot", $RepoRoot, "-RunResultPath", $terminalStopPath)
+    Add-Check -Name "terminal stop proof passes as paused" -Ok ($terminalStop.exit_code -eq 0 -and $terminalStop.json.ok -eq $true -and $terminalStop.json.selected_option -eq "Stop") -Reason $terminalStop.raw
+
+    $terminalFailPath = Join-Path $tempRoot "terminal-fail.json"
+    @{
+        run_ledger_valid = $false
+        verifier_valid = $false
+        metrics_valid = $false
+        clean_repo_required = $true
+        clean_repo_status = " M fixture"
+        continuation_decision = @{
+            question_id = "project_loop_next_step"
+            selected_option = "Yes"
+            terminal_state = "continue"
+        }
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $terminalFailPath -Encoding utf8NoBOM
+    $terminalFail = Invoke-JsonScript -Path $terminalScript -Arguments @("-RepoRoot", $RepoRoot, "-RunResultPath", $terminalFailPath)
+    $terminalFailureReason = [string]$terminalFail.json.reason
+    Add-Check -Name "terminal closeout rejects missing proof and dirty state" -Ok (
+        $terminalFail.exit_code -ne 0 -and
+        $terminalFailureReason.Contains("run_ledger_valid") -and
+        $terminalFailureReason.Contains("verifier_valid") -and
+        $terminalFailureReason.Contains("metrics_valid") -and
+        $terminalFailureReason.Contains("clean repo") -and
+        $terminalFailureReason.Contains("project_loop_final_health_gate")
+    ) -Reason "terminal closeout should list every missing proof"
+
+    $metricsInput = Join-Path $tempRoot "metrics-input.json"
+    $metricsOutput = Join-Path $tempRoot "metrics-output.json"
+    @{
+        run_id = "fixture-run"
+        started_at = "2026-06-15T00:00:00Z"
+        completed_at = "2026-06-15T00:00:05Z"
+        attempts_by_phase = @{ candidate_selection = 1; validation = 2; verification = 1 }
+        validation_failures_by_phase = @{ validation = 1 }
+        retry_count = 1
+        human_input_count = 1
+        github_mutation_count = 0
+        created_pr_count = 0
+        closed_issue_count = 0
+        reverted_or_reopened_count = 0
+        final_outcome = "done"
+        accepted_change_evidence = @("skills/loop-controller/scripts/test-scenarios.ps1")
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $metricsInput -Encoding utf8NoBOM
+    $metrics = Invoke-JsonScript -Path $metricsScript -Arguments @("-RepoRoot", $RepoRoot, "-MetricsInputPath", $metricsInput, "-OutputPath", $metricsOutput)
+    $metricsReport = if (Test-Path -LiteralPath $metricsOutput -PathType Leaf) { Get-Content -LiteralPath $metricsOutput -Raw | ConvertFrom-Json } else { $null }
+    Add-Check -Name "metrics report writes json" -Ok ($metrics.exit_code -eq 0 -and $metrics.json.ok -eq $true -and $null -ne $metricsReport) -Reason $metrics.raw
+    Add-Check -Name "metrics report records required fields" -Ok (
+        $null -ne $metricsReport -and
+        $metricsReport.elapsed_seconds -eq 5 -and
+        $metricsReport.retry_count -eq 1 -and
+        $metricsReport.human_input_count -eq 1 -and
+        $metricsReport.github_mutation_count -eq 0 -and
+        $metricsReport.final_outcome -eq "done" -and
+        @($metricsReport.accepted_change_evidence).Count -eq 1
+    ) -Reason "metrics report missing required fields"
+    Add-Check -Name "metrics report omits unsupported token or billing claims" -Ok (
+        $null -ne $metricsReport -and
+        -not (Test-LoopControllerProperty -Object $metricsReport -Name "token_count") -and
+        -not (Test-LoopControllerProperty -Object $metricsReport -Name "billing_cost")
+    ) -Reason "metrics report must not invent token or billing data"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "loop-controller-scenarios"; checks = $checks } | ConvertTo-Json -Depth 8
