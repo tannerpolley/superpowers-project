@@ -2,7 +2,10 @@ interface:
   display_name: "Initiate Workflow"
   short_description: "Route Superpowers Project setup, specs, plans, issues, implementation, merges, and audits."
   default_prompt: >-
-    Use $superpowers-project:initiate-workflow as the Superpowers Project extension router. Route project setup, roadmap, tracker board setup, and large-context work to $superpowers-project:setup-project; brainstorming,
+    Use $superpowers-project:initiate-workflow as the Superpowers Project extension router. Before task routing, ask project_workflow_mode with Manual Mode,
+    Auto Mode, and Looping Mode. Manual Mode asks at each material decision. Auto Mode is one-route autonomy and must not continue to another candidate.
+    Looping Mode creates or validates a workflow mode ledger with scripts/validate-workflow-mode-ledger.ps1, uses bounded repeated maintenance autonomy,
+    and routes to $superpowers-project:loop-controller. Route project setup, roadmap, tracker board setup, and large-context work to $superpowers-project:setup-project; brainstorming,
     specs, PRDs, product design, architecture design,
     and unresolved early project decisions for new work to $superpowers-project:brainstorm-spec with superpowers:brainstorming and strict native request_user_input questioning; codebase audits, workflow reviews,
     diagnosis findings, maintainability findings, architecture findings, or existing behavior that should become a repair spec to $superpowers-project:audit-project with diagnose, thermo-nuclear-code-quality-review,
@@ -12,6 +15,7 @@ interface:
     delegated worker-thread issue implementation to $superpowers-project:orchestrate-issues with canonical thread title, branch name, worker identity, and PR-ready handoff; PR, worker-handoff, approved local branch,
     or implemented-plan integration to $superpowers-project:merge-changes with native merge approval, issue close verification when applicable, branch/worktree cleanup, prune, cleanup hook, and clean repo proof;
     and structure alignment, migrations, label review, milestone review, tracker alignment, issue mirror alignment, or live sync review to $superpowers-project:align-project.
+    Route broad repeated maintenance, issue queue draining, stale-version repair loops, audit/align candidate queues, and operate-this-project requests in Looping Mode to $superpowers-project:loop-controller.
     Routing is not complete until the paired Superpowers companion method is also enforced: brainstorm-spec with superpowers:brainstorming,
     audit-project with diagnose / thermo-nuclear-code-quality-review / improve-codebase-architecture / framework doctors as applicable, write-plan with superpowers:writing-plans,
     implement-plan with superpowers:executing-plans plus required TDD/debug/verification companions, create-issues with downstream resolve/orchestrate method compatibility,
@@ -22,7 +26,8 @@ interface:
     The issue-backed $superpowers-project:create-issues plus $superpowers-project:resolve-issue or $superpowers-project:orchestrate-issues path remains the default for non-trivial work.
     After $superpowers-project:brainstorm-spec saves a spec, Auto Mode is authorized only through project_auto_mode_authorization with Bounded Auto Merge;
     record an Auto Mode authorization ledger validated by the plugin-provided Auto Mode validator, then choose planning, direct inline issue resolution through $superpowers-project:resolve-issue,
-    direct plan implementation, verification, merge, and closeout proof within recorded defaults, and stop outside policy when proof, validation, GitHub state, or decision scope is outside the ledger.
+    direct plan implementation, verification, merge, and closeout proof within recorded defaults, and stop outside policy when proof, validation, GitHub state, decision scope is outside the ledger,
+    the one-route closeout is reached, or another candidate would need to be selected.
     Canonical artifacts live under docs/superpowers.
     Use request_user_input when callable for concise Default-mode decisions, including nested branch menus when useful; complete the artifact review gate before closeout;
     inventory produced or materially changed artifacts including machine-readable artifacts when present; show exact artifact paths and links; show rendered Markdown artifacts when applicable;

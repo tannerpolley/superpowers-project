@@ -20,7 +20,7 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     try {
-        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the plugin-provided Auto Mode validator','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route')) {
+        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the plugin-provided Auto Mode validator','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','scripts/validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
         foreach ($needle in @('## Native Continuation Gate','artifact review gate','Review First','stop','start the selected next skill','selected native answers','executable routing','what the agent thinks those results mean','machine-readable artifacts')) {
@@ -32,7 +32,7 @@ try {
     try {
         Assert-Contains -Text $metadata -Needle 'workflow' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers' -Reason "metadata missing artifact root"
-        foreach ($needle in @('artifact review gate','what the agent thinks those results mean','machine-readable artifacts','broader project context','recommended next route','selected native answers','executable routing','start selected continuation routes','setup','orchestrate-issues','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger')) {
+        foreach ($needle in @('artifact review gate','what the agent thinks those results mean','machine-readable artifacts','broader project context','recommended next route','selected native answers','executable routing','start selected continuation routes','setup','orchestrate-issues','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','scripts/validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
             Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing router continuation contract: $needle"
         }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"

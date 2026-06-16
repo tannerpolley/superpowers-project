@@ -13,6 +13,28 @@ Do not end the turn or report the workflow complete until a native continuation 
 
 A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Only a user-selected `Stop` option or verified final `Done` gate is terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question. Final completion must use an explicit final health gate with `Done`, not a `Yes` option. Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer. Only Stop can break an intermediate loop before a verified final Done gate. The agent must not get out of the loop by itself, and ending a turn after a governed workflow action is invalid until the next native continuation or permission question is answered. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 
+## Workflow Mode Gate
+
+Before task routing, ask native question `project_workflow_mode`.
+
+Prompt: `How should I run this Superpowers Project workflow?`
+
+Options:
+
+- `Manual Mode`: ask at each material route, mutation, and closeout decision.
+- `Auto Mode`: one-route autonomy using recorded defaults and validator-backed proof; it must stop at route closeout and must not continue to another candidate.
+- `Looping Mode`: bounded repeated maintenance autonomy; create or validate a workflow mode ledger, then route to `$superpowers-project:loop-controller`.
+
+Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json` and validate it with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
+```
+
+Canonical marker: `scripts/validate-workflow-mode-ledger.ps1`.
+
+Recommend `Manual Mode` when the user has not asked for autonomy. Recommend `Auto Mode` only when one route is clear and source evidence is already strong. Recommend `Looping Mode` when the user asks to operate, maintain, drain issues, keep going, resolve a queue, or run broad project maintenance.
+
 ## Routing
 
 - Project setup, roadmap context, tracker board setup, or large-scope project map: `$superpowers-project:setup-project`
@@ -26,10 +48,11 @@ A pushed commit, merged PR, created issue, saved plan, completed audit, or synce
 - Worker-thread implementation of one ready issue: `$superpowers-project:orchestrate-issues`
 - PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$superpowers-project:merge-changes`
 - Structure alignment, migration, label review, milestone review, tracker alignment, issue mirror alignment, or live sync review: `$superpowers-project:align-project`
+- Broad repeated maintenance, issue queue draining, stale-version repair loops, audit/align candidate queues, or "operate this project" requests in `Looping Mode`: `$superpowers-project:loop-controller`
 
 The issue-backed `$superpowers-project:create-issues` plus `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$superpowers-project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
 
-After `$superpowers-project:brainstorm-spec` saves a spec, Auto Mode may be authorized only through native question `project_auto_mode_authorization` with `Bounded Auto Merge`. That route records an Auto Mode authorization ledger validated by the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the agent then chooses between planning, direct inline issue resolution through `$superpowers-project:resolve-issue`, direct plan implementation, verification, merge, and closeout proof within the recorded defaults. If proof is missing, validation fails, GitHub state is unsafe, or the needed decision falls outside the ledger policy, stop outside policy instead of inventing a new approval.
+After `$superpowers-project:brainstorm-spec` saves a spec, Auto Mode may be authorized only through native question `project_auto_mode_authorization` with `Bounded Auto Merge`. That route records an Auto Mode authorization ledger validated by the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the agent then chooses between planning, direct inline issue resolution through `$superpowers-project:resolve-issue`, direct plan implementation, verification, merge, and closeout proof within the recorded defaults. Auto Mode is one-route autonomy: if proof is missing, validation fails, GitHub state is unsafe, the route reaches closeout, the route needs a decision outside the ledger policy, or the agent would need to continue to another candidate, stop outside policy instead of inventing a new approval.
 
 External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$superpowers-project:create-issues` hydration first and block execution until mirror validation passes.
 
@@ -57,6 +80,7 @@ Routing is not complete until the project skill and its required Superpowers com
 - `$superpowers-project:resolve-issue` -> `superpowers:using-git-worktrees`, `superpowers:executing-plans`, `superpowers:test-driven-development` unless the source plan records an explicit opt-out, `superpowers:systematic-debugging` or `diagnose` when the issue is a bug, regression, CI, performance, or unclear failure case, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`
 - `$superpowers-project:orchestrate-issues` -> `superpowers:subagent-driven-development` for delegated orchestration, with worker handoffs that require `superpowers:using-git-worktrees`, `superpowers:executing-plans` or `superpowers:subagent-driven-development`, `superpowers:test-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`
 - `$superpowers-project:merge-changes` -> `superpowers:finishing-a-development-branch` as the closeout method, with upstream `superpowers:verification-before-completion` proof already satisfied
+- `$superpowers-project:loop-controller` -> existing project skills and their required Superpowers companion methods; Loop Controller coordinates the run but does not replace the work-owning skill or its proof gate
 
 Do not claim a project route is active if the required Superpowers companion method is omitted.
 
