@@ -3,6 +3,9 @@ interface:
   short_description: "Coordinate repeated Superpowers Project workflow runs with run ledgers, budgets, verifier proof, and native gates."
   default_prompt: >-
     Use $superpowers-project:loop-controller when a Superpowers Project workflow should discover a safe candidate, enforce budget, route through existing skills, record verifier evidence, and write metrics.
+    When invoked from project_workflow_mode, require a validated workflow mode ledger with selected_mode: looping before selecting another candidate.
+    Looping Mode is bounded repeated maintenance autonomy: select one ready candidate at a time from issue mirrors, approved plans, approved specs, audit findings, alignment drift, version drift, or live-sync drift, then route the actual work to the owning Superpowers Project skill.
+    After a candidate is merged, closed, or paused, re-check budget and continuation gates before choosing another candidate.
     It must ask native continuation questions after governed actions.
     Auto Mode is only route authorization; Loop Controller coordinates runs and must not bypass push, merge, GitHub mutation, live sync, or final Done gates.
     Generated run state lives under .superpowers/runs by default.

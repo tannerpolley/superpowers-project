@@ -125,6 +125,18 @@ try {
     Add-Check -Name "selector chooses low-risk ready candidate" -Ok ($selection.exit_code -eq 0 -and $selection.json.selected_candidate_id -eq "approved-spec-plan") -Reason $selection.raw
     Add-Check -Name "selector records skipped candidates" -Ok ($selection.json.skipped.Count -ge 1) -Reason "skipped candidates missing"
 
+    $maintenanceInventoryPath = Join-Path $tempRoot "maintenance-candidate-inventory.json"
+    @{
+        candidates = @(
+            @{ id = "ready-plan"; source = "approved-plan"; route = "implement-plan"; ready = $true; risk = "low"; source_path = "docs/superpowers/plans/2026-06-16-m0-workflow-mode-entry-plan.md"; reason = "approved plan needs implementation" },
+            @{ id = "stale-version"; source = "stale-version"; route = "align-project"; ready = $true; risk = "low"; source_path = "scripts/get-agent-plugin-version.ps1"; reason = "version drift repair" },
+            @{ id = "broad-audit"; source = "audit"; route = "audit-project"; ready = $true; risk = "medium"; source_path = "docs/superpowers/specs/2026-06-16-workflow-mode-entry-design.md"; reason = "broad maintenance audit" }
+        )
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $maintenanceInventoryPath -Encoding utf8NoBOM
+    $maintenanceSelection = Invoke-JsonScript -Path $selectorScript -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $maintenanceInventoryPath)
+    Add-Check -Name "selector accepts broad maintenance candidates" -Ok ($maintenanceSelection.exit_code -eq 0 -and $maintenanceSelection.json.selected_candidate_id -eq "ready-plan") -Reason $maintenanceSelection.raw
+    Add-Check -Name "broad maintenance selector keeps skipped list" -Ok ($null -ne $maintenanceSelection.json.skipped) -Reason "broad maintenance skipped list missing"
+
     $verifierScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-verifier-ledger.ps1"
     $terminalScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-terminal-closeout.ps1"
     $metricsScript = Join-Path $RepoRoot "skills\loop-controller\scripts\write-metrics-report.ps1"

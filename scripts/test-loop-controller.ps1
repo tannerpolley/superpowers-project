@@ -27,6 +27,8 @@ try {
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle 'Question id: `project_loop_next_step`' -Name "next-step question id exists"
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle 'Question id: `project_loop_final_health_gate`' -Name "final health gate question id exists"
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "Auto Mode is a route permission ledger" -Name "auto mode boundary exists"
+    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "## Looping Mode Input" -Name "looping mode input boundary exists"
+    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "selected_mode: looping" -Name "looping mode ledger marker exists"
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent" -Name "startup version check exists"
     Assert-Contains -Path "skills\loop-controller\agents\openai.yaml" -Needle "loop-controller" -Name "metadata exists"
     Assert-Contains -Path ".codex-plugin\plugin.json" -Needle '$superpowers-project:loop-controller' -Name "plugin prompt lists route"

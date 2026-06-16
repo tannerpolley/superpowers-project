@@ -25,6 +25,12 @@ Canonical marker: `scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent`
 
 Auto Mode is a route permission ledger. Loop Controller is the run coordinator. Loop Controller may validate and carry an Auto Mode authorization path, but it must not treat Auto Mode as permission to select unrelated work, widen mutation scope, bypass proof, push, merge, mutate GitHub, sync live, or claim final Done.
 
+## Looping Mode Input
+
+When invoked from `project_workflow_mode`, require a validated workflow mode ledger with `selected_mode: looping` before selecting another candidate. Looping Mode is bounded repeated maintenance autonomy: it may select one ready candidate at a time from issue mirrors, approved plans, approved specs, audit findings, alignment drift, version drift, or live-sync drift, then route the actual work to the owning Superpowers Project skill.
+
+After a candidate is merged, closed, or paused, re-check the budget and continuation gate before choosing another candidate. Auto Mode remains one-route autonomy and must not use Loop Controller to continue to another candidate.
+
 Existing skills own work:
 
 - `$superpowers-project:brainstorm-spec` owns idea shaping and specs.
