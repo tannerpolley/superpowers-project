@@ -60,6 +60,70 @@ try {
     $invalidResult = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-RunLedgerPath", $invalidLedger)
     Add-Check -Name "missing contract hash fails" -Ok ($invalidResult.exit_code -ne 0 -and $invalidResult.json.ok -eq $false) -Reason "missing contract hash should fail"
 
+    $budgetScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-budget.ps1"
+    $budgetOkPath = Join-Path $tempRoot "budget-ok.json"
+    @{
+        max_candidates = 2
+        candidates_completed = 1
+        max_attempts_per_phase = 3
+        current_phase_attempts = 1
+        max_repeated_same_failure = 2
+        repeated_same_failure_count = 0
+        max_changed_files = 20
+        changed_files = 3
+        max_github_mutations = 0
+        github_mutations = 0
+        max_validator_reruns = 6
+        validator_reruns = 2
+        max_unreviewed_diff_lines = 800
+        unreviewed_diff_lines = 120
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $budgetOkPath -Encoding utf8NoBOM
+    $budgetOk = Invoke-JsonScript -Path $budgetScript -Arguments @("-RepoRoot", $RepoRoot, "-BudgetLedgerPath", $budgetOkPath)
+    Add-Check -Name "budget within policy passes" -Ok ($budgetOk.exit_code -eq 0 -and $budgetOk.json.ok -eq $true) -Reason $budgetOk.raw
+
+    $budgetFailPath = Join-Path $tempRoot "budget-fail.json"
+    @{
+        max_candidates = 1
+        candidates_completed = 1
+        max_attempts_per_phase = 2
+        current_phase_attempts = 2
+        max_repeated_same_failure = 1
+        repeated_same_failure_count = 1
+        max_changed_files = 4
+        changed_files = 5
+        max_github_mutations = 0
+        github_mutations = 1
+        max_validator_reruns = 3
+        validator_reruns = 4
+        max_unreviewed_diff_lines = 100
+        unreviewed_diff_lines = 101
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $budgetFailPath -Encoding utf8NoBOM
+    $budgetFail = Invoke-JsonScript -Path $budgetScript -Arguments @("-RepoRoot", $RepoRoot, "-BudgetLedgerPath", $budgetFailPath)
+    Add-Check -Name "exhausted budget fails" -Ok ($budgetFail.exit_code -ne 0 -and $budgetFail.json.ok -eq $false) -Reason "exhausted budget should fail"
+    $budgetFailureReason = [string]$budgetFail.json.reason
+    Add-Check -Name "exhausted budget reports all failed limits" -Ok (
+        $budgetFailureReason.Contains("candidates_completed") -and
+        $budgetFailureReason.Contains("current_phase_attempts") -and
+        $budgetFailureReason.Contains("repeated_same_failure_count") -and
+        $budgetFailureReason.Contains("changed_files") -and
+        $budgetFailureReason.Contains("github_mutations") -and
+        $budgetFailureReason.Contains("validator_reruns") -and
+        $budgetFailureReason.Contains("unreviewed_diff_lines")
+    ) -Reason "exhausted budget reason must list every failed limit"
+
+    $selectorScript = Join-Path $RepoRoot "skills\loop-controller\scripts\select-candidate.ps1"
+    $inventoryPath = Join-Path $tempRoot "candidate-inventory.json"
+    @{
+        candidates = @(
+            @{ id = "broad-audit"; source = "audit"; route = "audit-project"; ready = $true; risk = "medium"; source_path = "docs/superpowers/specs/2026-06-15-auto-mode-loop-controller-design.md"; reason = "broad follow-up" },
+            @{ id = "approved-spec-plan"; source = "spec"; route = "write-plan"; ready = $true; risk = "low"; source_path = "docs/superpowers/specs/2026-06-15-auto-mode-loop-controller-design.md"; reason = "approved spec needs plan" },
+            @{ id = "missing-source"; source = "issue"; route = "resolve-issue"; ready = $false; risk = "low"; source_path = "docs/superpowers/issues/missing.md"; reason = "source mirror missing" }
+        )
+    } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $inventoryPath -Encoding utf8NoBOM
+    $selection = Invoke-JsonScript -Path $selectorScript -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $inventoryPath)
+    Add-Check -Name "selector chooses low-risk ready candidate" -Ok ($selection.exit_code -eq 0 -and $selection.json.selected_candidate_id -eq "approved-spec-plan") -Reason $selection.raw
+    Add-Check -Name "selector records skipped candidates" -Ok ($selection.json.skipped.Count -ge 1) -Reason "skipped candidates missing"
+
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "loop-controller-scenarios"; checks = $checks } | ConvertTo-Json -Depth 8
     if ($failed.Count -gt 0) { exit 1 }

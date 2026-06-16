@@ -41,7 +41,7 @@ Existing skills own work:
 
 Default generated run state lives under `.superpowers/runs/<run-id>`. Do not commit generated run ledgers unless a later approved plan explicitly requests durable committed run history.
 
-## Current Required Gate
+## Current Required Gates
 
 Validate run ledgers with:
 
@@ -49,7 +49,19 @@ Validate run ledgers with:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-run-ledger.ps1 -RepoRoot <repo-root> -RunLedgerPath <ledger-path>
 ```
 
-Later issue slices add budget, candidate selection, verifier, terminal closeout, and metrics validators before those phases can be enabled.
+Validate budget ledgers with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-budget.ps1 -RepoRoot <repo-root> -BudgetLedgerPath <ledger-path>
+```
+
+Select deterministic safe candidates with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\select-candidate.ps1 -RepoRoot <repo-root> -InventoryPath <inventory-path>
+```
+
+Later issue slices add verifier, terminal closeout, and metrics validators before those phases can be enabled.
 
 ## Native Continuation Loop
 
