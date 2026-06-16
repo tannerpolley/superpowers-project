@@ -232,6 +232,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode entry contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Workflow mode ledger validator" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-workflow-mode-ledger.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Workflow mode ledger validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Contract summary generation" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-contract-summary.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Contract summary generation failed" }
