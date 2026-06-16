@@ -26,13 +26,13 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 ## Related Issues
 
 - `docs/superpowers/issues/smoke-test-workflow.md`
-- `docs/superpowers/issues/53-loop-controller-skill-and-run-ledger-contract.md`
 - `docs/superpowers/issues/54-loop-controller-budget-and-candidate-selection-contracts.md`
 - `docs/superpowers/issues/55-loop-controller-verifier-terminal-closeout-and-metrics-contracts.md`
 - `docs/superpowers/issues/56-validate-loop-controller-contract-summary-and-live-sync-readiness.md`
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/53](https://github.com/tannerpolley/superpowers-project/issues/53) closed by [https://github.com/tannerpolley/superpowers-project/pull/57](https://github.com/tannerpolley/superpowers-project/pull/57) on 06/15/2026 23:55:17
 - [#2 Add merge-changes workflow and continuation gates](https://github.com/tannerpolley/superpowers-project/issues/2) closed by [PR #3](https://github.com/tannerpolley/superpowers-project/pull/3).
 - [#22 Add hard archival gate for orchestrated project-merge closeout](https://github.com/tannerpolley/superpowers-project/issues/22) closed by [PR #37](https://github.com/tannerpolley/superpowers-project/pull/37).
 - [#24 Make project continuation gates impossible to skip](https://github.com/tannerpolley/superpowers-project/issues/24) closed by commit [`13fb8dc`](https://github.com/tannerpolley/superpowers-project/commit/13fb8dc8e4fb62d1c28805a310ae6b41bcd27459).
@@ -40,3 +40,4 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 - [#27 Implement Plan Non-Issue Execution Route](https://github.com/tannerpolley/superpowers-project/issues/27) closed by [PR #36](https://github.com/tannerpolley/superpowers-project/pull/36).
 - [#29 Merge Non-Issue And Local Branch Modes](https://github.com/tannerpolley/superpowers-project/issues/29) closed by [PR #35](https://github.com/tannerpolley/superpowers-project/pull/35).
 - [#44 resolve-issue can stop at PR-ready without forced merge-changes gate](https://github.com/tannerpolley/superpowers-project/issues/44) closed by [PR #51](https://github.com/tannerpolley/superpowers-project/pull/51).
+
