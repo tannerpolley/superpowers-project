@@ -207,6 +207,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Companion interface contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Agent-Native companion preview" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-agent-native-companion-preview.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Agent-Native companion preview failed" }
+    }))
+
     $results.Add((Invoke-Step "Skill metadata readability contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-skill-metadata-readability.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Skill metadata readability contract failed" }

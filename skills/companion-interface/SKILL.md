@@ -1,31 +1,53 @@
 ---
 name: companion-interface
-description: Use when a Superpowers Project workflow should create or update the local HTML companion report for rich artifact review.
+description: Use when a Superpowers Project workflow should create or update a repo-owned Agent-Native visual-plan MDX artifact for rich review.
 ---
 
 # Companion Interface
 
-Companion Interface is the Superpowers Project evidence and interpretation channel. It writes repo-scoped report sessions and renders a static HTML workbench for the Codex in-app browser.
+Companion Interface is the Superpowers Project rich review channel. It creates or refreshes repo-owned BuilderIO/Agent-Native visual-plan MDX artifacts.
 
-Use this skill when the user asks to show rich artifacts, when a workflow produces large specs or plans, or when implementation evidence includes plots, tables, validation receipts, screenshots, diagrams, or long summaries.
+Use this skill when a governed workflow produces specs, plans, issue evidence, validation receipts, screenshots, diagrams, plots, tables, or long summaries that need structured review outside chat.
 
 ## Approval Boundary
 
 The companion must not record approval, push, publish, merge, live sync, GitHub mutation, or final Done. Native Codex chat and `request_user_input` remain the decision authority.
 
-## Report Model
+## Visual-Plan Source Model
 
-Use `scripts/new-report-session.ps1 -WorkflowName <name> -Title <title>` to create a session.
+Write local review artifacts under `plans/<slug>/`.
 
-Use `scripts/append-event.ps1 -ReportRoot <relative-report-root> -Type <event-type> -Title <title>` to add structured evidence.
+Required:
 
-Use `scripts/render-report.ps1 -ReportRoot <relative-report-root>` to regenerate `index.html`.
+- `plans/<slug>/plan.mdx`
 
-Generated reports live under `.superpowers/reports/<yyyy-mm-dd>/<run-id>`.
+Optional:
 
-## Required Closeout
+- `plans/<slug>/canvas.mdx` when static visual review is useful.
+- `plans/<slug>/prototype.mdx` when interaction review is useful.
+- `plans/<slug>/.plan-state.json` when Agent-Native local tooling writes editor state.
 
-After updating a report, tell the user the exact `index.html` path and the artifact types added. Keep chat concise and point detailed review to the companion.
+Canonical Superpowers specs, implementation plans, issue mirrors, and milestone pages remain under `docs/superpowers/`.
+
+## Tooling
+
+Before authoring MDX, fetch the Agent-Native block catalog with an available schema-only tool or:
+
+```powershell
+npx @agent-native/core@latest plan blocks --out <catalog-path>
+```
+
+After writing or revising the folder, run:
+
+```powershell
+npx @agent-native/core@latest plan local preview --dir plans/<slug> --kind plan --open
+```
+
+Report the `plan.mdx` path and returned preview URL or exact failure.
+
+## Hosted Plan Tools
+
+If hosted Plan MCP tools are visible in the active session, they may be used for hosted creation or publishing when the workflow permits it. When tools are not visible, use local-files mode and do not repeat failed hosted authentication polling.
 
 ## Native Continuation Loop
 
@@ -61,6 +83,6 @@ Revisit routes must show or gather evidence, ask follow-up questions when needed
 
 Before any closeout or permission question, complete the artifact review gate. Strict artifact display is mandatory.
 
-Show the created or revised report session, generated `index.html`, manifest, events file, artifact paths, rendered Markdown artifacts when present, and machine-readable artifacts with exact paths plus key fields.
+Show the created or revised visual-plan folder, `plan.mdx`, optional `canvas.mdx` or `prototype.mdx`, preview URL or failure, linked canonical Superpowers artifact paths, rendered Markdown artifacts when present, and machine-readable artifacts with exact paths plus key fields.
 
 Do not merely say something changed. State what was done, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, the active-goal impact, the broader project context, and the recommended next route.

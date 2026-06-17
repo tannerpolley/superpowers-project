@@ -1,0 +1,153 @@
+# Agent-Native Companion Replacement
+
+<Callout id="decision-agent-native-mdx" tone="decision">
+
+Replace the Superpowers Project static HTML companion with repo-owned Agent-Native Plan MDX. The review artifact lives under `plans/<slug>/`; native Codex chat and `request_user_input` remain the approval channel.
+
+</Callout>
+
+## Concrete Review Snapshot
+
+During a future `brainstorm-spec` run, the agent writes the canonical spec under `docs/superpowers/specs/`, then creates `plans/<slug>/plan.mdx` as the rich review surface. The user opens the local Agent-Native preview, scans evidence, diagrams, file maps, and validation receipts, then answers the normal native `Continue?` gate in Codex. No browser control inside the plan records approval.
+
+## Done Criteria
+
+- `skills/companion-interface` describes Agent-Native MDX visual-plan artifacts instead of static HTML reports.
+- HTML report-session scripts, templates, and active tests are removed or rewritten; no pass-through wrapper remains.
+- README, plugin prompt, project context, and related skill opt-in text point to visual-plan MDX.
+- A fixture local plan under `plans/<slug>/plan.mdx` previews with Agent-Native local-files mode.
+- Full repo validation, live sync validation, and cleanup proof pass.
+
+<Table
+  id="direction-comparison"
+  columns={["Direction", "Source of truth", "Approval boundary", "Decision"]}
+  rows={[
+    ["Agent-Native local MDX", "plans/<slug>/plan.mdx", "Native Codex only", "Recommended"],
+    ["Hosted Plan MCP only", "Hosted plan database unless exported", "Native Codex only", "Optional later transport"],
+    ["HTML shell around MDX", "Two competing sources", "Easy to blur", "Rejected"]
+  ]}
+/>
+
+## Architecture
+
+<Diagram
+  id="agent-native-companion-flow"
+  data={{
+    html: '<div class="diagram-panel" data-rough><div class="diagram-card"><strong>Governed workflow</strong><br><span class="diagram-muted">brainstorm, plan, audit, implement, merge</span></div><div class="diagram-node">Canonical artifact<br><span class="diagram-muted">docs/superpowers/*</span></div><div class="diagram-node">Visual-plan source<br><span class="diagram-muted">plans/&lt;slug&gt;/plan.mdx</span></div><div class="diagram-node">Local preview<br><span class="diagram-muted">Agent-Native CLI</span></div><div class="diagram-card"><strong>Native decision</strong><br><span class="diagram-muted">Codex chat / request_user_input</span></div></div>',
+    css: ".diagram-panel { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 12px; align-items: stretch; } .diagram-card, .diagram-node { border: 1px solid var(--wf-line); background: var(--wf-card); padding: 12px; border-radius: 8px; min-height: 86px; } .diagram-node { background: var(--wf-accent-soft); }",
+    caption: "The visual plan is a review surface between canonical artifacts and native continuation gates."
+  }}
+/>
+
+The companion route should change in place. `$superpowers-project:companion-interface` remains the canonical route name, but its contract becomes "create or refresh an Agent-Native visual-plan MDX artifact." The implementation should delete the HTML report-session model instead of retaining it as an alternate execution path.
+
+## File Map
+
+<FileTree
+  id="replacement-file-map"
+  title="Expected implementation touch points"
+  entries={[
+    {
+      path: "skills/companion-interface/SKILL.md",
+      change: "modified",
+      note: "Rewrite the companion contract around Agent-Native local-files mode and native approval boundaries."
+    },
+    {
+      path: "skills/companion-interface/scripts",
+      change: "removed",
+      note: "Remove static HTML report session helpers and renderer scripts."
+    },
+    {
+      path: "skills/companion-interface/templates",
+      change: "removed",
+      note: "Remove HTML/CSS/JS templates owned by the retired renderer."
+    },
+    {
+      path: "scripts/test-companion-interface.ps1",
+      change: "modified",
+      note: "Assert visual-plan wording and stale HTML vocabulary rejection."
+    },
+    {
+      path: "skills/brainstorm-spec/SKILL.md",
+      change: "modified",
+      note: "Route large brainstorm artifacts to Agent-Native MDX plans, not HTML reports."
+    },
+    {
+      path: "skills/write-plan/SKILL.md",
+      change: "modified",
+      note: "Route large implementation plans to Agent-Native MDX review artifacts."
+    },
+    {
+      path: "README.md",
+      change: "modified",
+      note: "Describe the companion as visual-plan MDX artifact review."
+    },
+    {
+      path: ".codex-plugin/plugin.json",
+      change: "modified",
+      note: "Update default prompt wording for the canonical companion route."
+    }
+  ]}
+/>
+
+## Implementation Slices
+
+<Checklist
+  id="implementation-slices"
+  items={[
+    {
+      label: "Rewrite focused companion tests around Agent-Native MDX",
+      note: "Tests should fail on active HTML report-session vocabulary."
+    },
+    {
+      label: "Rewrite companion-interface skill and metadata",
+      note: "State local-files mode, preview command, hosted-tool absence handling, and native approval boundary."
+    },
+    {
+      label: "Remove HTML renderer assets",
+      note: "Delete scripts and templates that exist only for index.html report sessions."
+    },
+    {
+      label: "Add a local visual-plan fixture scenario",
+      note: "Create plans/fixture-agent-native-companion/plan.mdx and run local preview."
+    },
+    {
+      label: "Update integrated skill guidance",
+      note: "brainstorm-spec and write-plan should point large review artifacts to visual-plan MDX."
+    },
+    {
+      label: "Validate and sync",
+      note: "Run focused tests, scripts/validate.ps1, scripts/sync-live.ps1 -Validate, and cleanup."
+    }
+  ]}
+/>
+
+## Validation
+
+The first implementation plan should prove the replacement with focused tests before broad validation:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+npx @agent-native/core@latest plan local preview --dir plans/fixture-agent-native-companion --kind plan --open
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```
+
+## Risks
+
+<Callout id="risk-hosted-tools" tone="risk">
+
+Hosted Plan MCP absence must not block the repo-owned path. If hosted tools are missing, use local-files mode. If local preview fails, report the exact command and error instead of inventing a URL or substituting HTML.
+
+</Callout>
+
+<Callout id="risk-source-roots" tone="warning">
+
+`plans/<slug>/plan.mdx` is the Agent-Native review artifact root. It does not replace canonical Superpowers implementation plans under `docs/superpowers/plans/`.
+
+</Callout>
+
+## Open Questions
+
+No blocking decisions remain for the replacement direction. Exact fixture names and helper boundaries can be settled in the implementation plan without changing the architecture.
