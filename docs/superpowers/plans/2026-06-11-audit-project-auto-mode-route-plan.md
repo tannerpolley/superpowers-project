@@ -4,9 +4,9 @@
 
 **Goal:** Make `$superpowers-project:audit-project` offer bounded Auto Mode after it saves a findings spec, matching the saved-spec path already available from `$superpowers-project:brainstorm-spec`.
 
-**Architecture:** Extend the audit continuation route, metadata, README, generated contract summary, and scenario tests so audit findings specs can authorize `project_auto_mode_authorization`. Reuse the existing plugin-provided Auto Mode validator and downstream ledger contract instead of creating a separate audit-specific execution engine.
+**Architecture:** Extend the audit continuation route, metadata, README, generated outcome workflow, and scenario tests so audit findings specs can authorize `project_auto_mode_authorization`. Reuse the existing plugin-provided Auto Mode validator and downstream ledger contract instead of creating a separate audit-specific execution engine.
 
-**Tech Stack:** Markdown skill contracts, YAML agent metadata, PowerShell validation scripts, generated Markdown contract summary.
+**Tech Stack:** Markdown skill contracts, YAML agent metadata, PowerShell validation scripts, generated Markdown outcome workflow.
 
 ---
 
@@ -30,8 +30,8 @@
 - The ledger must validate with `scripts/validate-auto-mode-authorization.ps1`.
 - The saved audit findings spec is carried as `source_spec`.
 - The route continues into `$superpowers-project:write-plan` after a valid ledger.
-- README and generated contract summary show that audit-project has `project_auto_mode_authorization`.
-- Focused audit scenario tests, contract summary tests, and plan use-case validation pass.
+- README and generated outcome workflow show that audit-project has `project_auto_mode_authorization`.
+- Focused audit scenario tests, outcome workflow tests, and plan use-case validation pass.
 
 ## Proof Oracle
 
@@ -64,7 +64,7 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - Modify: `skills/audit-project/agents/openai.yaml`
 - Modify: `README.md`
 - Modify: `scripts/generate-contract-summary.ps1`
-- Modify: `docs/superpowers/CONTRACT_SUMMARY.md`
+- Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
 
 - [ ] **Step 1: Extend audit continuation docs**
   Add an audit Auto Mode child route after the audit progress route. It must state that Auto Mode starts only after the findings spec is saved and self-reviewed.
@@ -80,14 +80,14 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
   State that a valid audit Auto Mode ledger continues into `$superpowers-project:write-plan` with the audit findings spec as the source spec, then downstream routes consume the ledger normally.
 
 - [ ] **Step 4: Update public route summaries**
-  Update README and generated contract summary so new agents can see that `audit-project` supports `project_auto_mode_authorization`.
+  Update README and generated outcome workflow so new agents can see that `audit-project` supports `project_auto_mode_authorization`.
 
 ## Task 2: Add Focused Validation Coverage
 
 **Use Cases:**
 - A future edit that removes audit Auto Mode from `SKILL.md`, metadata, README, or generated summary fails validation.
 - A future edit that changes the authorization validator command fails the audit scenario contract.
-- A future edit that leaves `CONTRACT_SUMMARY.md` stale relative to the generator fails `test-contract-summary`.
+- A future edit that leaves `OUTCOME_WORKFLOW.md` stale relative to the generator fails `test-contract-summary`.
 - The implementation plan itself fails validation if any task loses its `**Use Cases:**` block.
 
 **Files:**
@@ -97,11 +97,11 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - [ ] **Step 1: Extend audit-project scenario tests**
   Add required strings for `Auto Mode`, `project_auto_mode_authorization`, `Bounded Auto Merge`, `validate-auto-mode-authorization.ps1`, and `source spec`.
 
-- [ ] **Step 2: Extend contract summary tests**
+- [ ] **Step 2: Extend outcome workflow tests**
   Require `project_auto_mode_authorization` in the audit-project generated summary row.
 
 - [ ] **Step 3: Run focused validation**
-  Run plan use-case validation, audit scenario tests, contract summary tests, and Auto Mode contract tests before broader validation.
+  Run plan use-case validation, audit scenario tests, outcome workflow tests, and Auto Mode contract tests before broader validation.
 
 ## Task 3: Sync And Enable The Live Plugin Surface
 
@@ -139,3 +139,4 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - Proof oracle includes focused and full validation.
 - Feature work uses `superpowers:test-driven-development` via failing scenario/summary checks before implementation.
 - Completion requires version freshness and live sync proof.
+

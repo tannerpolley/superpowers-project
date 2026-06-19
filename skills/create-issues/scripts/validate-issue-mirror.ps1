@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = "Stop"
 $checks = [System.Collections.Generic.List[object]]::new()
 $sourceRepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path
-. (Join-Path $sourceRepoRoot "scripts\lib\outcome-contract.ps1")
+. (Join-Path $sourceRepoRoot "scripts\lib\outcome-proof.ps1")
 
 function Add-Check {
     param([string]$Name, [bool]$Ok, [string]$Reason)
@@ -73,11 +73,11 @@ try {
     }
     Add-Check -Name "source artifact" -Ok $true -Reason "passed"
 
-    $contract = Test-IssueOutcomeContractSummary -Text $text
-    if (-not $contract.ok) {
-        Complete -Ok $false -Reason ([string]$contract.reason)
+    $outcomeSummary = Test-IssueOutcomeSummary -Text $text
+    if (-not $outcomeSummary.ok) {
+        Complete -Ok $false -Reason ([string]$outcomeSummary.reason)
     }
-    Add-Check -Name "outcome contract summary" -Ok $true -Reason "passed"
+    Add-Check -Name "outcome summary" -Ok $true -Reason "passed"
 
     $githubIssue = Get-FieldValue -Text $text -Name "GitHub Issue"
     $prePublication = [regex]::IsMatch($text, "(?im)^\s*(?:\*\*)?Pre-Publication(?:\*\*)?\s*:\s*true\s*$")

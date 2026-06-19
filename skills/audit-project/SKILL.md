@@ -34,7 +34,7 @@ Load the narrowest applicable review skill before writing findings:
 - `improve-codebase-architecture` for architecture, module boundary, domain language, testability, and dependency findings
 - `react-doctor` for React behavior, component, hook, state, render, or accessibility findings
 
-If more than one applies, use each for its own evidence lane and merge the results into one findings spec.
+If more than one applies, use each for its own evidence source and merge the results into one findings spec.
 
 ## Findings Format
 

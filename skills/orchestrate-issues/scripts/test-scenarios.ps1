@@ -20,7 +20,7 @@ function New-FixtureRepo {
     New-Item -ItemType Directory -Force -Path (Join-Path $temp "skills/create-issues/scripts") | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $temp "skills/orchestrate-issues/scripts") | Out-Null
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/create-issues/scripts/validate-issue-mirror.ps1") -Destination (Join-Path $temp "skills/create-issues/scripts/validate-issue-mirror.ps1")
-    Copy-Item -LiteralPath (Join-Path $repoRoot "scripts/lib/outcome-contract.ps1") -Destination (Join-Path $temp "scripts/lib/outcome-contract.ps1")
+    Copy-Item -LiteralPath (Join-Path $repoRoot "scripts/lib/outcome-proof.ps1") -Destination (Join-Path $temp "scripts/lib/outcome-proof.ps1")
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/orchestrate-issues/scripts/derive-worker-identity.ps1") -Destination (Join-Path $temp "skills/orchestrate-issues/scripts/derive-worker-identity.ps1")
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1") -Destination (Join-Path $temp "skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1")
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/orchestrate-issues/scripts/validate-worker-handoff.ps1") -Destination (Join-Path $temp "skills/orchestrate-issues/scripts/validate-worker-handoff.ps1")
@@ -43,18 +43,18 @@ function New-FixtureRepo {
         "**Reviewer Role:** Main thread orchestrator",
         "**Script Gate Mode:** Safety only",
         "",
-        "## Outcome Contract Summary",
+        "## Outcome Summary",
         "",
-        "**Outcome Contract Source:** docs/superpowers/plans/2026-06-03-audit-project-audit-gate-plan.md#outcome-contract",
+        "**Outcome Source:** docs/superpowers/plans/2026-06-03-audit-project-audit-gate-plan.md#outcome-proof",
         "**Intent:** Prove orchestrated worker handoff carries contract evidence.",
-        "**Target-Perspective Output:** Maintainer sees worker handoff prepared from a contract-backed issue mirror.",
-        "**Truth Owner:** scripts/lib/outcome-contract.ps1",
-        "**Contract Interface:** issue mirror Outcome Contract Summary fields",
-        "**Cutover Decision:** Worker handoff validation requires the contract summary.",
-        "**Displaced Path:** Worker handoff from issue mirrors without contract evidence",
-        "**Acceptance Evidence:** orchestrate-issues scenario returns ok true.",
-        "**Kill Criteria:** Reject worker handoff when contract proof is missing.",
-        "**Forbidden Moves:** Do not use detached goal-board evidence as the contract source.",
+        "**Target Output:** Maintainer sees worker handoff prepared from a contract-backed issue mirror.",
+        "**Owner:** scripts/lib/outcome-proof.ps1",
+        "**Interface:** issue mirror Outcome Summary fields",
+        "**Cutover:** Worker handoff validation requires the outcome workflow.",
+        "**Replaced Path:** Worker handoff from issue mirrors without contract evidence",
+        "**Acceptance Proof:** orchestrate-issues scenario returns ok true.",
+        "**Stop Criteria:** Reject worker handoff when contract proof is missing.",
+        "**Avoid:** Do not use detached goal-board evidence as the contract source.",
         "",
         "## Project Merge",
         "",
@@ -150,3 +150,4 @@ $results | ConvertTo-Json -Depth 8
     $results | ConvertTo-Json -Depth 8
     exit 1
 }
+

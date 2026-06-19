@@ -5,23 +5,23 @@ function Test-Property {
     $null -ne $Object.PSObject.Properties[$Name]
 }
 
-function Assert-OutcomeContract {
-    param([object]$Contract)
-    if ($null -eq $Contract -or $Contract -is [string]) { throw "outcome contract must be structured" }
-    foreach ($field in @("intent", "truth_owner", "contract_interface", "cutover_decision", "displaced_path", "acceptance_evidence", "kill_criteria", "forbidden_moves")) {
-        if (-not (Test-Property $Contract $field)) { throw "outcome contract missing $field" }
-        $value = $Contract.$field
-        if ($value -is [string] -and [string]::IsNullOrWhiteSpace($value)) { throw "outcome contract $field is empty" }
-        if ($null -eq $value) { throw "outcome contract $field is empty" }
+function Assert-OutcomeProof {
+    param([object]$Proof)
+    if ($null -eq $Proof -or $Proof -is [string]) { throw "outcome proof must be structured" }
+    foreach ($field in @("intent", "owner", "interface", "cutover", "replaced_path", "acceptance_proof", "stop_criteria", "avoid")) {
+        if (-not (Test-Property $Proof $field)) { throw "outcome proof missing $field" }
+        $value = $Proof.$field
+        if ($value -is [string] -and [string]::IsNullOrWhiteSpace($value)) { throw "outcome proof $field is empty" }
+        if ($null -eq $value) { throw "outcome proof $field is empty" }
     }
 }
 
-function Assert-ContractReview {
+function Assert-ReadinessReview {
     param([object]$Review)
-    if ($null -eq $Review -or $Review -is [string]) { throw "contract review must be structured" }
+    if ($null -eq $Review -or $Review -is [string]) { throw "readiness review must be structured" }
     foreach ($field in @("plan_alignment", "correctness", "maintainability", "reality_evidence")) {
-        if (-not (Test-Property $Review $field)) { throw "contract review missing $field" }
-        if ($Review.$field -ne $true) { throw "contract review $field must be true" }
+        if (-not (Test-Property $Review $field)) { throw "readiness review missing $field" }
+        if ($Review.$field -ne $true) { throw "readiness review $field must be true" }
     }
 }
 
@@ -44,10 +44,10 @@ function Test-ImplementPlanLedger {
     if (-not (Test-Path -LiteralPath (Join-Path $repoPath $planPath) -PathType Leaf)) { throw "approved plan file is required" }
 
     if (Test-Property $Ledger "issue_mirror_path") { throw "implement-plan must not create or require issue mirrors" }
-    if (-not (Test-Property $Ledger "outcome_contract")) { throw "outcome contract is required" }
-    Assert-OutcomeContract -Contract $Ledger.outcome_contract
-    if (-not (Test-Property $Ledger "contract_review")) { throw "contract review is required" }
-    Assert-ContractReview -Review $Ledger.contract_review
+    if (-not (Test-Property $Ledger "outcome_proof")) { throw "outcome proof is required" }
+    Assert-OutcomeProof -Proof $Ledger.outcome_proof
+    if (-not (Test-Property $Ledger "readiness_review")) { throw "readiness review is required" }
+    Assert-ReadinessReview -Review $Ledger.readiness_review
     if (-not (Test-Property $Ledger "native_goal") -or $Ledger.native_goal.activated -ne $true) { throw "native /goal activation proof is required" }
     if (-not (Test-Property $Ledger "branch") -or [string]::IsNullOrWhiteSpace([string]$Ledger.branch)) { throw "branch is required" }
     if ([string]$Ledger.branch -eq "main") { throw "implement-plan requires a development branch, not main" }

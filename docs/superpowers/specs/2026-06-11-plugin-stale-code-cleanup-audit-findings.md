@@ -19,15 +19,15 @@ Audit the Superpowers Project plugin source for remaining inefficiencies, stale 
 - `AGENTS.md`
 - `docs/agents/project-roadmap.json`
 - `docs/agents/project-roadmap.md`
-- `docs/superpowers/CONTRACT_SUMMARY.md`
+- `docs/superpowers/OUTCOME_WORKFLOW.md`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 
 Commands used:
 
 ```powershell
 git status --short --branch
-rg -n "Stop/Done|Stop or Done|stale terminal label|stale terminal option|goal_board|goalbuddy|namespace wrapper|compatibility wrapper|fallback|obsolete|legacy|TODO|FIXME|not_implemented|not_available|debug_question_mode|Use Cases" skills scripts README.md docs/superpowers/CONTRACT_SUMMARY.md -g "*.md" -g "*.ps1" -g "*.yaml"
-rg -n "convert-idea-to-issue|milestones-validate|docs/ideas|docs/milestones/<milestone-folder>|canonical-skills|goalbuddy|GoalBuddy|Stop/Done|stale terminal label|stale terminal option|fallback|compatibility wrapper|namespace wrapper" scripts skills README.md AGENTS.md docs/superpowers/CONTRACT_SUMMARY.md docs/superpowers/PROJECT_CONTEXT.md docs/agents -g "*.ps1" -g "*.md" -g "*.yaml" -g "*.json"
+rg -n "Stop/Done|Stop or Done|stale terminal label|stale terminal option|goal_board|goalbuddy|namespace wrapper|compatibility wrapper|fallback|obsolete|legacy|TODO|FIXME|not_implemented|not_available|debug_question_mode|Use Cases" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md -g "*.md" -g "*.ps1" -g "*.yaml"
+rg -n "convert-idea-to-issue|milestones-validate|docs/ideas|docs/milestones/<milestone-folder>|canonical-skills|goalbuddy|GoalBuddy|Stop/Done|stale terminal label|stale terminal option|fallback|compatibility wrapper|namespace wrapper" scripts skills README.md AGENTS.md docs/superpowers/OUTCOME_WORKFLOW.md docs/superpowers/PROJECT_CONTEXT.md docs/agents -g "*.ps1" -g "*.md" -g "*.yaml" -g "*.json"
 ```
 
 ## Findings
@@ -105,8 +105,8 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 
 Evidence:
 
-- `docs/superpowers/CONTRACT_SUMMARY.md:37` lists `audit-project` question ids as `project_audit_next_step`, `project_audit_progress_route`, and `project_audit_revisit_route`, with no `project_auto_mode_authorization`.
-- `docs/superpowers/CONTRACT_SUMMARY.md:38` lists `project_auto_mode_authorization` only under `brainstorm-spec`.
+- `docs/superpowers/OUTCOME_WORKFLOW.md:37` lists `audit-project` question ids as `project_audit_next_step`, `project_audit_progress_route`, and `project_audit_revisit_route`, with no `project_auto_mode_authorization`.
+- `docs/superpowers/OUTCOME_WORKFLOW.md:38` lists `project_auto_mode_authorization` only under `brainstorm-spec`.
 - `README.md:48` documents Auto Mode after Brainstorm Spec, while `README.md:57` documents Audit Project next routes as Write Plan, Create Issues, and Review Findings.
 - `skills/audit-project/SKILL.md:103-112` defines only `Write Plan` and `Create Issues` for the audit progress route.
 
@@ -153,7 +153,7 @@ Evidence:
 - `scripts/test-native-qa-svg.ps1:239` contains `stale terminal label`.
 - `scripts/test-native-continuation-loop.ps1:269`, `:311`, and `:312` contain `stale terminal label` or `stale terminal option`.
 - `scripts/test-advanced-user-input-policy.ps1:120-122` contains old `stale terminal option` policy text as forbidden examples.
-- `rg -l "stale terminal label|stale terminal option" skills scripts README.md docs/superpowers/CONTRACT_SUMMARY.md` found 12 files containing `stale terminal label` and 2 files containing `stale terminal option`, all in tests.
+- `rg -l "stale terminal label|stale terminal option" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md` found 12 files containing `stale terminal label` and 2 files containing `stale terminal option`, all in tests.
 
 Impact:
 
@@ -166,7 +166,7 @@ Rename the fixture terminology to neutral language such as `legacy terminal plac
 Proof Oracle:
 
 ```powershell
-rg -n "stale terminal label|stale terminal option" skills scripts README.md docs/superpowers/CONTRACT_SUMMARY.md
+rg -n "stale terminal label|stale terminal option" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
 ```
@@ -190,7 +190,7 @@ Do not remove self-contained skill instructions blindly. Instead, create one sou
 Proof Oracle:
 
 ```powershell
-rg -l "Native Question Debug Ledger" skills scripts README.md docs/superpowers/CONTRACT_SUMMARY.md
+rg -l "Native Question Debug Ledger" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
@@ -219,3 +219,4 @@ The repair work is small enough for one implementation plan with these task grou
 
 - Should the debug-mode duplication be treated as a repair now, or left as intentionally self-contained skill text with only stronger validation?
 - Should exact old terminal placeholder strings be allowed in tests, or should the repo aim for zero broad-search hits in active source?
+

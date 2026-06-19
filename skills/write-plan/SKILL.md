@@ -45,7 +45,7 @@ When `request_user_input` is callable, the grill is a native UI hard gate, not o
 
 If a question can be answered by inspecting the repo, inspect first instead of asking. If the planning agent realizes it skipped the grill after drafting a plan, stop, run the native grill, and revise the saved plan before presenting it as ready.
 
-Use `request_user_input` in Default mode when the tool is callable and a decision affects scope, acceptance criteria, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, live mutation, truth owner, contract interface, cutover, displaced path, evidence fields, kill criteria, or forbidden moves.
+Use `request_user_input` in Default mode when the tool is callable and a decision affects scope, acceptance criteria, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, live mutation, owner, interface, cutover, replaced path, evidence fields, stop criteria, or avoid list.
 
 ## Test-Complete And Metrics Gate
 
@@ -60,29 +60,29 @@ When the project is scientific or engineering-oriented, ask for numerical metric
 
 Do not route to `Continue Into Work` until the test-complete and metrics answers exist or are explicitly marked not applicable with a clear reason.
 
-## Outcome Contract Gate
+## Outcome Proof Gate
 
-Every implementation plan MUST include a `## Outcome Contract` section before task decomposition. This section is mandatory for all implementation plans, not only high-risk plans.
+Every implementation plan MUST include a `## Outcome Proof` section before task decomposition. This section is mandatory for all implementation plans, not only high-risk plans.
 
-Required `## Outcome Contract` fields:
+Required `## Outcome Proof` fields:
 
 - `Intent`
 - `Current Behavior`
 - `Expected Outcome`
-- `Target-Perspective Output`
-- `Truth Owner`
-- `Contract Interface`
-- `Cutover Decision`
-- `Displaced Path`
-- `Evidence Lane`
-- `Acceptance Evidence`
-- `Kill Criteria`
-- `Forbidden Moves`
-- `Risk If Wrong`
+- `Target Output`
+- `Owner`
+- `Interface`
+- `Cutover`
+- `Replaced Path`
+- `Evidence`
+- `Acceptance Proof`
+- `Stop Criteria`
+- `Avoid`
+- `Risk`
 
-Every implementation plan MUST also include a `## Architecture Slice` section before task decomposition.
+Every implementation plan MUST also include a `## Implementation Boundaries` section before task decomposition.
 
-Required `## Architecture Slice` fields:
+Required `## Implementation Boundaries` fields:
 
 - `Files To Create`
 - `Files To Modify`
@@ -92,18 +92,18 @@ Required `## Architecture Slice` fields:
 - `Write Path`
 - `Integration Points`
 - `Migration Or Cutover`
-- `Displaced Path Handling`
-- `Acceptance Evidence Gate`
+- `Replaced Path Handling`
+- `Acceptance Proof Gate`
 
 Before saving or presenting a plan as ready, run the repo-root validator:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-contract.ps1 -PlanPath <saved-plan-path>
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath <saved-plan-path>
 ```
 
 If the validator fails, revise the plan before artifact review. Do not route to `$superpowers-project:create-issues`, `$superpowers-project:implement-plan`, `$superpowers-project:resolve-issue`, or `$superpowers-project:orchestrate-issues` until the saved plan passes.
 
-Task # Use Cases must cover the contract's acceptance evidence and cutover or displaced path handling. A plan is not ready when tasks can pass local tests but do not prove the target-perspective output, truth owner, contract interface, cutover decision, displaced path, evidence lane, kill criteria, and forbidden moves.
+Task # Use Cases must cover acceptance proof and cutover or replaced path handling. A plan is not ready when tasks can pass local tests but do not prove target output, owner, interface, cutover, replaced path, evidence, stop criteria, and avoid list.
 
 ## Task # Use Cases Gate
 
@@ -165,8 +165,8 @@ Required plan content:
 - source spec or direct-plan approval evidence
 - issue mirror linkage when applicable
 - milestone linkage when applicable
-- `## Outcome Contract` with truth owner, contract interface, cutover, displaced path, evidence lane, kill criteria, and forbidden moves
-- `## Architecture Slice` with source of truth, read/write path, integration points, migration or cutover, displaced path handling, and acceptance evidence gate
+- `## Outcome Proof` with owner, interface, cutover, replaced path, evidence, acceptance proof, stop criteria, avoid list, and risk
+- `## Implementation Boundaries` with source of truth, read/write path, integration points, migration or cutover, replaced path handling, and acceptance proof gate
 - acceptance criteria mapped to tasks
 - non-goals
 - proof oracle with exact command, artifact, user-visible behavior, or GitHub evidence
@@ -179,7 +179,7 @@ Feature and bug plans require `superpowers:test-driven-development` unless the u
 
 ## Companion Interface Opt-In
 
-When the user asks for the HTML companion, or when the saved plan is too large for chat rendering, use `$superpowers-project:companion-interface` to create or refresh a local report. Include source spec linkage, Outcome Contract, Architecture Slice, task list, Task # Use Cases blocks, proof oracle, test-complete definition, plan validation receipt, and recommended next route.
+When the user asks for the HTML companion, or when the saved plan is too large for chat rendering, use `$superpowers-project:companion-interface` to create or refresh a local report. Include source spec linkage, Outcome Proof, Implementation Boundaries, task list, Task # Use Cases blocks, proof oracle, test-complete definition, plan validation receipt, and recommended next route.
 
 The companion is an evidence surface only. Native continuation, issue creation, implementation, push, publish, merge, and final Done decisions still happen through chat or `request_user_input`.
 
@@ -209,7 +209,7 @@ Replace generic labels with real file paths, code, commands, and expected result
 
 ## Native Continuation Gate
 
-After saving and self-reviewing the plan, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the planning run. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show every produced or materially changed planning artifact, including the saved plan, the Outcome Contract, the Architecture Slice, the full task list, every Task # Use Cases block, the full step list, the source spec or issue mirror linkage, acceptance coverage, proof oracle, TDD/debug policy, and what counts as test complete. Show exact artifact paths and links, render created or revised Markdown artifacts in chat when reasonably sized, and summarize machine-readable artifacts with exact path plus key fields. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative excerpt, and why the full render is omitted. After artifacts are shown, add a separate findings summary that names the saved plan path, source spec or issue mirror, Outcome Contract validation, Architecture Slice validation, acceptance coverage, proof oracle, TDD/debug policy, Task # Use Cases validation, what counts as test complete, whether scientific or engineering numerical metrics were required, what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the result means for the active goal, what it means for the broader project context, and the recommended next route.
+After saving and self-reviewing the plan, complete the artifact review gate before asking the continuation question. Inventory every produced or materially changed artifact owned by the planning run. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show every produced or materially changed planning artifact, including the saved plan, the Outcome Proof, the Implementation Boundaries, the full task list, every Task # Use Cases block, the full step list, the source spec or issue mirror linkage, acceptance coverage, proof oracle, TDD/debug policy, and what counts as test complete. Show exact artifact paths and links, render created or revised Markdown artifacts in chat when reasonably sized, and summarize machine-readable artifacts with exact path plus key fields. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative excerpt, and why the full render is omitted. After artifacts are shown, add a separate findings summary that names the saved plan path, source spec or issue mirror, Outcome Proof validation, Implementation Boundaries validation, acceptance coverage, proof oracle, TDD/debug policy, Task # Use Cases validation, what counts as test complete, whether scientific or engineering numerical metrics were required, what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the result means for the active goal, what it means for the broader project context, and the recommended next route.
 
 Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and Stop in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include terminal options; they include only real forward routes. Nested Revisit-route menus must not include terminal options; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
@@ -315,8 +315,9 @@ Before reporting the plan ready:
 2. Confirm the source spec, source issue mirror, or direct-plan approval is named.
 3. Confirm every acceptance criterion maps to at least one task.
 4. Confirm each task names exact files and exact verification.
-5. Confirm the plan has `## Outcome Contract`, `## Architecture Slice`, and `scripts/validate-plan-outcome-contract.ps1 -PlanPath <saved-plan-path>` passes.
+5. Confirm the plan has `## Outcome Proof`, `## Implementation Boundaries`, and `scripts/validate-plan-outcome-proof.ps1 -PlanPath <saved-plan-path>` passes.
 6. Confirm every numbered task has a non-empty `**Use Cases:**` block and `scripts/validate-plan-task-use-cases.ps1 -PlanPath <saved-plan-path>` passes.
 7. Confirm feature and bug work uses `superpowers:test-driven-development` or records the user's explicit opt-out.
 8. Confirm bug work uses `superpowers:systematic-debugging` or diagnose discipline.
 9. Confirm completion requires `superpowers:verification-before-completion`.
+

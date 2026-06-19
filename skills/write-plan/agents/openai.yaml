@@ -10,19 +10,19 @@ interface:
     plans include creation date and milestone identity where applicable, for example docs/superpowers/plans/<yyyy-mm-dd>-<milestone-or-category>-<slug>-plan.md. Milestone pages are index views;
     represent milestone/category views through frontmatter plus milestone indexes and treat nested canonical milestone artifact folders are drift. Before saving a plan, use the Planning Grill Gate: apply grill-me behavior,
     inspect knowable context first, and use request_user_input in Default mode as a hard gate for material scope, acceptance criteria, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior,
-    live mutation choices, truth owner, contract interface, cutover, displaced path, evidence fields, kill criteria, and forbidden moves.
+    live mutation choices, owner, interface, cutover, replaced path, evidence fields, stop criteria, and avoid list.
     Do not present a plan as ready until material decisions have been answered or explicitly deferred with a named risk owner. Before presenting a plan as ready,
     ask or record what counts as test complete, what proof demonstrates that status, what metrics define pass versus fail, and whether tolerances, edge-case thresholds, or error bounds matter.
     When the project is scientific or engineering-oriented, ask for numerical metrics, thresholds, tolerances, units, and validation coverage, then record those answers in the plan acceptance criteria and proof oracle.
-    If those prompts are not applicable, record that with a clear reason before routing into work. Require every implementation plan to include ## Outcome Contract and ## Architecture Slice before tasks.
-    Outcome Contract must include Truth Owner, Contract Interface, Cutover Decision, Displaced Path, Evidence Lane, Acceptance Evidence, Kill Criteria, Forbidden Moves, and Risk If Wrong.
-    Architecture Slice must include Source Of Truth, Read Path, Write Path, Integration Points, Migration Or Cutover, Displaced Path Handling, and Acceptance Evidence Gate.
-    Run validate-plan-outcome-contract.ps1 against the saved plan before presenting it as ready, and do not route to create-issues, implement-plan, resolve-issue, or orchestrate-issues until it passes.
+    If those prompts are not applicable, record that with a clear reason before routing into work. Require every implementation plan to include ## Outcome Proof and ## Implementation Boundaries before tasks.
+    Outcome Proof must include Owner, Interface, Cutover, Replaced Path, Evidence, Acceptance Proof, Stop Criteria, Avoid, and Risk.
+    Implementation Boundaries must include Source Of Truth, Read Path, Write Path, Integration Points, Migration Or Cutover, Replaced Path Handling, and Acceptance Proof Gate.
+    Run validate-plan-outcome-proof.ps1 against the saved plan before presenting it as ready, and do not route to create-issues, implement-plan, resolve-issue, or orchestrate-issues until it passes.
     Require proof oracle evidence, require superpowers:test-driven-development for feature or bug plans unless explicit opt-out,
     and treat Task # Use Cases as a strict requirement: every numbered Task N must include a non-empty **Use Cases:** block with concrete user, system, acceptance, failure/recovery, validation, or workflow cases before files and steps.
     Run validate-plan-task-use-cases.ps1 against the saved plan before presenting it as ready, and do not route to create-issues, implement-plan, resolve-issue, or orchestrate-issues until it passes.
     require superpowers:systematic-debugging for bugs, and require superpowers:verification-before-completion before completion. After saving and self-reviewing the plan, complete the artifact review gate,
-    inventory every produced or materially changed artifact owned by the planning run, summarize the plan in chat, show the Outcome Contract, Architecture Slice, every Task # Use Cases block, state what counts as test complete,
+    inventory every produced or materially changed artifact owned by the planning run, summarize the plan in chat, show the Outcome Proof, Implementation Boundaries, every Task # Use Cases block, state what counts as test complete,
     state whether scientific or engineering numerical metrics were required,
     explain what the result means for the active goal and broader project context, show exact artifact paths and links, show rendered Markdown artifacts when applicable,
     and summarize machine-readable artifacts with exact path plus key fields. Use advanced-user-input sequential branching, ask project_plan_next_step with Yes Continue Into Work, Revisit Revise / Review Plan, and Stop.
@@ -56,3 +56,4 @@ interface:
     If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other;
     otherwise ask the next best child question or baseline nested route and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer.
     The terminal option must be Stop until a verified final Done gate is reached.
+

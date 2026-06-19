@@ -94,17 +94,17 @@ Each mirror must include:
 - Parallelization Plan
 - Reviewer Role
 - Script Gate Mode
-- Outcome Contract Summary
-- Outcome Contract Source
+- Outcome Summary
+- Outcome Source
 - Intent
-- Target-Perspective Output
-- Truth Owner
-- Contract Interface
-- Cutover Decision
-- Displaced Path
-- Acceptance Evidence
-- Kill Criteria
-- Forbidden Moves
+- Target Output
+- Owner
+- Interface
+- Cutover
+- Replaced Path
+- Acceptance Proof
+- Stop Criteria
+- Avoid
 - Project Merge section
 - Merge Owner
 - Merge Gate
@@ -119,7 +119,7 @@ Each mirror must include:
 
 Workflow metadata guides `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues`. Missing or malformed workflow metadata is blocking for every issue mirror because it creates ambiguous execution instructions. Issue metadata must keep downstream routing compatible with the mandatory Superpowers companion skills used by those execution routes. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
 
-Every issue mirror must include `## Outcome Contract Summary`. The summary carries the plan's Krypton-derived contract into issue execution and must include `Outcome Contract Source`, `Intent`, `Target-Perspective Output`, `Truth Owner`, `Contract Interface`, `Cutover Decision`, `Displaced Path`, `Acceptance Evidence`, `Kill Criteria`, and `Forbidden Moves`. The summary may narrow a multi-issue slice, but it must not drop or contradict the source plan's truth owner, contract interface, cutover decision, displaced path handling, acceptance evidence, kill criteria, or forbidden moves.
+Every issue mirror must include `## Outcome Summary`. The summary carries the plan's outcome proof into issue execution and must include `Outcome Source`, `Intent`, `Target Output`, `Owner`, `Interface`, `Cutover`, `Replaced Path`, `Acceptance Proof`, `Stop Criteria`, and `Avoid`. The summary may narrow a multi-issue slice, but it must not drop or contradict the source plan's owner, interface, cutover, replaced path handling, acceptance proof, stop criteria, or avoid list.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -146,18 +146,18 @@ Use this shape for each issue body and mirror:
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
 
-## Outcome Contract Summary
+## Outcome Summary
 
-**Outcome Contract Source:** <source plan path>#outcome-contract
+**Outcome Source:** <source plan path>#outcome-proof
 **Intent:** <issue slice intent>
-**Target-Perspective Output:** <target person or operator-visible result>
-**Truth Owner:** <module, artifact, or process that owns durable truth>
-**Contract Interface:** <interface consumed by downstream execution>
-**Cutover Decision:** <delete, redirect, demote, shim with removal trigger, or explicitly keep>
-**Displaced Path:** <old behavior, artifact, route, doc, or source file>
-**Acceptance Evidence:** <target-perspective proof>
-**Kill Criteria:** <condition that blocks or retires temporary paths>
-**Forbidden Moves:** <moves that would create wrong ownership, duplicate truth, or fake proof>
+**Target Output:** <target person or operator-visible result>
+**Owner:** <module, artifact, or process that owns durable truth>
+**Interface:** <interface consumed by downstream execution>
+**Cutover:** <delete, redirect, demote, shim with removal trigger, or explicitly keep>
+**Replaced Path:** <old behavior, artifact, route, doc, or source file>
+**Acceptance Proof:** <target-perspective proof>
+**Stop Criteria:** <condition that blocks or retires temporary paths>
+**Avoid:** <moves that would create wrong ownership, duplicate truth, or fake proof>
 
 ## Project Merge
 
@@ -205,9 +205,9 @@ Validation must prove:
 - Goal Command is present for AFK issues
 - bug mirrors include Reproduction or Feedback Loop evidence
 - workflow metadata is present and valid
-- Outcome Contract Summary is present and valid
-- Outcome Contract Source does not use `docs/goals`
-- Contract Interface, Cutover Decision, Acceptance Evidence, Kill Criteria, and Forbidden Moves are concrete
+- Outcome Summary is present and valid
+- Outcome Source does not use `docs/goals`
+- Interface, Cutover, Acceptance Proof, Stop Criteria, and Avoid are concrete
 - Project Merge metadata is present and valid
 
 ## External GitHub Issue Hydration
@@ -219,7 +219,7 @@ Protocol:
 1. Read the GitHub issue body from `IssueBodyPath` for fixture work or from `gh issue view <url>` for live tracker work.
 2. Create or update `docs/superpowers/issues/<issue-number>-<slug>.md`.
 3. Preserve the issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command.
-4. Create or update `## Outcome Contract Summary` with `Outcome Contract Source`, `Contract Interface`, `Cutover Decision`, `Acceptance Evidence`, `Kill Criteria`, and `Forbidden Moves` before validation.
+4. Create or update `## Outcome Summary` with `Outcome Source`, `Interface`, `Cutover`, `Acceptance Proof`, `Stop Criteria`, and `Avoid` before validation.
 5. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
 6. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
 7. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
@@ -308,3 +308,4 @@ Options:
 - `Repair Issue Mirrors`: repair local mirror drift, then return to `project_issue_next_step`.
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
+

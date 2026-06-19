@@ -81,18 +81,18 @@ Dummy repo proves Superpowers Project artifacts.
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
 
-## Outcome Contract Summary
+## Outcome Summary
 
-**Outcome Contract Source:** docs/superpowers/plans/2026-06-02-dummy-plan.md#outcome-contract
+**Outcome Source:** docs/superpowers/plans/2026-06-02-dummy-plan.md#outcome-proof
 **Intent:** Prove dummy issue execution carries contract evidence.
-**Target-Perspective Output:** Maintainer sees dummy issue setup accepted with contract proof.
-**Truth Owner:** `scripts/lib/outcome-contract.ps1`
-**Contract Interface:** issue mirror Outcome Contract Summary fields
-**Cutover Decision:** Dummy issue validation requires the contract summary.
-**Displaced Path:** Dummy issue validation without contract evidence
-**Acceptance Evidence:** dummy repo validation returns `ok: true`.
-**Kill Criteria:** Reject dummy issue mirrors that omit contract proof.
-**Forbidden Moves:** Do not use detached goal-board evidence as the contract source.
+**Target Output:** Maintainer sees dummy issue setup accepted with contract proof.
+**Owner:** `scripts/lib/outcome-proof.ps1`
+**Interface:** issue mirror Outcome Summary fields
+**Cutover:** Dummy issue validation requires the outcome workflow.
+**Replaced Path:** Dummy issue validation without contract evidence
+**Acceptance Proof:** dummy repo validation returns `ok: true`.
+**Stop Criteria:** Reject dummy issue mirrors that omit contract proof.
+**Avoid:** Do not use detached goal-board evidence as the contract source.
 
 ## Project Merge
 
@@ -189,3 +189,4 @@ Dummy repo proves Superpowers Project artifacts.
         }
     }
 }
+

@@ -38,17 +38,17 @@ function New-FixtureRepo {
 function New-HappyLedger {
     [pscustomobject]@{
         plan_path = "docs/superpowers/plans/plan.md"
-        outcome_contract = [pscustomobject]@{
-            intent = "Adopt outcome contracts"
-            truth_owner = "scripts/lib/outcome-contract.ps1"
-            contract_interface = "structured outcome_contract ledger object"
-            cutover_decision = "extend existing execution proof"
-            displaced_path = "merge-ready proof without contract review"
-            acceptance_evidence = "contract review evidence is structured"
-            kill_criteria = "block merge-ready when contract review is missing"
-            forbidden_moves = @("docs/goals route", "string-only contract proof")
+        outcome_proof = [pscustomobject]@{
+            intent = "Adopt outcome proofs"
+            owner = "scripts/lib/outcome-proof.ps1"
+            interface = "structured outcome_proof ledger object"
+            cutover = "extend existing execution proof"
+            replaced_path = "merge-ready proof without readiness review"
+            acceptance_proof = "readiness review evidence is structured"
+            stop_criteria = "block merge-ready when readiness review is missing"
+            avoid = @("docs/goals route", "string-only contract proof")
         }
-        contract_review = [pscustomobject]@{
+        readiness_review = [pscustomobject]@{
             plan_alignment = $true
             correctness = $true
             maintainability = $true
@@ -98,8 +98,8 @@ $scenarios = @(
             'implement_plan_push_permission',
             'branch push proof',
             'merge-ready',
-            'outcome contract',
-            'contract review',
+            'outcome proof',
+            'readiness review',
             'local-branch',
             'open pull requests',
             'merge-changes'
@@ -171,22 +171,22 @@ $scenarios = @(
         try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "issue closure" }
         Assert-True $failed "issue closure claim should fail"
     }
-    Invoke-Scenario "contract rejects missing outcome contract and review evidence" {
+    Invoke-Scenario "contract rejects missing outcome proof and review evidence" {
         $repo = New-FixtureRepo
         $ledger = New-HappyLedger
-        $ledger.PSObject.Properties.Remove("outcome_contract")
+        $ledger.PSObject.Properties.Remove("outcome_proof")
         $failed = $false
-        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "outcome contract" }
-        Assert-True $failed "missing outcome contract should fail"
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "outcome proof" }
+        Assert-True $failed "missing outcome proof should fail"
 
         $ledger = New-HappyLedger
-        $ledger.PSObject.Properties.Remove("contract_review")
+        $ledger.PSObject.Properties.Remove("readiness_review")
         $failed = $false
-        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "contract review" }
-        Assert-True $failed "missing contract review should fail"
+        try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "readiness review" }
+        Assert-True $failed "missing readiness review should fail"
 
         $ledger = New-HappyLedger
-        $ledger.contract_review.reality_evidence = $false
+        $ledger.readiness_review.reality_evidence = $false
         $failed = $false
         try { Test-ImplementPlanLedger -RepoRoot $repo -Ledger $ledger | Out-Null } catch { $failed = $_.Exception.Message -match "reality_evidence" }
         Assert-True $failed "failed reality evidence review should fail"
@@ -230,3 +230,4 @@ $scenarios | ConvertTo-Json -Depth 6
 if ($failedScenarios.Count -gt 0) {
     throw "implement-plan scenario tests failed: $($failedScenarios.name -join ', ')"
 }
+

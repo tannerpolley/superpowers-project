@@ -237,9 +237,9 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode ledger validator failed" }
     }))
 
-    $results.Add((Invoke-Step "Contract summary generation" {
-        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-contract-summary.ps1") | Out-Host
-        if ($LASTEXITCODE -ne 0) { throw "Contract summary generation failed" }
+    $results.Add((Invoke-Step "Outcome workflow summary generation" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-outcome-workflow-summary.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Outcome workflow summary generation failed" }
     }))
 
     $results.Add((Invoke-Step "Stale skill contract detector" {
@@ -262,9 +262,9 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Plan task use cases failed" }
     }))
 
-    $results.Add((Invoke-Step "Plan outcome contract" {
-        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-plan-outcome-contract.ps1") | Out-Host
-        if ($LASTEXITCODE -ne 0) { throw "Plan outcome contract failed" }
+    $results.Add((Invoke-Step "Plan outcome proof" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-plan-outcome-proof.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Plan outcome proof failed" }
     }))
 
     $results.Add((Invoke-Step "Local project workflow smoke" {

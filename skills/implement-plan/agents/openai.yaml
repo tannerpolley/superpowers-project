@@ -6,13 +6,13 @@ interface:
     Require superpowers:executing-plans as the base method, require superpowers:test-driven-development for feature and bug work unless the approved plan records an explicit opt-out,
     require superpowers:systematic-debugging or diagnose for bugs, regressions, CI failures, performance work, or unclear failure modes, require superpowers:verification-before-completion before any success claim, commit,
     or local merge, and require superpowers:subagent-driven-development whenever worker topology is selected. Do not treat those companion skills as optional suggestions.
-    This route does not create issue mirrors, must not open pull requests, and must not claim GitHub issue closure. Require the approved plan's outcome contract before code edits and carry structured outcome contract evidence with intent,
-    truth owner, contract interface, cutover decision, displaced path, acceptance evidence, kill criteria, and forbidden moves. Require native `/goal` activation, a development branch,
+    This route does not create issue mirrors, must not open pull requests, and must not claim GitHub issue closure. Require the approved plan's outcome proof before code edits and carry structured outcome proof evidence with intent,
+    owner, interface, cutover, replaced path, acceptance proof, stop criteria, and avoid list. Require native `/goal` activation, a development branch,
     and Task # Use Cases as a strict requirement before actual implementation. Run validate-plan-task-use-cases.ps1 against the approved plan and block before branches, worker handoffs,
     or code edits if any numbered Task N lacks a non-empty **Use Cases:** block.
     request_user_input for implement_plan_topology when callable, or an Auto Mode authorization ledger from project_auto_mode_authorization validated by the plugin-provided Auto Mode validator with bounded-auto-merge,
     recorded defaults, preauthorized-after-clean-premerge, and stop outside policy, the approved plan proof oracle, cleanup evidence, implement_plan_push_permission with push-branch or hold only,
-    explicit branch push proof before merge-ready output, structured contract review evidence for plan alignment, correctness, maintainability, and reality evidence, and merge-ready output routed to merge-changes in local-branch mode.
+    explicit branch push proof before merge-ready output, structured readiness review evidence for plan alignment, correctness, maintainability, and reality evidence, and merge-ready output routed to merge-changes in local-branch mode.
     Before asking push permission, complete the artifact review gate, show verification evidence, explain what the results mean for the active goal and broader project context, and state the recommended next route.
     Do not ask for push approval first and explain later. Pull request routes are allowed only for issue-backed work with a companion issue mirror.
     Only use worker mode when the worker handoff names the orchestrator, role, plan path, branch, reporting path, and request_agent_input boundary. At closeout, complete the artifact review gate,
@@ -45,3 +45,4 @@ interface:
     If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other;
     otherwise ask the next best child question or baseline nested route and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer.
     The terminal option must be Stop until a verified final Done gate is reached.
+

@@ -27,7 +27,7 @@ The goal is to make every Superpowers Project implementation plan and issue mirr
 
 ### Design 1: Embedded Contract In Existing Skills
 
-Add a required Superpowers Project outcome contract to `write-plan`, copy the relevant fields into issue mirrors through `create-issues`, and require `implement-plan`, `resolve-issue`, and `merge-changes` to verify the same fields during execution and integration.
+Add a required Superpowers Project outcome proof to `write-plan`, copy the relevant fields into issue mirrors through `create-issues`, and require `implement-plan`, `resolve-issue`, and `merge-changes` to verify the same fields during execution and integration.
 
 This is the selected design. It gives Superpowers Project the Krypton benefits while preserving the current plugin interface and source-of-truth model.
 
@@ -59,25 +59,25 @@ This keeps the contract deep: one plan contract pays back across planning, issue
 
 ## Contract Shape
 
-Every implementation plan must include a `## Outcome Contract` section before task decomposition.
+Every implementation plan must include a `## Outcome Proof` section before task decomposition.
 
 Required fields:
 
 - **Intent:** the product, operator, or engineering outcome served.
 - **Current Behavior:** what exists now.
 - **Expected Outcome:** what should be true after the work.
-- **Target-Perspective Output:** what the target person or operator sees, receives, runs, inspects, or trusts.
-- **Truth Owner:** the module, artifact, or process that owns the durable truth.
-- **Contract Interface:** the interface that crosses from owner to consumer, including expected shape, invariants, and trust assumptions.
-- **Cutover Decision:** delete, redirect, demote, shim with removal trigger, or explicitly keep the old path.
-- **Displaced Path:** the behavior, artifact, route, doc, or source file that stops being current.
-- **Evidence Lane:** browser, API, CLI, generated artifact, persisted record, trace, GitHub state, or workflow ledger.
-- **Acceptance Evidence:** the exact target-perspective proof required.
-- **Kill Criteria:** what must happen if a temporary path, shim, or duplicate implementation cannot be proven or retired.
-- **Forbidden Moves:** changes the agent must not make because they would create wrong ownership, duplicate truth, or fake proof.
-- **Risk If Wrong:** what breaks or becomes misleading if the contract is violated.
+- **Target Output:** what the target person or operator sees, receives, runs, inspects, or trusts.
+- **Owner:** the module, artifact, or process that owns the durable truth.
+- **Interface:** the interface that crosses from owner to consumer, including expected shape, invariants, and trust assumptions.
+- **Cutover:** delete, redirect, demote, shim with removal trigger, or explicitly keep the old path.
+- **Replaced Path:** the behavior, artifact, route, doc, or source file that stops being current.
+- **Evidence:** browser, API, CLI, generated artifact, persisted record, trace, GitHub state, or workflow ledger.
+- **Acceptance Proof:** the exact target-perspective proof required.
+- **Stop Criteria:** what must happen if a temporary path, shim, or duplicate implementation cannot be proven or retired.
+- **Avoid:** changes the agent must not make because they would create wrong ownership, duplicate truth, or fake proof.
+- **Risk:** what breaks or becomes misleading if the contract is violated.
 
-Every plan must also include a `## Architecture Slice` section before tasks.
+Every plan must also include a `## Implementation Boundaries` section before tasks.
 
 Required fields:
 
@@ -89,14 +89,14 @@ Required fields:
 - **Write Path**
 - **Integration Points**
 - **Migration Or Cutover**
-- **Displaced Path Handling**
-- **Acceptance Evidence Gate**
+- **Replaced Path Handling**
+- **Acceptance Proof Gate**
 
 Fields may say that no displaced path exists only when the plan names why no old path is being replaced. Empty generic answers are invalid.
 
 ## Plan Integration
 
-`$superpowers-project:write-plan` should add the outcome contract after the existing required header and before `## Acceptance Criteria` or task sections.
+`$superpowers-project:write-plan` should add the outcome proof after the existing required header and before `## Acceptance Criteria` or task sections.
 
 The planning grill should ask native questions for unresolved contract fields before a plan is saved. If repo inspection can answer a field, the agent should inspect first and write the evidence instead of asking the user.
 
@@ -113,24 +113,24 @@ The plan is not ready when Task # Use Cases do not cover the contract's acceptan
 
 ## Issue Mirror Integration
 
-`$superpowers-project:create-issues` should copy a compact contract summary into every issue mirror created from a plan.
+`$superpowers-project:create-issues` should copy a compact outcome workflow into every issue mirror created from a plan.
 
 Issue mirror fields:
 
-- **Outcome Contract Source:** linked source plan and section.
+- **Outcome Source:** linked source plan and section.
 - **Intent**
-- **Target-Perspective Output**
-- **Truth Owner**
-- **Contract Interface**
-- **Cutover Decision**
-- **Displaced Path**
-- **Acceptance Evidence**
-- **Kill Criteria**
-- **Forbidden Moves**
+- **Target Output**
+- **Owner**
+- **Interface**
+- **Cutover**
+- **Replaced Path**
+- **Acceptance Proof**
+- **Stop Criteria**
+- **Avoid**
 
 For multi-issue plans, each issue mirror must say which part of the source contract it owns. An issue can narrow the contract for its slice, but it cannot contradict or drop the source plan's truth owner, contract interface, cutover, or evidence requirement.
 
-Issue mirror validation should reject issue-ready state when the mirror lacks the contract summary or when the summary conflicts with the source plan.
+Issue mirror validation should reject issue-ready state when the mirror lacks the outcome workflow or when the summary conflicts with the source plan.
 
 ## Execution Integration
 
@@ -164,14 +164,14 @@ Execution may continue only when the answer is recorded in the relevant artifact
 
 ## Review And Merge Integration
 
-Execution closeout should add four contract review lanes:
+Execution closeout should add four readiness review lanes:
 
 1. **Plan Alignment Review:** verifies implementation still matches intent, truth owner, contract interface, cutover, displaced path, acceptance evidence, and kill criteria.
 2. **Correctness Review:** verifies target behavior, security, data integrity, freshness, and trust assumptions.
 3. **Maintainability Review:** verifies no duplicate current-looking path, stale artifact, unclear ownership, misleading comment, or unnecessary indirection remains.
 4. **Reality Evidence Review:** verifies the target-perspective proof from the selected evidence lane.
 
-`$superpowers-project:merge-changes` should treat failed contract review as failed premerge proof. A passing test command or clean diff is supporting evidence, not enough by itself.
+`$superpowers-project:merge-changes` should treat failed readiness review as failed premerge proof. A passing test command or clean diff is supporting evidence, not enough by itself.
 
 Final `Done` remains governed by the existing merge and closeout gates. The Krypton-derived contract adds required proof content; it does not replace native continuation, merge approval, cleanup, issue close verification, or clean repo proof.
 
@@ -179,16 +179,16 @@ Final `Done` remains governed by the existing merge and closeout gates. The Kryp
 
 Add a plan contract validator, or extend the existing plan validator, to enforce:
 
-- `## Outcome Contract` exists.
-- all required outcome contract fields exist and are non-empty.
-- `## Architecture Slice` exists.
+- `## Outcome Proof` exists.
+- all required outcome proof fields exist and are non-empty.
+- `## Implementation Boundaries` exists.
 - all required architecture slice fields exist and are non-empty.
 - no field uses a generic answer when a concrete owner, interface, path, or evidence artifact is required.
 - Task # Use Cases include at least one use case tied to acceptance evidence and one tied to cutover or displaced path handling when those fields are active.
 
 Add issue mirror validation for:
 
-- contract summary exists.
+- outcome workflow exists.
 - contract source links to the source plan.
 - issue contract fields do not contradict source plan fields.
 - issue acceptance criteria and proof oracle cover the issue's contract slice.
@@ -203,7 +203,7 @@ Add execution and merge validation for:
 
 Missing contract fields block plan readiness.
 
-Missing issue contract summary blocks issue-ready execution.
+Missing issue outcome workflow blocks issue-ready execution.
 
 Contract drift during implementation blocks push, PR-ready handoff, or merge-ready output until the plan or issue mirror is revised and reviewed.
 
@@ -234,9 +234,9 @@ Required scenarios:
 
 ## Acceptance Criteria
 
-- Every saved implementation plan has a required Superpowers Project outcome contract.
+- Every saved implementation plan has a required Superpowers Project outcome proof.
 - Every saved implementation plan has an architecture slice that names source of truth, read path, write path, contract interface, cutover, displaced path handling, and evidence gate.
-- Every issue mirror created from a plan carries a compact contract summary linked to the source plan.
+- Every issue mirror created from a plan carries a compact outcome workflow linked to the source plan.
 - Issue execution cannot start when the issue mirror lacks or contradicts contract fields.
 - Implement and resolve setup ledgers carry contract fields from the approved plan or issue mirror.
 - PR-ready, merge-ready, premerge, and closeout evidence include plan alignment, correctness, maintainability, and target-perspective evidence reviews.
@@ -253,6 +253,7 @@ Required scenarios:
 
 ## Open Questions For Planning
 
-- Should the validator be one new `validate-plan-outcome-contract.ps1` script or an extension of `validate-plan-task-use-cases.ps1`?
+- Should the validator be one new `validate-plan-outcome-proof.ps1` script or an extension of `validate-plan-task-use-cases.ps1`?
 - Should issue mirror contract validation live in the create-issues mirror validator or a shared contract helper consumed by create, resolve, and merge scripts?
 - Which contract fields should become machine-readable ledger fields first if the implementation needs to land incrementally?
+

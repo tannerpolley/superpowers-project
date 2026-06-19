@@ -37,7 +37,7 @@ Legend:
 
 ## Source Line Reference Index
 
-`SKILL.md` is the source of exact question ids, prompts, option labels, route effects, and terminal leaves. `agents/openai.yaml` repeats most route summaries in one folded `default_prompt` on line 5 of each skill's YAML file; it is useful as a contract summary, but it is less precise than the `SKILL.md` blocks for exact prompts and child questions.
+`SKILL.md` is the source of exact question ids, prompts, option labels, route effects, and terminal leaves. `agents/openai.yaml` repeats most route summaries in one folded `default_prompt` on line 5 of each skill's YAML file; it is useful as a outcome workflow, but it is less precise than the `SKILL.md` blocks for exact prompts and child questions.
 
 Shared closeout semantics:
 
@@ -709,3 +709,4 @@ These are source gaps or tensions found while building the tree:
 - Nested Yes/Revisit route menus omit `Stop` and `Done`; only top-level closeout and final health gates include terminal options.
 - Intermediate gates use `Yes`, `Revisit`, and `Stop`; verified final health gates use `Done`, `Revisit`, and `Stop`.
 - Most `agents/openai.yaml` files compress the route tree into one folded line, which preserves the broad contract but does not carry every exact prompt, child question id, or option description from `SKILL.md`.
+

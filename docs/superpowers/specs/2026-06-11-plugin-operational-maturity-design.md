@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Turn the six follow-up improvements from the plugin contract hardening closeout into an official Superpowers Project spec. The goal is to move the plugin from locally validated and manually operated toward repeatable CI, release traceability, stale-thread detection, easier merge closeout, end-to-end smoke coverage, and a generated contract summary that a new agent can read quickly.
+Turn the six follow-up improvements from the plugin contract hardening closeout into an official Superpowers Project spec. The goal is to move the plugin from locally validated and manually operated toward repeatable CI, release traceability, stale-thread detection, easier merge closeout, end-to-end smoke coverage, and a generated outcome workflow that a new agent can read quickly.
 
 ## Project Context Evidence
 
@@ -33,7 +33,7 @@ The six improvements are:
 3. Stale-skill or stale-thread detector.
 4. Local-branch merge and closeout helper.
 5. End-to-end fixture smoke tests.
-6. Rendered contract summary page.
+6. Rendered outcome workflow page.
 
 The work should be planned as staged implementation slices so each slice can land with its own proof oracle. The highest-risk surfaces are CI portability and merge-closeout automation, because they touch environment assumptions and mutation-adjacent workflows.
 
@@ -297,7 +297,7 @@ Optional modes:
 
 True end-to-end coverage can become slow and brittle. The fixture should start narrow: one happy path plus two negative assertions around terminal gates. Broader GitHub-aware smoke tests should stay opt-in until fixture maintenance is proven cheap.
 
-## Improvement 6: Rendered Contract Summary Page
+## Improvement 6: Rendered Outcome Workflow Page
 
 ### Problem
 
@@ -312,7 +312,7 @@ The repo should expose a generated, rendered summary page that names the current
 Add a generated Markdown artifact such as:
 
 ```text
-docs/superpowers/CONTRACT_SUMMARY.md
+docs/superpowers/OUTCOME_WORKFLOW.md
 ```
 
 Add a generator such as:
@@ -366,7 +366,7 @@ Generated docs can become noisy if they dump too much source text. The generator
 
 ## Suggested Delivery Order
 
-1. Add contract markers and generated contract summary.
+1. Add contract markers and generated outcome workflow.
 2. Add stale-skill detector using those markers.
 3. Add CI-safe validation workflow.
 4. Add release receipt and version discipline.
@@ -378,7 +378,7 @@ This order makes later work easier because CI and smoke tests can rely on the su
 ## Milestone Linkage
 
 - `M0 - Governance`: CI validation, merge/closeout helper, end-to-end smoke tests, and terminal gate proof.
-- `M1 - Source Of Truth`: stale-skill detector, generated contract summary, source/live marker comparison, and drift prevention.
+- `M1 - Source Of Truth`: stale-skill detector, generated outcome workflow, source/live marker comparison, and drift prevention.
 - `M2 - Distribution`: release/version bump discipline and distribution-ready proof receipts.
 
 ## Proof Oracle Candidates
@@ -399,7 +399,7 @@ This order makes later work easier because CI and smoke tests can rely on the su
 - Should contract markers live in frontmatter, a dedicated `## Contract Markers` section, or generated metadata?
 - Should the stale detector inspect only source and live deployed copies by default, or should it also accept user-provided observed text from a stale thread?
 - Should the local-branch closeout helper push `main` by default after merge, or should that be a second apply-stage approval?
-- Should the rendered contract summary be fully generated or generated with a hand-written introduction?
+- Should the rendered outcome workflow be fully generated or generated with a hand-written introduction?
 
 ## Non-Goals
 
@@ -416,3 +416,4 @@ This order makes later work easier because CI and smoke tests can rely on the su
 - Scope check: the spec intentionally groups six related operational maturity improvements; implementation should still be split into smaller plans or issues.
 - Contradiction check: the spec preserves the hardened terminal gate model and does not make helper scripts responsible for user decisions.
 - Ambiguity check: open questions are planning choices, not missing direction for the six requested improvements.
+

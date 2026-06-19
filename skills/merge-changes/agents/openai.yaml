@@ -4,15 +4,15 @@ interface:
   default_prompt: >-
     Use $superpowers-project:merge-changes when a Superpowers Project issue-backed PR URL or worker handoff, or an approved local branch, is ready for main-thread integration.
     This route is the closeout adapter for superpowers:finishing-a-development-branch.
-    Require upstream superpowers:verification-before-completion proof plus structured contract_review proof with plan_alignment, correctness, maintainability, and reality_evidence all true,
+    Require upstream superpowers:verification-before-completion proof plus structured readiness_review proof with plan_alignment, correctness, maintainability, and reality_evidence all true,
     and do not treat merge-time judgment as a substitute for missing execution-time verification or branch-finish discipline.
     Auto Mode requires an Auto Mode authorization ledger from project_auto_mode_authorization validated by the plugin-provided Auto Mode validator with bounded-auto-merge, recorded defaults,
     preauthorized-after-clean-premerge, and stop outside policy; clean premerge proof satisfies merge approval before merging without more user input. Support merge_mode values pr-issue and local-branch only.
     PR options are allowed only when there is a companion issue mirror. In pr-issue mode, read the linked issue mirror, source plan, setup ledger, and PR-ready handoff;
     require exact PR issue closure, linked issue closeout, mirror cleanup, and milestone closed-summary proof.
-    In local-branch mode, require source plan linkage, contract review proof, clean synced main proof, validation proof, native merge approval, local merge proof,
+    In local-branch mode, require source plan linkage, readiness review proof, clean synced main proof, validation proof, native merge approval, local merge proof,
     branch/worktree cleanup, prune proof, cleanup hook proof, and clean repo proof.
-    Run collect-premerge-ledger.ps1 with ContractReviewJson when assembling PR Temp Plus Evidence and pass the generated ledger to premerge.ps1;
+    Run collect-premerge-ledger.ps1 with ReadinessReviewJson when assembling PR Temp Plus Evidence and pass the generated ledger to premerge.ps1;
     before asking project_merge_approval, complete the artifact review gate, show verification evidence, explain what the results mean for the active goal and broader project context, and state the recommended next route.
     Do not ask for approval first and explain later. Then ask native request_user_input question project_merge_approval with Merge and Decline options before merging; merge only after approval; sync default;
     delete only the owned branch; remove the owned worktree; run git fetch --prune and the repo cleanup hook; then run closeout.ps1 with mode-specific evidence,
@@ -50,3 +50,4 @@ interface:
     If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other;
     otherwise ask the next best child question or baseline nested route and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer.
     The terminal option must be Stop until a verified final Done gate is reached.
+

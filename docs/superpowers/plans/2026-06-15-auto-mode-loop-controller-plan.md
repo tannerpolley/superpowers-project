@@ -19,7 +19,7 @@
 - User-approved test-complete proof: focused Loop Controller tests, plan use-case validation, `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, and cleanup proof.
 - Existing Auto Mode proof surface: `scripts/lib/auto-mode-contract.ps1`, `scripts/validate-auto-mode-authorization.ps1`, `scripts/test-auto-mode-contract.ps1`.
 - Existing version proof surface: `scripts/get-agent-plugin-version.ps1`, `scripts/test-agent-plugin-version.ps1`.
-- Existing continuation proof surface: `scripts/test-native-continuation-loop.ps1`, `docs/superpowers/CONTRACT_SUMMARY.md`.
+- Existing continuation proof surface: `scripts/test-native-continuation-loop.ps1`, `docs/superpowers/OUTCOME_WORKFLOW.md`.
 
 ## Test-Complete Definition
 
@@ -47,7 +47,7 @@ No scientific or engineering numerical metrics are required. This is a workflow 
 - Terminal closeout validation rejects missing verifier proof, dirty repo state when a clean state is required, missing metrics, and invalid continuation decisions.
 - Metrics report generation records elapsed time, attempts, validation failures, retry count, human input count, PR/issue counts when present, final outcome, and accepted-change evidence.
 - Focused tests and full validation are wired into `scripts/validate.ps1`.
-- `docs/superpowers/CONTRACT_SUMMARY.md` includes the Loop Controller route and native question IDs after regeneration.
+- `docs/superpowers/OUTCOME_WORKFLOW.md` includes the Loop Controller route and native question IDs after regeneration.
 
 ## Non-Goals
 
@@ -76,7 +76,7 @@ No scientific or engineering numerical metrics are required. This is a workflow 
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `README.md`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
-- Modify: `docs/superpowers/CONTRACT_SUMMARY.md`
+- Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
 - Modify: `scripts/lib/project-skills.ps1`
 - Modify: `scripts/validate.ps1`
 - Modify: `CHANGELOG.md`
@@ -1070,7 +1070,7 @@ git commit -m "Add loop controller metrics fixture"
 
 Expected: commit succeeds.
 
-## Task 7: Validate, Regenerate Contract Summary, Sync, And Close Out
+## Task 7: Validate, Regenerate Outcome Workflow, Sync, And Close Out
 
 **Use Cases:**
 - Full repo validation proves the new skill does not break existing Superpowers Project contracts.
@@ -1079,7 +1079,7 @@ Expected: commit succeeds.
 - Cleanup proof shows the contracts-first implementation leaves no repo-owned background processes.
 
 **Files:**
-- Modify: `docs/superpowers/CONTRACT_SUMMARY.md`
+- Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
 - Modify: no other source files expected unless validation reports a specific broken contract.
 
 - [ ] **Step 1: Validate this saved plan's Task # Use Cases**
@@ -1103,7 +1103,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scrip
 
 Expected: both commands exit `0` and emit JSON with `"ok": true`.
 
-- [ ] **Step 3: Regenerate and validate the contract summary**
+- [ ] **Step 3: Regenerate and validate the outcome workflow**
 
 Run:
 
@@ -1112,7 +1112,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\generate-contract-su
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
 ```
 
-Expected: `docs/superpowers/CONTRACT_SUMMARY.md` lists `loop-controller`, `project_loop_next_step`, and `project_loop_final_health_gate`; the contract summary test exits `0`.
+Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` lists `loop-controller`, `project_loop_next_step`, and `project_loop_final_health_gate`; the outcome workflow test exits `0`.
 
 - [ ] **Step 4: Run full source validation**
 
@@ -1149,11 +1149,11 @@ Expected: output reports no matching leftover Codex processes under this repo.
 Run:
 
 ```powershell
-git add docs\superpowers\CONTRACT_SUMMARY.md
-git commit -m "Update contract summary for loop controller"
+git add docs\superpowers\OUTCOME_WORKFLOW.md
+git commit -m "Update outcome workflow for loop controller"
 ```
 
-Expected: commit succeeds if the generated contract summary changed. If no source file changed during closeout, record the validation receipts in the handoff instead of creating an empty commit.
+Expected: commit succeeds if the generated outcome workflow changed. If no source file changed during closeout, record the validation receipts in the handoff instead of creating an empty commit.
 
 ## Risk And Dependency Notes
 
@@ -1180,3 +1180,4 @@ Expected: commit succeeds if the generated contract summary changed. If no sourc
 - TDD policy: script and skill implementation tasks require `superpowers:test-driven-development`.
 - Debug policy: no bug or regression repair is planned, so `superpowers:systematic-debugging` is not required for the first implementation unless a failing validator needs diagnosis during execution.
 - Completion policy: final implementation completion requires `superpowers:verification-before-completion`, full validation, live-sync validation, and cleanup proof.
+

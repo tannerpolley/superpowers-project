@@ -33,7 +33,7 @@ No implementation route was used. This is a findings-first audit for later plann
 - `.codex-local/external/krypton/examples/acceptance-evidence.md`
 - `README.md`
 - `docs/superpowers/PROJECT_CONTEXT.md`
-- `docs/superpowers/CONTRACT_SUMMARY.md`
+- `docs/superpowers/OUTCOME_WORKFLOW.md`
 - `skills/write-plan/SKILL.md`
 - `skills/implement-plan/SKILL.md`
 - `skills/resolve-issue/SKILL.md`
@@ -82,7 +82,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 
 Add a fixture asserting that a plan with a Krypton-shaped `docs/goals` source is rejected unless the user explicitly opted into separate GoalBuddy work outside the default route.
 
-### P2: Krypton's outcome contract would strengthen `write-plan`, but it is not yet first-class in Superpowers Project plans
+### P2: Krypton's outcome proof would strengthen `write-plan`, but it is not yet first-class in Superpowers Project plans
 
 **Observed evidence:**
 
@@ -97,7 +97,7 @@ The plugin already has strong proof and native decision gates, but a plan can st
 
 **Repair requirement:**
 
-Add a Superpowers Project outcome contract section to `$superpowers-project:write-plan` before task decomposition. The section should preserve existing header shape and add required fields for:
+Add a Superpowers Project outcome proof section to `$superpowers-project:write-plan` before task decomposition. The section should preserve existing header shape and add required fields for:
 
 - intent and target-perspective output
 - current behavior and displaced path
@@ -138,7 +138,7 @@ Krypton does not need to become a separate workflow route. The useful part is th
 Thread Krypton-style role evidence into existing ledgers and artifact review gates:
 
 - `write-plan`: optional or required PRE plan-review evidence for high-risk plans.
-- `implement-plan` and `resolve-issue`: setup ledger fields carrying the outcome contract from the approved plan.
+- `implement-plan` and `resolve-issue`: setup ledger fields carrying the outcome proof from the approved plan.
 - `implement-plan` and `resolve-issue`: final evidence fields for post-plan alignment, correctness review, maintainability review, and target-perspective proof.
 - `merge-changes`: premerge proof should reject work when the contract drift, duplicate-path, or weak-evidence review fails.
 
@@ -188,12 +188,12 @@ Use `$superpowers-project:write-plan` to create one implementation plan from thi
 
 Recommended plan tasks:
 
-1. Extend the Project Plan contract with a Superpowers Project outcome contract section.
+1. Extend the Project Plan contract with a Superpowers Project outcome proof section.
 2. Add or extend plan validation for truth owner, contract interface, cutover, displaced path, evidence lane, and kill criteria.
-3. Carry outcome contract fields through implement/resolve setup and final evidence ledgers.
+3. Carry outcome proof fields through implement/resolve setup and final evidence ledgers.
 4. Add post-plan, correctness, maintainability, and target-perspective review fields to execution closeout proof.
 5. Add Krypton-inspired pressure scenario fixtures to repo-owned tests.
-6. Update README and contract summary after validation.
+6. Update README and outcome workflow after validation.
 
 ## Non-Findings
 
@@ -203,6 +203,7 @@ Recommended plan tasks:
 
 ## Open Questions
 
-- Should the outcome contract be mandatory for every plan or only for high-risk plans? The stronger default is every implementation plan, with lightweight "not applicable" explanations only for fields that truly do not apply.
+- Should the outcome proof be mandatory for every plan or only for high-risk plans? The stronger default is every implementation plan, with lightweight "not applicable" explanations only for fields that truly do not apply.
 - Should reviewer evidence be prose in the artifact review gate, structured ledger fields, or both? The stronger default is both: readable summary plus validator-consumable fields for execution and merge gates.
 - Should the local ignored Krypton download remain for manual comparison, or should it be removed after the repo-owned pressure fixtures are added?
+

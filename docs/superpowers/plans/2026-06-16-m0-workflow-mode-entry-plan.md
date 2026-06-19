@@ -6,7 +6,7 @@
 
 **Architecture:** Add mode selection at initiation, store it in a root-validated workflow mode ledger, and keep the existing skill-to-skill closeout flow underneath. Auto Mode remains one-route only; Looping Mode hands broad repeated maintenance to Loop Controller with budgets, proof, metrics, and per-candidate continuation.
 
-**Tech Stack:** PowerShell validators and tests, Markdown skill contracts, YAML skill metadata, generated contract summary, Mermaid and SVG workflow docs.
+**Tech Stack:** PowerShell validators and tests, Markdown skill contracts, YAML skill metadata, generated outcome workflow, Mermaid and SVG workflow docs.
 
 ---
 
@@ -34,7 +34,7 @@
 - Root validator rejects Looping Mode without budget, candidate scope, proof policy, or stop conditions.
 - Auto Mode remains one-route only and cannot continue to another candidate after closeout.
 - Looping Mode routes through Loop Controller and may select broad maintenance candidates one at a time after merge proof and budget re-checks.
-- README, plugin metadata, contract summary, Mermaid, and SVG surfaces expose the mode gate.
+- README, plugin metadata, outcome workflow, Mermaid, and SVG surfaces expose the mode gate.
 - Existing skill-to-skill flow remains intact after the mode gate is added.
 
 ## Non-Goals
@@ -72,7 +72,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 **Use Cases:**
 - A new agent can discover the Manual, Auto, and Looping modes from the router before choosing a task route.
 - A stale router that exposes Loop Controller only as a hidden skill route fails the contract.
-- README, metadata, and contract summary drift are caught before the plugin ships.
+- README, metadata, and outcome workflow drift are caught before the plugin ships.
 
 **Files:**
 - Create: `scripts/test-initiate-workflow-mode-gate.ps1`
@@ -106,7 +106,7 @@ try {
     $skill = Read-RepoText "skills/initiate-workflow/SKILL.md"
     $metadata = Read-RepoText "skills/initiate-workflow/agents/openai.yaml"
     $readme = Read-RepoText "README.md"
-    $summary = Read-RepoText "docs/superpowers/CONTRACT_SUMMARY.md"
+    $summary = Read-RepoText "docs/superpowers/OUTCOME_WORKFLOW.md"
     $mermaid = Read-RepoText "docs/assets/native-qa-main-flow-mermaid.md"
 
     foreach ($textCase in @(
@@ -512,7 +512,7 @@ Expected: both focused Loop Controller tests exit `0`, then commit succeeds.
 - Modify: `docs/assets/native-qa-main-flow-mermaid.md`
 - Modify: `docs/assets/native-qa-main-flow.svg`
 - Modify: `scripts/test-native-qa-svg.ps1`
-- Modify: `docs/superpowers/CONTRACT_SUMMARY.md`
+- Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
 - Test: `scripts/test-native-qa-svg.ps1`
 - Test: `scripts/test-contract-summary.ps1`
 
@@ -571,7 +571,7 @@ Also assert existing labels still exist:
 "Align Project"
 ```
 
-- [ ] **Step 4: Regenerate the contract summary.**
+- [ ] **Step 4: Regenerate the outcome workflow.**
 
 Run:
 
@@ -579,7 +579,7 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\generate-contract-summary.ps1
 ```
 
-Expected: `docs/superpowers/CONTRACT_SUMMARY.md` includes `project_workflow_mode` in the `initiate-workflow` row.
+Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` includes `project_workflow_mode` in the `initiate-workflow` row.
 
 - [ ] **Step 5: Verify docs and commit.**
 
@@ -589,7 +589,7 @@ Run:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-initiate-workflow-mode-gate.ps1
-git add README.md .codex-plugin/plugin.json docs/assets/native-qa-main-flow-mermaid.md docs/assets/native-qa-main-flow.svg scripts/test-native-qa-svg.ps1 docs/superpowers/CONTRACT_SUMMARY.md
+git add README.md .codex-plugin/plugin.json docs/assets/native-qa-main-flow-mermaid.md docs/assets/native-qa-main-flow.svg scripts/test-native-qa-svg.ps1 docs/superpowers/OUTCOME_WORKFLOW.md
 git commit -m "Document workflow mode entry"
 ```
 
@@ -685,3 +685,4 @@ Expected: commit succeeds or no changes remain.
 - TDD policy: all implementation tasks begin with failing contract or scenario tests before skill/script changes.
 - Debug policy: this is feature/workflow work, not a bug diagnosis plan.
 - Verification policy: completion requires focused tests, full validation, live sync validation, and cleanup proof.
+

@@ -40,22 +40,22 @@ function Assert-True {
     if (-not $Condition) { throw $Message }
 }
 
-function New-OutcomeContract {
+function New-OutcomeProof {
     [pscustomobject]@{
-        source = "docs/superpowers/plans/2026-06-02-sample-plan.md#outcome-contract"
+        source = "docs/superpowers/plans/2026-06-02-sample-plan.md#outcome-proof"
         intent = "Resolve the sample issue with contract continuity."
-        target_perspective_output = "Maintainer sees PR-ready evidence tied to the source contract."
-        truth_owner = "scripts/lib/outcome-contract.ps1"
-        contract_interface = "structured outcome_contract ledger object"
-        cutover_decision = "Resolve setup and PR-ready validation require contract evidence."
-        displaced_path = "PR-ready handoff without outcome contract proof"
-        acceptance_evidence = "validate-pr-ready.ps1 returns ok true with contract review."
-        kill_criteria = "Block PR-ready handoff when contract review is missing."
-        forbidden_moves = @("Do not use GoalBuddy board paths as the contract source.")
+        target_output = "Maintainer sees PR-ready evidence tied to the source contract."
+        owner = "scripts/lib/outcome-proof.ps1"
+        interface = "structured outcome_proof ledger object"
+        cutover = "Resolve setup and PR-ready validation require contract evidence."
+        replaced_path = "PR-ready handoff without outcome proof proof"
+        acceptance_proof = "validate-pr-ready.ps1 returns ok true with readiness review."
+        stop_criteria = "Block PR-ready handoff when readiness review is missing."
+        avoid = @("Do not use GoalBuddy board paths as the contract source.")
     }
 }
 
-function New-ContractReview {
+function New-ReadinessReview {
     [pscustomobject]@{
         plan_alignment = $true
         correctness = $true
@@ -101,18 +101,18 @@ function Write-IssueMirror {
 **Goal Command:** /goal Resolve sample issue
 **Branch:** codex/sample-issue
 
-## Outcome Contract Summary
+## Outcome Summary
 
-**Outcome Contract Source:** $SourcePlan#outcome-contract
+**Outcome Source:** $SourcePlan#outcome-proof
 **Intent:** Resolve the sample issue with contract continuity.
-**Target-Perspective Output:** Maintainer sees PR-ready evidence tied to the source contract.
-**Truth Owner:** `scripts/lib/outcome-contract.ps1`
-**Contract Interface:** structured outcome_contract ledger object
-**Cutover Decision:** Resolve setup and PR-ready validation require contract evidence.
-**Displaced Path:** PR-ready handoff without outcome contract proof
-**Acceptance Evidence:** validate-pr-ready.ps1 returns ok true with contract review.
-**Kill Criteria:** Block PR-ready handoff when contract review is missing.
-**Forbidden Moves:** Do not use GoalBuddy board paths as the contract source.
+**Target Output:** Maintainer sees PR-ready evidence tied to the source contract.
+**Owner:** `scripts/lib/outcome-proof.ps1`
+**Interface:** structured outcome_proof ledger object
+**Cutover:** Resolve setup and PR-ready validation require contract evidence.
+**Replaced Path:** PR-ready handoff without outcome proof proof
+**Acceptance Proof:** validate-pr-ready.ps1 returns ok true with readiness review.
+**Stop Criteria:** Block PR-ready handoff when readiness review is missing.
+**Avoid:** Do not use GoalBuddy board paths as the contract source.
 
 ## Acceptance Criteria
 
@@ -135,7 +135,7 @@ function New-Handoff {
         goal_objective = "Resolve https://github.com/example/repo/issues/12 on codex/sample-issue using docs/superpowers/issues/12-sample.md and docs/superpowers/plans/2026-06-02-sample-plan.md."
         proof_oracle = @("pwsh -NoProfile -Command 'exit 0'")
         required_checks_policy = "allow-none-with-local-proof"
-        outcome_contract = New-OutcomeContract
+        outcome_proof = New-OutcomeProof
     } | ConvertTo-Json -Depth 12 -Compress
 }
 
@@ -204,7 +204,7 @@ function New-SetupLedger {
         goal_objective = "Resolve https://github.com/example/repo/issues/12 on codex/sample-issue using docs/superpowers/issues/12-sample.md and docs/superpowers/plans/2026-06-02-sample-plan.md."
         goal_activation_proof = if ($null -eq $GoalProof) { (New-GoalProof | ConvertFrom-Json) } else { $GoalProof }
         execution_decision = (New-ExecutionDecision | ConvertFrom-Json)
-        outcome_contract = New-OutcomeContract
+        outcome_proof = New-OutcomeProof
         proof_oracle = @("pwsh -NoProfile -Command 'exit 0'")
         branch_inventory_before = @{ local = @("main"); remote = @() }
     }
@@ -220,8 +220,8 @@ function New-PrReadyLedger {
         pr_url = "https://github.com/example/repo/pull/5"
         issue_url = "https://github.com/example/repo/issues/12"
         branch = "codex/sample-issue"
-        outcome_contract = New-OutcomeContract
-        contract_review = New-ContractReview
+        outcome_proof = New-OutcomeProof
+        readiness_review = New-ReadinessReview
         branch_pushed = $true
         pr_closes_issue = $true
         push_permission = (New-PushPermission | ConvertFrom-Json)
@@ -306,12 +306,12 @@ try {
         Assert-True (-not $result.ok -and $result.reason -match "goal_board_path") "expected board path rejection"
     }
 
-    Invoke-Scenario "setup ledger rejects missing outcome contract" {
+    Invoke-Scenario "setup ledger rejects missing outcome proof" {
         $ledgerObject = New-SetupLedger | ConvertFrom-Json
-        $ledgerObject.PSObject.Properties.Remove("outcome_contract")
+        $ledgerObject.PSObject.Properties.Remove("outcome_proof")
         $ledger = $ledgerObject | ConvertTo-Json -Depth 16 -Compress
         $result = Invoke-JsonScript -ScriptName "validate-setup.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", $ledger)
-        Assert-True (-not $result.ok -and $result.reason -match "outcome[_ ]contract") "expected setup validation to require outcome contract"
+        Assert-True (-not $result.ok -and $result.reason -match "outcome[_ ]proof") "expected setup validation to require outcome proof"
     }
 
     Invoke-Scenario "tracked GoalBuddy board files are never required" {
@@ -388,7 +388,7 @@ try {
             "-PushPermissionJson", $pushPermission,
             "-AcceptanceCoverageJson", $acceptance,
             "-HandoffProofJson", $handoff,
-            "-ContractReviewJson", (New-ContractReview | ConvertTo-Json -Depth 8 -Compress),
+            "-ReadinessReviewJson", (New-ReadinessReview | ConvertTo-Json -Depth 8 -Compress),
             "-GoalCompletionProofJson", $goalCompletion,
             "-OutputDir", $outputDir
         )
@@ -420,7 +420,7 @@ try {
             "-PushPermissionJson", $pushPermission,
             "-AcceptanceCoverageJson", $acceptance,
             "-HandoffProofJson", $handoff,
-            "-ContractReviewJson", (New-ContractReview | ConvertTo-Json -Depth 8 -Compress),
+            "-ReadinessReviewJson", (New-ReadinessReview | ConvertTo-Json -Depth 8 -Compress),
             "-GoalCompletionProofJson", $goalCompletion
         )
         Assert-True ($collected.ok) $collected.reason
@@ -459,12 +459,12 @@ try {
         Assert-True (-not $result.ok -and $result.reason -match "push[_ ]permission") "expected missing push permission failure"
     }
 
-    Invoke-Scenario "PR-ready handoff rejects missing contract review" {
+    Invoke-Scenario "PR-ready handoff rejects missing readiness review" {
         $prReadyObject = New-PrReadyLedger | ConvertFrom-Json
-        $prReadyObject.PSObject.Properties.Remove("contract_review")
+        $prReadyObject.PSObject.Properties.Remove("readiness_review")
         $prReady = $prReadyObject | ConvertTo-Json -Depth 16 -Compress
         $result = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", $prReady)
-        Assert-True (-not $result.ok -and $result.reason -match "contract[_ ]review") "expected missing contract review failure"
+        Assert-True (-not $result.ok -and $result.reason -match "readiness[_ ]review") "expected missing readiness review failure"
     }
 
     Invoke-Scenario "resolve terminal closeout blocks missing continuation ledger" {
@@ -502,7 +502,7 @@ try {
 
     Invoke-Scenario "skill text declares native goal state machine" {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
-        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "Outcome Contract Summary", "outcome contract", "contract review", "native goal activation", "Superpowers execution", "PR-ready validation", "project_resolve_push_permission", "GoalBuddy boards are outside the default execution model", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the plugin-provided Auto Mode validator", "bounded-auto-merge", "recorded defaults", "stop outside policy")) {
+        foreach ($needle in @("repo gate", "issue mirror validation", "source plan validation", "Outcome Summary", "outcome proof", "readiness review", "native goal activation", "Superpowers execution", "PR-ready validation", "project_resolve_push_permission", "GoalBuddy boards are outside the default execution model", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the plugin-provided Auto Mode validator", "bounded-auto-merge", "recorded defaults", "stop outside policy")) {
             Assert-True ($text.Contains($needle)) "missing skill text: $needle"
         }
         foreach ($needle in @(
@@ -545,7 +545,7 @@ try {
 
     Invoke-Scenario "metadata declares executable continuation routing" {
         $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
-        foreach ($needle in @("summarize", "artifact review gate", "Outcome Contract Summary", "outcome_contract", "contract review", "plan_alignment", "reality_evidence", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill", "project_resolve_push_permission", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop")) {
+        foreach ($needle in @("summarize", "artifact review gate", "Outcome Summary", "outcome_proof", "readiness review", "plan_alignment", "reality_evidence", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill", "project_resolve_push_permission", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop")) {
             Assert-True ($metadata.Contains($needle)) "missing metadata continuation route: $needle"
         }
     }
@@ -581,3 +581,5 @@ $failed = @($results | Where-Object { -not $_.ok })
 } finally {
     if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 }
+
+

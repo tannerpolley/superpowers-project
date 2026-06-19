@@ -51,21 +51,21 @@ function Run-Hydration {
     $output | ConvertFrom-Json
 }
 
-function New-OutcomeContractSummary {
+function New-OutcomeProofSummary {
     param([string]$SourcePlan = "docs/superpowers/plans/2026-06-02-sample-plan.md")
 @"
-## Outcome Contract Summary
+## Outcome Summary
 
-**Outcome Contract Source:** $SourcePlan#outcome-contract
+**Outcome Source:** $SourcePlan#outcome-proof
 **Intent:** Enforce issue contract continuity.
-**Target-Perspective Output:** Maintainer sees issue execution blocked without contract proof.
-**Truth Owner:** ``scripts/lib/outcome-contract.ps1``
-**Contract Interface:** Markdown issue summary fields consumed by validators.
-**Cutover Decision:** Extend issue readiness validation.
-**Displaced Path:** Issue readiness without contract summary.
-**Acceptance Evidence:** issue validator returns ``ok: true``.
-**Kill Criteria:** Reject issue mirrors missing contract proof.
-**Forbidden Moves:** Do not use ``docs/goals`` as the issue source.
+**Target Output:** Maintainer sees issue execution blocked without contract proof.
+**Owner:** ``scripts/lib/outcome-proof.ps1``
+**Interface:** Markdown issue summary fields consumed by validators.
+**Cutover:** Extend issue readiness validation.
+**Replaced Path:** Issue readiness without outcome workflow.
+**Acceptance Proof:** issue validator returns ``ok: true``.
+**Stop Criteria:** Reject issue mirrors missing contract proof.
+**Avoid:** Do not use ``docs/goals`` as the issue source.
 "@
 }
 
@@ -118,7 +118,7 @@ Hydrate an externally created GitHub issue into local Superpowers Project artifa
 
 - ``pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1``
 
-$(New-OutcomeContractSummary -SourcePlan $SourcePlan)
+$(New-OutcomeProofSummary -SourcePlan $SourcePlan)
 "@ | Set-Content -LiteralPath $Path -Encoding utf8NoBOM
 }
 
@@ -157,11 +157,11 @@ $scenarios = @(
             "external GitHub issues are intake",
             "hydrate-external-issue.ps1",
             "Missing or malformed workflow metadata is blocking for every issue mirror",
-            "Outcome Contract Summary",
-            "Outcome Contract Source",
-            "Contract Interface",
-            "Cutover Decision",
-            "Kill Criteria"
+            "Outcome Summary",
+            "Outcome Source",
+            "Interface",
+            "Cutover",
+            "Stop Criteria"
         )) {
             Assert-Contains $text $needle "missing create-issues contract: $needle"
         }
@@ -206,8 +206,8 @@ $scenarios = @(
         Assert-Contains $metadata "flat canonical roots" "missing metadata flat root policy"
         Assert-Contains $metadata "issue mirrors include the GitHub issue number" "missing metadata issue filename policy"
         Assert-Contains $metadata "missing or malformed workflow metadata is blocking for every issue mirror" "missing metadata strict workflow metadata policy"
-        foreach ($needle in @("Outcome Contract Summary", "Outcome Contract Source", "Contract Interface", "Cutover Decision", "Kill Criteria")) {
-            Assert-Contains $metadata $needle "missing metadata outcome contract summary policy: $needle"
+        foreach ($needle in @("Outcome Summary", "Outcome Source", "Interface", "Cutover", "Stop Criteria")) {
+            Assert-Contains $metadata $needle "missing metadata outcome summary policy: $needle"
         }
         foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
@@ -279,7 +279,7 @@ $scenarios = @(
 
 - [ ] Sample issue can be resolved by an agent
 
-$(New-OutcomeContractSummary)
+$(New-OutcomeProofSummary)
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
             if (-not $result.ok) { throw $result.reason }
@@ -323,7 +323,7 @@ $(New-OutcomeContractSummary)
 
 - [ ] Sample issue can be resolved by an agent
 
-$(New-OutcomeContractSummary)
+$(New-OutcomeProofSummary)
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
             if ($result.ok -or $result.reason -ne "Execution Mode is required") { throw "expected Execution Mode to be required" }
@@ -331,7 +331,7 @@ $(New-OutcomeContractSummary)
             if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
         }
     }
-    Invoke-Scenario "issue mirror validator blocks missing outcome contract summary" {
+    Invoke-Scenario "issue mirror validator blocks missing outcome summary" {
         if (-not (Test-Path -LiteralPath $validatorFile -PathType Leaf)) { throw "missing validate-issue-mirror.ps1" }
         $root = Join-Path ([IO.Path]::GetTempPath()) ("create-issues-missing-contract-" + [guid]::NewGuid().ToString("N"))
         try {
@@ -340,7 +340,7 @@ $(New-OutcomeContractSummary)
             Set-Content -LiteralPath (Join-Path $root "docs\superpowers\plans\2026-06-02-sample-plan.md") -Value "# Sample Plan" -Encoding utf8NoBOM
             $issuePath = Join-Path $root "docs\superpowers\issues\15-missing-contract.md"
             @"
-# Missing Outcome Contract Summary
+# Missing Outcome Summary
 
 **GitHub Issue:** https://github.com/example/repo/issues/15
 **GitHub Milestone:** M1 - Source Of Truth
@@ -369,7 +369,7 @@ $(New-OutcomeContractSummary)
 - [ ] Sample issue can be resolved by an agent
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
-            if ($result.ok -or $result.reason -notmatch "Outcome Contract Summary") { throw "expected missing outcome contract summary to fail" }
+            if ($result.ok -or $result.reason -notmatch "Outcome Summary") { throw "expected missing outcome summary to fail" }
         } finally {
             if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
         }
@@ -411,7 +411,7 @@ $(New-OutcomeContractSummary)
 
 - [ ] Bug fix is verified
 
-$(New-OutcomeContractSummary -SourcePlan "docs/superpowers/specs/2026-06-02-bug-design.md")
+$(New-OutcomeProofSummary -SourcePlan "docs/superpowers/specs/2026-06-02-bug-design.md")
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
             if ($result.ok -or $result.reason -notmatch "repro|feedback") { throw "expected repro or feedback loop failure" }
@@ -554,3 +554,4 @@ $(New-OutcomeContractSummary -SourcePlan "docs/superpowers/specs/2026-06-02-bug-
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
+

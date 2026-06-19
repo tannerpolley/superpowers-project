@@ -74,7 +74,7 @@ try {
         "-RepoRoot", $repo,
         "-SetupLedgerPath", $setupPath,
         "-ValidationCommand", "exit 0",
-        "-ContractReviewJson", $contractReview,
+        "-ReadinessReviewJson", $contractReview,
         "-OutputDir", $outDir
     )
     Add-Check -Name "local branch prepare passes" -Ok ($prepare.exit_code -eq 0 -and $prepare.json.ok -eq $true) -Reason ([string]$prepare.json.reason)
@@ -147,3 +147,4 @@ try {
         }
     }
 }
+

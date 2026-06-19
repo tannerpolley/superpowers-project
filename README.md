@@ -83,15 +83,15 @@ Implementation plans must include `Task # Use Cases`: every numbered `Task N` ne
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <plan>
 ```
 
-## Outcome Contracts
+## Outcome Proofs
 
-Implementation plans must also include an `Outcome Contract` and `Architecture Slice`. The contract names the target outcome, truth owner, contract interface, cutover decision, displaced path, acceptance evidence, kill criteria, and forbidden moves. Issue mirrors carry that proof forward as an `Outcome Contract Summary`.
+Implementation plans must also include an `Outcome Proof` and `Implementation Boundaries`. The proof names the target outcome, owner, interface, cutover, replaced path, evidence, acceptance proof, stop criteria, avoid list, and risk. Issue mirrors carry that proof forward as an `Outcome Summary`.
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-contract.ps1 -PlanPath <plan>
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath <plan>
 ```
 
-`$superpowers-project:implement-plan` and `$superpowers-project:resolve-issue` carry the approved contract as structured `outcome_contract` ledger evidence. `$superpowers-project:merge-changes` requires structured `contract_review` proof with `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` all true before merge approval.
+`$superpowers-project:implement-plan` and `$superpowers-project:resolve-issue` carry the approved proof as structured `outcome_proof` ledger evidence. `$superpowers-project:merge-changes` requires structured `readiness_review` proof with `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` all true before merge approval.
 
 ## Implement Plan
 
@@ -183,3 +183,4 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
 After install, start with `$superpowers-project:initiate-workflow` in Codex to route setup, brainstorming, code/workflow audits, planning, issue creation, issue resolution, orchestration, merge cleanup, or alignment checks.
+

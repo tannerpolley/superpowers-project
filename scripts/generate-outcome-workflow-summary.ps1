@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path,
-    [string]$OutputPath = (Join-Path (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path "docs\superpowers\CONTRACT_SUMMARY.md")
+    [string]$OutputPath = (Join-Path (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path "docs\superpowers\OUTCOME_WORKFLOW.md")
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,9 +32,9 @@ $canonicalNamespace = Get-ProjectCanonicalPromptNamespace
 $lines = [System.Collections.Generic.List[string]]::new()
 
 foreach ($line in @(
-    '# Superpowers Project Contract Summary',
+    '# Superpowers Project Outcome Workflow',
     '',
-    '> Generated from repo source by `scripts/generate-contract-summary.ps1`. Do not edit by hand.',
+    '> Generated from repo source by `scripts/generate-outcome-workflow-summary.ps1`. Do not edit by hand.',
     '',
     '## Canonical Identity',
     '',
@@ -55,14 +55,14 @@ foreach ($line in @(
     '- Every numbered `Task N` in an implementation plan must include a non-empty `**Use Cases:**` block before files and steps.',
     '- `scripts/validate-plan-task-use-cases.ps1 -PlanPath <plan>` is mandatory before a plan is ready, before `$superpowers-project:implement-plan` edits code, and before `$superpowers-project:resolve-issue` executes a linked source plan.',
     '',
-    '## Outcome Contracts And Contract Review',
+    '## Outcome Proof And Readiness Review',
     '',
-    '- Plans require an `Outcome Contract` and `Architecture Slice` before implementation.',
-    '- `scripts/validate-plan-outcome-contract.ps1 -PlanPath <plan>` validates intent, truth owner, contract interface, cutover decision, displaced path, acceptance evidence, kill criteria, forbidden moves, and architecture slice fields.',
-    '- Issue mirrors must include an `Outcome Contract Summary` derived from the approved source plan.',
-    '- `$superpowers-project:implement-plan` and `$superpowers-project:resolve-issue` carry structured `outcome_contract` proof through execution ledgers.',
-    '- `$superpowers-project:merge-changes` requires structured `contract_review` proof before merge approval.',
-    '- `contract_review` must show `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` all true.',
+    '- Plans require an `Outcome Proof` and `Implementation Boundaries` before implementation.',
+    '- `scripts/validate-plan-outcome-proof.ps1 -PlanPath <plan>` validates intent, owner, interface, cutover, replaced path, evidence, acceptance proof, stop criteria, avoid, risk, and implementation boundary fields.',
+    '- Issue mirrors must include an `Outcome Summary` derived from the approved source plan.',
+    '- `$superpowers-project:implement-plan` and `$superpowers-project:resolve-issue` carry structured `outcome_proof` proof through execution ledgers.',
+    '- `$superpowers-project:merge-changes` requires structured `readiness_review` proof before merge approval.',
+    '- `readiness_review` must show `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` all true.',
     '',
     '## Terminal Model',
     '',
@@ -146,7 +146,7 @@ foreach ($line in @(
     '',
     '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`',
     '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`',
-    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1`',
+    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-outcome-workflow-summary.ps1`',
     '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent`',
     '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`'
 )) {
@@ -161,7 +161,8 @@ Set-Content -LiteralPath $targetPath -Value $output -Encoding utf8NoBOM
 
 [pscustomobject]@{
     ok = $true
-    phase = "generate-contract-summary"
+    phase = "generate-outcome-workflow-summary"
     output_path = [IO.Path]::GetFullPath($targetPath)
     workflow_skill_count = $workflowSkills.Count
 } | ConvertTo-Json -Depth 8
+

@@ -23,7 +23,7 @@
 - [ ] Stale skill detection has a source-owned script that reports source/live/metadata contract markers and missing expected question ids.
 - [ ] Local-branch merge closeout has prepare/apply helpers that preserve native approval boundaries.
 - [ ] End-to-end smoke coverage has a safe local-only fixture test.
-- [ ] A generated contract summary exists and validation fails when it drifts from source.
+- [ ] A generated outcome workflow exists and validation fails when it drifts from source.
 - [ ] `scripts/validate.ps1` wires all new validators.
 - [ ] `scripts/sync-live.ps1 -Validate` passes after implementation.
 
@@ -55,18 +55,18 @@ This is a workflow/plugin governance change. Numerical metrics are not applicabl
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
 
-## Task 1: Generate Contract Summary
+## Task 1: Generate Outcome Workflow
 
 **Files:**
 - Create: `scripts/generate-contract-summary.ps1`
 - Create: `scripts/test-contract-summary.ps1`
-- Create: `docs/superpowers/CONTRACT_SUMMARY.md`
+- Create: `docs/superpowers/OUTCOME_WORKFLOW.md`
 - Modify: `scripts/validate.ps1`
 
 - [ ] **Step 1: Add generator**
   - Parse active workflow skills from `scripts/lib/project-skills.ps1`.
   - Extract skill frontmatter name, description, question ids, final gate ids, and key contract markers.
-  - Emit deterministic Markdown to `docs/superpowers/CONTRACT_SUMMARY.md`.
+  - Emit deterministic Markdown to `docs/superpowers/OUTCOME_WORKFLOW.md`.
 - [ ] **Step 2: Add summary validator**
   - Generate to temp and compare normalized content against the checked-in summary.
   - Fail if a workflow skill, question id, final gate, canonical namespace, or validation command is missing.
@@ -187,3 +187,4 @@ This is a workflow/plugin governance change. Numerical metrics are not applicabl
   - Commit.
   - Push branch.
   - Use merge-changes local-branch mode with preauthorized clean premerge proof from Auto Mode.
+

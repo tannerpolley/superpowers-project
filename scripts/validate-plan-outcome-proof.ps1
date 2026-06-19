@@ -5,7 +5,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\outcome-contract.ps1")
+. (Join-Path $PSScriptRoot "lib\outcome-proof.ps1")
 
 function Normalize-RelativePath {
     param([string]$Path)
@@ -35,10 +35,10 @@ try {
     }
 
     $text = Get-Content -LiteralPath $planFull -Raw
-    $result = Test-PlanOutcomeContract -Text $text
+    $result = Test-PlanOutcomeProof -Text $text
     [pscustomobject]@{
         ok = [bool]$result.ok
-        phase = "plan-outcome-contract"
+        phase = "plan-outcome-proof"
         plan_path = $relativePlan
         reason = [string]$result.reason
         fields = $result.fields
@@ -47,7 +47,7 @@ try {
 } catch {
     [pscustomobject]@{
         ok = $false
-        phase = "plan-outcome-contract"
+        phase = "plan-outcome-proof"
         reason = $_.Exception.Message
     } | ConvertTo-Json -Depth 8
     exit 1

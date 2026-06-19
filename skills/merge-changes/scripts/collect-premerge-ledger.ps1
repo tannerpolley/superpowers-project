@@ -10,8 +10,8 @@ param(
     [string]$IssueFixturePath,
     [string[]]$VerificationCommands = @(),
     [string[]]$ChangedFilesCovered = @(),
-    [string]$ContractReviewJson,
-    [string]$ContractReviewPath,
+    [string]$ReadinessReviewJson,
+    [string]$ReadinessReviewPath,
     [string]$OutputDir
 )
 
@@ -99,8 +99,8 @@ try {
     $setup = Read-JsonInput -Path $SetupLedgerPath -Name "setup ledger"
     $pr = Get-PrEvidence
     $issue = Get-IssueEvidence
-    $contractReview = Read-JsonInput -Json $ContractReviewJson -Path $ContractReviewPath -Name "contract review"
-    Assert-ContractReviewProof -Proof $contractReview
+    $readinessReview = Read-JsonInput -Json $ReadinessReviewJson -Path $ReadinessReviewPath -Name "readiness review"
+    Assert-ReadinessReviewProof -Proof $readinessReview
     $covered = Expand-ListValues $ChangedFilesCovered
     if ($covered.Count -eq 0) {
         $covered = @($pr.files | ForEach-Object { Normalize-RepoPath ([string]$_.path) })
@@ -114,7 +114,7 @@ try {
         changed_files_covered = @($covered | ForEach-Object { Normalize-RepoPath $_ })
         verification_exemptions = @()
         proof_commands = $proof
-        contract_review = $contractReview
+        readiness_review = $readinessReview
     }
     if ($ledger.proof_commands.Count -eq 0) { throw "VerificationCommands is required" }
     $ledgerPath = New-OutputPath -OutputDir $OutputDir

@@ -13,7 +13,7 @@ The goal is to make agent freedom explicit before routing begins. The existing s
 - `skills/loop-controller/SKILL.md` already defines Loop Controller as the run coordinator with run ledgers, budgets, candidate selection, verifier proof, metrics, and native continuation gates.
 - `docs/superpowers/specs/2026-06-15-auto-mode-loop-controller-design.md` already separates Manual Mode, Auto Mode, and Loop Controller conceptually, but the current router and diagrams do not make those modes the first workflow decision.
 - `docs/assets/native-qa-main-flow-mermaid.md` shows the existing skill-to-skill closeout flow. It starts at `Initiate Workflow` and routes into setup/spec/audit/plan/issue/implementation/merge/align without a top-level mode decision.
-- `README.md` and `docs/superpowers/CONTRACT_SUMMARY.md` expose Loop Controller as a workflow skill, but they do not yet define Manual, Auto, and Looping as the three entry modes for `initiate-workflow`.
+- `README.md` and `docs/superpowers/OUTCOME_WORKFLOW.md` expose Loop Controller as a workflow skill, but they do not yet define Manual, Auto, and Looping as the three entry modes for `initiate-workflow`.
 
 ## User Decisions
 
@@ -172,7 +172,7 @@ After a candidate is merged, Loop Controller should search for existing candidat
 
 ### Documentation And Diagrams
 
-Update `README.md`, `docs/superpowers/CONTRACT_SUMMARY.md`, and the Native Q&A Mermaid/SVG flow assets to show the mode gate before the existing flowchart.
+Update `README.md`, `docs/superpowers/OUTCOME_WORKFLOW.md`, and the Native Q&A Mermaid/SVG flow assets to show the mode gate before the existing flowchart.
 
 The existing skill-to-skill flow should remain recognizable. The new diagram should show:
 
@@ -232,7 +232,7 @@ Looping Mode may skip a failed candidate and continue only when the failure is c
 The implementation plan should add focused tests for:
 
 - `initiate-workflow` exposes `project_workflow_mode`.
-- `Manual Mode`, `Auto Mode`, and `Looping Mode` appear in skill text, metadata, README, and generated contract summary.
+- `Manual Mode`, `Auto Mode`, and `Looping Mode` appear in skill text, metadata, README, and generated outcome workflow.
 - mode ledger validator accepts valid fixtures for all three modes.
 - mode ledger validator rejects unknown mode names.
 - Auto Mode fixtures fail when they include queue continuation authority.
@@ -261,7 +261,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Valid
 ## Milestone Linkage
 
 - `M0 - Governance`: owns the mode gate, approval boundaries, terminal model, and validator contracts.
-- `M1 - Source Of Truth`: owns generated docs, contract summary, diagram consistency, and stale-surface detection.
+- `M1 - Source Of Truth`: owns generated docs, outcome workflow, diagram consistency, and stale-surface detection.
 - `M2 - Distribution`: owns eventual automation templates and operational docs for repeated maintenance runs.
 
 ## Non-Goals
@@ -290,3 +290,4 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Valid
 - Ambiguity check: the remaining open questions are planning-level placement and storage choices, not unresolved product direction.
 - Proof check: the spec names validator and scenario tests that can prove the mode gate without requiring real GitHub mutation.
 - Safety check: the spec preserves existing skill ownership, native approval gates, final proof, budget checks, and clean-state requirements.
+

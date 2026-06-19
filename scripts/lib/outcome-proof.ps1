@@ -1,22 +1,22 @@
 $ErrorActionPreference = "Stop"
 
-$script:OutcomeContractFields = @(
+$script:OutcomeProofFields = @(
     "Intent",
     "Current Behavior",
     "Expected Outcome",
-    "Target-Perspective Output",
-    "Truth Owner",
-    "Contract Interface",
-    "Cutover Decision",
-    "Displaced Path",
-    "Evidence Lane",
-    "Acceptance Evidence",
-    "Kill Criteria",
-    "Forbidden Moves",
-    "Risk If Wrong"
+    "Target Output",
+    "Owner",
+    "Interface",
+    "Cutover",
+    "Replaced Path",
+    "Evidence",
+    "Acceptance Proof",
+    "Stop Criteria",
+    "Avoid",
+    "Risk"
 )
 
-$script:ArchitectureSliceFields = @(
+$script:ImplementationBoundaryFields = @(
     "Files To Create",
     "Files To Modify",
     "Files To Avoid",
@@ -25,21 +25,21 @@ $script:ArchitectureSliceFields = @(
     "Write Path",
     "Integration Points",
     "Migration Or Cutover",
-    "Displaced Path Handling",
-    "Acceptance Evidence Gate"
+    "Replaced Path Handling",
+    "Acceptance Proof Gate"
 )
 
-$script:IssueOutcomeContractFields = @(
-    "Outcome Contract Source",
+$script:IssueOutcomeSummaryFields = @(
+    "Outcome Source",
     "Intent",
-    "Target-Perspective Output",
-    "Truth Owner",
-    "Contract Interface",
-    "Cutover Decision",
-    "Displaced Path",
-    "Acceptance Evidence",
-    "Kill Criteria",
-    "Forbidden Moves"
+    "Target Output",
+    "Owner",
+    "Interface",
+    "Cutover",
+    "Replaced Path",
+    "Acceptance Proof",
+    "Stop Criteria",
+    "Avoid"
 )
 
 function Get-MarkdownSection {
@@ -55,7 +55,7 @@ function Get-MarkdownSection {
     $match.Groups["body"].Value
 }
 
-function Get-ContractFieldValue {
+function Get-OutcomeFieldValue {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
         [Parameter(Mandatory = $true)][string]$Name
@@ -74,7 +74,7 @@ function Get-ContractFieldValue {
     $null
 }
 
-function Test-ConcreteContractValue {
+function Test-ConcreteOutcomeValue {
     param(
         [Parameter(Mandatory = $true)][string]$Field,
         [AllowNull()][string]$Value
@@ -89,18 +89,18 @@ function Test-ConcreteContractValue {
         return [pscustomobject]@{ ok = $false; reason = "$Field uses a generic value" }
     }
 
-    if ($Field -eq "Acceptance Evidence" -and $trimmed -match '^(tests?\s+pass(?:ed)?|unit tests?\s+pass(?:ed)?|lint\s+pass(?:ed)?|diff\s+reviewed)$') {
-        return [pscustomobject]@{ ok = $false; reason = "Acceptance Evidence must prove target-perspective behavior, not only tests or diffs" }
+    if ($Field -eq "Acceptance Proof" -and $trimmed -match '^(tests?\s+pass(?:ed)?|unit tests?\s+pass(?:ed)?|lint\s+pass(?:ed)?|diff\s+reviewed)$') {
+        return [pscustomobject]@{ ok = $false; reason = "Acceptance Proof must prove target-perspective behavior, not only tests or diffs" }
     }
 
-    if ($Field -eq "Evidence Lane" -and $trimmed -match '^(tests?|unit tests?|lint|diff)$') {
-        return [pscustomobject]@{ ok = $false; reason = "Evidence Lane must name a target-perspective lane" }
+    if ($Field -eq "Evidence" -and $trimmed -match '^(tests?|unit tests?|lint|diff)$') {
+        return [pscustomobject]@{ ok = $false; reason = "Evidence must name a target-perspective lane" }
     }
 
     [pscustomobject]@{ ok = $true; reason = "passed" }
 }
 
-function Test-RequiredContractFields {
+function Test-RequiredOutcomeFields {
     param(
         [Parameter(Mandatory = $true)][string]$SectionText,
         [Parameter(Mandatory = $true)][string[]]$Fields,
@@ -109,8 +109,8 @@ function Test-RequiredContractFields {
 
     $values = [ordered]@{}
     foreach ($field in $Fields) {
-        $value = Get-ContractFieldValue -Text $SectionText -Name $field
-        $valueCheck = Test-ConcreteContractValue -Field $field -Value $value
+        $value = Get-OutcomeFieldValue -Text $SectionText -Name $field
+        $valueCheck = Test-ConcreteOutcomeValue -Field $field -Value $value
         if (-not $valueCheck.ok) {
             return [pscustomobject]@{
                 ok = $false
@@ -160,13 +160,13 @@ function Get-TaskUseCaseLines {
     @($useCases)
 }
 
-function Test-TaskUseCaseContractCoverage {
+function Test-TaskUseCaseOutcomeCoverage {
     param([Parameter(Mandatory = $true)][string]$Text)
 
     $lines = [string[]]($Text -split "\r?\n")
     $useCases = @(Get-TaskUseCaseLines -Lines $lines)
     if ($useCases.Count -eq 0) {
-        return [pscustomobject]@{ ok = $false; reason = "Task # Use Cases are required to cover outcome contract evidence and cutover" }
+        return [pscustomobject]@{ ok = $false; reason = "Task # Use Cases are required to cover outcome evidence and cutover" }
     }
 
     $combined = ($useCases -join "`n").ToLowerInvariant()
@@ -179,64 +179,65 @@ function Test-TaskUseCaseContractCoverage {
     [pscustomobject]@{ ok = $true; reason = "passed"; use_case_count = $useCases.Count }
 }
 
-function Test-PlanOutcomeContract {
+function Test-PlanOutcomeProof {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$Text)
 
-    $outcomeSection = Get-MarkdownSection -Text $Text -Name "Outcome Contract"
+    $outcomeSection = Get-MarkdownSection -Text $Text -Name "Outcome Proof"
     if ($null -eq $outcomeSection) {
-        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-contract"; reason = "missing ## Outcome Contract"; fields = @{} }
+        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-proof"; reason = "missing ## Outcome Proof"; fields = @{} }
     }
 
-    $outcome = Test-RequiredContractFields -SectionText $outcomeSection -Fields $script:OutcomeContractFields -SectionName "Outcome Contract"
+    $outcome = Test-RequiredOutcomeFields -SectionText $outcomeSection -Fields $script:OutcomeProofFields -SectionName "Outcome Proof"
     if (-not $outcome.ok) {
-        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-contract"; reason = $outcome.reason; fields = $outcome.fields }
+        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-proof"; reason = $outcome.reason; fields = $outcome.fields }
     }
 
-    $architectureSection = Get-MarkdownSection -Text $Text -Name "Architecture Slice"
+    $architectureSection = Get-MarkdownSection -Text $Text -Name "Implementation Boundaries"
     if ($null -eq $architectureSection) {
-        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-contract"; reason = "missing ## Architecture Slice"; fields = $outcome.fields }
+        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-proof"; reason = "missing ## Implementation Boundaries"; fields = $outcome.fields }
     }
 
-    $architecture = Test-RequiredContractFields -SectionText $architectureSection -Fields $script:ArchitectureSliceFields -SectionName "Architecture Slice"
+    $architecture = Test-RequiredOutcomeFields -SectionText $architectureSection -Fields $script:ImplementationBoundaryFields -SectionName "Implementation Boundaries"
     if (-not $architecture.ok) {
-        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-contract"; reason = $architecture.reason; fields = $outcome.fields }
+        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-proof"; reason = $architecture.reason; fields = $outcome.fields }
     }
 
-    $coverage = Test-TaskUseCaseContractCoverage -Text $Text
+    $coverage = Test-TaskUseCaseOutcomeCoverage -Text $Text
     if (-not $coverage.ok) {
-        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-contract"; reason = $coverage.reason; fields = $outcome.fields }
+        return [pscustomobject]@{ ok = $false; phase = "plan-outcome-proof"; reason = $coverage.reason; fields = $outcome.fields }
     }
 
     [pscustomobject]@{
         ok = $true
-        phase = "plan-outcome-contract"
-        reason = "outcome contract passed"
+        phase = "plan-outcome-proof"
+        reason = "outcome proof passed"
         fields = [ordered]@{
-            outcome_contract = $outcome.fields
-            architecture_slice = $architecture.fields
+            outcome_proof = $outcome.fields
+            implementation_boundaries = $architecture.fields
         }
     }
 }
 
-function Test-IssueOutcomeContractSummary {
+function Test-IssueOutcomeSummary {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$Text)
 
-    $summarySection = Get-MarkdownSection -Text $Text -Name "Outcome Contract Summary"
+    $summarySection = Get-MarkdownSection -Text $Text -Name "Outcome Summary"
     if ($null -eq $summarySection) {
-        return [pscustomobject]@{ ok = $false; phase = "issue-outcome-contract"; reason = "missing ## Outcome Contract Summary"; fields = @{} }
+        return [pscustomobject]@{ ok = $false; phase = "issue-outcome-summary"; reason = "missing ## Outcome Summary"; fields = @{} }
     }
 
-    $summary = Test-RequiredContractFields -SectionText $summarySection -Fields $script:IssueOutcomeContractFields -SectionName "Outcome Contract Summary"
+    $summary = Test-RequiredOutcomeFields -SectionText $summarySection -Fields $script:IssueOutcomeSummaryFields -SectionName "Outcome Summary"
     if (-not $summary.ok) {
-        return [pscustomobject]@{ ok = $false; phase = "issue-outcome-contract"; reason = $summary.reason; fields = $summary.fields }
+        return [pscustomobject]@{ ok = $false; phase = "issue-outcome-summary"; reason = $summary.reason; fields = $summary.fields }
     }
 
-    $source = [string]$summary.fields["Outcome Contract Source"]
+    $source = [string]$summary.fields["Outcome Source"]
     if (($source -replace '\\', '/') -match '(^|/)docs/goals(/|$)') {
-        return [pscustomobject]@{ ok = $false; phase = "issue-outcome-contract"; reason = "Outcome Contract Source must not use docs/goals"; fields = $summary.fields }
+        return [pscustomobject]@{ ok = $false; phase = "issue-outcome-summary"; reason = "Outcome Source must not use docs/goals"; fields = $summary.fields }
     }
 
-    [pscustomobject]@{ ok = $true; phase = "issue-outcome-contract"; reason = "issue outcome contract summary passed"; fields = $summary.fields }
+    [pscustomobject]@{ ok = $true; phase = "issue-outcome-summary"; reason = "issue outcome summary passed"; fields = $summary.fields }
 }
+

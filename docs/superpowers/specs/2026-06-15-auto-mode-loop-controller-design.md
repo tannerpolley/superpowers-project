@@ -13,7 +13,7 @@ The goal is to move from "the agent may continue through this approved route" to
 - `scripts/lib/auto-mode-contract.ps1` validates Auto Mode authorization fields such as `project_auto_mode_authorization`, `bounded-auto-merge`, `recorded-defaults`, `stop_outside_policy`, `mutation_scope`, `required_proof`, and `stop_conditions`.
 - `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md` already added CI, release receipts, stale contract detection, local-branch closeout helpers, e2e smoke tests, and generated contract summaries. Loop Controller should build on those mature surfaces instead of replacing them.
 - `README.md` documents strict native continuation geometry: intermediate gates use `Yes`, `Revisit`, and `Stop`; final health gates use `Done`, `Revisit`, and `Stop`; saved artifacts, pushed branches, created issues, merged PRs, completed audits, and live sync are not terminal by themselves.
-- `docs/superpowers/CONTRACT_SUMMARY.md` records the current approval boundaries: push, publish, merge, board creation, GitHub mutation, Auto Mode authorization, and final `Done` require explicit proof and owning gates.
+- `docs/superpowers/OUTCOME_WORKFLOW.md` records the current approval boundaries: push, publish, merge, board creation, GitHub mutation, Auto Mode authorization, and final `Done` require explicit proof and owning gates.
 - Recent issue #44 resolution proved why loop terminal behavior must be script-backed: PR-ready evidence is not terminal without a structured continuation decision or a follow-on `merge-changes` route.
 
 ## External Reference Inputs
@@ -212,7 +212,7 @@ Loop Controller should define templates, not immediately require them:
 - milestone drift audit;
 - issue mirror sync audit;
 - dependency/security alert triage;
-- contract summary freshness check.
+- outcome workflow freshness check.
 
 Automations are entrypoints. The Loop Controller remains the shared state, budget, verification, and metrics engine.
 
@@ -381,7 +381,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scrip
 
 ## Suggested Delivery Slices
 
-1. Add the `loop-controller` skill shell, metadata, README row, and contract summary support.
+1. Add the `loop-controller` skill shell, metadata, README row, and outcome workflow support.
 2. Add run ledger schema and validator.
 3. Add budget validator and repeated-failure stop tests.
 4. Add candidate selector fixture contract.
@@ -395,7 +395,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scrip
 ## Milestone Linkage
 
 - `M0 - Governance`: loop state machine, budgets, verifier proof, terminal closeout, native gates, and safety guards.
-- `M1 - Source Of Truth`: run ledger schema, candidate inventory, contract summary integration, stale version blocking, and artifact ownership.
+- `M1 - Source Of Truth`: run ledger schema, candidate inventory, outcome workflow integration, stale version blocking, and artifact ownership.
 - `M2 - Distribution`: automation templates, release/operational reporting, and shareable loop setup.
 
 ## Non-Goals
@@ -427,3 +427,4 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scrip
 - Ambiguity check: open questions are planning choices, not missing product direction.
 - Proof check: the spec names existing proof commands and new validator candidates.
 - Safety check: the spec preserves native approval gates, stop-outside-policy, final `Done` proof, and clean-state requirements.
+

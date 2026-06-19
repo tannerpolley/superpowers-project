@@ -20,7 +20,7 @@ try {
     $skill = Read-RepoText "skills/initiate-workflow/SKILL.md"
     $metadata = Read-RepoText "skills/initiate-workflow/agents/openai.yaml"
     $readme = Read-RepoText "README.md"
-    $summary = Read-RepoText "docs/superpowers/CONTRACT_SUMMARY.md"
+    $summary = Read-RepoText "docs/superpowers/OUTCOME_WORKFLOW.md"
     $mermaid = Read-RepoText "docs/assets/native-qa-main-flow-mermaid.md"
 
     foreach ($textCase in @(
@@ -48,3 +48,4 @@ try {
     [pscustomobject]@{ ok = $false; phase = "initiate-workflow-mode-gate"; reason = $_.Exception.Message; checks = $checks } | ConvertTo-Json -Depth 8
     exit 1
 }
+

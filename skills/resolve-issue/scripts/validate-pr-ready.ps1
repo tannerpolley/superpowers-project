@@ -15,18 +15,18 @@ try {
     [void](Resolve-RepoRoot -RepoRoot $RepoRoot)
     $setup = Read-JsonInput -Json $SetupLedgerJson -Path $SetupLedgerPath -Name "setup ledger"
     $ready = Read-JsonInput -Json $PrReadyLedgerJson -Path $PrReadyLedgerPath -Name "PR-ready ledger"
-    Assert-OutcomeContract -Contract $setup.outcome_contract
+    Assert-OutcomeProof -Proof $setup.outcome_proof
     if ([string]$ready.issue_url -ne [string]$setup.issue_url) { throw "PR-ready issue_url must match setup ledger" }
     if ((Normalize-RepoPath ([string]$ready.branch)) -ne (Normalize-RepoPath ([string]$setup.branch))) { throw "PR-ready branch must match setup ledger" }
     foreach ($field in @("branch_pushed", "pr_closes_issue", "acceptance_criteria_covered", "verification_passed")) {
         if ($ready.$field -ne $true) { throw "PR-ready ledger requires $field" }
     }
-    foreach ($field in @("outcome_contract", "contract_review", "push_permission", "branch_push_proof", "handoff_sent", "goal_completion_proof")) {
+    foreach ($field in @("outcome_proof", "readiness_review", "push_permission", "branch_push_proof", "handoff_sent", "goal_completion_proof")) {
         if (-not (Test-Property -Object $ready -Name $field) -or $ready.$field -is [string]) { throw "PR-ready ledger $field must be structured" }
     }
-    Assert-OutcomeContract -Contract $ready.outcome_contract
-    if ([string]$ready.outcome_contract.source -ne [string]$setup.outcome_contract.source) { throw "PR-ready outcome contract source must match setup ledger" }
-    Assert-ContractReview -Review $ready.contract_review
+    Assert-OutcomeProof -Proof $ready.outcome_proof
+    if ([string]$ready.outcome_proof.source -ne [string]$setup.outcome_proof.source) { throw "PR-ready outcome proof source must match setup ledger" }
+    Assert-ReadinessReview -Review $ready.readiness_review
     Assert-PushPermission -Permission $ready.push_permission
     $goalProof = $ready.goal_completion_proof
     if ([string]$goalProof.status -ne "complete") { throw "goal completion proof must mark status complete" }
