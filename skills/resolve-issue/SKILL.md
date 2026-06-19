@@ -5,7 +5,7 @@ description: Use when one ready GitHub issue mirror under docs/superpowers/issue
 
 # Project Resolve
 
-This skill is the issue-backed Superpowers Project adapter for `superpowers:executing-plans`. It owns direct current-thread implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence for the main thread orchestrator: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, native goal completion proof, and a handoff to `$superpowers-project:merge-changes`.
+This skill is the issue-backed Superpowers Project adapter for `superpowers:executing-plans`. It owns direct current-thread implementation for one ready GitHub issue. It starts from a synced issue mirror under `docs/superpowers/issues`, validates the linked source plan and Outcome Contract Summary, activates a native `/goal`, executes with Superpowers discipline, and ends with PR-ready evidence for the main thread orchestrator: covered acceptance criteria, passed verification, pushed branch, opened PR that closes the linked issue, structured contract review, native goal completion proof, and a handoff to `$superpowers-project:merge-changes`.
 
 If the user wants delegated worker-thread implementation, route to `$superpowers-project:orchestrate-issues` before setup. `$superpowers-project:resolve-issue` must not create worker threads or worker handoff ledgers.
 
@@ -51,12 +51,12 @@ Stop immediately when any of these are true:
 - The issue mirror has no linked source plan under `docs/superpowers/plans`.
 - The linked source plan does not exist.
 - The linked source plan fails `scripts/validate-plan-task-use-cases.ps1`.
-- The issue mirror lacks acceptance criteria, proof oracle, or AFK/HITL classification.
+- The issue mirror lacks acceptance criteria, proof oracle, AFK/HITL classification, or Outcome Contract Summary.
 - Native goal proof is missing, a plain string, inactive, or not from `get_goal`.
-- Setup ledger contains `goal_board_path`, `goalbuddy_checker`, or `docs/goals`.
+- Setup ledger lacks structured `outcome_contract`, or contains `goal_board_path`, `goalbuddy_checker`, or `docs/goals`.
 - Code edits or implementation tests begin before setup validation passes.
 - PR-ready evidence does not close the exact linked GitHub issue.
-- PR-ready evidence does not show push permission proof, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
+- PR-ready evidence does not show outcome contract proof, contract review proof, push permission proof, acceptance coverage, verification proof, branch push proof, handoff proof, and native goal completion proof.
 - A terminal success or final closeout is attempted without a structured continuation decision ledger that records explicit `Stop`.
 
 ## State Machine
@@ -64,18 +64,18 @@ Stop immediately when any of these are true:
 Follow this order exactly:
 
 1. `repo gate`: verify the active repo and explicit target when needed.
-2. `issue mirror validation`: inspect `docs/superpowers/issues/<issue>.md`.
+2. `issue mirror validation`: inspect `docs/superpowers/issues/<issue>.md`, including its Outcome Contract Summary.
 3. `source plan validation`: read the linked `docs/superpowers/plans/<plan>.md`.
 4. `Task # Use Cases validation`: run `scripts/validate-plan-task-use-cases.ps1` against the linked source plan.
 5. `preflight`: verify the repo is ready for one issue execution.
 6. `route check`: if worker-thread execution is requested, stop and route to `$superpowers-project:orchestrate-issues`.
 7. `native goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
-8. `setup validation`: write and validate the setup ledger for direct current-thread execution.
+8. `setup validation`: write and validate the setup ledger for direct current-thread execution, including structured `outcome_contract`.
 9. `worktree and branch setup`: create or verify the current-thread worktree/branch.
 10. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
 11. `development branch finish`: use `superpowers:finishing-a-development-branch`, with PR as the default finish path.
 12. `push permission`: ask native push permission before pushing the branch or opening the PR.
-13. `PR-ready validation`: validate push permission, branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+13. `PR-ready validation`: validate outcome contract carry-forward, contract review proof, push permission, branch push, PR URL, closing issue reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
 14. `handoff`: send or record the worker/main-thread handoff and route final integration to `$superpowers-project:merge-changes`.
 15. `terminal closeout`: before ending this skill as complete, collect a continuation decision ledger and validate that the user explicitly selected `Stop`. Any non-terminal route must keep the workflow running.
 
@@ -102,13 +102,13 @@ Worker-thread orchestration is owned by `$superpowers-project:orchestrate-issues
 
 Run bundled scripts from this skill package with explicit `-RepoRoot`:
 
-- `scripts/prepare-execution.ps1 -Mode Inspect`: reads the issue mirror, validates the source plan, and emits handoff JSON plus the exact native goal objective.
+- `scripts/prepare-execution.ps1 -Mode Inspect`: reads the issue mirror, validates the source plan and Outcome Contract Summary, and emits handoff JSON plus the exact native goal objective.
 - `scripts/preflight.ps1`: validates issue mirror, source plan, branch, proof oracle, and clean starting state.
 - `scripts/prepare-execution.ps1 -Mode ApplySetup`: creates or verifies the implementation branch and prints the native goal objective.
-- `scripts/prepare-execution.ps1 -Mode FinalizeSetup`: accepts structured `get_goal` proof and writes the native setup ledger.
-- `scripts/validate-setup.ps1`: rejects GoalBuddy board fields and requires issue mirror, source plan, branch, proof oracle, goal id or thread goal proof, and structured native goal proof.
-- `scripts/collect-pr-ready-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrJson <json> -VerificationCommands <commands> -PushPermissionJson <json-or-path> -AcceptanceCoverageJson <json> -HandoffProofJson <json> -GoalCompletionProofJson <json> -OutputDir <temp-or-handoff-dir>`: generates the PR-ready ledger from PR evidence, push permission proof, acceptance coverage, verification receipts, handoff proof, and native goal completion proof.
-- `scripts/validate-pr-ready.ps1`: validates push permission proof, branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+- `scripts/prepare-execution.ps1 -Mode FinalizeSetup`: accepts structured `get_goal` proof and writes the native setup ledger with the issue outcome contract.
+- `scripts/validate-setup.ps1`: rejects GoalBuddy board fields and requires issue mirror, source plan, branch, proof oracle, goal id or thread goal proof, structured outcome contract, and structured native goal proof.
+- `scripts/collect-pr-ready-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrJson <json> -VerificationCommands <commands> -PushPermissionJson <json-or-path> -AcceptanceCoverageJson <json> -HandoffProofJson <json> -ContractReviewJson <json-or-path> -GoalCompletionProofJson <json> -OutputDir <temp-or-handoff-dir>`: generates the PR-ready ledger from PR evidence, outcome contract carry-forward, contract review proof, push permission proof, acceptance coverage, verification receipts, handoff proof, and native goal completion proof.
+- `scripts/validate-pr-ready.ps1`: validates outcome contract carry-forward, contract review proof, push permission proof, branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
 - `scripts/collect-continuation-ledger.ps1 -RepoRoot . -QuestionId <id> -Prompt <text> -Source <request_user_input|debug_question_mode> -SelectedOptionId <id> -RecommendedOptionId <id> -TerminalState <stop|continue|revisit> -OptionIds <id1,id2,id3> -OutputDir <temp-or-handoff-dir>`: records the structured continuation decision after a PR-ready native route question.
 - `scripts/validate-terminal-closeout.ps1 -RepoRoot . -PrReadyResultJson <json-or-path> -ContinuationDecisionJson <json-or-path>`: blocks terminal success unless the PR-ready gate passed and the continuation decision records explicit `Stop`.
 
@@ -147,6 +147,18 @@ The setup ledger must include:
     "recommended_mode": "inline",
     "options": ["orchestrated-worker", "inline"]
   },
+  "outcome_contract": {
+    "source": "docs/superpowers/plans/<date>-<slug>-plan.md#outcome-contract",
+    "intent": "<source plan intent>",
+    "target_perspective_output": "<maintainer-visible target output>",
+    "truth_owner": "<contract truth owner>",
+    "contract_interface": "<ledger, script, API, or file boundary>",
+    "cutover_decision": "<active cutover decision>",
+    "displaced_path": "<old path displaced by this work>",
+    "acceptance_evidence": "<evidence that proves the contract>",
+    "kill_criteria": "<condition that blocks handoff>",
+    "forbidden_moves": ["<moves that would violate the contract>"]
+  },
   "workflow_policy": {
     "worktree_policy": "Native Codex worktree thread first",
     "integration_policy": "Current thread owns PR",
@@ -165,6 +177,21 @@ The setup ledger must include:
 ```
 
 Plain strings do not count as native goal, verification, or completion proof.
+
+## Contract Review Proof
+
+Before PR-ready handoff, collect structured `contract_review` evidence:
+
+```json
+{
+  "plan_alignment": true,
+  "correctness": true,
+  "maintainability": true,
+  "reality_evidence": true
+}
+```
+
+`plan_alignment` means the implementation still matches the linked source plan and issue Outcome Contract Summary. `correctness` means the implementation satisfies the acceptance criteria. `maintainability` means the change does not leave duplicate displaced paths, loose compatibility wrappers, or stale instructions. `reality_evidence` means the proof came from actual artifacts, commands, rendered output, PR metadata, or file diffs rather than a claim. Missing or false contract review blocks PR-ready validation.
 
 ## Native Goal Policy
 
@@ -212,7 +239,7 @@ Only `Push And Open PR` records `selected_action: push-pr`. Only `Hold` records 
 
 ## Native Continuation Gate
 
-After PR-ready handoff proof passes, complete the artifact review gate before asking the continuation question. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show every produced or materially changed direct issue-resolution artifact, including the PR URL, branch, issue mirror, source plan, changed files, changed sections or representative diffs/snippets, acceptance coverage, verification commands, exact test values/results, branch push proof, handoff proof, and native goal completion proof. Show exact artifact paths and links, render created or revised Markdown artifacts in chat when reasonably sized, and summarize machine-readable artifacts with exact path plus key fields. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative diff or snippet, and why the full render is omitted. After artifacts are shown, add a separate findings summary that names the PR URL, branch, issue mirror, source plan, acceptance coverage, verification proof, branch push proof, handoff proof, native goal completion proof, what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and the recommended next route.
+After PR-ready handoff proof passes, complete the artifact review gate before asking the continuation question. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show every produced or materially changed direct issue-resolution artifact, including the PR URL, branch, issue mirror, source plan, outcome contract, contract review evidence, changed files, changed sections or representative diffs/snippets, acceptance coverage, verification commands, exact test values/results, branch push proof, handoff proof, and native goal completion proof. Show exact artifact paths and links, render created or revised Markdown artifacts in chat when reasonably sized, and summarize machine-readable artifacts with exact path plus key fields. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative diff or snippet, and why the full render is omitted. After artifacts are shown, add a separate findings summary that names the PR URL, branch, issue mirror, source plan, outcome contract source, contract review status, acceptance coverage, verification proof, branch push proof, handoff proof, native goal completion proof, what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and the recommended next route.
 
 Ask native continuation questions with `request_user_input` when callable. These questions are executable routing, not advisory text. The top-level closeout question must be asked as `Continue?`. The top-level closeout question must use exactly three trajectory options: `Yes` for progress, `Revisit` for the standard go-back route, and `Stop` for the normal terminal route. Do not show Continue children beside Revisit and Stop in the same top-level question. Do not show Continue children as peer top-level options. Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection. If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. If Yes has multiple next skills, ask a nested Yes route question after the user selects Yes. If Revisit has multiple reiteration paths, ask a nested review route question after the user selects Revisit. Nested Yes-route menus must not include terminal options; they include only real forward routes. Nested Revisit-route menus must not include terminal options; they include only real review, revise, repair, rerun, recover, or evidence-gathering routes. Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Recommend Yes when at least one safe forward route exists. Recommend Revisit when review, repair, or missing evidence is the next safe action. Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion. Use `advanced-user-input` sequential branching when a branch answer changes the follow-up questions. Custom Other never terminates a workflow directly. If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other; otherwise turn it into the next best follow-up question or baseline route tree and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer; show evidence or rendered artifacts, ask follow-up questions, and return to the originating continuation gate.
 
@@ -279,6 +306,8 @@ Record the selected route in a structured continuation decision ledger. If the a
 Do not send a success-style final response until PR-ready proof shows:
 
 - Acceptance criteria are covered.
+- Outcome contract is carried from setup into PR-ready proof.
+- Contract review has true `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence`.
 - Push permission was explicitly approved.
 - Verification passed.
 - Branch is pushed.

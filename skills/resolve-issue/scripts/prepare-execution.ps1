@@ -15,7 +15,25 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "lib\contract.ps1")
+$sourceRepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path
+. (Join-Path $sourceRepoRoot "scripts\lib\outcome-contract.ps1")
 $phase = "prepare-$($Mode.ToLowerInvariant())"
+
+function New-OutcomeContractFromIssueSummary {
+    param($Fields)
+    [ordered]@{
+        source = [string]$Fields["Outcome Contract Source"]
+        intent = [string]$Fields["Intent"]
+        target_perspective_output = [string]$Fields["Target-Perspective Output"]
+        truth_owner = [string]$Fields["Truth Owner"]
+        contract_interface = [string]$Fields["Contract Interface"]
+        cutover_decision = [string]$Fields["Cutover Decision"]
+        displaced_path = [string]$Fields["Displaced Path"]
+        acceptance_evidence = [string]$Fields["Acceptance Evidence"]
+        kill_criteria = [string]$Fields["Kill Criteria"]
+        forbidden_moves = @(Get-StringArray $Fields["Forbidden Moves"])
+    }
+}
 
 function Read-IssueMirrorContract {
     param([string]$RepoRoot, [string]$IssueMirror)
@@ -31,6 +49,10 @@ function Read-IssueMirrorContract {
     if (-not (Test-Path -LiteralPath $sourcePlanPath -PathType Leaf)) { throw "source plan does not exist: $relativeSourcePlan" }
     $issueUrl = Get-FieldValue -Text $text -Name "GitHub Issue"
     if ([string]::IsNullOrWhiteSpace($issueUrl) -or $issueUrl -eq "pre-publication") { throw "GitHub Issue is required before execution" }
+    $contractSummary = Test-IssueOutcomeContractSummary -Text $text
+    if (-not $contractSummary.ok) { throw $contractSummary.reason }
+    $outcomeContract = New-OutcomeContractFromIssueSummary -Fields $contractSummary.fields
+    Assert-OutcomeContract -Contract $outcomeContract
     $branch = Get-FieldValue -Text $text -Name "Branch"
     if ([string]::IsNullOrWhiteSpace($branch)) {
         $slug = [IO.Path]::GetFileNameWithoutExtension($relativeIssueMirror) -replace '^\d+-', ''
@@ -51,6 +73,7 @@ function Read-IssueMirrorContract {
         goal_objective = $goalObjective
         proof_oracle = $proof
         required_checks_policy = "require-existing"
+        outcome_contract = $outcomeContract
     }
 }
 
@@ -66,6 +89,8 @@ try {
     $sourcePlan = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$handoff.source_plan) -Prefix "docs/superpowers/plans" -Name "source plan"
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $issueMirror) -PathType Leaf)) { throw "issue mirror file is missing" }
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $sourcePlan) -PathType Leaf)) { throw "source plan does not exist" }
+    if (-not (Test-Property -Object $handoff -Name "outcome_contract")) { throw "handoff outcome contract is required" }
+    Assert-OutcomeContract -Contract $handoff.outcome_contract
 
     if ($Mode -eq "ApplySetup") {
         $inventoryBefore = Get-BranchInventorySafe -RepoRoot $root
@@ -101,6 +126,7 @@ try {
         goal_objective = [string]$handoff.goal_objective
         goal_activation_proof = $goalProof
         execution_decision = $executionDecision
+        outcome_contract = $handoff.outcome_contract
         workflow_policy = [ordered]@{
             worktree_policy = "Native Codex worktree thread first"
             integration_policy = "Current thread owns PR"
@@ -128,4 +154,3 @@ try {
 } catch {
     Stop-Contract -Phase $phase -Reason $_.Exception.Message -Evidence @{}
 }
-

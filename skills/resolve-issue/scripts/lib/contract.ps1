@@ -180,6 +180,28 @@ function Assert-ExecutionDecision {
     }
 }
 
+function Assert-OutcomeContract {
+    param($Contract)
+    if ($null -eq $Contract -or $Contract -is [string]) { throw "outcome contract must be structured" }
+    foreach ($field in @("source", "intent", "target_perspective_output", "truth_owner", "contract_interface", "cutover_decision", "displaced_path", "acceptance_evidence", "kill_criteria", "forbidden_moves")) {
+        if (-not (Test-Property -Object $Contract -Name $field)) { throw "outcome contract missing $field" }
+    }
+    foreach ($field in @("source", "intent", "target_perspective_output", "truth_owner", "contract_interface", "cutover_decision", "displaced_path", "acceptance_evidence", "kill_criteria")) {
+        if ([string]::IsNullOrWhiteSpace([string]$Contract.$field)) { throw "outcome contract $field is empty" }
+    }
+    if ((Normalize-RepoPath ([string]$Contract.source)).Contains("docs/goals")) { throw "outcome contract source must not use docs/goals" }
+    if ((Get-StringArray $Contract.forbidden_moves).Count -eq 0) { throw "outcome contract forbidden_moves must be populated" }
+}
+
+function Assert-ContractReview {
+    param($Review)
+    if ($null -eq $Review -or $Review -is [string]) { throw "contract review must be structured" }
+    foreach ($field in @("plan_alignment", "correctness", "maintainability", "reality_evidence")) {
+        if (-not (Test-Property -Object $Review -Name $field)) { throw "contract review missing $field" }
+        if ($Review.$field -ne $true) { throw "contract review $field must be true" }
+    }
+}
+
 function Assert-PushPermission {
     param($Permission)
     if ($null -eq $Permission) { throw "push permission is required" }

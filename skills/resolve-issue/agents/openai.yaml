@@ -2,7 +2,7 @@ interface:
   display_name: "Resolve Issue"
   short_description: "Resolve one ready issue directly with goal proof, TDD, verification, and a PR-ready handoff."
   default_prompt: >-
-    Use $superpowers-project:resolve-issue for direct current-thread implementation of one ready Superpowers Project GitHub issue mirror with native /goal proof, pushed branch, opened PR, and PR-ready handoff.
+    Use $superpowers-project:resolve-issue for direct current-thread implementation of one ready Superpowers Project GitHub issue mirror with Outcome Contract Summary, native /goal proof, pushed branch, opened PR, structured contract review, and PR-ready handoff.
     This route is the issue-backed adapter for superpowers:executing-plans. Require superpowers:using-git-worktrees before implementation, require superpowers:executing-plans as the base execution method,
     require superpowers:test-driven-development unless the source plan records an explicit opt-out, require superpowers:systematic-debugging or diagnose for bugs, regressions, failing tests, CI failures, performance work,
     or unclear failure modes, require superpowers:verification-before-completion before PR-ready claims, and require superpowers:finishing-a-development-branch after verification and before PR creation.
@@ -14,13 +14,14 @@ interface:
     Treat Task # Use Cases as a strict requirement for issue resolution: run validate-plan-task-use-cases.ps1 against the linked source plan before native goal activation, branch setup, or code edits,
     and block if any numbered Task N lacks a non-empty **Use Cases:** block; issue acceptance criteria alone are not a substitute.
     Activate native /goal proof, record a direct inline execution decision, ask project_resolve_push_permission with push-pr or hold before any branch push or PR creation, push the branch only after approval,
-    open a PR that closes the exact issue, run collect-pr-ready-ledger.ps1 with push permission proof to assemble Temp Plus Evidence, pass the generated ledger to validate-pr-ready.ps1, complete the resolve goal at PR-ready,
+    carry the structured outcome_contract from setup into PR-ready proof, collect contract review evidence with plan_alignment, correctness, maintainability, and reality_evidence all true,
+    open a PR that closes the exact issue, run collect-pr-ready-ledger.ps1 with push permission proof and ContractReviewJson to assemble Temp Plus Evidence, pass the generated ledger to validate-pr-ready.ps1, complete the resolve goal at PR-ready,
     hand off final integration to $superpowers-project:merge-changes, collect a structured continuation decision ledger with collect-continuation-ledger.ps1 after each PR-ready native route answer,
     and require validate-terminal-closeout.ps1 before any final success-style response so only explicit Stop can terminate resolve-issue.
     Before asking push permission, complete the artifact review gate, show verification evidence, explain what the results mean for the active goal and broader project context, and state the recommended next route.
     Do not ask for push approval first and explain later. PR-ready proof alone is not terminal permission. There is no hand-authored JSON requirement for normal runs.
     Do not merge, close issues, delete branches, or run final cleanup from this skill. At closeout, complete the artifact review gate,
-    inventory every produced or materially changed artifact owned by the direct issue-resolution run, summarize the PR-ready result in chat, explain what the results mean for the active goal and broader project context,
+    inventory every produced or materially changed artifact owned by the direct issue-resolution run, summarize the PR-ready result in chat with outcome contract and contract review evidence, explain what the results mean for the active goal and broader project context,
     state the recommended next route, show exact artifact paths and links, show rendered Markdown artifacts when applicable, and summarize machine-readable artifacts with exact path plus key fields.
     Ask project_resolve_next_step with Yes Integrate Resolved Issue, Revisit Review / Revise PR-Ready Work, and Stop; use nested merge, another-issue, and branch-fix children including Merge, Resolve Another, Review First,
     Revise Branch, and Address CI / Checks, then start the selected next skill in the same turn when tools and state allow it. After every completed action, ask the next native continuation or permission question.

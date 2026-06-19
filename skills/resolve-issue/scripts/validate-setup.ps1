@@ -34,12 +34,13 @@ try {
         if (Test-Property -Object $ledger -Name $forbidden) { throw "$forbidden is outside the native goal setup ledger" }
     }
     if (Test-ContainsForbiddenGoalBuddyValue -Value $ledger) { throw "docs/goals is outside the default execution model" }
-    foreach ($field in @("issue_url", "issue_mirror", "source_plan", "branch", "goal_activation_proof", "goal_objective", "execution_decision", "proof_oracle")) {
+    foreach ($field in @("issue_url", "issue_mirror", "source_plan", "branch", "goal_activation_proof", "goal_objective", "execution_decision", "outcome_contract", "proof_oracle")) {
         if (-not (Test-Property -Object $ledger -Name $field)) { throw "$field is required in setup ledger" }
     }
     if (-not (Test-Property -Object $ledger -Name "goal_id") -and -not (Test-Property -Object $ledger -Name "thread_goal_proof")) { throw "goal_id or thread goal proof is required" }
     Assert-NativeGoalProof -Proof $ledger.goal_activation_proof
     Assert-ExecutionDecision -Decision $ledger.execution_decision
+    Assert-OutcomeContract -Contract $ledger.outcome_contract
     if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") {
         throw "orchestrated worker execution is owned by orchestrate-issues; use resolve-issue only for direct current-thread execution"
     }
@@ -52,4 +53,3 @@ try {
 } catch {
     Stop-Contract -Phase $phase -Reason $_.Exception.Message -Evidence @{}
 }
-

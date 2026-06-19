@@ -9,6 +9,8 @@ param(
     [string]$PushPermissionPath,
     [string]$AcceptanceCoverageJson,
     [string]$HandoffProofJson,
+    [string]$ContractReviewJson,
+    [string]$ContractReviewPath,
     [string]$GoalCompletionProofJson,
     [string]$OutputDir
 )
@@ -57,7 +59,10 @@ try {
     $pushPermission = Read-JsonInput -Json $PushPermissionJson -Path $PushPermissionPath -Name "push permission"
     $acceptanceCoverage = Read-JsonInput -Json $AcceptanceCoverageJson -Name "acceptance coverage"
     $handoffProof = Read-JsonInput -Json $HandoffProofJson -Name "handoff proof"
+    $contractReview = Read-JsonInput -Json $ContractReviewJson -Path $ContractReviewPath -Name "contract review"
     $goalCompletionProof = Read-JsonInput -Json $GoalCompletionProofJson -Name "goal completion proof"
+    Assert-OutcomeContract -Contract $setup.outcome_contract
+    Assert-ContractReview -Review $contractReview
 
     $issueNumber = Get-IssueNumberFromUrl -IssueUrl ([string]$setup.issue_url)
     $prClosesIssue = (Test-ClosingKeywordForIssue -Body ([string]$pr.body) -IssueNumber $issueNumber) -or (Test-ClosingReferenceIncludesIssue -References $pr.closingIssuesReferences -IssueNumber $issueNumber)
@@ -67,6 +72,8 @@ try {
         issue_mirror = Normalize-RepoPath ([string]$setup.issue_mirror)
         source_plan = Normalize-RepoPath ([string]$setup.source_plan)
         branch = Normalize-RepoPath ([string]$setup.branch)
+        outcome_contract = $setup.outcome_contract
+        contract_review = $contractReview
         branch_pushed = -not [string]::IsNullOrWhiteSpace([string]$pr.url)
         branch_push_proof = [ordered]@{
             source = "PR evidence"

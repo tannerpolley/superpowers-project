@@ -21,6 +21,8 @@ Require an approved plan path under `docs/superpowers/plans`. If the request nam
 
 Require native `/goal` activation before code changes. The goal must name the approved plan path and the intended execution route. Record proof as structured evidence, not a prose claim.
 
+Require the approved plan's outcome contract before code changes. Restate the plan's `Intent`, `Truth Owner`, `Contract Interface`, `Cutover Decision`, `Displaced Path`, `Acceptance Evidence`, `Kill Criteria`, and `Forbidden Moves` before editing. Carry these fields as structured `outcome_contract` evidence in the implementation ledger.
+
 ## Task # Use Cases Gate
 
 Task # Use Cases are a strict requirement before actual plan implementation. Before creating branches, activating worker handoffs, or editing code, run the repo-root validator against the approved plan:
@@ -75,7 +77,16 @@ Do not treat these companion skills as optional suggestions. If a required compa
 
 ## Implementation Discipline
 
-Follow the approved plan's proof oracle. If a task needs a decision that the plan did not make, ask through native UI when callable and stop until the decision is answered. Do not invent broad policy during implementation.
+Follow the approved plan's proof oracle and outcome contract. If a task needs a decision that the plan did not make, or would change truth owner, contract interface, cutover decision, displaced path handling, acceptance evidence, kill criteria, or forbidden moves, ask through native UI when callable and stop until the decision is answered. Do not invent broad policy during implementation.
+
+Before push permission, merge-ready output, or local branch handoff, collect structured `contract_review` evidence with:
+
+- `plan_alignment: true`
+- `correctness: true`
+- `maintainability: true`
+- `reality_evidence: true`
+
+Missing or failed contract review blocks merge-ready output even when tests pass.
 
 ## Push Permission Gate
 
@@ -97,8 +108,10 @@ Only `Push Branch` records `selected_action: push-branch`. Only `Hold` records `
 Produce a merge-ready handoff that includes:
 
 - approved plan path
+- outcome contract
 - branch name and commit list
 - verification commands and results
+- contract review evidence covering plan alignment, correctness, maintainability, and reality evidence
 - cleanup hook result
 - push permission ledger
 - branch push proof
@@ -138,4 +151,4 @@ After the user selects an option, start the selected next skill in the same turn
 
 ## Contract Helper
 
-Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, native `/goal` activation, a development branch, topology selection, passed verification, native push permission, branch push proof, merge-ready evidence, and no issue closure claim.
+Use `skills/implement-plan/scripts/lib/contract.ps1` to validate structured handoff ledgers in tests or worker closeout automation. The helper requires the approved plan, outcome contract, contract review evidence, native `/goal` activation, a development branch, topology selection, passed verification, native push permission, branch push proof, merge-ready evidence, and no issue closure claim.
