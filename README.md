@@ -30,6 +30,16 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:audit-project`: reviews code or workflow behavior and writes P-coded repair findings specs.
 - `$superpowers-project:align-project`: aligns project, GitHub, migration, tracker, and live-sync drift.
 
+## Docker Agent-Native Preview
+
+To host the checked-in Agent-Native companion preview from a container:
+
+```powershell
+docker compose -f .\docker-compose.agent-native-preview.yml up --build
+```
+
+Then open `http://127.0.0.1:8097/preview.html`. The image runs Agent-Native `plan local check`, generates the local preview inside the container, and serves only the generated preview HTML.
+
 ## Native Q&A Workflow
 
 The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `Stop`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected. Nested Yes menus list only forward routes, nested Revisit menus list only review, revision, repair, recovery, rerun, or evidence routes, and terminal options are not repeated inside those nested route menus.
