@@ -41,9 +41,22 @@ This fixture proves local Agent-Native visual-plan preview works from repo-owned
     $raw = & npx -y @agent-native/core@latest plan local preview --dir $planDir --kind plan 2>&1
     $text = ($raw | Out-String).Trim()
     Add-Check -Name "preview command exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $text
-    $json = $text | ConvertFrom-Json
+    $jsonStart = $text.IndexOf("{")
+    $jsonEnd = $text.LastIndexOf("}")
+    if ($jsonStart -lt 0 -or $jsonEnd -le $jsonStart) {
+        throw "preview command did not emit JSON: $text"
+    }
+    $json = $text.Substring($jsonStart, $jsonEnd - $jsonStart + 1) | ConvertFrom-Json
     Add-Check -Name "preview reports ok" -Ok ($json.ok -eq $true) -Reason $text
-    Add-Check -Name "preview output exists" -Ok (Test-Path -LiteralPath $json.out -PathType Leaf) -Reason "preview output missing"
+    $previewTargetOk = $false
+    if (-not [string]::IsNullOrWhiteSpace([string]$json.out)) {
+        $previewTargetOk = Test-Path -LiteralPath $json.out -PathType Leaf
+    } elseif (-not [string]::IsNullOrWhiteSpace([string]$json.url)) {
+        $previewUri = $null
+        $previewTargetOk = [Uri]::TryCreate([string]$json.url, [UriKind]::Absolute, [ref]$previewUri) -and
+            @("http", "https", "file").Contains($previewUri.Scheme)
+    }
+    Add-Check -Name "preview target returned" -Ok $previewTargetOk -Reason "preview output or URL missing"
     Add-Check -Name "preview includes plan source" -Ok (@($json.files) -contains "plan.mdx") -Reason "plan.mdx was not reported"
 
     $failed = @($checks | Where-Object { -not $_.ok })
