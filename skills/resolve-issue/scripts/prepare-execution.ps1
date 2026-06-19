@@ -21,7 +21,7 @@ $phase = "prepare-$($Mode.ToLowerInvariant())"
 
 function New-OutcomeContractFromIssueSummary {
     param($Fields)
-    [ordered]@{
+    [pscustomobject][ordered]@{
         source = [string]$Fields["Outcome Contract Source"]
         intent = [string]$Fields["Intent"]
         target_perspective_output = [string]$Fields["Target-Perspective Output"]

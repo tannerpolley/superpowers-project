@@ -64,10 +64,17 @@ try {
         branch = "codex/e2e-smoke"
     } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
     $outDir = Join-Path $tempRoot "evidence"
+    $contractReview = @{
+        plan_alignment = $true
+        correctness = $true
+        maintainability = $true
+        reality_evidence = $true
+    } | ConvertTo-Json -Depth 8 -Compress
     $prepare = Invoke-JsonFile -ScriptPath (Join-Path $RepoRoot "skills\merge-changes\scripts\prepare-local-branch-closeout.ps1") -Arguments @(
         "-RepoRoot", $repo,
         "-SetupLedgerPath", $setupPath,
         "-ValidationCommand", "exit 0",
+        "-ContractReviewJson", $contractReview,
         "-OutputDir", $outDir
     )
     Add-Check -Name "local branch prepare passes" -Ok ($prepare.exit_code -eq 0 -and $prepare.json.ok -eq $true) -Reason ([string]$prepare.json.reason)

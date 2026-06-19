@@ -10,7 +10,8 @@ interface:
     plans include creation date and milestone identity where applicable, for example docs/superpowers/plans/<yyyy-mm-dd>-<milestone-or-category>-<slug>-plan.md. Milestone pages are index views;
     represent milestone/category views through frontmatter plus milestone indexes and treat nested canonical milestone artifact folders are drift. Before saving a plan, use the Planning Grill Gate: apply grill-me behavior,
     inspect knowable context first, and use request_user_input in Default mode as a hard gate for material scope, acceptance criteria, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior,
-    live mutation choices, truth owner, contract interface, cutover, displaced path, evidence fields, kill criteria, and forbidden moves. Do not present a plan as ready until material decisions have been answered or explicitly deferred with a named risk owner. Before presenting a plan as ready,
+    live mutation choices, truth owner, contract interface, cutover, displaced path, evidence fields, kill criteria, and forbidden moves.
+    Do not present a plan as ready until material decisions have been answered or explicitly deferred with a named risk owner. Before presenting a plan as ready,
     ask or record what counts as test complete, what proof demonstrates that status, what metrics define pass versus fail, and whether tolerances, edge-case thresholds, or error bounds matter.
     When the project is scientific or engineering-oriented, ask for numerical metrics, thresholds, tolerances, units, and validation coverage, then record those answers in the plan acceptance criteria and proof oracle.
     If those prompts are not applicable, record that with a clear reason before routing into work. Require every implementation plan to include ## Outcome Contract and ## Architecture Slice before tasks.
