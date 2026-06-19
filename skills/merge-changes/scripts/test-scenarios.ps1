@@ -62,6 +62,15 @@ function New-LocalBranchSetupLedger {
     } | ConvertTo-Json -Depth 12 -Compress
 }
 
+function New-ContractReview {
+    [pscustomobject]@{
+        plan_alignment = $true
+        correctness = $true
+        maintainability = $true
+        reality_evidence = $true
+    }
+}
+
 function New-VerificationLedger {
     @{
         required_checks_policy = "require-existing"
@@ -69,12 +78,14 @@ function New-VerificationLedger {
         changed_files_covered = @("src/example.txt", "docs/superpowers/issues/12-sample.md")
         verification_exemptions = @()
         proof_commands = @("pwsh -NoProfile -Command 'exit 0'")
+        contract_review = New-ContractReview
     } | ConvertTo-Json -Depth 12 -Compress
 }
 
 function New-LocalBranchVerificationLedger {
     @{
         proof_commands = @("pwsh -NoProfile -Command 'exit 0'")
+        contract_review = New-ContractReview
         clean_synced_main_proof = @{
             source = "git status --short --branch"
             exit_code = 0
@@ -219,6 +230,10 @@ Invoke-Scenario "merge contract text is present" {
         "closeout.ps1",
         "git fetch --prune",
         "cleanup hook",
+        "contract review proof",
+        "contract_review",
+        "plan_alignment",
+        "reality_evidence",
         "collect-premerge-ledger.ps1",
         "collect-closeout-ledger.ps1",
         "collect-continuation-ledger.ps1",
@@ -268,7 +283,7 @@ Invoke-Scenario "metadata is present" {
     Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
     Assert-Contains $metadata "issue-backed PR URL" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
-    foreach ($needle in @("summarize", "artifact review gate", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_merge_next_step", "Run Align", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
+    foreach ($needle in @("summarize", "artifact review gate", "contract_review", "plan_alignment", "reality_evidence", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_merge_next_step", "Run Align", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
         Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
     }
     foreach ($needle in @("pr-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "preauthorized-after-clean-premerge")) {
@@ -309,6 +324,22 @@ Invoke-Scenario "premerge accepts local-branch with clean synced main and valida
     $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-LocalBranchSetupLedger), "-VerificationLedgerJson", (New-LocalBranchVerificationLedger))
     if (-not $result.ok) { throw $result.reason }
     if ([string]$result.evidence.mode -ne "local-branch") { throw "premerge did not record local-branch mode" }
+}
+
+Invoke-Scenario "premerge rejects missing contract review proof" {
+    $verification = (New-VerificationLedger | ConvertFrom-Json)
+    $verification.PSObject.Properties.Remove("contract_review")
+    $pr = @{
+        url = "https://github.com/example/repo/pull/5"
+        state = "OPEN"
+        body = "Closes #12"
+        closingIssuesReferences = @(@{ number = 12 })
+        requiredChecks = @(@{ name = "local-proof"; state = "SUCCESS"; conclusion = "SUCCESS" })
+        files = @(@{ path = "src/example.txt" }, @{ path = "docs/superpowers/issues/12-sample.md" })
+    } | ConvertTo-Json -Depth 12 -Compress
+    $issue = @{ state = "OPEN"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-VerificationLedgerJson", ($verification | ConvertTo-Json -Depth 12 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if ($result.ok -or $result.reason -notmatch "contract[_ ]review") { throw "expected missing contract review proof to block" }
 }
 
 Invoke-Scenario "premerge rejects non-issue PR mode" {
@@ -559,6 +590,7 @@ Invoke-Scenario "collect-premerge-ledger emits evidence accepted by premerge" {
         "-IssueJson", $issue,
         "-VerificationCommands", "pwsh -NoProfile -Command 'exit 0'",
         "-ChangedFilesCovered", "src/example.txt,docs/superpowers/issues/12-sample.md",
+        "-ContractReviewJson", (New-ContractReview | ConvertTo-Json -Depth 8 -Compress),
         "-OutputDir", $outputDir
     )
     if (-not $collected.ok) { throw $collected.reason }
@@ -756,6 +788,7 @@ Invoke-Scenario "local branch closeout helper dry run requires native merge deci
         "-RepoRoot", $repo,
         "-SetupLedgerPath", $setupPath,
         "-ValidationCommand", "exit 0",
+        "-ContractReviewJson", (New-ContractReview | ConvertTo-Json -Depth 8 -Compress),
         "-OutputDir", $outputDir
     )
     if (-not $prepared.ok) { throw $prepared.reason }
@@ -805,6 +838,7 @@ Invoke-Scenario "local branch closeout helper refuses malformed approval and wro
         "-RepoRoot", $repo,
         "-SetupLedgerPath", $setupPath,
         "-ValidationCommand", "exit 0",
+        "-ContractReviewJson", (New-ContractReview | ConvertTo-Json -Depth 8 -Compress),
         "-OutputDir", (Join-Path $tempRoot "local-helper-bad-output")
     )
     if (-not $prepared.ok) { throw $prepared.reason }

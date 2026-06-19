@@ -22,6 +22,8 @@ try {
     Assert-SourcePlanLinkage -Setup $setup
     Assert-BranchLinkage -Setup $setup
     $verification = Read-JsonInput -Json $VerificationLedgerJson -Path $VerificationLedgerPath -Name "verification ledger"
+    if (-not (Test-Property -Object $verification -Name "contract_review")) { throw "contract_review proof is required" }
+    Assert-ContractReviewProof -Proof $verification.contract_review
 
     if ($mode -eq "local-branch") {
         if (-not (Test-Property -Object $verification -Name "clean_synced_main_proof")) { throw "clean synced main proof is required for local-branch mode" }

@@ -6,6 +6,8 @@ param(
     [string]$SourcePlan,
     [string]$ValidationCommand = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1",
     [string[]]$ProofCommands = @(),
+    [string]$ContractReviewJson,
+    [string]$ContractReviewPath,
     [string]$OutputDir
 )
 
@@ -93,6 +95,8 @@ try {
     if ($branchExists.exit_code -ne 0) { throw "local branch is missing: $branchName" }
     $changedFiles = @(Invoke-GitCapture -Root $root -Arguments @("diff", "--name-only", "main...$branchName")).output -split "\r?\n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { Normalize-RepoPath $_ }
     $validation = Invoke-PwshCommandCapture -Root $root -Command $ValidationCommand
+    $contractReview = Read-JsonInput -Json $ContractReviewJson -Path $ContractReviewPath -Name "contract review"
+    Assert-ContractReviewProof -Proof $contractReview
     $allProofCommands = @($ProofCommands)
     if ($allProofCommands.Count -eq 0) { $allProofCommands = @($ValidationCommand) }
 
@@ -113,6 +117,7 @@ try {
             exit_code = [int]$validation.exit_code
             output = [string]$validation.output
         }
+        contract_review = $contractReview
         changed_files = @($changedFiles)
     }
     $setupPath = if (-not [string]::IsNullOrWhiteSpace($SetupLedgerPath)) { $SetupLedgerPath } else { New-OutputPath -OutputDir $OutputDir -Name "local-branch-setup-ledger.json" }

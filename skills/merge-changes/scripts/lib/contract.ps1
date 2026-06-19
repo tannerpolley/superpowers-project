@@ -250,6 +250,15 @@ function Assert-ValidationProof {
     if ([int]$Proof.exit_code -ne 0) { throw "validation proof must pass" }
 }
 
+function Assert-ContractReviewProof {
+    param($Proof)
+    if ($null -eq $Proof -or $Proof -is [string]) { throw "contract_review proof must be structured" }
+    foreach ($field in @("plan_alignment", "correctness", "maintainability", "reality_evidence")) {
+        if (-not (Test-Property -Object $Proof -Name $field)) { throw "contract_review proof missing $field" }
+        if ($Proof.$field -ne $true) { throw "contract_review proof $field must be true" }
+    }
+}
+
 function Assert-PrVerification {
     param($Verification, $Pr)
     $policy = if (Test-Property -Object $Verification -Name "required_checks_policy") { [string]$Verification.required_checks_policy } else { "require-existing" }

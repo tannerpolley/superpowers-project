@@ -10,6 +10,8 @@ param(
     [string]$IssueFixturePath,
     [string[]]$VerificationCommands = @(),
     [string[]]$ChangedFilesCovered = @(),
+    [string]$ContractReviewJson,
+    [string]$ContractReviewPath,
     [string]$OutputDir
 )
 
@@ -97,6 +99,8 @@ try {
     $setup = Read-JsonInput -Path $SetupLedgerPath -Name "setup ledger"
     $pr = Get-PrEvidence
     $issue = Get-IssueEvidence
+    $contractReview = Read-JsonInput -Json $ContractReviewJson -Path $ContractReviewPath -Name "contract review"
+    Assert-ContractReviewProof -Proof $contractReview
     $covered = Expand-ListValues $ChangedFilesCovered
     if ($covered.Count -eq 0) {
         $covered = @($pr.files | ForEach-Object { Normalize-RepoPath ([string]$_.path) })
@@ -110,6 +114,7 @@ try {
         changed_files_covered = @($covered | ForEach-Object { Normalize-RepoPath $_ })
         verification_exemptions = @()
         proof_commands = $proof
+        contract_review = $contractReview
     }
     if ($ledger.proof_commands.Count -eq 0) { throw "VerificationCommands is required" }
     $ledgerPath = New-OutputPath -OutputDir $OutputDir
@@ -118,4 +123,3 @@ try {
 } catch {
     Write-CollectorResult -Ok $false -Reason $_.Exception.Message
 }
-
