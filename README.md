@@ -34,7 +34,7 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 
 The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `Stop`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected. Nested Yes menus list only forward routes, nested Revisit menus list only review, revision, repair, recovery, rerun, or evidence routes, and terminal options are not repeated inside those nested route menus.
 
-At startup, `$superpowers-project:initiate-workflow` first asks `project_workflow_mode` with `Manual Mode`, `Auto Mode`, and `Looping Mode`. Manual Mode asks at each material decision. Auto Mode is one-route autonomy only and stops at route closeout instead of continuing to another candidate. Looping Mode routes to `$superpowers-project:loop-controller`, which selects one ready maintenance candidate at a time, routes the actual work to the owning skill, and re-checks budget before another candidate.
+At startup, `$superpowers-project:initiate-workflow` first asks `project_workflow_mode` with `Manual Mode`, `Auto Mode`, and `Looping Mode`. Manual Mode asks at each material decision. Auto Mode is selected there, is one-route autonomy only, and stops at route closeout instead of continuing to another candidate. Looping Mode routes to `$superpowers-project:loop-controller`, which selects one ready maintenance candidate at a time, routes the actual work to the owning skill, and re-checks budget before another candidate.
 
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
@@ -63,10 +63,10 @@ Before any closeout, push, publish, or merge question, the agent must show the a
 | `project_align_next_step` | After an alignment check | Yes, Revisit, Stop | Apply Repair, Create Planning Spec, Run Align Again |
 | `project_align_final_health_gate` | After verified healthy alignment proof | Done, Revisit, Stop | Terminal Done only after clean audit proof |
 
-Auto Mode ledgers are validated by the plugin-provided validator:
+Auto Mode ledgers are validated by the plugin-provided validator from the loaded Superpowers Project plugin root:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
 ```
 
 Workflow mode ledgers are validated before mode-driven routing:

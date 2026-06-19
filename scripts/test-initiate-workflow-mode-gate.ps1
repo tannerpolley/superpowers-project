@@ -39,6 +39,13 @@ try {
     Add-Check "router names root validator" $skill.Contains("scripts/validate-workflow-mode-ledger.ps1") "router must name the root mode-ledger validator"
     Add-Check "auto mode is one-route only" $skill.Contains("one-route autonomy") "Auto Mode must be one-route only"
     Add-Check "looping mode delegates to loop controller" $skill.Contains('$superpowers-project:loop-controller') "Looping Mode must delegate to Loop Controller"
+    Add-Check "auto mode is invoked at initiate workflow" $skill.Contains("Selecting `Auto Mode` at `project_workflow_mode` is the Auto Mode invocation") "Auto Mode invocation must live at initiate-workflow"
+    Add-Check "auto validator path is plugin-rooted" $skill.Contains("<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1") "router must point to the loaded plugin root Auto Mode validator"
+    Add-Check "README auto validator path is plugin-rooted" $readme.Contains("<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1") "README must point to the loaded plugin root Auto Mode validator"
+    Add-Check "summary auto validator path is plugin-rooted" $summary.Contains("<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1") "summary must point to the loaded plugin root Auto Mode validator"
+    Add-Check "README does not use active-repo auto validator" (-not $readme.Contains("-File .\scripts\validate-auto-mode-authorization.ps1")) "README must not tell other repos to run an active-repo Auto Mode validator"
+    Add-Check "summary does not use active-repo auto validator" (-not $summary.Contains("-File .\scripts\validate-auto-mode-authorization.ps1")) "summary must not tell other repos to run an active-repo Auto Mode validator"
+    Add-Check "brainstorm does not own Auto Mode authorization" (-not $skill.Contains("After `$superpowers-project:brainstorm-spec` saves a spec, Auto Mode")) "router must not describe Auto Mode as a post-brainstorm invocation"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "initiate-workflow-mode-gate"; checks = $checks } | ConvertTo-Json -Depth 8

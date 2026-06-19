@@ -137,10 +137,10 @@ Auto Mode starts only after the findings spec is saved, self-reviewed, and shown
 - `required_proof` containing `plan-proof-oracle`, `verification-receipts`, `cleanup-hook`, `premerge-proof`, and `closeout-proof`
 - `stop_conditions` containing `missing-proof`, `dirty-unsafe-state`, `failed-validation`, and `decision-outside-policy`
 
-Validate the ledger with the plugin-provided Auto Mode validator:
+Validate the ledger with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
 ```
 
 If the ledger passes, continue into `$superpowers-project:write-plan` with the audit findings spec as the source spec. If validation fails or a needed decision falls outside the ledger policy, stop outside policy and return to manual planning instead of inventing approval.

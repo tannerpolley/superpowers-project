@@ -101,12 +101,12 @@ try {
     Copy-Item -LiteralPath (Join-Path $RepoRoot "skills\brainstorm-spec\SKILL.md") -Destination (Join-Path $liveRoot "skills\brainstorm-spec\SKILL.md")
     Copy-Item -LiteralPath (Join-Path $RepoRoot "skills\brainstorm-spec\agents\openai.yaml") -Destination (Join-Path $liveRoot "skills\brainstorm-spec\agents\openai.yaml")
     $skillPath = Join-Path $liveRoot "skills\brainstorm-spec\SKILL.md"
-    (Get-Content -LiteralPath $skillPath -Raw).Replace("project_brainstorm_start_route", "project_old_route") | Set-Content -LiteralPath $skillPath -Encoding utf8NoBOM
+    (Get-Content -LiteralPath $skillPath -Raw).Replace("project_brainstorm_plan_route", "project_old_route") | Set-Content -LiteralPath $skillPath -Encoding utf8NoBOM
     $stale = Invoke-JsonFile -ScriptPath (Join-Path $RepoRoot "scripts\detect-stale-skill-contract.ps1") -Arguments @(
         "-RepoRoot", $RepoRoot,
         "-LivePluginRoot", $liveRoot,
         "-SkillName", "brainstorm-spec",
-        "-ExpectedQuestionId", "project_brainstorm_start_route"
+        "-ExpectedQuestionId", "project_brainstorm_plan_route"
     )
     Add-Check -Name "stale expected question id fails" -Ok ($stale.exit_code -ne 0 -and $stale.json.ok -eq $false) -Reason "stale detector should fail when expected question id is missing"
 

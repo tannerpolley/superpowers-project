@@ -112,16 +112,19 @@ Route-specific source ranges:
       - Return to route selection.
 
 - `project_auto_mode_authorization`
-  - Startup point: only after `$superpowers-project:brainstorm-spec` saves a spec.
+  - Startup point: `$superpowers-project:initiate-workflow` after `project_workflow_mode` selects Auto Mode and the route has a source artifact.
   - Valid approval option:
     - `Bounded Auto Merge`
-      - Record an Auto Mode authorization ledger.
-      - Continue within the recorded defaults.
+      - Record or carry an Auto Mode authorization ledger tied to the startup mode selection.
+      - Continue within the recorded defaults for one selected or derived route.
+  - Validator:
+    - Resolve from the loaded Superpowers Project plugin root: `<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`.
   - Stop outside policy when:
     - Proof is missing.
     - Validation fails.
     - GitHub state is unsafe.
     - A decision falls outside the ledger policy.
+    - The selected route reaches closeout.
 
 ## Setup Project
 
@@ -177,42 +180,25 @@ Route-specific source ranges:
   - Prompt: `Should I continue on with the workflow?`
   - Options:
     - Yes (`Continue From Spec`)
-      - ASK `project_brainstorm_start_route`.
-      - `project_brainstorm_start_route`
-        - Prompt: `Should I continue manually or authorize Auto Mode?`
+      - ASK `project_brainstorm_plan_route`.
+      - `project_brainstorm_plan_route`
+        - Prompt: `How should planning start from this brainstorm?`
         - Options:
-          - `Manual Planning`
-            - ASK `project_brainstorm_plan_route`.
-            - `project_brainstorm_plan_route`
-              - Prompt: `How should planning start from this brainstorm?`
+          - `Create One Plan`
+            - START `$superpowers-project:write-plan` from the recently generated spec.
+          - `Multi-Spec Planning`
+            - ASK `project_brainstorm_multi_spec_route`.
+            - `project_brainstorm_multi_spec_route`
+              - Prompt: `How should multiple specs become plans?`
               - Options:
-                - `Create One Plan`
-                  - START `$superpowers-project:write-plan` from the recently generated spec.
-                - `Multi-Spec Planning`
-                  - ASK `project_brainstorm_multi_spec_route`.
-                  - `project_brainstorm_multi_spec_route`
-                    - Prompt: `How should multiple specs become plans?`
-                    - Options:
-                      - `Plan Multiple Specs`
-                        - START `$superpowers-project:write-plan` from multiple existing specs.
-                        - Prompt for spec selection if not known.
-                      - `Create Multiple Plans`
-                        - Create multiple related plans from multiple specs.
-                        - Prompt for spec-to-plan grouping if not known.
-          - `Auto Mode`
-            - ASK `project_auto_mode_authorization`.
-            - `project_auto_mode_authorization`
-              - Prompt: `Authorize bounded Auto Mode for this saved spec?`
-              - Options:
-                - `Bounded Auto Merge`
-                  - Create an Auto Mode authorization ledger.
-                  - Continue without more user input through planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
-                - `Manual Planning`
-                  - ASK `project_brainstorm_plan_route`.
-              - Guard:
-                - Validate the ledger with the plugin-provided Auto Mode validator: `scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`.
-              - Recovery:
-                - If a saved-spec closeout omitted `project_brainstorm_start_route`, `project_auto_mode_authorization`, or `Bounded Auto Merge`, warn about stale loaded skill text and re-ask the missed native route.
+                - `Plan Multiple Specs`
+                  - START `$superpowers-project:write-plan` from multiple existing specs.
+                  - Prompt for spec selection if not known.
+                - `Create Multiple Plans`
+                  - Create multiple related plans from multiple specs.
+                  - Prompt for spec-to-plan grouping if not known.
+      - Recovery:
+        - If a saved-spec closeout omitted `project_brainstorm_plan_route`, warn about stale loaded skill text and re-ask the missed native route.
     - Revisit (`Revise / Review Brainstorm`)
       - ASK `project_brainstorm_reiteration_route`.
       - `project_brainstorm_reiteration_route`

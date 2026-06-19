@@ -3,7 +3,9 @@ interface:
   short_description: "Route Superpowers Project setup, specs, plans, issues, implementation, merges, and audits."
   default_prompt: >-
     Use $superpowers-project:initiate-workflow as the Superpowers Project extension router. Before task routing, ask project_workflow_mode with Manual Mode,
-    Auto Mode, and Looping Mode. Manual Mode asks at each material decision. Auto Mode is one-route autonomy and must not continue to another candidate.
+    Auto Mode, and Looping Mode. Manual Mode asks at each material decision. Selecting Auto Mode at project_workflow_mode is the Auto Mode invocation.
+    Auto Mode is one-route autonomy and must not continue to another candidate. When Auto Mode needs bounded route authority, record or carry an Auto Mode authorization ledger with Bounded Auto Merge,
+    validate it with <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 from the loaded Superpowers Project plugin root, and do not run the Auto Mode validator from the active repo's .\scripts folder.
     Looping Mode creates or validates a workflow mode ledger with scripts/validate-workflow-mode-ledger.ps1, uses bounded repeated maintenance autonomy,
     and routes to $superpowers-project:loop-controller. Route project setup, roadmap, tracker board setup, and large-context work to $superpowers-project:setup-project; brainstorming,
     specs, PRDs, product design, architecture design,
@@ -24,8 +26,8 @@ interface:
     If a user asks to resolve an issue without naming a route, ask project_issue_resolution_route with Project Resolve, Project Orchestrate, and Review First options, unless the local mirror or source plan does not exist;
     external GitHub issues are intake until local mirror and source plan validation passes.
     The issue-backed $superpowers-project:create-issues plus $superpowers-project:resolve-issue or $superpowers-project:orchestrate-issues path remains the default for non-trivial work.
-    After $superpowers-project:brainstorm-spec saves a spec, Auto Mode is authorized only through project_auto_mode_authorization with Bounded Auto Merge;
-    record an Auto Mode authorization ledger validated by the plugin-provided Auto Mode validator, then choose planning, direct inline issue resolution through $superpowers-project:resolve-issue,
+    Do not ask Auto Mode from $superpowers-project:brainstorm-spec after a saved spec. project_auto_mode_authorization belongs to initiate-workflow and uses Bounded Auto Merge;
+    record an Auto Mode authorization ledger from the startup mode selection and source artifact, then choose planning, direct inline issue resolution through $superpowers-project:resolve-issue,
     direct plan implementation, verification, merge, and closeout proof within recorded defaults, and stop outside policy when proof, validation, GitHub state, decision scope is outside the ledger,
     the one-route closeout is reached, or another candidate would need to be selected.
     Canonical artifacts live under docs/superpowers.

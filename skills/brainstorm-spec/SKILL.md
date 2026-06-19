@@ -39,7 +39,7 @@ For every brainstorm run, the agent MUST create checklist tasks and complete the
 8. User reviews written spec before proceeding. Do not infer approval from silence, prior enthusiasm, a custom `Other` answer, or a stale thread state.
 9. Transition only to `$superpowers-project:write-plan` or `superpowers:writing-plans` after the checklist, written spec, self-review, artifact display, and user review are complete.
 
-Do NOT invoke implementation, issue creation, branch work, PR work, merge work, or planning before this gate is satisfied. Auto Mode authorization is forbidden until the same gate is satisfied and the saved spec has passed the artifact review and user-review checks.
+Do NOT invoke implementation, issue creation, branch work, PR work, merge work, or planning before this gate is satisfied. Auto Mode routing belongs to `$superpowers-project:initiate-workflow`; this skill may continue only into planning, revisit, or stop after the saved spec passes artifact review and user review.
 
 ## Native Question Debug Mode
 
@@ -119,22 +119,11 @@ Prompt: `Should I continue on with the workflow?`
 
 Options:
 
-- Yes: choose how to turn the brainstorm artifact into planning work.
+- Yes: Continue From Spec by choosing how to turn the brainstorm artifact into planning work.
 - Revisit: revise, review, ask follow-ups, or run another brainstorm loop.
 - Stop: break the continuation loop.
 
-If the user selects `Continue From Spec`, ask:
-
-Question id: `project_brainstorm_start_route`
-
-Prompt: `Should I continue manually or authorize Auto Mode?`
-
-Options:
-
-- `Manual Planning`: choose the next planning route yourself.
-- `Auto Mode`: authorize the agent to choose the route, plan, implement, verify, and merge within the bounded policy.
-
-If the user selects `Manual Planning`, ask:
+Manual Planning is the only brainstorm-owned progress path. If the user selects `Yes`, ask:
 
 Question id: `project_brainstorm_plan_route`
 
@@ -145,36 +134,9 @@ Options:
 - `Create One Plan`: create one `$superpowers-project:write-plan` from the recently generated spec.
 - `Multi-Spec Planning`: choose whether to create one plan from multiple specs or multiple related plans.
 
-If the user selects `Auto Mode`, ask:
+If a saved-spec closeout appears to omit `project_brainstorm_plan_route`, treat that as stale-thread recovery. Warn that the loaded thread may still be using older skill text, re-ask the missed native route, and continue from the corrected path instead of stopping or inferring approval from the stale behavior.
 
-Question id: `project_auto_mode_authorization`
-
-Prompt: `Authorize bounded Auto Mode for this saved spec?`
-
-Options:
-
-- `Bounded Auto Merge`: create an Auto Mode authorization ledger and continue without more user input through planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
-- `Manual Planning`: return to `project_brainstorm_plan_route`.
-
-`Bounded Auto Merge` is the only valid Auto Mode approval. It must record an Auto Mode authorization ledger before the next skill starts. The ledger must include:
-
-- `question_id: project_auto_mode_authorization`
-- `source: request_user_input`
-- `selected_authority: bounded-auto-merge`
-- `source_spec: docs/superpowers/specs/<yyyy-mm-dd>-<slug>.md`
-- `route_policy.selected_mode: agent-chooses`
-- `route_policy.issue_route: direct-inline-resolve-issue`
-- `decision_policy.selected_mode: recorded-defaults`
-- `decision_policy.stop_outside_policy: true`
-- `merge_permission.selected_mode: preauthorized-after-clean-premerge`
-- `merge_permission.require_clean_premerge: true`
-- `mutation_scope` containing `current-repo` and `development-branch`
-- `required_proof` containing `plan-proof-oracle`, `verification-receipts`, `cleanup-hook`, `premerge-proof`, and `closeout-proof`
-- `stop_conditions` containing `missing-proof`, `dirty-unsafe-state`, `failed-validation`, and `decision-outside-policy`
-
-If a saved-spec closeout appears to omit `project_brainstorm_start_route`, `project_auto_mode_authorization`, or `Bounded Auto Merge`, treat that as stale-thread recovery. Warn that the loaded thread may still be using older skill text, re-ask the missed native route, and continue from the corrected path instead of stopping or inferring approval from the stale behavior.
-
-Validate the ledger with the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`). If the ledger does not pass, do not continue into Auto Mode.
+Do not ask an Auto Mode question from this skill. If startup selected Auto Mode, carry the existing workflow mode ledger forward and let `$superpowers-project:initiate-workflow` and downstream route contracts enforce the bounded policy.
 
 If the user selects `Multi-Spec Planning`, ask:
 

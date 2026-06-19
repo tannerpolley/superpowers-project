@@ -16,13 +16,13 @@ try {
     New-Item -ItemType Directory -Path (Join-Path $liveRoot "skills\brainstorm-spec\agents") -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot "skills\brainstorm-spec\SKILL.md") -Destination (Join-Path $liveRoot "skills\brainstorm-spec\SKILL.md")
     Copy-Item -LiteralPath (Join-Path $RepoRoot "skills\brainstorm-spec\agents\openai.yaml") -Destination (Join-Path $liveRoot "skills\brainstorm-spec\agents\openai.yaml")
-    $okRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "scripts\detect-stale-skill-contract.ps1") -RepoRoot $RepoRoot -LivePluginRoot $liveRoot -SkillName "brainstorm-spec" -ExpectedQuestionId "project_brainstorm_start_route"
+    $okRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "scripts\detect-stale-skill-contract.ps1") -RepoRoot $RepoRoot -LivePluginRoot $liveRoot -SkillName "brainstorm-spec" -ExpectedQuestionId "project_brainstorm_plan_route"
     $okResult = ($okRaw | Out-String | ConvertFrom-Json)
     Add-Check -Name "fresh live skill passes" -Ok ($okResult.ok -eq $true) -Reason "fresh live skill should pass"
 
-    $staleText = (Get-Content -LiteralPath (Join-Path $liveRoot "skills\brainstorm-spec\SKILL.md") -Raw).Replace("project_brainstorm_start_route", "project_old_route")
+    $staleText = (Get-Content -LiteralPath (Join-Path $liveRoot "skills\brainstorm-spec\SKILL.md") -Raw).Replace("project_brainstorm_plan_route", "project_old_route")
     Set-Content -LiteralPath (Join-Path $liveRoot "skills\brainstorm-spec\SKILL.md") -Value $staleText -Encoding utf8NoBOM
-    $badRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "scripts\detect-stale-skill-contract.ps1") -RepoRoot $RepoRoot -LivePluginRoot $liveRoot -SkillName "brainstorm-spec" -ExpectedQuestionId "project_brainstorm_start_route" 2>&1
+    $badRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "scripts\detect-stale-skill-contract.ps1") -RepoRoot $RepoRoot -LivePluginRoot $liveRoot -SkillName "brainstorm-spec" -ExpectedQuestionId "project_brainstorm_plan_route" 2>&1
     $badExit = $LASTEXITCODE
     $badResult = ($badRaw | Out-String | ConvertFrom-Json)
     Add-Check -Name "stale live skill fails" -Ok ($badExit -ne 0 -and $badResult.ok -eq $false) -Reason "stale live skill should fail"

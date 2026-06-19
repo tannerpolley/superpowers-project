@@ -27,6 +27,8 @@ Options:
 - `Auto Mode`: one-route autonomy using recorded defaults and validator-backed proof; it must stop at route closeout and must not continue to another candidate.
 - `Looping Mode`: bounded repeated maintenance autonomy; create or validate a workflow mode ledger, then route to `$superpowers-project:loop-controller`.
 
+Selecting Auto Mode at project_workflow_mode is the Auto Mode invocation. Do not invoke Auto Mode again from `$superpowers-project:brainstorm-spec` after a saved spec. The workflow mode ledger records the startup selection before task routing; downstream routes may consume it only for one selected or derived route and must stop at route closeout.
+
 Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json` and validate it with:
 
 ```powershell
@@ -34,6 +36,14 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-mo
 ```
 
 Canonical marker: `scripts/validate-workflow-mode-ledger.ps1`.
+
+When Auto Mode needs the bounded route authority used by downstream planning, implementation, verification, merge, or live-sync proof, record an Auto Mode authorization ledger tied to the startup mode selection and the source artifact. The valid authority is `Bounded Auto Merge`. Resolve the Auto Mode validator from the loaded Superpowers Project plugin root. This is the plugin-provided Auto Mode validator:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```
+
+Do not run `.\scripts\validate-auto-mode-authorization.ps1` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
 
 Recommend `Manual Mode` when the user has not asked for autonomy. Recommend `Auto Mode` only when one route is clear and source evidence is already strong. Recommend `Looping Mode` when the user asks to operate, maintain, drain issues, keep going, resolve a queue, or run broad project maintenance.
 
@@ -54,7 +64,16 @@ Recommend `Manual Mode` when the user has not asked for autonomy. Recommend `Aut
 
 The issue-backed `$superpowers-project:create-issues` plus `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$superpowers-project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
 
-After `$superpowers-project:brainstorm-spec` saves a spec, Auto Mode may be authorized only through native question `project_auto_mode_authorization` with `Bounded Auto Merge`. That route records an Auto Mode authorization ledger validated by the plugin-provided Auto Mode validator (`scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the agent then chooses between planning, direct inline issue resolution through `$superpowers-project:resolve-issue`, direct plan implementation, verification, merge, and closeout proof within the recorded defaults. Auto Mode is one-route autonomy: if proof is missing, validation fails, GitHub state is unsafe, the route reaches closeout, the route needs a decision outside the ledger policy, or the agent would need to continue to another candidate, stop outside policy instead of inventing a new approval.
+Question id: `project_auto_mode_authorization`
+
+Prompt: `Authorize bounded Auto Mode for this initiated workflow route?`
+
+Options:
+
+- `Bounded Auto Merge`: record or carry the Auto Mode authorization ledger and continue without more user input through the selected route's planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
+- `Manual Mode`: return to normal material decision gates.
+
+Auto Mode is one-route autonomy: if proof is missing, validation fails, GitHub state is unsafe, the route reaches closeout, the route needs a decision outside the ledger policy, or the agent would need to continue to another candidate, stop outside policy instead of inventing a new approval.
 
 External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$superpowers-project:create-issues` hydration first and block execution until mirror validation passes.
 

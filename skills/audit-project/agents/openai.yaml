@@ -12,7 +12,8 @@ interface:
     record missing evidence as a revisit route or open question.
     After saving the findings spec, route to $superpowers-project:write-plan by default, offer Auto Mode when the user wants bounded automation from the saved source spec,
     or route to $superpowers-project:create-issues only when findings are already issue-ready. Auto Mode asks project_auto_mode_authorization with Bounded Auto Merge and Manual Planning,
-    validates the Auto Mode authorization ledger with scripts/validate-auto-mode-authorization.ps1, records direct-inline-resolve-issue routing, carries the audit findings source spec into $superpowers-project:write-plan,
+    validates the Auto Mode authorization ledger with <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 from the loaded Superpowers Project plugin root,
+    records direct-inline-resolve-issue routing, carries the audit findings source spec into $superpowers-project:write-plan,
     and stops outside policy if validation fails or a decision falls outside recorded defaults.
     At closeout, complete the artifact review gate,
     inventory every produced or materially changed artifact owned by the audit run, summarize P0, P1, P2, and P3 findings plus healthy and skipped checks,

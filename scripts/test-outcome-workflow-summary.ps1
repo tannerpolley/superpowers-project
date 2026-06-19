@@ -33,7 +33,7 @@ try {
 
     foreach ($needle in @(
         '$superpowers-project:*',
-        'project_brainstorm_start_route',
+        'project_brainstorm_plan_route',
         'project_merge_final_health_gate',
         'debug_question_mode',
         'scripts/sync-live.ps1 -Validate',
@@ -58,13 +58,16 @@ try {
         'Manual Mode',
         'Looping Mode',
         'selected_mode',
-        'validate-workflow-mode-ledger.ps1'
+        'validate-workflow-mode-ledger.ps1',
+        '<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1'
     )) {
         Add-Check -Name "summary contains $needle" -Ok $current.Contains($needle) -Reason "outcome workflow missing $needle"
     }
 
     $auditRowPattern = '(?m)^\| `audit-project` \| .+ \| .*`project_auto_mode_authorization`'
     Add-Check -Name "audit-project summary lists Auto Mode authorization" -Ok ([regex]::IsMatch($current, $auditRowPattern)) -Reason "audit-project summary row missing project_auto_mode_authorization"
+    $brainstormRowPattern = '(?m)^\| `brainstorm-spec` \| .+ \| (?!.*`project_auto_mode_authorization`).*`project_brainstorm_plan_route`'
+    Add-Check -Name "brainstorm summary excludes Auto Mode authorization" -Ok ([regex]::IsMatch($current, $brainstormRowPattern)) -Reason "brainstorm-spec summary row must list planning routes without project_auto_mode_authorization"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "outcome-workflow-summary"; checks = $checks } | ConvertTo-Json -Depth 8

@@ -112,7 +112,7 @@ foreach ($line in @(
     '- Push, publish, merge, board creation, GitHub mutation, and final `Done` require explicit proof and the owning native gate.',
     '- `project_merge_approval` is the merge approval gate.',
     '- `project_auto_mode_authorization` can authorize bounded Auto Mode only when the plugin-provided Auto Mode validator passes.',
-    '- Validate Auto Mode ledgers with `scripts/validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>` from the loaded Superpowers Project plugin surface.',
+    '- Validate Auto Mode ledgers with `<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>` from the loaded Superpowers Project plugin root.',
     '- Helper scripts may prepare evidence, but they must not convert missing approval into approval.',
     '',
     '## Debug Mode',
@@ -148,7 +148,7 @@ foreach ($line in @(
     '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`',
     '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-outcome-workflow-summary.ps1`',
     '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent`',
-    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`'
+    '- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_plan_route`'
 )) {
     [void]$lines.Add($line)
 }

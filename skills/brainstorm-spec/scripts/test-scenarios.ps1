@@ -101,7 +101,7 @@ $scenarios = @(
             "User reviews written spec",
             'Transition only to `$superpowers-project:write-plan`',
             "Do NOT invoke implementation",
-            "Auto Mode authorization is forbidden"
+            'Auto Mode routing belongs to `$superpowers-project:initiate-workflow`'
         )) {
             Assert-Contains $text $needle "missing upstream brainstorming checklist gate in SKILL.md: $needle"
         }
@@ -114,7 +114,7 @@ $scenarios = @(
             "approval after each section",
             "architecture, components, data flow, error handling, and testing",
             "User reviews written spec",
-            "Auto Mode authorization is forbidden"
+            "Auto Mode routing belongs to initiate-workflow"
         )) {
             Assert-Contains $metadata $needle "missing upstream brainstorming checklist gate in metadata: $needle"
         }
@@ -142,19 +142,10 @@ $scenarios = @(
             "Continue From Spec",
             "Revise / Review Brainstorm",
             "Stop",
-            "project_brainstorm_start_route",
             "Manual Planning",
-            "Auto Mode",
-            "project_auto_mode_authorization",
-            "Bounded Auto Merge",
             "loaded thread may still be using older skill text",
             "re-ask the missed native route",
             "stale-thread recovery",
-            "Auto Mode authorization ledger",
-            "bounded-auto-merge",
-            "recorded-defaults",
-            "direct-inline-resolve-issue",
-            "the plugin-provided Auto Mode validator",
             "project_brainstorm_plan_route",
             "Create One Plan",
             "Multi-Spec Planning",
@@ -181,11 +172,7 @@ $scenarios = @(
             "project_brainstorm_next_step",
             "Continue From Spec",
             "Revise / Review Brainstorm",
-            "project_brainstorm_start_route",
             "Manual Planning",
-            "Auto Mode",
-            "project_auto_mode_authorization",
-            "Bounded Auto Merge",
             "loaded thread may still be using older skill text",
             "re-ask the missed native route",
             "stale-thread recovery",
@@ -195,6 +182,23 @@ $scenarios = @(
         )) {
             Assert-Contains $text $needle "missing continuation gate text: $needle"
         }
+    }
+    Invoke-Scenario "brainstorm no longer owns Auto Mode authorization" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            "project_brainstorm_start_route",
+            "project_auto_mode_authorization",
+            "Bounded Auto Merge",
+            "Auto Mode authorization ledger",
+            "validate-auto-mode-authorization.ps1",
+            "authorize Auto Mode"
+        )) {
+            Assert-NotContains $text $needle "brainstorm SKILL.md must not own Auto Mode route: $needle"
+            Assert-NotContains $metadata $needle "brainstorm metadata must not own Auto Mode route: $needle"
+        }
+        Assert-Contains $text 'Auto Mode routing belongs to `$superpowers-project:initiate-workflow`' "brainstorm must point Auto Mode ownership at initiate-workflow"
+        Assert-Contains $metadata "Auto Mode routing belongs to initiate-workflow" "metadata must point Auto Mode ownership at initiate-workflow"
     }
 
     Invoke-Scenario "native continuation policy avoids nested stop routes" {
