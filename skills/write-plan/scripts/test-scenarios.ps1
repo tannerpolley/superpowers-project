@@ -54,6 +54,16 @@ $scenarios = @(
             "bounded-auto-merge",
             "recorded defaults",
             "stop outside policy",
+            "## Outcome Contract",
+            "## Architecture Slice",
+            "validate-plan-outcome-contract.ps1",
+            "Truth Owner",
+            "Contract Interface",
+            "Cutover Decision",
+            "Displaced Path",
+            "Evidence Lane",
+            "Kill Criteria",
+            "Forbidden Moves",
             "Interview me relentlessly about every aspect of this plan",
             "superpowers:test-driven-development",
             "superpowers:systematic-debugging",
@@ -74,7 +84,11 @@ $scenarios = @(
             "revise the saved plan before presenting it as ready",
             "branch strategy",
             "publish behavior",
-            "live mutation"
+            "live mutation",
+            "truth owner",
+            "contract interface",
+            "cutover",
+            "evidence fields"
         )) {
             Assert-Contains $text $needle "missing planning grill gate contract: $needle"
         }
@@ -134,6 +148,16 @@ $scenarios = @(
             "thresholds",
             "tolerances",
             "units",
+            "Outcome Contract",
+            "Architecture Slice",
+            "validate-plan-outcome-contract.ps1",
+            "Truth Owner",
+            "Contract Interface",
+            "Cutover Decision",
+            "Displaced Path",
+            "Evidence Lane",
+            "Kill Criteria",
+            "Forbidden Moves",
             "artifact review gate",
             "broader project context"
         )) {
