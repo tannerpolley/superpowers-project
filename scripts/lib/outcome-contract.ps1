@@ -85,7 +85,7 @@ function Test-ConcreteContractValue {
     }
 
     $trimmed = $Value.Trim()
-    if ($trimmed -match '^(none|n/a|na|not applicable|same as above|-)$') {
+    if ($trimmed -match '^(tbd|none|n/a|na|not applicable|same as above|-)$') {
         return [pscustomobject]@{ ok = $false; reason = "$Field uses a generic value" }
     }
 

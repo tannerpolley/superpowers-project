@@ -94,6 +94,17 @@ Each mirror must include:
 - Parallelization Plan
 - Reviewer Role
 - Script Gate Mode
+- Outcome Contract Summary
+- Outcome Contract Source
+- Intent
+- Target-Perspective Output
+- Truth Owner
+- Contract Interface
+- Cutover Decision
+- Displaced Path
+- Acceptance Evidence
+- Kill Criteria
+- Forbidden Moves
 - Project Merge section
 - Merge Owner
 - Merge Gate
@@ -107,6 +118,8 @@ Each mirror must include:
 - GitHub body text or a close mirror of it
 
 Workflow metadata guides `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues`. Missing or malformed workflow metadata is blocking for every issue mirror because it creates ambiguous execution instructions. Issue metadata must keep downstream routing compatible with the mandatory Superpowers companion skills used by those execution routes. `Execution Mode` should normally be `Ask at runtime` so the resolver asks whether to solve inline or open a worker worktree thread.
+
+Every issue mirror must include `## Outcome Contract Summary`. The summary carries the plan's Krypton-derived contract into issue execution and must include `Outcome Contract Source`, `Intent`, `Target-Perspective Output`, `Truth Owner`, `Contract Interface`, `Cutover Decision`, `Displaced Path`, `Acceptance Evidence`, `Kill Criteria`, and `Forbidden Moves`. The summary may narrow a multi-issue slice, but it must not drop or contradict the source plan's truth owner, contract interface, cutover decision, displaced path handling, acceptance evidence, kill criteria, or forbidden moves.
 
 Bug mirrors must include either a Reproduction section or a Feedback Loop section so the fixing agent has a concrete failure to prove.
 
@@ -132,6 +145,19 @@ Use this shape for each issue body and mirror:
 **Parallelization Plan:** None
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
+
+## Outcome Contract Summary
+
+**Outcome Contract Source:** <source plan path>#outcome-contract
+**Intent:** <issue slice intent>
+**Target-Perspective Output:** <target person or operator-visible result>
+**Truth Owner:** <module, artifact, or process that owns durable truth>
+**Contract Interface:** <interface consumed by downstream execution>
+**Cutover Decision:** <delete, redirect, demote, shim with removal trigger, or explicitly keep>
+**Displaced Path:** <old behavior, artifact, route, doc, or source file>
+**Acceptance Evidence:** <target-perspective proof>
+**Kill Criteria:** <condition that blocks or retires temporary paths>
+**Forbidden Moves:** <moves that would create wrong ownership, duplicate truth, or fake proof>
 
 ## Project Merge
 
@@ -179,6 +205,9 @@ Validation must prove:
 - Goal Command is present for AFK issues
 - bug mirrors include Reproduction or Feedback Loop evidence
 - workflow metadata is present and valid
+- Outcome Contract Summary is present and valid
+- Outcome Contract Source does not use `docs/goals`
+- Contract Interface, Cutover Decision, Acceptance Evidence, Kill Criteria, and Forbidden Moves are concrete
 - Project Merge metadata is present and valid
 
 ## External GitHub Issue Hydration
@@ -190,9 +219,10 @@ Protocol:
 1. Read the GitHub issue body from `IssueBodyPath` for fixture work or from `gh issue view <url>` for live tracker work.
 2. Create or update `docs/superpowers/issues/<issue-number>-<slug>.md`.
 3. Preserve the issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command.
-4. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
-5. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
-6. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
+4. Create or update `## Outcome Contract Summary` with `Outcome Contract Source`, `Contract Interface`, `Cutover Decision`, `Acceptance Evidence`, `Kill Criteria`, and `Forbidden Moves` before validation.
+5. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
+6. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
+7. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
 
 Hydration may create a source plan and pass mirror validation in the same command, but the original GitHub issue remains intake until the local mirror and source plan exist and validation has passed. Do not hand raw GitHub issue text to execution skills.
 

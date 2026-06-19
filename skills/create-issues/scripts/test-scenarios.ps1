@@ -51,6 +51,24 @@ function Run-Hydration {
     $output | ConvertFrom-Json
 }
 
+function New-OutcomeContractSummary {
+    param([string]$SourcePlan = "docs/superpowers/plans/2026-06-02-sample-plan.md")
+@"
+## Outcome Contract Summary
+
+**Outcome Contract Source:** $SourcePlan#outcome-contract
+**Intent:** Enforce issue contract continuity.
+**Target-Perspective Output:** Maintainer sees issue execution blocked without contract proof.
+**Truth Owner:** ``scripts/lib/outcome-contract.ps1``
+**Contract Interface:** Markdown issue summary fields consumed by validators.
+**Cutover Decision:** Extend issue readiness validation.
+**Displaced Path:** Issue readiness without contract summary.
+**Acceptance Evidence:** issue validator returns ``ok: true``.
+**Kill Criteria:** Reject issue mirrors missing contract proof.
+**Forbidden Moves:** Do not use ``docs/goals`` as the issue source.
+"@
+}
+
 function New-ExternalIssueBody {
     param([string]$Path, [string]$SourcePlan)
     @"
@@ -99,6 +117,8 @@ Hydrate an externally created GitHub issue into local Superpowers Project artifa
 ## Proof Oracle
 
 - ``pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1``
+
+$(New-OutcomeContractSummary -SourcePlan $SourcePlan)
 "@ | Set-Content -LiteralPath $Path -Encoding utf8NoBOM
 }
 
@@ -136,7 +156,12 @@ $scenarios = @(
             "External GitHub Issue Hydration",
             "external GitHub issues are intake",
             "hydrate-external-issue.ps1",
-            "Missing or malformed workflow metadata is blocking for every issue mirror"
+            "Missing or malformed workflow metadata is blocking for every issue mirror",
+            "Outcome Contract Summary",
+            "Outcome Contract Source",
+            "Contract Interface",
+            "Cutover Decision",
+            "Kill Criteria"
         )) {
             Assert-Contains $text $needle "missing create-issues contract: $needle"
         }
@@ -181,6 +206,9 @@ $scenarios = @(
         Assert-Contains $metadata "flat canonical roots" "missing metadata flat root policy"
         Assert-Contains $metadata "issue mirrors include the GitHub issue number" "missing metadata issue filename policy"
         Assert-Contains $metadata "missing or malformed workflow metadata is blocking for every issue mirror" "missing metadata strict workflow metadata policy"
+        foreach ($needle in @("Outcome Contract Summary", "Outcome Contract Source", "Contract Interface", "Cutover Decision", "Kill Criteria")) {
+            Assert-Contains $metadata $needle "missing metadata outcome contract summary policy: $needle"
+        }
         foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }
@@ -250,6 +278,8 @@ $scenarios = @(
 ## Acceptance Criteria
 
 - [ ] Sample issue can be resolved by an agent
+
+$(New-OutcomeContractSummary)
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
             if (-not $result.ok) { throw $result.reason }
@@ -292,9 +322,54 @@ $scenarios = @(
 ## Acceptance Criteria
 
 - [ ] Sample issue can be resolved by an agent
+
+$(New-OutcomeContractSummary)
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
             if ($result.ok -or $result.reason -ne "Execution Mode is required") { throw "expected Execution Mode to be required" }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "issue mirror validator blocks missing outcome contract summary" {
+        if (-not (Test-Path -LiteralPath $validatorFile -PathType Leaf)) { throw "missing validate-issue-mirror.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("create-issues-missing-contract-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\issues") -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\plans") -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $root "docs\superpowers\plans\2026-06-02-sample-plan.md") -Value "# Sample Plan" -Encoding utf8NoBOM
+            $issuePath = Join-Path $root "docs\superpowers\issues\15-missing-contract.md"
+            @"
+# Missing Outcome Contract Summary
+
+**GitHub Issue:** https://github.com/example/repo/issues/15
+**GitHub Milestone:** M1 - Source Of Truth
+**Issue Type:** task
+**Source Plan:** docs/superpowers/plans/2026-06-02-sample-plan.md
+**Classification:** AFK
+**Goal Command:** /goal Resolve sample issue
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
+
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
+## Acceptance Criteria
+
+- [ ] Sample issue can be resolved by an agent
+"@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
+            $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
+            if ($result.ok -or $result.reason -notmatch "Outcome Contract Summary") { throw "expected missing outcome contract summary to fail" }
         } finally {
             if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
         }
@@ -335,6 +410,8 @@ $scenarios = @(
 ## Acceptance Criteria
 
 - [ ] Bug fix is verified
+
+$(New-OutcomeContractSummary -SourcePlan "docs/superpowers/specs/2026-06-02-bug-design.md")
 "@ | Set-Content -LiteralPath $issuePath -Encoding utf8NoBOM
             $result = Run-Validator -RepoRoot $root -IssuePath $issuePath -MilestoneRequired
             if ($result.ok -or $result.reason -notmatch "repro|feedback") { throw "expected repro or feedback loop failure" }

@@ -128,6 +128,33 @@ Run the proof oracle recorded in the hydrated issue mirror.
 "@
 }
 
+function New-OutcomeContractSummaryText {
+    param([string]$SourcePlan, [string]$Title)
+    @"
+## Outcome Contract Summary
+
+**Outcome Contract Source:** $SourcePlan#outcome-contract
+**Intent:** Hydrate external issue '$Title' into Superpowers Project execution records.
+**Target-Perspective Output:** Maintainer sees a local issue mirror with source plan linkage and validation proof.
+**Truth Owner:** ``skills/create-issues/scripts/hydrate-external-issue.ps1``
+**Contract Interface:** Markdown issue mirror fields consumed by validate-issue-mirror.ps1.
+**Cutover Decision:** Convert external intake into local docs/superpowers issue mirror before execution.
+**Displaced Path:** Raw external issue URL without local mirror and source plan.
+**Acceptance Evidence:** issue mirror validation returns ``ok: true``.
+**Kill Criteria:** Block execution until source plan and local mirror validation pass.
+**Forbidden Moves:** Do not execute from a raw GitHub issue URL.
+"@
+}
+
+function Set-OutcomeContractSummary {
+    param([string]$Text, [string]$SourcePlan, [string]$Title)
+    $summary = New-OutcomeContractSummaryText -SourcePlan $SourcePlan -Title $Title
+    if (-not [regex]::IsMatch($Text, "(?im)^\s{0,3}##\s+Outcome Contract Summary\s*$")) {
+        return ($Text.TrimEnd() + "`n`n" + $summary + "`n")
+    }
+    Set-FieldValue -Text $Text -Name "Outcome Contract Source" -Value "$SourcePlan#outcome-contract"
+}
+
 try {
     $root = (Resolve-Path -LiteralPath $RepoRoot -ErrorAction SilentlyContinue)
     if ($null -eq $root) {
@@ -157,6 +184,7 @@ try {
 
     $mirrorText = Set-FieldValue -Text $body -Name "GitHub Issue" -Value $IssueUrl
     $mirrorText = Set-FieldValue -Text $mirrorText -Name "Source Plan" -Value ($sourcePlan -replace '\\', '/')
+    $mirrorText = Set-OutcomeContractSummary -Text $mirrorText -SourcePlan ($sourcePlan -replace '\\', '/') -Title $title
 
     $mirrorRelative = "docs/superpowers/issues/$number-$slug.md"
     $mirrorPath = Join-Path $rootPath $mirrorRelative
@@ -179,4 +207,3 @@ try {
 } catch {
     Complete -Ok $false -Reason $_.Exception.Message
 }
-

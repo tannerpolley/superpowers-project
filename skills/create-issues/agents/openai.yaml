@@ -7,11 +7,13 @@ interface:
     direct-inline-resolve-issue routing, and stop outside policy before issue publication or execution handoff without more user input.
     Read docs/superpowers/specs, docs/superpowers/plans, docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones, docs/superpowers/issues, and tracker label vocabulary from docs/agents when present;
     keep flat canonical roots for spec -> plan -> issue; classify each slice as AFK or HITL; capture Blocked by relationships, Acceptance Criteria, GitHub Issue, GitHub Milestone, configured type/status labels, proof oracle,
-    Goal Command for AFK issues, Execution Mode, Worktree Policy, Integration Policy, TDD Policy, Parallelization Plan, Reviewer Role, and Script Gate Mode;
+    Goal Command for AFK issues, Execution Mode, Worktree Policy, Integration Policy, TDD Policy, Parallelization Plan, Reviewer Role, Script Gate Mode, Outcome Contract Summary, Outcome Contract Source,
+    Contract Interface, Cutover Decision, Acceptance Evidence, Kill Criteria, and Forbidden Moves;
     missing or malformed workflow metadata is blocking for every issue mirror; include a Project Merge section with Merge Owner, Merge Gate, Merge Policy, Worktree Cleanup Policy, and Orchestrator Wakeup Policy;
+    missing or malformed Outcome Contract Summary is blocking for every issue mirror because issue execution must carry the source plan contract into resolve, orchestrate, and merge proof;
     write mirrors under docs/superpowers/issues, where issue mirrors include the GitHub issue number after publication;
     keep downstream routing compatible with the mandatory Superpowers companion skills enforced by $superpowers-project:resolve-issue and $superpowers-project:orchestrate-issues; for Source Plan:
-    TBD or GitHub issues without local artifacts, run hydrate-external-issue.ps1 to create or update the local mirror and source plan before routing;
+    TBD or GitHub issues without local artifacts, run hydrate-external-issue.ps1 to create or update the local mirror, source plan, and Outcome Contract Summary before routing;
     external GitHub issues are intake until local mirror and source plan validation passes; treat Milestone pages are index views and nested canonical milestone artifact folders are drift; validate mirrors before handoff.
     At closeout, complete the artifact review gate, inventory every produced or materially changed artifact owned by the issue-publication run, summarize the issue set in chat,
     explain what the results mean for the active goal and broader project context, and state the recommended next route.
