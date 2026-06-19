@@ -83,6 +83,16 @@ Implementation plans must include `Task # Use Cases`: every numbered `Task N` ne
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <plan>
 ```
 
+## Outcome Contracts
+
+Implementation plans must also include an `Outcome Contract` and `Architecture Slice`. The contract names the target outcome, truth owner, contract interface, cutover decision, displaced path, acceptance evidence, kill criteria, and forbidden moves. Issue mirrors carry that proof forward as an `Outcome Contract Summary`.
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-contract.ps1 -PlanPath <plan>
+```
+
+`$superpowers-project:implement-plan` and `$superpowers-project:resolve-issue` carry the approved contract as structured `outcome_contract` ledger evidence. `$superpowers-project:merge-changes` requires structured `contract_review` proof with `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` all true before merge approval.
+
 ## Implement Plan
 
 `$superpowers-project:implement-plan` is the direct execution path after `$superpowers-project:write-plan` when an approved plan without a GitHub issue should be implemented without GitHub issue mirrors.
