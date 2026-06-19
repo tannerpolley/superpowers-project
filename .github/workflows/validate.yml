@@ -30,9 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install PyYAML
           choco install ripgrep -y --no-progress
-          choco install pandoc -y --no-progress
           rg --version
-          pandoc --version
 
       - name: Run source validation suite
         shell: pwsh
