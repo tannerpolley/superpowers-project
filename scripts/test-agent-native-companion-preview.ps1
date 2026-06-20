@@ -73,6 +73,36 @@ try {
     $verifyJson = Convert-AgentNativeJson -Text $verifyText
     Add-Check -Name "fixture bridge verify passes" -Ok ($verifyJson.ok -eq $true -and $verifyJson.bridge.ok -eq $true -and $verifyJson.bridge.localOnly -eq $true) -Reason $verifyText
 
+    $recapDir = Join-Path $tempRoot "plans\fixture-agent-native-recap"
+    New-Item -ItemType Directory -Path $recapDir -Force | Out-Null
+    $recapPath = Join-Path $recapDir "plan.mdx"
+    Set-Content -LiteralPath $recapPath -Encoding utf8NoBOM -Value @'
+---
+kind: "recap"
+localOnly: true
+---
+
+# Fixture Agent-Native Recap
+
+## Outcome
+
+- The recap source is local MDX.
+- Native Codex approval remains outside the recap.
+- Validation and changed-file evidence belong in the visual companion.
+'@
+
+    $recapCheckRaw = & npx -y @agent-native/core@latest plan local check --dir $recapDir 2>&1
+    $recapCheckText = ($recapCheckRaw | Out-String).Trim()
+    Add-Check -Name "recap fixture check exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $recapCheckText
+    $recapCheckJson = Convert-AgentNativeJson -Text $recapCheckText
+    Add-Check -Name "recap fixture schema validates" -Ok ($recapCheckJson.ok -eq $true -and $recapCheckJson.validation -eq "passed") -Reason $recapCheckText
+
+    $recapPreviewRaw = & npx -y @agent-native/core@latest plan local preview --dir $recapDir --kind recap 2>&1
+    $recapPreviewText = ($recapPreviewRaw | Out-String).Trim()
+    Add-Check -Name "recap preview exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $recapPreviewText
+    $recapPreviewJson = Convert-AgentNativeJson -Text $recapPreviewText
+    Add-Check -Name "recap preview reports ok" -Ok ($recapPreviewJson.ok -eq $true -and (@($recapPreviewJson.files) -contains "plan.mdx")) -Reason $recapPreviewText
+
     $repoPlanDir = Join-Path $RepoRoot "plans\agent-native-companion-replacement"
     if (Test-Path -LiteralPath (Join-Path $repoPlanDir "plan.mdx") -PathType Leaf) {
         $checkRaw = & npx -y @agent-native/core@latest plan local check --dir $repoPlanDir 2>&1

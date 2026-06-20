@@ -1,3 +1,8 @@
+---
+kind: "plan"
+localOnly: true
+---
+
 # Agent-Native Companion Replacement
 
 Decision: replace the Superpowers Project static HTML companion with repo-owned Agent-Native Plan MDX. The review artifact lives under `plans/<slug>/`; native Codex chat and `request_user_input` remain the approval channel.
@@ -6,11 +11,21 @@ Decision: replace the Superpowers Project static HTML companion with repo-owned 
 
 During a future `brainstorm-spec` run, the agent writes the canonical spec under `docs/superpowers/specs/`, then creates `plans/<slug>/plan.mdx` as the rich review surface. The user opens the local Agent-Native preview, scans evidence, file maps, validation receipts, and risks, then answers the normal native `Continue?` gate in Codex. No browser control inside the plan records approval.
 
+## Companion Operating Model
+
+- Use `visual-plan` for forward-looking specs, implementation plans, route choices, architecture decisions, and review-before-work.
+- Use `visual-recap` for after-action PR, branch, commit, validation, audit, merge, and workflow proof.
+- Keep canonical Superpowers records in `docs/superpowers/*`; keep visual companion source in `plans/<slug>/`.
+- Skip visual companions for tiny obvious edits that review faster as a plain diff or short chat note.
+- Treat Docker preview as a local rendering bridge. Hosted comments and full Agent-Native collaboration require hosted Plan tools or a proper local Plan app.
+
 ## Done Criteria
 
 - `skills/companion-interface` describes Agent-Native MDX visual-plan artifacts instead of static HTML reports.
+- `skills/companion-interface` describes Agent-Native MDX visual-recap artifacts for after-action workflow and PR proof.
 - HTML report-session scripts, templates, and active tests are removed or rewritten; no pass-through wrapper remains.
 - README, plugin prompt, project context, and related skill opt-in text point to visual-plan MDX.
+- README, plugin prompt, project context, and related skill opt-in text state that visual recaps are companions and not approval records.
 - A fixture local plan under `plans/<slug>/plan.mdx` validates with Agent-Native local-files mode.
 - Full repo validation, live sync validation, and cleanup proof pass.
 
@@ -33,12 +48,14 @@ The companion route should change in place. `$superpowers-project:companion-inte
 ## File Map
 
 - `skills/companion-interface/SKILL.md`: modify. Rewrite the companion contract around Agent-Native local-files mode and native approval boundaries.
+- `skills/companion-interface/SKILL.md`: modify. Make `visual-plan` and `visual-recap` explicit artifact types with separate workflow phases.
 - `skills/companion-interface/scripts`: remove. Delete static HTML report session helpers and renderer scripts.
 - `skills/companion-interface/templates`: remove. Delete HTML, CSS, and JavaScript templates owned by the retired renderer.
 - `scripts/test-companion-interface.ps1`: modify. Assert visual-plan wording and stale HTML vocabulary rejection.
 - `skills/brainstorm-spec/SKILL.md`: modify. Route large brainstorm artifacts to Agent-Native MDX plans, not HTML reports.
 - `skills/write-plan/SKILL.md`: modify. Route large implementation plans to Agent-Native MDX review artifacts.
 - `README.md`: modify. Describe the companion as visual-plan MDX artifact review.
+- `README.md`: modify. Describe recaps as after-action visual companions and document the Docker preview limitation.
 - `.codex-plugin/plugin.json`: modify. Update default prompt wording for the canonical companion route.
 
 ## Implementation Slices

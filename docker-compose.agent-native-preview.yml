@@ -10,6 +10,6 @@ services:
     ports:
       - "8097:8080"
     environment:
-      PLAN_DIR: /repo/plans/agent-native-companion-replacement
-      PLAN_KIND: plan
+      PLAN_DIR: ${PLAN_DIR:-/repo/plans/agent-native-companion-replacement}
+      PLAN_KIND: ${PLAN_KIND:-plan}
       PORT: "8080"
