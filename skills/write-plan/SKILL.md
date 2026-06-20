@@ -179,7 +179,7 @@ Feature and bug plans require `superpowers:test-driven-development` unless the u
 
 ## Companion Interface Opt-In
 
-When the user asks for the HTML companion, or when the saved plan is too large for chat rendering, use `$superpowers-project:companion-interface` to create or refresh a local report. Include source spec linkage, Outcome Proof, Implementation Boundaries, task list, Task # Use Cases blocks, proof oracle, test-complete definition, plan validation receipt, and recommended next route.
+When the user asks for the companion, or when the saved implementation plan is too large for chat rendering, use `$superpowers-project:companion-interface` to create or refresh a repo-owned Agent-Native visual-plan MDX artifact. Include source spec linkage, Outcome Proof, Implementation Boundaries, task list, Task # Use Cases blocks, proof oracle, test-complete definition, plan validation receipt, and recommended next route.
 
 The companion is an evidence surface only. Native continuation, issue creation, implementation, push, publish, merge, and final Done decisions still happen through chat or `request_user_input`.
 
@@ -320,4 +320,3 @@ Before reporting the plan ready:
 7. Confirm feature and bug work uses `superpowers:test-driven-development` or records the user's explicit opt-out.
 8. Confirm bug work uses `superpowers:systematic-debugging` or diagnose discipline.
 9. Confirm completion requires `superpowers:verification-before-completion`.
-

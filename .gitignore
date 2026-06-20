@@ -10,3 +10,4 @@ node_modules/
 .idea/
 .chatgpt/
 .superpowers/
+plans/**/preview.html

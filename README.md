@@ -20,7 +20,7 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:setup-project`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
 - `$superpowers-project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
 - `$superpowers-project:write-plan`: writes Superpowers implementation plans with project context.
-- `$superpowers-project:companion-interface`: creates and refreshes a local HTML companion report for rich artifact review in the Codex in-app browser.
+- `$superpowers-project:companion-interface`: creates and refreshes repo-owned Agent-Native visual-plan or visual-recap MDX artifacts for rich review while native Codex input remains the approval channel.
 - `$superpowers-project:loop-controller`: coordinates repeated workflow runs with local run ledgers, budgets, candidate selection, verifier proof, metrics, and native continuation gates.
 - `$superpowers-project:implement-plan`: implements an approved plan on a development branch without creating GitHub issue mirrors.
 - `$superpowers-project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
@@ -29,6 +29,37 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:merge-changes`: reviews and merges issue-backed PR work or approved local branch work, cleans owned branches and worktrees, prunes, and records clean repo proof.
 - `$superpowers-project:audit-project`: reviews code or workflow behavior and writes P-coded repair findings specs.
 - `$superpowers-project:align-project`: aligns project, GitHub, migration, tracker, and live-sync drift.
+
+## Agent-Native Companion Artifacts
+
+The companion route uses BuilderIO/Agent-Native MDX as a visual guide and audit surface. It does not replace canonical Superpowers artifacts:
+
+- Canonical specs, implementation plans, issue mirrors, and milestone pages stay under `docs/superpowers/*`.
+- Visual companion sources live under `plans/<slug>/plan.mdx`, with optional `canvas.mdx`, `prototype.mdx`, and `.plan-state.json`.
+- Use `visual-plan` for forward-looking specs, implementation plans, route choices, architecture decisions, and review-before-work.
+- Use `visual-recap` for after-action PR, branch, commit, validation, audit, merge, and workflow proof.
+- Skip the companion for tiny obvious edits that review faster as a plain diff or short chat note.
+- Native Codex chat and `request_user_input` remain the approval boundary for push, publish, merge, live sync, GitHub mutation, and final Done.
+
+## Docker Agent-Native Preview
+
+To host the checked-in Agent-Native companion preview from a container:
+
+```powershell
+docker compose -f .\docker-compose.agent-native-preview.yml up --build
+```
+
+Then open `http://localhost:8097/preview.html`. The image runs Agent-Native `plan local check`, generates the local preview inside the container, and serves only the generated preview HTML.
+
+To preview another local artifact or a recap:
+
+```powershell
+$env:PLAN_DIR = "/repo/plans/<slug>"
+$env:PLAN_KIND = "recap"
+docker compose -f .\docker-compose.agent-native-preview.yml up --build
+```
+
+The Docker preview is a local rendering bridge for source-controlled MDX. Hosted comments, feedback tools, and full Agent-Native collaboration require hosted Plan tools or a proper local Plan app using the same plan source.
 
 ## Native Q&A Workflow
 

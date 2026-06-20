@@ -1,31 +1,78 @@
 ---
 name: companion-interface
-description: Use when a Superpowers Project workflow should create or update the local HTML companion report for rich artifact review.
+description: Use when a Superpowers Project workflow should create or update repo-owned Agent-Native visual-plan or visual-recap MDX artifacts for rich review.
 ---
 
 # Companion Interface
 
-Companion Interface is the Superpowers Project evidence and interpretation channel. It writes repo-scoped report sessions and renders a static HTML workbench for the Codex in-app browser.
+Companion Interface is the Superpowers Project rich review channel. It creates or refreshes repo-owned BuilderIO/Agent-Native MDX artifacts.
 
-Use this skill when the user asks to show rich artifacts, when a workflow produces large specs or plans, or when implementation evidence includes plots, tables, validation receipts, screenshots, diagrams, or long summaries.
+Use this skill when a governed workflow produces specs, plans, issue evidence, validation receipts, screenshots, diagrams, plots, tables, or long summaries that need structured review outside chat.
 
 ## Approval Boundary
 
 The companion must not record approval, push, publish, merge, live sync, GitHub mutation, or final Done. Native Codex chat and `request_user_input` remain the decision authority.
 
-## Report Model
+## Artifact Types
 
-Use `scripts/new-report-session.ps1 -WorkflowName <name> -Title <title>` to create a session.
+Use the BuilderIO/Agent-Native skill that matches the workflow phase:
 
-Use `scripts/append-event.ps1 -ReportRoot <relative-report-root> -Type <event-type> -Title <title>` to add structured evidence.
+- `visual-plan`: forward-looking companion for specs, implementation plans, architecture decisions, route choices, open questions, and review-before-work.
+- `visual-recap`: after-action companion for PRs, branches, commits, validation receipts, merge closeout, audit findings, and workflow proof.
 
-Use `scripts/render-report.ps1 -ReportRoot <relative-report-root>` to regenerate `index.html`.
+Do not create a companion for tiny, obvious edits that review faster as a plain diff or chat note. Use it when the work is multi-file, risky, UI-facing, architecture-sensitive, validation-heavy, or too large for readable chat rendering.
 
-Generated reports live under `.superpowers/reports/<yyyy-mm-dd>/<run-id>`.
+## MDX Source Model
 
-## Required Closeout
+Write local review artifacts under `plans/<slug>/`.
 
-After updating a report, tell the user the exact `index.html` path and the artifact types added. Keep chat concise and point detailed review to the companion.
+Required:
+
+- `plans/<slug>/plan.mdx`
+
+Optional:
+
+- `plans/<slug>/canvas.mdx` when static visual review is useful.
+- `plans/<slug>/prototype.mdx` when interaction review is useful.
+- `plans/<slug>/.plan-state.json` when Agent-Native local tooling writes editor state.
+
+For visual plans, set or preserve `kind: "plan"` when frontmatter or state exists. For visual recaps, set or preserve `kind: "recap"` and `localOnly: true` when frontmatter or state exists.
+
+Canonical Superpowers specs, implementation plans, issue mirrors, and milestone pages remain under `docs/superpowers/`. The companion is a visual guide and audit surface, not the canonical workflow record.
+
+## Tooling
+
+Before authoring MDX, fetch the Agent-Native block catalog with an available schema-only tool or:
+
+```powershell
+npx @agent-native/core@latest plan blocks --out <catalog-path>
+```
+
+After writing or revising a forward plan folder, run:
+
+```powershell
+npx @agent-native/core@latest plan local preview --dir plans/<slug> --kind plan --open
+```
+
+After writing or revising a recap folder, run:
+
+```powershell
+npx @agent-native/core@latest plan local preview --dir plans/<slug> --kind recap --open
+```
+
+Report the `plan.mdx` path, artifact kind, and returned preview URL or exact failure.
+
+## Hosted Plan Tools
+
+If hosted Plan MCP tools are visible in the active session, they may be used for hosted creation or publishing when the workflow permits it. When tools are not visible, use local-files mode and do not repeat failed hosted authentication polling.
+
+## Docker Preview
+
+The Docker preview host may serve a checked-in local MDX artifact for in-app browser review. Treat that preview as a local rendering bridge. Full Agent-Native collaboration features, hosted comments, and feedback tools require hosted Plan tools or a proper local Plan app with the same plan source.
+
+## Recap Grounding
+
+Visual recaps must be grounded in the actual work unit: changed files, PR or branch diff, validation output, artifact paths, and closeout evidence. Do not infer schema, API, UI, or workflow facts that are not visible in the diff or produced evidence. Redact secrets and credential-like literals.
 
 ## Native Continuation Loop
 
@@ -61,6 +108,6 @@ Revisit routes must show or gather evidence, ask follow-up questions when needed
 
 Before any closeout or permission question, complete the artifact review gate. Strict artifact display is mandatory.
 
-Show the created or revised report session, generated `index.html`, manifest, events file, artifact paths, rendered Markdown artifacts when present, and machine-readable artifacts with exact paths plus key fields.
+Show the created or revised Agent-Native folder, artifact kind (`plan` or `recap`), `plan.mdx`, optional `canvas.mdx` or `prototype.mdx`, preview URL or failure, linked canonical Superpowers artifact paths, rendered Markdown artifacts when present, and machine-readable artifacts with exact paths plus key fields.
 
 Do not merely say something changed. State what was done, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, the active-goal impact, the broader project context, and the recommended next route.

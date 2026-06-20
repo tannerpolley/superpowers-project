@@ -1,0 +1,93 @@
+---
+kind: "plan"
+localOnly: true
+---
+
+# Agent-Native Companion Replacement
+
+Decision: replace the Superpowers Project static HTML companion with repo-owned Agent-Native Plan MDX. The review artifact lives under `plans/<slug>/`; native Codex chat and `request_user_input` remain the approval channel.
+
+## Concrete Review Snapshot
+
+During a future `brainstorm-spec` run, the agent writes the canonical spec under `docs/superpowers/specs/`, then creates `plans/<slug>/plan.mdx` as the rich review surface. The user opens the local Agent-Native preview, scans evidence, file maps, validation receipts, and risks, then answers the normal native `Continue?` gate in Codex. No browser control inside the plan records approval.
+
+## Companion Operating Model
+
+- Use `visual-plan` for forward-looking specs, implementation plans, route choices, architecture decisions, and review-before-work.
+- Use `visual-recap` for after-action PR, branch, commit, validation, audit, merge, and workflow proof.
+- Keep canonical Superpowers records in `docs/superpowers/*`; keep visual companion source in `plans/<slug>/`.
+- Skip visual companions for tiny obvious edits that review faster as a plain diff or short chat note.
+- Treat Docker preview as a local rendering bridge. Hosted comments and full Agent-Native collaboration require hosted Plan tools or a proper local Plan app.
+
+## Done Criteria
+
+- `skills/companion-interface` describes Agent-Native MDX visual-plan artifacts instead of static HTML reports.
+- `skills/companion-interface` describes Agent-Native MDX visual-recap artifacts for after-action workflow and PR proof.
+- HTML report-session scripts, templates, and active tests are removed or rewritten; no pass-through wrapper remains.
+- README, plugin prompt, project context, and related skill opt-in text point to visual-plan MDX.
+- README, plugin prompt, project context, and related skill opt-in text state that visual recaps are companions and not approval records.
+- A fixture local plan under `plans/<slug>/plan.mdx` validates with Agent-Native local-files mode.
+- Full repo validation, live sync validation, and cleanup proof pass.
+
+## Direction Comparison
+
+- Agent-Native local MDX: recommended. Source of truth is `plans/<slug>/plan.mdx`; approvals stay in native Codex.
+- Hosted Plan MCP: optional later transport. Source of truth is hosted unless exported; approvals still stay in native Codex.
+- HTML shell around MDX: rejected. It creates two competing sources and blurs the approval boundary.
+
+## Architecture
+
+1. Governed workflow runs through the existing Superpowers Project routes.
+2. Canonical specs, plans, issues, and milestone records stay under `docs/superpowers/*`.
+3. The visual review source lives under `plans/<slug>/plan.mdx`.
+4. Agent-Native local preview and bridge commands validate and display the source.
+5. Native Codex chat or `request_user_input` records the approval.
+
+The companion route should change in place. `$superpowers-project:companion-interface` remains the canonical route name, but its contract becomes "create or refresh an Agent-Native visual-plan MDX artifact." The implementation should delete the HTML report-session model instead of retaining it as an alternate execution path.
+
+## File Map
+
+- `skills/companion-interface/SKILL.md`: modify. Rewrite the companion contract around Agent-Native local-files mode and native approval boundaries.
+- `skills/companion-interface/SKILL.md`: modify. Make `visual-plan` and `visual-recap` explicit artifact types with separate workflow phases.
+- `skills/companion-interface/scripts`: remove. Delete static HTML report session helpers and renderer scripts.
+- `skills/companion-interface/templates`: remove. Delete HTML, CSS, and JavaScript templates owned by the retired renderer.
+- `scripts/test-companion-interface.ps1`: modify. Assert visual-plan wording and stale HTML vocabulary rejection.
+- `skills/brainstorm-spec/SKILL.md`: modify. Route large brainstorm artifacts to Agent-Native MDX plans, not HTML reports.
+- `skills/write-plan/SKILL.md`: modify. Route large implementation plans to Agent-Native MDX review artifacts.
+- `README.md`: modify. Describe the companion as visual-plan MDX artifact review.
+- `README.md`: modify. Describe recaps as after-action visual companions and document the Docker preview limitation.
+- `.codex-plugin/plugin.json`: modify. Update default prompt wording for the canonical companion route.
+
+## Implementation Slices
+
+- Rewrite focused companion tests around Agent-Native MDX. Tests should fail on active HTML report-session vocabulary.
+- Rewrite companion-interface skill and metadata. State local-files mode, preview command, hosted-tool absence handling, and native approval boundary.
+- Remove HTML renderer assets. Delete scripts and templates that exist only for index.html report sessions.
+- Add a local visual-plan fixture scenario. Create `plans/fixture-agent-native-companion/plan.mdx` and run local check, preview, and verify.
+- Update integrated skill guidance. `brainstorm-spec` and `write-plan` should point large review artifacts to visual-plan MDX.
+- Validate and sync. Run focused tests, `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, and cleanup.
+
+## Validation
+
+The first implementation plan should prove the replacement with focused tests before broad validation:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+npx @agent-native/core@latest plan local check --dir plans/fixture-agent-native-companion
+npx @agent-native/core@latest plan local verify --dir plans/fixture-agent-native-companion --kind plan --port 0
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```
+
+## Risks
+
+Hosted tools: hosted Plan MCP absence must not block the repo-owned path. If hosted tools are missing, use local-files mode. If local preview or bridge verification fails, report the exact command and error instead of inventing a URL or substituting a separate HTML companion.
+
+Source roots: `plans/<slug>/plan.mdx` is the Agent-Native review artifact root. It does not replace canonical Superpowers implementation plans under `docs/superpowers/plans/`.
+
+Embedded browser: Codex's in-app browser may block the hosted Plan UI from fetching the local bridge. The source is still valid when `plan local check` and `plan local verify` pass; use hosted Plan publish or an external Chromium/Edge session for full interactive native blocks when those tools are available.
+
+## Open Questions
+
+No blocking decisions remain for the replacement direction. Exact fixture names and helper boundaries can be settled in the implementation plan without changing the architecture.

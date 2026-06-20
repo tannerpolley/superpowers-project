@@ -83,7 +83,7 @@ Use the smallest supporting set:
 
 ## Companion Interface Opt-In
 
-When the user asks for the HTML companion, or when rendered specs, design alternatives, project-context evidence, or saved spec previews would be too large for chat, use `$superpowers-project:companion-interface` to create or refresh a local report. Include project context evidence, design alternatives, user decisions, open questions, saved spec path, and recommended next route.
+When the user asks for the companion, or when rendered specs, design alternatives, project-context evidence, or saved spec previews would be too large for chat, use `$superpowers-project:companion-interface` to create or refresh a repo-owned Agent-Native visual-plan MDX artifact. Include project context evidence, design alternatives, user decisions, open questions, saved spec path, and recommended next route.
 
 The companion is an evidence surface only; native approval, user review, and continuation decisions still happen through chat or `request_user_input`.
 

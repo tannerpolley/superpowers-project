@@ -10,6 +10,7 @@ Superpowers Project extends Superpowers with durable project context, roadmap an
 - Plans: `docs/superpowers/plans/`
 - Issue mirrors: `docs/superpowers/issues/`
 - Milestone pages: `docs/superpowers/milestones/`
+- Agent-Native review artifacts: `plans/<slug>/plan.mdx` with optional `canvas.mdx` or `prototype.mdx`; use visual-plan artifacts for forward-looking specs and implementation plans, and visual-recap artifacts for after-action PR, branch, validation, audit, merge, and workflow proof. These are rich review and audit surfaces, not replacements for canonical Superpowers specs, plans, issue mirrors, or milestone pages.
 
 ## Roadmap And Milestones
 
