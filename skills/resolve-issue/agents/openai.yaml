@@ -2,54 +2,20 @@ interface:
   display_name: "Resolve Issue"
   short_description: "Resolve one ready issue directly with goal proof, TDD, verification, and a PR-ready handoff."
   default_prompt: >-
-    Use $superpowers-project:resolve-issue for direct current-thread implementation of one ready Superpowers Project GitHub issue mirror with Outcome Summary,
-    native /goal proof, pushed branch, opened PR, structured readiness review, and PR-ready handoff.
-    This route is the issue-backed adapter for superpowers:executing-plans. Require superpowers:using-git-worktrees before implementation, require superpowers:executing-plans as the base execution method,
-    require superpowers:test-driven-development unless the source plan records an explicit opt-out, require superpowers:systematic-debugging or diagnose for bugs, regressions, failing tests, CI failures, performance work,
-    or unclear failure modes, require superpowers:verification-before-completion before PR-ready claims, and require superpowers:finishing-a-development-branch after verification and before PR creation.
-    Do not collapse this into generic Superpowers execution or treat the companion skills as optional.
-    Auto Mode requires an Auto Mode authorization ledger from project_auto_mode_authorization validated by the plugin-provided Auto Mode validator with bounded-auto-merge, recorded defaults,
-    direct-inline-resolve-issue routing, and stop outside policy before direct issue execution without more user input.
-    Do not create worker threads from this skill; use $superpowers-project:orchestrate-issues for delegated worker worktree execution.
-    Enforce flat canonical roots for spec -> plan -> issue; Milestone pages are index views, and nested canonical milestone artifact folders are drift unless explicitly generated index/view output.
-    Treat Task # Use Cases as a strict requirement for issue resolution: run validate-plan-task-use-cases.ps1 against the linked source plan before native goal activation, branch setup, or code edits,
-    and block if any numbered Task N lacks a non-empty **Use Cases:** block; issue acceptance criteria alone are not a substitute.
-    Activate native /goal proof, record a direct inline execution decision, ask project_resolve_push_permission with push-pr or hold before any branch push or PR creation, push the branch only after approval,
-    carry the structured outcome_proof from setup into PR-ready proof, collect readiness review evidence with plan_alignment, correctness, maintainability, and reality_evidence all true,
-    open a PR that closes the exact issue, run collect-pr-ready-ledger.ps1 with push permission proof and ReadinessReviewJson to assemble Temp Plus Evidence,
-    pass the generated ledger to validate-pr-ready.ps1, complete the resolve goal at PR-ready,
-    hand off final integration to $superpowers-project:merge-changes, collect a structured continuation decision ledger with collect-continuation-ledger.ps1 after each PR-ready native route answer,
-    and require validate-terminal-closeout.ps1 before any final success-style response so only explicit Stop can terminate resolve-issue.
-    Before asking push permission, complete the artifact review gate, show verification evidence, explain what the results mean for the active goal and broader project context, and state the recommended next route.
-    Do not ask for push approval first and explain later. PR-ready proof alone is not terminal permission. There is no hand-authored JSON requirement for normal runs.
-    Do not merge, close issues, delete branches, or run final cleanup from this skill. At closeout, complete the artifact review gate,
-    inventory every produced or materially changed artifact owned by the direct issue-resolution run, summarize the PR-ready result in chat with outcome proof and readiness review evidence,
-    explain what the results mean for the active goal and broader project context,
-    state the recommended next route, show exact artifact paths and links, show rendered Markdown artifacts when applicable, and summarize machine-readable artifacts with exact path plus key fields.
-    Ask project_resolve_next_step with Yes Integrate Resolved Issue, Revisit Review / Revise PR-Ready Work, and Stop; use nested merge, another-issue, and branch-fix children including Merge, Resolve Another, Review First,
-    Revise Branch, and Address CI / Checks, then start the selected next skill in the same turn when tools and state allow it. After every completed action, ask the next native continuation or permission question.
-    Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate.
-    A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question.
-    Final completion must use an explicit final health gate with `Done`, not a `Yes` option.
-    Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer.
-    Only Stop can break an intermediate loop before a verified final Done gate.
-    The agent must not get out of the loop by itself, and ending a turn after a governed workflow action is invalid until the next native continuation or permission question is answered.
-    At closeout, show exact artifact paths and links and show rendered Markdown artifacts when newly created or changed Markdown is reasonably sized.
-    Strict artifact display is mandatory before every closeout or permission question: show what was created or revised, do not merely say something changed, include chosen brainstorm design/specs, full plan tasks and steps,
-    created issue bodies or mirrors, full changed-artifact inventory, exact test values/results, cleanup evidence, branch or PR proof, machine-readable ledgers, and when large artifacts are not fully rendered show the path,
-    type, action, exact sections changed, representative diff or snippet, and why the full render is omitted. After artifacts are shown, add a separate findings summary with what was done, what was fixed,
-    what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context,
-    what next steps are now recommended, active-goal impact, broader project impact, and the recommended next route. Use flowchart geometry for native continuation: the top-level closeout question must be asked as Continue?.
-    The top-level closeout question must use exactly three trajectory options: Yes for progress, Revisit for the standard go-back route, and Stop as the normal terminal route.
-    Do not show Continue children beside Revisit and Stop in the same top-level question. Do not show Continue children as peer top-level options.
-    Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection.
-    If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. After Yes, ask the nested progress route question when multiple next skills are possible.
-    After Revisit, show evidence or rendered artifacts, ask the nested review/revision question when needed, and return to the originating continuation gate.
-    Nested Yes-route menus must not include terminal options and should list only forward routes.
-    Nested Revisit-route menus must not include terminal options and should list only revisit, repair, rerun, recovery, review, or evidence routes. Recommend Yes when at least one safe forward route exists.
-    Recommend Revisit when review, repair, or missing evidence is the next safe action. Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.
-    Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Custom Other never terminates a workflow directly.
-    If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other;
-    otherwise ask the next best child question or baseline nested route and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer.
-    The terminal option must be Stop until a verified final Done gate is reached.
-
+    Use $superpowers-project:resolve-issue for one ready issue mirror under docs/superpowers/issues that will be
+    implemented directly in the current thread using flat canonical roots. Milestone pages are index views. Read SKILL.md for setup, goal, push, PR-ready, and handoff gates;
+    read docs/superpowers/workflow-contract.yml for route question ids and options. Task # Use Cases are a strict requirement;
+    run scripts/validate-plan-task-use-cases.ps1 before issue execution. This route is the issue-backed
+    adapter for superpowers:executing-plans. Require superpowers:using-git-worktrees before implementation, require
+    superpowers:executing-plans as the base execution method, require superpowers:test-driven-development unless the
+    source plan records an explicit opt-out, require superpowers:systematic-debugging or diagnose for bugs,
+    regressions, failing tests, CI failures, performance work, or unclear failure modes, require
+    superpowers:verification-before-completion before PR-ready claims, require
+    superpowers:finishing-a-development-branch after verification and before PR creation, and Do not collapse this
+    into generic Superpowers execution or treat the companion skills as optional. summarize artifact review gate
+    status, Outcome Summary, outcome_proof, readiness review, plan_alignment, reality_evidence, verification evidence,
+    broader project context, recommended next route, and machine-readable artifacts. project_resolve_next_step can
+    continue with Merge, Resolve Another, Review First, or Stop; start the selected next skill.
+    project_resolve_push_permission has Push And Open PR and Hold. Auto Mode authorization ledger uses
+    project_auto_mode_authorization with Bounded Auto Merge and Manual Mode plus bounded-auto-merge. Terminal closeout
+    uses collect-continuation-ledger.ps1 and validate-terminal-closeout.ps1 with explicit Stop.

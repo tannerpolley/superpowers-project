@@ -70,11 +70,15 @@ try {
         "Bounded Auto Merge",
         "validate-auto-mode-authorization.ps1",
         "direct-inline-resolve-issue",
-        "source spec",
+        "source spec"
+    )) {
+        Assert-Contains -Text $agentText -Needle $needle -Reason "openai.yaml missing required text: $needle"
+    }
+    foreach ($needle in @(
         "Nested Yes-route menus must not include terminal options",
         "Custom Other never terminates a workflow directly"
     )) {
-        Assert-Contains -Text $agentText -Needle $needle -Reason "openai.yaml missing required text: $needle"
+        if ($agentText.Contains($needle)) { throw "openai.yaml duplicates global workflow policy instead of compact contract reference: $needle" }
     }
     Add-Check -Name "metadata contract" -Ok $true -Reason "passed"
 

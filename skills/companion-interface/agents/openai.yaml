@@ -2,35 +2,8 @@ interface:
   display_name: "Companion Interface"
   short_description: "Create Superpowers Project Agent-Native visual-plan and visual-recap MDX review artifacts."
   default_prompt: >-
-    Use $superpowers-project:companion-interface to create or refresh repo-owned Agent-Native visual-plan or visual-recap MDX artifacts under plans/<slug>/plan.mdx.
-    Keep native Codex chat and request_user_input as the approval channel.
-    Use visual-plan for forward-looking specs, implementation plans, route choices, architecture decisions, and review-before-work.
-    Use visual-recap for after-action PR, branch, commit, validation, audit, merge, and workflow proof.
-    Skip the companion for tiny obvious edits that review faster as a plain diff or short chat note.
-    The companion-interface artifact is an evidence surface for summaries, changed artifacts, validation receipts, plots, tables, screenshots, diagrams, and long rendered Markdown.
-    Canonical Superpowers specs, plans, issue mirrors, and milestone pages remain under docs/superpowers; Agent-Native MDX is the visual guide and audit surface.
-    Use local-files mode when hosted Plan MCP tools are unavailable, and do not repeat failed hosted authentication polling.
-    Treat the Docker preview as a local rendering bridge; hosted comments and full Agent-Native collaboration require hosted Plan tools or a proper local Plan app.
-    It must not record approval, push, publish, merge, live sync, GitHub mutation, or final Done.
-    After every completed action, ask the next native continuation or permission question.
-    Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate.
-    Revisit is non-terminal. Only Stop can break an intermediate loop before a verified final Done gate.
-    Review First is not a terminal answer. The agent must not get out of the loop by itself.
-    ending a turn after a governed workflow action is invalid, and the agent must not recommend Stop before verified final completion.
-    A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal.
-    The closeout question is Continue? with Yes, Revisit, and Stop.
-    The top-level closeout question must use exactly three trajectory options.
-    Do not show Continue children as peer top-level options.
-    Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires.
-    Custom Other never terminates a workflow directly.
-    If Custom Other requests Stop or Done, ask a fresh confirmation question with separate built-in labels instead of terminating from Other.
-    Nested Yes-route menus must not include terminal options.
-    Nested Revisit-route menus must not include terminal options.
-    Recommend Yes when at least one safe forward route exists.
-    Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.
-    Revisit routes must gather evidence and return to the originating continuation gate.
-    Before any closeout or permission question, complete the artifact review gate.
-    Strict artifact display is mandatory; do not merely say something changed.
-    Show created or revised Agent-Native folders, artifact kind, plan.mdx, optional canvas.mdx or prototype.mdx, preview URL or failure.
-    Show linked canonical Superpowers artifact paths and machine-readable artifacts with exact paths plus key fields.
-    Add a findings summary with what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, active-goal impact, broader project context, and the recommended next route.
+    Use $superpowers-project:companion-interface for optional Agent-Native visual-plan or visual-recap review
+    surfaces that complement, but do not replace, native chat/request_user_input approvals. Read SKILL.md for
+    local-files mode, preview boundaries, and approval limits; read docs/superpowers/workflow-contract.yml for where
+    companion output can attach to brainstorm, plan, or merge routes. Do not treat visual assets as permission to
+    mutate, publish, push, or merge.

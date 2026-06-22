@@ -2,47 +2,21 @@ interface:
   display_name: "Implement Plan"
   short_description: "Implement an approved plan on a development branch without issue mirrors."
   default_prompt: >-
-    Use $superpowers-project:implement-plan when an approved plan under `docs/superpowers/plans` should be implemented without creating a GitHub issue. This route is the non-issue adapter for superpowers:executing-plans.
-    Require superpowers:executing-plans as the base method, require superpowers:test-driven-development for feature and bug work unless the approved plan records an explicit opt-out,
-    require superpowers:systematic-debugging or diagnose for bugs, regressions, CI failures, performance work, or unclear failure modes, require superpowers:verification-before-completion before any success claim, commit,
-    or local merge, and require superpowers:subagent-driven-development whenever worker topology is selected. Do not treat those companion skills as optional suggestions.
-    This route does not create issue mirrors, must not open pull requests, and must not claim GitHub issue closure. Require the approved plan's outcome proof before code edits and carry structured outcome proof evidence with intent,
-    owner, interface, cutover, replaced path, acceptance proof, stop criteria, and avoid list. Require native `/goal` activation, a development branch,
-    and Task # Use Cases as a strict requirement before actual implementation. Run validate-plan-task-use-cases.ps1 against the approved plan and block before branches, worker handoffs,
-    or code edits if any numbered Task N lacks a non-empty **Use Cases:** block.
-    request_user_input for implement_plan_topology when callable, or an Auto Mode authorization ledger from project_auto_mode_authorization validated by the plugin-provided Auto Mode validator with bounded-auto-merge,
-    recorded defaults, preauthorized-after-clean-premerge, and stop outside policy, the approved plan proof oracle, cleanup evidence, implement_plan_push_permission with push-branch or hold only,
-    explicit branch push proof before merge-ready output, structured readiness review evidence for plan alignment, correctness, maintainability, and reality evidence, and merge-ready output routed to merge-changes in local-branch mode.
-    Before asking push permission, complete the artifact review gate, show verification evidence, explain what the results mean for the active goal and broader project context, and state the recommended next route.
-    Do not ask for push approval first and explain later. Pull request routes are allowed only for issue-backed work with a companion issue mirror.
-    Only use worker mode when the worker handoff names the orchestrator, role, plan path, branch, reporting path, and request_agent_input boundary. At closeout, complete the artifact review gate,
-    inventory every produced or materially changed artifact owned by the implementation run, summarize the branch result in chat, explain what the results mean for the active goal and broader project context,
-    state the recommended next route, show exact artifact paths and links, show rendered Markdown artifacts when applicable, and summarize machine-readable artifacts with exact path plus key fields.
-    Ask project_implement_next_step with Yes Merge Implemented Plan, Revisit Revise / Review Branch, and Stop;
-    use nested branch revision and evidence review children, then start the selected next skill in the same turn when tools and state allow it.
-    After every completed action, ask the next native continuation or permission question. Do not end the workflow until the user selects Stop through native continuation input or reaches a verified final Done gate.
-    A local merge, created issue, saved plan, completed audit, or synced live plugin is not terminal. Revisit is non-terminal. Yes must start the selected progress route or ask its blocking child question.
-    Final completion must use an explicit final health gate with `Done`, not a `Yes` option.
-    Revisit must show/review/repair/gather evidence, ask follow-up questions when needed, and return to the originating continuation gate. Review First is not a terminal answer.
-    Only Stop can break an intermediate loop before a verified final Done gate.
-    The agent must not get out of the loop by itself, and ending a turn after a governed workflow action is invalid until the next native continuation or permission question is answered.
-    At closeout, show exact artifact paths and links and show rendered Markdown artifacts when newly created or changed Markdown is reasonably sized.
-    Strict artifact display is mandatory before every closeout or permission question: show what was created or revised, do not merely say something changed, include chosen brainstorm design/specs, full plan tasks and steps,
-    created issue bodies or mirrors, full changed-artifact inventory, exact test values/results, cleanup evidence, branch or PR proof, machine-readable ledgers, and when large artifacts are not fully rendered show the path,
-    type, action, exact sections changed, representative diff or snippet, and why the full render is omitted. After artifacts are shown, add a separate findings summary with what was done, what was fixed,
-    what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context,
-    what next steps are now recommended, active-goal impact, broader project impact, and the recommended next route. Use flowchart geometry for native continuation: the top-level closeout question must be asked as Continue?.
-    The top-level closeout question must use exactly three trajectory options: Yes for progress, Revisit for the standard go-back route, and Stop as the normal terminal route.
-    Do not show Continue children beside Revisit and Stop in the same top-level question. Do not show Continue children as peer top-level options.
-    Do not compress the top-level Continue? gate and a nested route decision into one prompt, one prose acknowledgement, or one inferred selection.
-    If multiple forward or review routes exist, ask the top-level gate first and then the matching nested question. After Yes, ask the nested progress route question when multiple next skills are possible.
-    After Revisit, show evidence or rendered artifacts, ask the nested review/revision question when needed, and return to the originating continuation gate.
-    Nested Yes-route menus must not include terminal options and should list only forward routes.
-    Nested Revisit-route menus must not include terminal options and should list only revisit, repair, rerun, recovery, review, or evidence routes. Recommend Yes when at least one safe forward route exists.
-    Recommend Revisit when review, repair, or missing evidence is the next safe action. Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.
-    Do not recommend Stop merely because the branch is clean, validated, or already pushed when merge-ready routing is the authorized next step and the user has not asked to stop.
-    Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires. Custom Other never terminates a workflow directly.
-    If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other;
-    otherwise ask the next best child question or baseline nested route and keep the workflow running. Do not infer terminal intent from a custom answer. Review First is not a terminal answer.
-    The terminal option must be Stop until a verified final Done gate is reached.
-
+    Use $superpowers-project:implement-plan for approved non-issue implementation plans that need branch-backed
+    proof. Execute an approved plan under `docs/superpowers/plans`; this route does not create issue mirrors and
+    must not claim GitHub issue closure. Read SKILL.md for exact setup, push, PR, and closeout gates; read docs/superpowers/workflow-contract.yml
+    for route question ids and options. Task # Use Cases are a strict requirement; run
+    scripts/validate-plan-task-use-cases.ps1 before implementation. This route is the non-issue adapter for
+    superpowers:executing-plans. Require native `/goal` activation, development branch, request_user_input,
+    implement_plan_topology with Inline and Orchestrated Worker. implement_plan_push_permission has Push And Open PR
+    and Hold. Require branch push proof, outcome proof, readiness review, merge-ready local-branch handoff to
+    merge-changes, and no open pull requests for local-only merge handoff. Auto Mode authorization ledger uses
+    project_auto_mode_authorization with Bounded Auto Merge and Manual Mode, the plugin-provided Auto Mode validator, bounded-auto-merge, recorded defaults,
+    preauthorized-after-clean-premerge, and stop outside policy. Require superpowers:executing-plans as the base method, require
+    superpowers:test-driven-development for feature and bug work unless the approved plan records an explicit opt-out,
+    require superpowers:systematic-debugging or diagnose for bugs, regressions, CI failures, performance work, or unclear failure modes, require
+    superpowers:verification-before-completion before any success claim, commit, or local merge, require
+    superpowers:subagent-driven-development whenever worker topology is selected, and Do not treat those companion
+    skills as optional suggestions. Closeout summarizes artifact review gate, verification evidence, broader project context,
+    recommended next route, and machine-readable artifacts. Do not recommend Stop merely because the branch is clean, validated, or already pushed.
+    Do not ask for push approval first and explain later.

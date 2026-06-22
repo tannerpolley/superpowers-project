@@ -554,14 +554,25 @@ try {
     Invoke-Scenario "native continuation policy avoids nested stop routes" {
         $text = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw
         $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
-        foreach ($needle in @(
+        $globalPolicyNeedles = @(
             "Nested Yes-route menus must not include terminal options",
             "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
-        )) {
+        )
+        foreach ($needle in $globalPolicyNeedles) {
             Assert-True ($text.Contains($needle)) "missing native continuation policy in SKILL.md: $needle"
-            Assert-True ($metadata.Contains($needle)) "missing native continuation policy in metadata: $needle"
+            Assert-True (-not $metadata.Contains($needle)) "metadata duplicates native continuation policy instead of compact contract reference: $needle"
+        }
+        foreach ($needle in @(
+            "docs/superpowers/workflow-contract.yml",
+            "project_resolve_next_step",
+            "project_resolve_push_permission",
+            "Push And Open PR",
+            "Hold",
+            "start the selected next skill"
+        )) {
+            Assert-True ($metadata.Contains($needle)) "missing compact continuation metadata: $needle"
         }
 
         $questionIds = [regex]::Matches($text, 'Question id:\s*`([^`]+)`')
@@ -581,5 +592,4 @@ $failed = @($results | Where-Object { -not $_.ok })
 } finally {
     if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 }
-
 

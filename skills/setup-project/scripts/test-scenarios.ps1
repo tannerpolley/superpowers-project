@@ -188,14 +188,27 @@ try {
 
     
     try {
-        foreach ($needle in @(
+        $globalPolicyNeedles = @(
             "Nested Yes-route menus must not include terminal options",
             "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
-        )) {
+        )
+        foreach ($needle in $globalPolicyNeedles) {
             if (-not $skill.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
-            if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
+            if ($metadata.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "docs/superpowers/workflow-contract.yml",
+            "project_setup_next_step",
+            "Brainstorm New Spec",
+            "Write Plan",
+            "Create Issues",
+            "Run Align",
+            "Stop",
+            "start the selected next skill"
+        )) {
+            if (-not $metadata.Contains($needle)) { throw "missing compact continuation metadata: $needle" }
         }
 
         $questionIds = [regex]::Matches($skill, 'Question id:\s*`([^`]+)`')

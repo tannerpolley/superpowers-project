@@ -135,14 +135,14 @@ $scenarios = @(
         if (-not (Test-Path -LiteralPath $yamlFile -PathType Leaf)) { throw "missing agents/openai.yaml" }
         $text = Get-Content -LiteralPath $yamlFile -Raw
         Assert-Contains $text "default_prompt:" "missing metadata default_prompt"
+        Assert-Contains $text "SKILL.md" "missing metadata SKILL.md pointer"
+        Assert-Contains $text "docs/superpowers/workflow-contract.yml" "missing metadata workflow contract pointer"
         Assert-Contains $text "docs/superpowers/plans" "missing metadata plan path"
         Assert-Contains $text "superpowers:writing-plans" "missing metadata Superpowers route"
         Assert-Contains $text "request_user_input" "missing metadata native question policy"
         Assert-Contains $text "flat canonical roots" "missing metadata flat root policy"
         Assert-Contains $text "plans include creation date and milestone identity where applicable" "missing metadata plan filename policy"
         foreach ($needle in @(
-            "what counts as test complete",
-            "what metrics define pass versus fail",
             "scientific or engineering-oriented",
             "numerical metrics",
             "thresholds",
@@ -218,7 +218,22 @@ $scenarios = @(
             "Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires"
         )) {
             Assert-Contains $text $needle "missing nested continuation routing contract: $needle"
-            Assert-Contains $metadata $needle "missing nested continuation routing metadata: $needle"
+        }
+        foreach ($needle in @(
+            "advanced-user-input",
+            "SKILL.md",
+            "docs/superpowers/workflow-contract.yml",
+            "project_plan_work_route",
+            "Project Issue First",
+            "Project Implement",
+            "Use Ready Issue",
+            "project_plan_issue_execution_route",
+            "Resolve Issue",
+            "Orchestrate Issues",
+            "Review First",
+            "Revise Plan"
+        )) {
+            Assert-Contains $metadata $needle "missing compact nested continuation metadata: $needle"
         }
         Assert-NotContains $metadata "with Project Issue First, Quick Apply, Review First, Revise Plan, and Stop options" "metadata must not specify an impossible five-option native question"
     }
@@ -237,7 +252,16 @@ $scenarios = @(
             'creating issue mirrors'
         )) {
             Assert-Contains $text $needle "missing direct implement route contract: $needle"
-            Assert-Contains $metadata $needle "missing direct implement route metadata: $needle"
+        }
+        foreach ($needle in @(
+            'Project Implement',
+            '$superpowers-project:implement-plan',
+            'Project Issue First',
+            '$superpowers-project:create-issues',
+            'Use Ready Issue',
+            'compatible ready issue mirror already exists'
+        )) {
+            Assert-Contains $metadata $needle "missing compact direct implement route metadata: $needle"
         }
     }
     Invoke-Scenario "removed local-main direct apply path is absent" {
@@ -272,8 +296,9 @@ $scenarios = @(
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
             if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
-            if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
         }
+        Assert-Contains $metadata "SKILL.md" "metadata must point to SKILL.md for continuation policy"
+        Assert-Contains $metadata "docs/superpowers/workflow-contract.yml" "metadata must point to workflow contract for route options"
 
         $questionIds = [regex]::Matches($text, 'Question id:\s*`([^`]+)`')
         for ($index = 0; $index -lt $questionIds.Count; $index++) {
@@ -294,4 +319,3 @@ $scenarios = @(
 $failed = @($scenarios | Where-Object { -not $_.ok })
 $scenarios | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
-
