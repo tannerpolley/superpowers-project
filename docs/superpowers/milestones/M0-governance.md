@@ -27,7 +27,6 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 ## Related Issues
 
-- [#63 Add canonical workflow route registry](https://github.com/tannerpolley/superpowers-project/issues/63)
 - [#66 Centralize native continuation and artifact review policy](https://github.com/tannerpolley/superpowers-project/issues/66)
 - [#67 Add Decision Ledger requirements](https://github.com/tannerpolley/superpowers-project/issues/67)
 - [#68 Clean active backlog and candidate signal](https://github.com/tannerpolley/superpowers-project/issues/68)
@@ -37,6 +36,7 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/63](https://github.com/tannerpolley/superpowers-project/issues/63) closed by [https://github.com/tannerpolley/superpowers-project/pull/73](https://github.com/tannerpolley/superpowers-project/pull/73) on 2026-06-22T18:32:56Z
 - `docs/superpowers/issues/smoke-test-workflow.md` closed after local smoke proof on 06/16/2026
 - [https://github.com/tannerpolley/superpowers-project/issues/56](https://github.com/tannerpolley/superpowers-project/issues/56) closed after [validation-only closeout](https://github.com/tannerpolley/superpowers-project/issues/56#issuecomment-4715948404) on 06/16/2026 07:16:38
 - [https://github.com/tannerpolley/superpowers-project/issues/55](https://github.com/tannerpolley/superpowers-project/issues/55) closed by [https://github.com/tannerpolley/superpowers-project/pull/59](https://github.com/tannerpolley/superpowers-project/pull/59) on 06/16/2026 06:39:26
