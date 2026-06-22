@@ -43,11 +43,11 @@ Add validation and tests that keep `.superpowers/**` ignored and non-canonical.
 
 ## Acceptance Criteria
 
-- [ ] `.gitignore` keeps `.superpowers/` ignored.
-- [ ] Validator fails if `git ls-files .superpowers` returns tracked files.
-- [ ] Validator fails when docs present `.superpowers/**` as canonical project docs.
-- [ ] Local untracked run ledgers remain allowed for active workflow proof.
-- [ ] Generated-state validation runs from `scripts/validate.ps1`.
+- [x] `.gitignore` keeps `.superpowers/` ignored.
+- [x] Validator fails if `git ls-files .superpowers` returns tracked files.
+- [x] Validator fails when docs present `.superpowers/**` as canonical project docs.
+- [x] Local untracked run ledgers remain allowed for active workflow proof.
+- [x] Generated-state validation runs from `scripts/validate.ps1`.
 
 ## Blocked by
 
