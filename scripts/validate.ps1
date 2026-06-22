@@ -242,6 +242,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode ledger validator failed" }
     }))
 
+    $results.Add((Invoke-Step "Workflow contract registry" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-workflow-contract.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Workflow contract registry failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-workflow-contract.ps1") -RepoRoot $repoRoot | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Workflow contract validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Outcome workflow summary generation" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-outcome-workflow-summary.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Outcome workflow summary generation failed" }
