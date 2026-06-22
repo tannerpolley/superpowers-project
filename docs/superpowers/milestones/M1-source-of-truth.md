@@ -17,14 +17,21 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - `docs/superpowers/specs/2026-06-03-project-plugin-namespace-skill-naming-design.md`
 - `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
 - `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md`
+- `docs/superpowers/specs/2026-06-21-workflow-contract-normalization-design.md`
 
 ## Related Plans
 
 - `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
 - `docs/superpowers/plans/2026-06-03-setup-orchestration-plan.md`
 - `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
+- `docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md`
 
 ## Related Issues
+
+- [#64 Guard generated runtime state](https://github.com/tannerpolley/superpowers-project/issues/64)
+- [#65 Compress skill metadata prompts against workflow contract](https://github.com/tannerpolley/superpowers-project/issues/65)
+- [#72 Run live-sync tracker and align drift validation](https://github.com/tannerpolley/superpowers-project/issues/72)
+
 ## Closed Issues
 
 - [https://github.com/tannerpolley/superpowers-project/issues/47](https://github.com/tannerpolley/superpowers-project/issues/47) closed by [https://github.com/tannerpolley/superpowers-project/pull/52](https://github.com/tannerpolley/superpowers-project/pull/52) on 06/15/2026 23:11:37
@@ -46,5 +53,3 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - [#5 Validate skill docs against script parameters](https://github.com/tannerpolley/superpowers-project/issues/5) closed by [PR #11](https://github.com/tannerpolley/superpowers-project/pull/11).
 - [#6 Normalize GitHub check states consistently](https://github.com/tannerpolley/superpowers-project/issues/6) closed by [PR #12](https://github.com/tannerpolley/superpowers-project/pull/12).
 - [#7 Generate resolve and merge evidence ledgers](https://github.com/tannerpolley/superpowers-project/issues/7) closed by [PR #14](https://github.com/tannerpolley/superpowers-project/pull/14).
-
-
