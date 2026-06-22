@@ -43,11 +43,11 @@ Add `docs/superpowers/workflow-contract.yml`, registry loading helpers, a valida
 
 ## Acceptance Criteria
 
-- [ ] `docs/superpowers/workflow-contract.yml` includes every active workflow skill.
-- [ ] The contract includes native question IDs, top-level options, nested options, final gates, validators, artifacts, and next-skill transitions.
-- [ ] `scripts/validate-workflow-contract.ps1` fails when a nested Yes route includes `Stop`.
-- [ ] `scripts/test-workflow-contract.ps1` passes.
-- [ ] `scripts/validate.ps1` runs the new registry test or validator.
+- [x] `docs/superpowers/workflow-contract.yml` includes every active workflow skill.
+- [x] The contract includes native question IDs, top-level options, nested options, final gates, validators, artifacts, and next-skill transitions.
+- [x] `scripts/validate-workflow-contract.ps1` fails when a nested Yes route includes `Stop`.
+- [x] `scripts/test-workflow-contract.ps1` passes.
+- [x] `scripts/validate.ps1` runs the new registry test or validator.
 
 ## Blocked by
 
