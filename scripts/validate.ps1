@@ -337,6 +337,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "flat artifact root validator failed" }
     }))
 
+    $results.Add((Invoke-Step "generated runtime state guardrails" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-generated-state.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "generated runtime state guardrails failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-generated-state.ps1") -RepoRoot $repoRoot | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "generated runtime state validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Plugin manifest validation" {
         if (-not (Test-Path -LiteralPath $pluginValidate -PathType Leaf)) {
             throw "plugin validator not found: $pluginValidate"
