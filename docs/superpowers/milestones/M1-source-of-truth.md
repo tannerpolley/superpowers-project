@@ -28,12 +28,12 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Related Issues
 
-- [#64 Guard generated runtime state](https://github.com/tannerpolley/superpowers-project/issues/64)
 - [#65 Compress skill metadata prompts against workflow contract](https://github.com/tannerpolley/superpowers-project/issues/65)
 - [#72 Run live-sync tracker and align drift validation](https://github.com/tannerpolley/superpowers-project/issues/72)
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/64](https://github.com/tannerpolley/superpowers-project/issues/64) closed by [https://github.com/tannerpolley/superpowers-project/pull/74](https://github.com/tannerpolley/superpowers-project/pull/74) on 2026-06-22T19:55:22Z
 - [https://github.com/tannerpolley/superpowers-project/issues/47](https://github.com/tannerpolley/superpowers-project/issues/47) closed by [https://github.com/tannerpolley/superpowers-project/pull/52](https://github.com/tannerpolley/superpowers-project/pull/52) on 06/15/2026 23:11:37
 - [https://github.com/tannerpolley/superpowers-project/issues/46](https://github.com/tannerpolley/superpowers-project/issues/46) closed by [https://github.com/tannerpolley/superpowers-project/pull/50](https://github.com/tannerpolley/superpowers-project/pull/50) on 06/13/2026 13:21:46
 - [https://github.com/tannerpolley/superpowers-project/issues/45](https://github.com/tannerpolley/superpowers-project/issues/45) closed by [https://github.com/tannerpolley/superpowers-project/pull/49](https://github.com/tannerpolley/superpowers-project/pull/49) on 06/13/2026 06:30:26
