@@ -81,7 +81,7 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     Invoke-Scenario "skill frontmatter and metadata are valid" {
-        foreach ($needle in @("name: orchestrate-issues", "worker-thread", "project_orchestrate_next_step", "project_issue_resolution_route", "debug_question_mode", "Native Question Debug Ledger", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the plugin-provided Auto Mode validator", "bounded-auto-merge", "recorded defaults", "direct-inline-resolve-issue", "stop outside policy", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts")) {
+        foreach ($needle in @("name: orchestrate-issues", "worker-thread", "project_orchestrate_next_step", "project_issue_resolution_route", "debug_question_mode", "Native Question Debug Ledger", "Auto Mode authorization ledger", "project_auto_mode_authorization", "the plugin-provided Auto Mode validator", "bounded-auto-merge", "recorded defaults", "direct-inline-resolve-issue", "stop outside policy", "artifact review gate", "helper-required findings summary", "Route-specific artifact inventory", "machine-readable handoff ledgers")) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing orchestrate skill contract: $needle"
         }
         foreach ($needle in @("orchestrate-issues", "derive-worker-identity.ps1", "merge-changes", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts")) {
@@ -129,8 +129,16 @@ try {
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )
         foreach ($needle in $globalPolicyNeedles) {
-            if (-not $skill.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if ($skill.Contains($needle)) { throw "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle" }
             if ($metadata.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
+        )) {
+            if (-not $skill.Contains($needle)) { throw "missing compact native continuation helper reference: $needle" }
         }
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",

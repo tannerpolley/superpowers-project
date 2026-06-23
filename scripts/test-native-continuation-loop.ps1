@@ -102,73 +102,41 @@ foreach ($skillName in $workflowSkillNames) {
     $text = Get-Content -LiteralPath $skillPath -Raw
     foreach ($needle in @(
         '## Native Continuation Loop',
-        'Do not end the turn',
-        'until a native continuation question returns `Stop` or reaches a verified final `Done` gate',
-        'After every completed action',
-        'ask another native continuation question',
-        'Only a user-selected `Stop` option or verified final `Done` gate is terminal',
-        'Revisit is non-terminal',
-        'Only Stop can break an intermediate loop before a verified final Done gate',
-        'Review First is not a terminal answer',
-        'The agent must not get out of the loop by itself',
-        'ending a turn after a governed workflow action is invalid',
-        'must not recommend Stop before verified final completion'
+        'skills/advanced-user-input/SKILL.md',
+        'global native continuation',
+        'verified Done',
+        'artifact review policy',
+        'route-specific gates',
+        'After every completed route-specific action',
+        'ask the next native continuation or permission question',
+        'selected route can continue',
+        'ask or report the exact blocker through the next native question'
     )) {
-        Add-Check $checks "$skillName contains $needle" ($text.Contains($needle)) "$skillPath must contain continuation-loop contract: $needle"
+        Add-Check $checks "$skillName contains centralized loop reference $needle" ($text.Contains($needle)) "$skillPath must contain centralized continuation-loop reference: $needle"
     }
-    $terminalPhrases = @(
-        'A pushed commit, merged PR, created issue, saved plan, completed audit, or synced live plugin is not terminal',
-        'A local merge, created issue, saved plan, completed audit, or synced live plugin is not terminal',
-        'A pushed issue-backed commit, merged issue-backed PR, local branch merge, created issue, saved plan, completed audit, or synced live plugin is not terminal'
-    )
-    Add-Check $checks "$skillName contains non-terminal artifact contract" (@($terminalPhrases | Where-Object { $text.Contains($_) }).Count -gt 0) "$skillPath must contain a non-terminal artifact contract"
 
     foreach ($needle in @(
         '## Native Continuation Gate',
-        'Continue?',
-        'Yes',
-        'Revisit',
-        'Stop',
-        'top-level closeout question must use exactly three trajectory options',
-        'Do not show Continue children as peer top-level options',
-        'Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires',
-        'Custom Other',
-        'return to the originating continuation gate',
-        'Nested Yes-route menus must not include terminal options',
-        'Nested Revisit-route menus must not include terminal options',
-        'Recommend Yes when at least one safe forward route exists',
-        'Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.',
-        'Custom Other never terminates a workflow directly',
-        'fresh confirmation question with separate built-in labels instead of terminating from Other'
+        'skills/advanced-user-input/SKILL.md',
+        'global native question geometry',
+        'Custom Other handling',
+        'Revisit behavior',
+        'Stop and verified Done terminal rules',
+        'nested-route rules',
+        'route-specific question IDs',
+        'selected answers are executable routing'
     )) {
-        Add-Check $checks "$skillName contains flowchart contract $needle" ($text.Contains($needle)) "$skillPath must contain native flowchart contract: $needle"
+        Add-Check $checks "$skillName contains route-specific native gate $needle" ($text.Contains($needle)) "$skillPath must contain route-specific native gate reference: $needle"
+    }
+    if ($skillName -ne 'companion-interface') {
+        Add-Check $checks "$skillName contains route-specific native gate Question id:" ($text.Contains('Question id:')) "$skillPath must contain route-specific native gate question IDs"
     }
 
     Add-Check $checks "$skillName contains artifact review gate" ($text.Contains('artifact review gate')) "$skillPath must contain closeout artifact review wording"
-    Add-Check $checks "$skillName contains rendered artifact wording" (
-        $text.Contains('rendered Markdown artifacts') -or
-        $text.Contains('render created or revised Markdown artifacts')
-    ) "$skillPath must require rendering or showing created/revised Markdown artifacts at closeout"
-    Add-Check $checks "$skillName contains strict artifact display" ($text.Contains('Strict artifact display is mandatory')) "$skillPath must force strict artifact display before closeout"
-    Add-Check $checks "$skillName forbids path-only artifact claims" ($text.Contains('Do not merely say something changed')) "$skillPath must forbid path-only or prose-only artifact closeout claims"
-    Add-Check $checks "$skillName contains agent judgment summary" ($text.Contains("what remains unsatisfactory or risky") -and $text.Contains("the agent's own feedback/opinion")) "$skillPath must require the agent's own post-artifact judgment summary"
-    Add-Check $checks "$skillName contains machine-readable artifact summary" ($text.Contains('machine-readable artifacts')) "$skillPath must summarize machine-readable artifacts at closeout"
-    Add-Check $checks "$skillName contains broader project context closeout wording" ($text.Contains('broader project context')) "$skillPath must connect closeout findings to the broader project context"
-    Add-Check $checks "$skillName contains recommended next route wording" (
-        $text.Contains('recommended next route') -or
-        $text.Contains('recommended next workflow') -or
-        $text.Contains('what next steps are now recommended') -or
-        $text.Contains('what the result means for the next workflow step') -or
-        $text.Contains('Recommend `Project Implement`')
-    ) "$skillPath must include a next-route or next-steps closeout recommendation"
-    Add-Check $checks "$skillName contains findings interpretation wording" (
-        $text.Contains('what the agent thinks those results mean') -or
-        $text.Contains('what the agent thinks those results and findings mean') -or
-        $text.Contains('what the results mean for the active goal') -or
-        $text.Contains('explain what the results mean for the active goal and broader project context') -or
-        $text.Contains('what the result means for the active goal') -or
-        $text.Contains('what the result means for the next workflow step')
-    ) "$skillPath must interpret the meaning of the closeout result"
+    Add-Check $checks "$skillName references helper-required artifact review" ($text.Contains('artifact review gate required by `skills/advanced-user-input/SKILL.md`')) "$skillPath must reference helper-owned artifact review gate"
+    Add-Check $checks "$skillName preserves route-specific artifact inventory" ($text.Contains('Route-specific artifact inventory must include')) "$skillPath must preserve route-specific artifact inventory"
+    Add-Check $checks "$skillName preserves route-specific findings summary" ($text.Contains('helper-required findings summary')) "$skillPath must preserve route-specific findings summary"
+    Add-Check $checks "$skillName contains findings interpretation wording" ($text.Contains('route-specific status')) "$skillPath must interpret the route-specific closeout result"
     Add-Check $checks "$skillName omits old direction-coded option labels" (-not [regex]::IsMatch($text, '(?m)^\s*-\s+(Down|Left|Right):')) "$skillPath must not expose Down/Left/Right as option names"
 
     $agentPath = Join-Path $skillRoot "$skillName\agents\openai.yaml"
@@ -234,7 +202,7 @@ foreach ($skillName in $workflowSkillNames) {
         Add-Check $checks "$skillName uses Stop for intermediate terminal routes" (-not $usesCombinedRouteLabel) "$skillName must use Stop for intermediate terminal routes"
     }
     if ($finalCapableSkillNames -contains $skillName) {
-        Add-Check $checks "$skillName defines verified final Done semantics" ($text.Contains("verified final")) "$skillName must define verified final Done semantics"
+        Add-Check $checks "$skillName defines verified final Done semantics" ($text.Contains("verified final") -or $text.Contains("verified Done")) "$skillName must define verified final Done semantics"
         Add-Check $checks "$skillName final Done requires clean worktree in SKILL.md" ($text.Contains("git status --short") -or $text.Contains("worktree is clean")) "$skillPath must state that final Done requires a clean worktree"
         $finalGateId = $finalHealthGateIds[$skillName]
         $finalGateBlock = Get-QuestionBlock -Text $text -QuestionId $finalGateId

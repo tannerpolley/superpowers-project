@@ -121,11 +121,19 @@ $scenarios = @(
             "verification evidence",
             "broader project context",
             "recommended next route",
-            "machine-readable artifacts",
-            "Do not recommend Stop merely because the branch is clean, validated, or already pushed",
+            "helper-required findings summary",
+            "merge-ready drafts",
             "Do not ask for push approval first and explain later"
         )) {
             Assert-Contains $text $needle "missing implement-plan closeout contract: $needle"
+        }
+        foreach ($needle in @(
+            "artifact review gate",
+            "verification evidence",
+            "broader project context",
+            "recommended next route",
+            "Do not ask for push approval first and explain later"
+        )) {
             Assert-Contains $metadata $needle "missing implement-plan metadata closeout contract: $needle"
         }
     }
@@ -139,19 +147,26 @@ $scenarios = @(
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )
         foreach ($needle in $globalPolicyNeedles) {
-            if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if ($text.Contains($needle)) { throw "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle" }
             if ($metadata.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
         }
         foreach ($needle in @(
-            "implement_plan_topology",
-            "implement_plan_push_permission",
-            "Do not recommend Stop merely because the branch is clean, validated, or already pushed"
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
         )) {
-            if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
-            if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
+            if (-not $text.Contains($needle)) { throw "missing compact native continuation helper reference: $needle" }
+        }
+        foreach ($needle in @(
+            "implement_plan_topology",
+            "implement_plan_push_permission"
+        )) {
+            if (-not $text.Contains($needle)) { throw "missing route-specific native continuation contract in SKILL.md: $needle" }
+            if (-not $metadata.Contains($needle)) { throw "missing route-specific native continuation contract in metadata: $needle" }
         }
         foreach ($needle in @("Push And Open PR", "Hold")) {
-            if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
+            if (-not $metadata.Contains($needle)) { throw "missing route-specific native continuation contract in metadata: $needle" }
         }
         if (-not $metadata.Contains("docs/superpowers/workflow-contract.yml")) { throw "missing compact continuation metadata: docs/superpowers/workflow-contract.yml" }
 

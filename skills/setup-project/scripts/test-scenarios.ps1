@@ -60,10 +60,13 @@ try {
         foreach ($needle in @(
             '## Native Continuation Gate',
             'artifact review gate',
-            'what the agent thinks those results mean',
+            'helper-required findings summary',
+            'Route-specific artifact inventory',
+            'changed or verified setup docs',
+            'tracker config evidence',
+            'board evidence',
             'machine-readable artifacts',
-            'broader project context',
-            'recommended next route',
+            'route-specific status',
             'Review Setup',
             'stop',
             'request_user_input',
@@ -195,8 +198,16 @@ try {
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )
         foreach ($needle in $globalPolicyNeedles) {
-            if (-not $skill.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if ($skill.Contains($needle)) { throw "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle" }
             if ($metadata.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
+        )) {
+            if (-not $skill.Contains($needle)) { throw "missing compact native continuation helper reference: $needle" }
         }
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",

@@ -20,10 +20,10 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     try {
-        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the plugin-provided Auto Mode validator','<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1','stop outside policy','artifact review gate','machine-readable artifacts','broader project context','recommended next route','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','scripts/validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
+        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the plugin-provided Auto Mode validator','<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1','stop outside policy','artifact review gate','machine-readable artifacts','helper-required findings summary','route-specific status','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','scripts/validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
-        foreach ($needle in @('## Native Continuation Gate','artifact review gate','Review First','stop','start the selected next skill','selected native answers','executable routing','what the agent thinks those results mean','machine-readable artifacts')) {
+        foreach ($needle in @('## Native Continuation Gate','artifact review gate','Review First','stop','start the selected next skill','selected answers','executable routing','helper-required findings summary','machine-readable artifacts')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router continuation contract: $needle"
         }
         Add-Result -Name "router contract present" -Ok $true -Reason "passed"
@@ -88,8 +88,16 @@ try {
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )
         foreach ($needle in $globalPolicyNeedles) {
-            Assert-Contains -Text $skill -Needle $needle -Reason "missing native continuation policy in SKILL.md: $needle"
+            Assert-NotContains -Text $skill -Needle $needle -Reason "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle"
             Assert-NotContains -Text $metadata -Needle $needle -Reason "metadata duplicates native continuation policy instead of compact contract reference: $needle"
+        }
+        foreach ($needle in @(
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
+        )) {
+            Assert-Contains -Text $skill -Needle $needle -Reason "missing compact native continuation helper reference: $needle"
         }
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",

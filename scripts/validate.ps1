@@ -197,6 +197,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Native continuation loop contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Global policy deduplication contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-global-policy-deduplication.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Global policy deduplication contract failed" }
+    }))
+
     $results.Add((Invoke-Step "Advanced user input policy contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-advanced-user-input-policy.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Advanced user input policy contract failed" }
