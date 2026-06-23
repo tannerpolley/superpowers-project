@@ -217,6 +217,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Skill metadata readability contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Skill metadata workflow contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-skill-metadata-contract.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Skill metadata contract tests failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-skill-metadata-contract.ps1") -RepoRoot $repoRoot | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Skill metadata workflow contract failed" }
+    }))
+
     $results.Add((Invoke-Step "Superpowers method contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-method-contract.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Superpowers method contract failed" }

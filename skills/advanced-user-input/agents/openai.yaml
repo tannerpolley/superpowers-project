@@ -2,34 +2,8 @@ interface:
   display_name: "Advanced User Input"
   short_description: "Use native user input for Project workflow gates, large option menus, and worker questions."
   default_prompt: >-
-    Use $superpowers-project:advanced-user-input when a Superpowers Project workflow needs native user-input prompts, bulk question gates, large option menus, sequential branch prompts, Custom answer handling,
-    or worker-to-orchestrator request_agent_input handoffs. Use the smallest native question shape that preserves the real decision tree.
-    For project workflow closeout gates, always ask the three-way trajectory question first: Continue? with Yes for progress and Revisit for the standard go-back route. Use Stop for mid-loop exits.
-    Use Done only for verified final states. Verified final health gates use exactly three top-level options: Done, Revisit, and Stop. Done is valid only when final proof exists and the repo worktree is clean;
-    Done is invalid whenever git status --short is non-empty. Before any continuation, permission, push, publish, or merge question, complete an artifact review gate.
-    Strict artifact display is mandatory before every closeout or permission question: show what was created or revised, do not merely say something changed, include chosen brainstorm design/specs, full plan tasks and steps,
-    created issue bodies or mirrors, full changed-artifact inventory, exact test values/results, cleanup evidence, branch or PR proof, machine-readable ledgers, and when large artifacts are not fully rendered show the path,
-    type, action, exact sections changed, representative diff or snippet, and why the full render is omitted. After artifacts are shown, add a separate findings summary with what was done, what was fixed,
-    what remains unsatisfactory or risky, the agent's own feedback/opinion, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context,
-    what next steps are now recommended, active-goal impact, broader project impact, and the recommended next route.
-    Push, publish, and merge approval questions are invalid until the artifact review gate and findings summary have been shown.
-    If observed behavior conflicts with repo-owned workflow contracts, treat it as a stale-thread recovery case: warn that the loaded thread may still be using older skill text, identify the missed gate or missing route,
-    re-ask that gate natively, and continue from the corrected route instead of treating the skipped step as terminal or implicit approval. Custom answers never terminate directly from Other.
-    If a custom answer requests `Stop` or `Done`, ask a fresh confirmation question with separate built-in labels instead of terminating from Other.
-    Custom answers that request revision, review, repair, more evidence, a different route, or stronger loop behavior are Revisit behavior. Do not infer terminal intent from ambiguity or a loose completion claim;
-    report the remaining lifecycle state and continue with the next follow-up question instead. Do not flatten closeout into a five-option or larger peer menu.
-    If Yes or Revisit needs more detail, ask the nested branch question after that answer. Nested Yes-route menus must not include terminal options and should list only forward routes.
-    Nested Revisit-route menus must not include terminal options and should list only revisit, repair, rerun, recovery, review, or evidence routes. Recommend Yes when at least one safe forward route exists.
-    Recommend Revisit when evidence is incomplete, validation failed, or review/repair is the next safe action.
-    The agent must not get out of the loop by itself, and ending a turn after a governed workflow action is invalid until the next native continuation or permission question is answered.
-    Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion. Do not recommend Stop merely because a clean forward route exists,
-    because the current branch is already healthy, or because the original request was narrower than the selected workflow route when the user has not asked to stop.
-    Approval gates use domain-specific decline or cancel labels instead of generic terminal labels unless the decline actually ends the workflow.
-    Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires.
-    Use larger native prompts only inside a selected branch, in data-backed selection menus, or for independent bulk decisions that are all needed before one action. debug_question_mode is not a normal workflow path;
-    use it only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in waitingOnUserInput and no tool exists to answer the modal prompt.
-    Record a Native Question Debug Ledger before executing the selected answer with skill_name, thread_id, observed_status: waitingOnUserInput,
-    question_id, prompt, options, recommended_option, selected_answer, answer_source: recommended-default | user-provided-debug-answer, no_answer_tool_available: true, and mutation_allowed: false.
-    debug_question_mode must not approve mutation, substitute for a live user decision in normal work, publish, push, merge, create worker threads, grant scope approval, or grant route approval.
-    If native Q&A is unavailable, say so and ask in normal chat. If a large native prompt fails, report the rejected shape, retry with sequential branch prompts, and preserve every real route.
-    Use request_agent_input only as the written worker-to-orchestrator protocol when a worker or subagent needs direction from its orchestrator.
+    Use $superpowers-project:advanced-user-input when native request_user_input choices, sequential branching,
+    Custom Other handling, debug-question ledgers, or artifact-review policy shape matters. Read SKILL.md for the
+    global continuation and artifact review policy, and docs/superpowers/workflow-contract.yml for project route
+    question ids and option sets. This helper owns shared native UI policy; route skills add only route-specific
+    gates, artifacts, validators, and stop points. Never use debug mode to approve mutation.

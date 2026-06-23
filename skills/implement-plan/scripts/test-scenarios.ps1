@@ -132,16 +132,28 @@ $scenarios = @(
     Invoke-Scenario "native continuation policy avoids nested stop routes" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
-        foreach ($needle in @(
+        $globalPolicyNeedles = @(
             "Nested Yes-route menus must not include terminal options",
             "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
-            "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion.",
+            "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
+        )
+        foreach ($needle in $globalPolicyNeedles) {
+            if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if ($metadata.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "implement_plan_topology",
+            "implement_plan_push_permission",
             "Do not recommend Stop merely because the branch is clean, validated, or already pushed"
         )) {
             if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
             if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
         }
+        foreach ($needle in @("Push And Open PR", "Hold")) {
+            if (-not $metadata.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
+        }
+        if (-not $metadata.Contains("docs/superpowers/workflow-contract.yml")) { throw "missing compact continuation metadata: docs/superpowers/workflow-contract.yml" }
 
         $questionIds = [regex]::Matches($text, 'Question id:\s*`([^`]+)`')
         for ($index = 0; $index -lt $questionIds.Count; $index++) {
@@ -230,4 +242,3 @@ $scenarios | ConvertTo-Json -Depth 6
 if ($failedScenarios.Count -gt 0) {
     throw "implement-plan scenario tests failed: $($failedScenarios.name -join ', ')"
 }
-

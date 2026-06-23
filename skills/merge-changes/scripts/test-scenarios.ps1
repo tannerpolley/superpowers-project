@@ -873,14 +873,26 @@ Invoke-Scenario "local branch closeout helper refuses malformed approval and wro
     try {
         $text = Get-Content -LiteralPath $skillFile -Raw
         $metadataText = Get-Content -LiteralPath $metadataFile -Raw
-        foreach ($needle in @(
+        $globalPolicyNeedles = @(
             "Nested Yes-route menus must not include terminal options",
             "Nested Revisit-route menus must not include terminal options",
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
-        )) {
+        )
+        foreach ($needle in $globalPolicyNeedles) {
             if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
-            if (-not $metadataText.Contains($needle)) { throw "missing native continuation policy in metadata: $needle" }
+            if ($metadataText.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "docs/superpowers/workflow-contract.yml",
+            "project_merge_next_step",
+            "Run Align",
+            "Resolve Another",
+            "Review Closeout",
+            "Stop",
+            "start the selected next skill"
+        )) {
+            if (-not $metadataText.Contains($needle)) { throw "missing compact continuation metadata: $needle" }
         }
 
         $questionIds = [regex]::Matches($text, 'Question id:\s*`([^`]+)`')
@@ -899,4 +911,3 @@ $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
-
