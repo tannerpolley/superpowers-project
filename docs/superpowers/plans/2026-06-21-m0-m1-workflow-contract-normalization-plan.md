@@ -14,7 +14,7 @@
 
 - `docs/superpowers/specs/2026-06-21-workflow-contract-normalization-design.md`
 
-## Planning Decisions
+## Decision Ledger
 
 | Decision | Source | Answer | Impact | Deferred? | Risk owner |
 |---|---|---|---|---|---|

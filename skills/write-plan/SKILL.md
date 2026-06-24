@@ -104,6 +104,22 @@ If the validator fails, revise the plan before artifact review. Do not route to 
 
 Task # Use Cases must cover acceptance proof and cutover or replaced path handling. A plan is not ready when tasks can pass local tests but do not prove target output, owner, interface, cutover, replaced path, evidence, stop criteria, and avoid list.
 
+## Decision Ledger Gate
+
+Every implementation plan MUST include a `## Decision Ledger` section with a Markdown table. The required columns are `Decision`, `Source`, `Answer`, `Impact`, `Deferred?`, and `Risk owner`.
+
+Plans created from source specs must carry forward source-spec decisions that still affect implementation, then add planning grill decisions for scope, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, live mutation, owner, interface, cutover, replaced path, evidence, stop criteria, and avoid list. Plans created from issue mirrors must carry forward the linked source plan or source spec decisions instead of repeating issue metadata as fake decision evidence.
+
+`Deferred?` must use `Yes` or `No`. Deferred rows must name a concrete risk owner and downstream impact; they are not allowed to hide missing scope, proof, owner, or cutover decisions.
+
+Before saving or presenting a plan as ready, run the repo-root validator:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path <saved-plan-path> -Kind plan
+```
+
+If the validator fails, revise the plan before artifact review. Do not route to `$superpowers-project:create-issues`, `$superpowers-project:implement-plan`, `$superpowers-project:resolve-issue`, or `$superpowers-project:orchestrate-issues` until the saved plan passes.
+
 ## Task # Use Cases Gate
 
 Task # Use Cases are a strict requirement for every actual implementation plan. Every numbered `Task N` section MUST include a `**Use Cases:**` block before files and checkbox steps. Each block must list concrete user, system, issue-acceptance, failure, recovery, validation, or workflow cases that the task is responsible for covering.
@@ -166,6 +182,7 @@ Required plan content:
 - milestone linkage when applicable
 - `## Outcome Proof` with owner, interface, cutover, replaced path, evidence, acceptance proof, stop criteria, avoid list, and risk
 - `## Implementation Boundaries` with source of truth, read/write path, integration points, migration or cutover, replaced path handling, and acceptance proof gate
+- `## Decision Ledger` carrying forward source decisions and planning grill decisions with `Decision`, `Source`, `Answer`, `Impact`, `Deferred?`, and `Risk owner`
 - acceptance criteria mapped to tasks
 - non-goals
 - proof oracle with exact command, artifact, user-visible behavior, or GitHub evidence
