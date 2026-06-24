@@ -211,8 +211,16 @@ $scenarios = @(
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )
         foreach ($needle in $globalPolicyNeedles) {
-            if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if ($text.Contains($needle)) { throw "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle" }
             if ($metadata.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
+        )) {
+            if (-not $text.Contains($needle)) { throw "missing compact native continuation helper reference: $needle" }
         }
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",

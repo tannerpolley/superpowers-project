@@ -525,12 +525,14 @@ try {
             "validate-terminal-closeout.ps1",
             'explicit `Stop`',
             "## Native Continuation Gate",
-            "summarize",
+            "helper-required findings summary",
             "artifact review gate",
             "verification evidence",
             "broader project context",
             "recommended next route",
-            "machine-readable artifacts",
+            "branch push proof",
+            "handoff proof",
+            "native goal completion proof",
             "Do not ask for push approval first and explain later",
             "project_resolve_next_step",
             "Merge",
@@ -561,8 +563,16 @@ try {
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )
         foreach ($needle in $globalPolicyNeedles) {
-            Assert-True ($text.Contains($needle)) "missing native continuation policy in SKILL.md: $needle"
+            Assert-True (-not $text.Contains($needle)) "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle"
             Assert-True (-not $metadata.Contains($needle)) "metadata duplicates native continuation policy instead of compact contract reference: $needle"
+        }
+        foreach ($needle in @(
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
+        )) {
+            Assert-True ($text.Contains($needle)) "missing compact native continuation helper reference: $needle"
         }
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
@@ -592,4 +602,3 @@ $failed = @($results | Where-Object { -not $_.ok })
 } finally {
     if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 }
-

@@ -173,12 +173,14 @@ $scenarios = @(
         $text = Get-Content -LiteralPath $skillFile -Raw
         foreach ($needle in @(
             "## Native Continuation Gate",
-            "summarize",
+            "helper-required findings summary",
             "artifact review gate",
-            "Inventory every produced or materially changed artifact",
+            "Route-specific artifact inventory",
+            "Outcome Proof",
+            "Implementation Boundaries",
+            "Task # Use Cases",
             "what counts as test complete",
             "scientific or engineering numerical metrics",
-            "broader project context",
             "Review First",
             "stop",
             "request_user_input",
@@ -198,7 +200,9 @@ $scenarios = @(
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
         foreach ($needle in @(
             "advanced-user-input",
-            "sequential branching",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing",
             "project_plan_next_step",
             "Continue Into Work",
             "Revise / Review Plan",
@@ -213,9 +217,7 @@ $scenarios = @(
             "implement-plan",
             "project_plan_review_route",
             "Review First",
-            "Revise Plan",
-            "Do not show Continue children as peer top-level options",
-            "Nested branch questions and independent bulk gates may use as many native questions or options as the decision requires"
+            "Revise Plan"
         )) {
             Assert-Contains $text $needle "missing nested continuation routing contract: $needle"
         }
@@ -295,7 +297,16 @@ $scenarios = @(
             "Recommend Yes when at least one safe forward route exists",
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )) {
-            if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if ($text.Contains($needle)) { throw "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle" }
+            if ($metadata.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
+        )) {
+            if (-not $text.Contains($needle)) { throw "missing compact native continuation helper reference: $needle" }
         }
         Assert-Contains $metadata "SKILL.md" "metadata must point to SKILL.md for continuation policy"
         Assert-Contains $metadata "docs/superpowers/workflow-contract.yml" "metadata must point to workflow contract for route options"

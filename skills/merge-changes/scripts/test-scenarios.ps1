@@ -253,13 +253,13 @@ Invoke-Scenario "merge contract text is present" {
         "user-provided-debug-answer",
         "Debug mode must not",
         "## Native Continuation Gate",
-        "summarize",
+        "helper-required findings summary",
         "artifact review gate",
         "verification evidence",
         "broader project context",
         "recommended next route",
-        "machine-readable artifacts",
-        "Do not ask for approval first and explain later",
+        "machine-readable closeout ledgers",
+        "Complete the artifact review gate required by",
         "project_merge_next_step",
         "Run Align",
         "Resolve Another",
@@ -880,8 +880,16 @@ Invoke-Scenario "local branch closeout helper refuses malformed approval and wro
             "Stop may be selectable at the top-level gate for user control, but the agent must not recommend Stop before verified final completion."
         )
         foreach ($needle in $globalPolicyNeedles) {
-            if (-not $text.Contains($needle)) { throw "missing native continuation policy in SKILL.md: $needle" }
+            if ($text.Contains($needle)) { throw "SKILL.md duplicates helper-owned global policy instead of compact contract reference: $needle" }
             if ($metadataText.Contains($needle)) { throw "metadata duplicates native continuation policy instead of compact contract reference: $needle" }
+        }
+        foreach ($needle in @(
+            "skills/advanced-user-input/SKILL.md",
+            "global native question geometry",
+            "route-specific question IDs",
+            "selected answers are executable routing"
+        )) {
+            if (-not $text.Contains($needle)) { throw "missing compact native continuation helper reference: $needle" }
         }
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
@@ -911,3 +919,4 @@ $failed = @($results | Where-Object { -not $_.ok })
 $results | ConvertTo-Json -Depth 8
 if ($failed.Count -gt 0) { exit 1 }
 if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
+exit 0
