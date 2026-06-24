@@ -291,6 +291,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Plan outcome proof failed" }
     }))
 
+    $results.Add((Invoke-Step "Decision Ledger contract" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-decision-ledger.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Decision Ledger contract failed" }
+    }))
+
     $results.Add((Invoke-Step "Local project workflow smoke" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-e2e-project-workflow.ps1") -LocalOnly | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Local project workflow smoke failed" }

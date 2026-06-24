@@ -104,6 +104,16 @@ A saved spec should include:
 - GitHub issue or PRD linkage when already known
 - proof oracle candidates for later planning
 
+Every saved spec MUST include a `## Decision Ledger` section with a Markdown table. The required columns are `Decision`, `Source`, `Answer`, `Impact`, `Deferred?`, and `Risk owner`. Record every material user, repo-evidence, grill, scope, owner, interface, cutover, proof, and tradeoff decision that shaped the spec. `Deferred?` must use `Yes` or `No`; deferred rows must still name a concrete risk owner and downstream impact. Open questions are allowed only when represented as deferred rows with an owner and impact.
+
+Before reporting a spec ready, run the repo-root validator:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path <saved-spec-path> -Kind spec
+```
+
+If the validator fails, revise the spec before artifact review. Do not route to `$superpowers-project:write-plan` until the saved spec passes.
+
 Before reporting the spec ready, self-review for placeholders, contradictions, ambiguous wording, and scope that should be split before `write-plan` runs.
 
 ## Native Continuation Gate
