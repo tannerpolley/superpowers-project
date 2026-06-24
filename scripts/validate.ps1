@@ -244,6 +244,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Loop Controller contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Active backlog candidate signal" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-active-backlog.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Active backlog tests failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-active-backlog.ps1") -RepoRoot $repoRoot | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Active backlog validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Workflow mode entry contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-initiate-workflow-mode-gate.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode entry contract failed" }

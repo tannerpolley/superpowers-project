@@ -20,7 +20,13 @@ function Get-LoopCandidateRiskScore {
 try {
     $repo = Resolve-LoopControllerRepoRoot -RepoRoot $RepoRoot
     $inventoryFullPath = if ([IO.Path]::IsPathRooted($InventoryPath)) { $InventoryPath } else { Join-Path $repo $InventoryPath }
-    $inventory = Read-LoopControllerJson -Path $inventoryFullPath
+    if ([IO.Path]::GetExtension($inventoryFullPath) -ieq ".md") {
+        . (Join-Path $repo "scripts\lib\active-backlog.ps1")
+        $activeEntries = @(Read-ActiveBacklog -RepoRoot $repo -Path $inventoryFullPath)
+        $inventory = [pscustomobject]@{ candidates = @($activeEntries | ForEach-Object { ConvertTo-LoopCandidateFromActiveBacklog -Entry $_ }) }
+    } else {
+        $inventory = Read-LoopControllerJson -Path $inventoryFullPath
+    }
     Assert-LoopRequiredProperties -Object $inventory -Names @("candidates")
 
     $validRoutes = @("brainstorm-spec", "write-plan", "create-issues", "implement-plan", "resolve-issue", "orchestrate-issues", "merge-changes", "audit-project", "align-project")
@@ -45,7 +51,7 @@ try {
 
     $selected = @(
         $ready |
-            Sort-Object @{ Expression = { Get-LoopCandidateRiskScore -Risk ([string]$_.risk) } }, @{ Expression = { [string]$_.id } } |
+            Sort-Object @{ Expression = { if (Test-LoopControllerProperty -Object $_ -Name "priority_rank") { [int]$_.priority_rank } else { 99 } } }, @{ Expression = { Get-LoopCandidateRiskScore -Risk ([string]$_.risk) } }, @{ Expression = { [string]$_.id } } |
             Select-Object -First 1
     )[0]
 
