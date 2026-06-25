@@ -43,22 +43,22 @@ try {
 
     $validBacklog = Join-Path $tempRoot "valid-active.md"
     Write-BacklogFixture -Path $validBacklog -Rows @(
-        "| 69 | resolve-issue | docs/superpowers/issues/69-artifact-review-card-schema.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-artifact-review-card.ps1 | Standardize Artifact Review Card schema. |",
-        "| 70 | resolve-issue | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | blocked | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-worker-packets.ps1 | Blocked by artifact review card schema. |"
+        "| 70 | resolve-issue | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-worker-packets.ps1 | Add worker handoff and PR-ready packets. |",
+        "| 71 | resolve-issue | docs/superpowers/issues/71-golden-path-workflow-fixtures.md | P2 | blocked | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-examples.ps1 | Blocked by worker packets. |"
     )
     $valid = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $validBacklog)
     Add-Check -Name "valid active backlog passes" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true -and $valid.json.ready_count -eq 1) -Reason $valid.raw
 
     $missingProof = Join-Path $tempRoot "missing-proof.md"
     Write-BacklogFixture -Path $missingProof -Rows @(
-        "| 69 | resolve-issue | docs/superpowers/issues/69-artifact-review-card-schema.md | P2 | ready |  | missing proof target |"
+        "| 70 | resolve-issue | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | ready |  | missing proof target |"
     )
     $missingProofResult = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $missingProof)
     Add-Check -Name "missing proof target fails" -Ok ($missingProofResult.exit_code -ne 0 -and $missingProofResult.raw.Contains("proof target")) -Reason "missing proof target should fail"
 
     $unsupportedRoute = Join-Path $tempRoot "unsupported-route.md"
     Write-BacklogFixture -Path $unsupportedRoute -Rows @(
-        "| 99 | unknown-route | docs/superpowers/issues/69-artifact-review-card-schema.md | P2 | ready | pwsh.exe -File fixture.ps1 | bad route |"
+        "| 99 | unknown-route | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | ready | pwsh.exe -File fixture.ps1 | bad route |"
     )
     $unsupportedRouteResult = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $unsupportedRoute)
     Add-Check -Name "unsupported route owner fails" -Ok ($unsupportedRouteResult.exit_code -ne 0 -and $unsupportedRouteResult.raw.Contains("Route owner")) -Reason "unsupported route should fail"
@@ -73,10 +73,10 @@ try {
     $selectorBacklog = Join-Path $tempRoot "selector-active.md"
     Write-BacklogFixture -Path $selectorBacklog -Rows @(
         "| old-plan | write-plan | docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md | P0 | archived | historical checkbox | archived historical checkbox |",
-        "| 69 | resolve-issue | docs/superpowers/issues/69-artifact-review-card-schema.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-artifact-review-card.ps1 | Standardize Artifact Review Card schema. |"
+        "| 70 | resolve-issue | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-worker-packets.ps1 | Add worker handoff and PR-ready packets. |"
     )
     $selection = Invoke-JsonScript -Path $selector -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $selectorBacklog)
-    Add-Check -Name "selector chooses active backlog item" -Ok ($selection.exit_code -eq 0 -and $selection.json.selected_candidate_id -eq "69") -Reason $selection.raw
+    Add-Check -Name "selector chooses active backlog item" -Ok ($selection.exit_code -eq 0 -and $selection.json.selected_candidate_id -eq "70") -Reason $selection.raw
     Add-Check -Name "selector skips archived historical row" -Ok (@($selection.json.skipped | Where-Object { $_.id -eq "old-plan" -and $_.reason -match "status" }).Count -eq 1) -Reason "archived row should be skipped"
 
     $failed = @($checks | Where-Object { -not $_.ok })

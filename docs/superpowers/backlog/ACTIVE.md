@@ -4,7 +4,6 @@ This file is the explicit Loop Controller candidate source for current maintenan
 
 | ID | Route owner | Source artifact | Priority | Status | Proof target | Reason |
 |---|---|---|---|---|---|---|
-| 69 | resolve-issue | docs/superpowers/issues/69-artifact-review-card-schema.md | P2 | ready | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-artifact-review-card.ps1` | Standardize Artifact Review Card schema after native continuation policy is centralized. |
-| 70 | resolve-issue | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-worker-packets.ps1` | Blocked by #69 artifact review card schema. |
-| 71 | resolve-issue | docs/superpowers/issues/71-golden-path-workflow-fixtures.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-examples.ps1` | Blocked by #69 artifact review card schema. |
-| 72 | resolve-issue | docs/superpowers/issues/72-live-sync-tracker-align-validation.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Final proof slice blocked by #68 through #71. |
+| 70 | resolve-issue | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | ready | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-worker-packets.ps1` | Unblocked by #69; worker handoff and PR-ready packets are next. |
+| 71 | resolve-issue | docs/superpowers/issues/71-golden-path-workflow-fixtures.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-examples.ps1` | Blocked by #70 worker handoff and PR-ready packets. |
+| 72 | resolve-issue | docs/superpowers/issues/72-live-sync-tracker-align-validation.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Final proof slice blocked by #70 and #71. |
