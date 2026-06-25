@@ -27,10 +27,11 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 ## Related Issues
 
-- [#71 Add golden-path workflow fixtures](https://github.com/tannerpolley/superpowers-project/issues/71)
+- None
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/71](https://github.com/tannerpolley/superpowers-project/issues/71) closed by [https://github.com/tannerpolley/superpowers-project/pull/81](https://github.com/tannerpolley/superpowers-project/pull/81) on 2026-06-25T19:52:21Z
 - [https://github.com/tannerpolley/superpowers-project/issues/70](https://github.com/tannerpolley/superpowers-project/issues/70) closed by [https://github.com/tannerpolley/superpowers-project/pull/80](https://github.com/tannerpolley/superpowers-project/pull/80) on 2026-06-25T18:30:11Z
 - [https://github.com/tannerpolley/superpowers-project/issues/69](https://github.com/tannerpolley/superpowers-project/issues/69) closed by [https://github.com/tannerpolley/superpowers-project/pull/79](https://github.com/tannerpolley/superpowers-project/pull/79) on 2026-06-25T03:54:32Z
 - [https://github.com/tannerpolley/superpowers-project/issues/68](https://github.com/tannerpolley/superpowers-project/issues/68) closed by [https://github.com/tannerpolley/superpowers-project/pull/78](https://github.com/tannerpolley/superpowers-project/pull/78) on 2026-06-24T21:14:54Z

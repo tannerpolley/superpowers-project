@@ -62,10 +62,10 @@ try {
 
     $workerPacket = [ordered]@{
         packet_type = "worker_handoff"
-        issue_mirror = "docs/superpowers/issues/71-golden-path-workflow-fixtures.md"
+        issue_mirror = "docs/superpowers/issues/72-live-sync-tracker-align-validation.md"
         source_plan = "docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md"
         goal_command = "/goal Add sample worker handoff and PR-ready packets with validation for orchestrated issue work."
-        branch = "codex/issue-71-golden-path-workflow-fixtures"
+        branch = "codex/issue-72-live-sync-tracker-align-validation"
         branch_worktree_policy = "worker creates an isolated worktree for the branch"
         reviewer_role = "main-thread-orchestrator"
         proof_oracle = @(
@@ -85,9 +85,9 @@ try {
 
     $prReadyPacket = [ordered]@{
         packet_type = "pr_ready"
-        issue_mirror = "docs/superpowers/issues/71-golden-path-workflow-fixtures.md"
+        issue_mirror = "docs/superpowers/issues/72-live-sync-tracker-align-validation.md"
         source_plan = "docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md"
-        branch = "codex/issue-71-golden-path-workflow-fixtures"
+        branch = "codex/issue-72-live-sync-tracker-align-validation"
         proof_oracle = @(
             "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-worker-packets.ps1",
             "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1"
@@ -105,8 +105,8 @@ try {
         }
         merge_handoff = [ordered]@{
             route = "merge-changes"
-            pr_url = "https://github.com/tannerpolley/superpowers-project/pull/71"
-            closes_issue = "https://github.com/tannerpolley/superpowers-project/issues/71"
+            pr_url = "https://github.com/tannerpolley/superpowers-project/pull/72"
+            closes_issue = "https://github.com/tannerpolley/superpowers-project/issues/72"
             worker_must_not_merge = $true
         }
     }

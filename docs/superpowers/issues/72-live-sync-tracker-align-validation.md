@@ -6,7 +6,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-21-workflow-contract-normalization-design.md
 **Source Plan:** docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md
 **Classification:** AFK
-**Labels:** status:blocked, type:task
+**Labels:** status:ready, type:task
 **Goal Command:** /goal Run and record live-sync, tracker, and align drift proof after workflow normalization changes merge.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -52,7 +52,7 @@ Run and record validation receipts after the preceding slices land, then route t
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/71
+- None
 
 ## Non-goals
 
