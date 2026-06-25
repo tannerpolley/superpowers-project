@@ -7,10 +7,10 @@ These packets define the minimum evidence shape for orchestrated issue work. The
 ```json
 {
   "packet_type": "worker_handoff",
-  "issue_mirror": "docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md",
-  "source_plan": "docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md",
-  "goal_command": "/goal Add sample worker handoff and PR-ready packets with validation for orchestrated issue work.",
-  "branch": "codex/issue-70-worker-handoff-pr-ready-packets",
+  "issue_mirror": "docs/superpowers/issues/<issue-number>-<issue-slug>.md",
+  "source_plan": "docs/superpowers/plans/<source-plan>.md",
+  "goal_command": "/goal Resolve the delegated issue with complete worker handoff and PR-ready proof.",
+  "branch": "codex/issue-<issue-number>-<issue-slug>",
   "branch_worktree_policy": "worker creates an isolated worktree for the branch",
   "reviewer_role": "main-thread-orchestrator",
   "proof_oracle": [
@@ -34,9 +34,9 @@ These packets define the minimum evidence shape for orchestrated issue work. The
 ```json
 {
   "packet_type": "pr_ready",
-  "issue_mirror": "docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md",
-  "source_plan": "docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md",
-  "branch": "codex/issue-70-worker-handoff-pr-ready-packets",
+  "issue_mirror": "docs/superpowers/issues/<issue-number>-<issue-slug>.md",
+  "source_plan": "docs/superpowers/plans/<source-plan>.md",
+  "branch": "codex/issue-<issue-number>-<issue-slug>",
   "proof_oracle": [
     "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\test-worker-packets.ps1",
     "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\validate.ps1"
@@ -63,7 +63,7 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   "merge_handoff": {
     "route": "merge-changes",
     "pr_url": "https://github.com/tannerpolley/superpowers-project/pull/<number>",
-    "closes_issue": "https://github.com/tannerpolley/superpowers-project/issues/70",
+    "closes_issue": "https://github.com/<owner>/<repo>/issues/<issue-number>",
     "worker_must_not_merge": true
   }
 }

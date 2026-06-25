@@ -144,10 +144,10 @@ try {
         "| ID | Route owner | Source artifact | Priority | Status | Proof target | Reason |",
         "|---|---|---|---|---|---|---|",
         "| archived-plan-checkbox | write-plan | docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md | P0 | archived | historical checkbox | historical plan checkbox noise |",
-        "| 70 | resolve-issue | docs/superpowers/issues/70-worker-handoff-pr-ready-packets.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-worker-packets.ps1 | active issue mirror |"
+        "| 71 | resolve-issue | docs/superpowers/issues/71-golden-path-workflow-fixtures.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-examples.ps1 | active issue mirror |"
     ) | Set-Content -LiteralPath $activeBacklogPath -Encoding utf8NoBOM
     $activeBacklogSelection = Invoke-JsonScript -Path $selectorScript -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $activeBacklogPath)
-    Add-Check -Name "selector accepts active backlog markdown" -Ok ($activeBacklogSelection.exit_code -eq 0 -and $activeBacklogSelection.json.selected_candidate_id -eq "70") -Reason $activeBacklogSelection.raw
+    Add-Check -Name "selector accepts active backlog markdown" -Ok ($activeBacklogSelection.exit_code -eq 0 -and $activeBacklogSelection.json.selected_candidate_id -eq "71") -Reason $activeBacklogSelection.raw
     Add-Check -Name "selector skips archived historical checkbox rows" -Ok (@($activeBacklogSelection.json.skipped | Where-Object { $_.id -eq "archived-plan-checkbox" -and $_.reason -match "status" }).Count -eq 1) -Reason "archived historical checkbox row should be skipped"
 
     $verifierScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-verifier-ledger.ps1"

@@ -6,7 +6,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-21-workflow-contract-normalization-design.md
 **Source Plan:** docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md
 **Classification:** AFK
-**Labels:** status:blocked, type:task
+**Labels:** status:ready, type:task
 **Goal Command:** /goal Add golden-path workflow examples and validators for common Superpowers Project routes.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -51,9 +51,7 @@ Add four golden-path examples and validators that compare examples to the regist
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/63
-- https://github.com/tannerpolley/superpowers-project/issues/66
-- https://github.com/tannerpolley/superpowers-project/issues/69
+- None
 
 ## Non-goals
 

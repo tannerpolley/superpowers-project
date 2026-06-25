@@ -44,8 +44,9 @@ function Assert-RequiredObject {
 }
 
 function Assert-RepoFile {
-    param([string]$RepoRoot, [string]$Path, [string]$Field)
+    param([string]$RepoRoot, [string]$Path, [string]$Field, [bool]$AllowPlaceholders = $false)
     if ([string]::IsNullOrWhiteSpace($Path)) { throw "$Field is required" }
+    if ($AllowPlaceholders -and $Path.Contains("<") -and $Path.Contains(">")) { return }
     $fullPath = if ([IO.Path]::IsPathRooted($Path)) { $Path } else { Join-Path $RepoRoot $Path }
     if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { throw "$Field does not exist: $Path" }
 }
@@ -57,12 +58,12 @@ function Assert-CommandList {
 }
 
 function Assert-WorkerHandoffPacket {
-    param([string]$RepoRoot, $Packet)
+    param([string]$RepoRoot, $Packet, [bool]$AllowPlaceholders = $false)
     foreach ($field in @("issue_mirror", "source_plan", "goal_command", "branch", "branch_worktree_policy", "reviewer_role")) {
         Assert-RequiredString -Packet $Packet -Field $field
     }
-    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.issue_mirror) -Field "issue_mirror"
-    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.source_plan) -Field "source_plan"
+    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.issue_mirror) -Field "issue_mirror" -AllowPlaceholders $AllowPlaceholders
+    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.source_plan) -Field "source_plan" -AllowPlaceholders $AllowPlaceholders
     Assert-CommandList -Value $Packet.proof_oracle -Field "proof_oracle"
     Assert-RequiredObject -Packet $Packet -Field "validation"
     if (-not (Has-Property -Object $Packet.validation -Name "required_commands")) { throw "validation.required_commands is required" }
@@ -73,12 +74,12 @@ function Assert-WorkerHandoffPacket {
 }
 
 function Assert-PrReadyPacket {
-    param([string]$RepoRoot, $Packet)
+    param([string]$RepoRoot, $Packet, [bool]$AllowPlaceholders = $false)
     foreach ($field in @("issue_mirror", "source_plan", "branch")) {
         Assert-RequiredString -Packet $Packet -Field $field
     }
-    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.issue_mirror) -Field "issue_mirror"
-    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.source_plan) -Field "source_plan"
+    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.issue_mirror) -Field "issue_mirror" -AllowPlaceholders $AllowPlaceholders
+    Assert-RepoFile -RepoRoot $RepoRoot -Path ([string]$Packet.source_plan) -Field "source_plan" -AllowPlaceholders $AllowPlaceholders
     Assert-CommandList -Value $Packet.proof_oracle -Field "proof_oracle"
     Assert-RequiredObject -Packet $Packet -Field "diff_scope"
     if (-not (Has-Property -Object $Packet.diff_scope -Name "changed_files")) { throw "diff_scope.changed_files is required" }
@@ -115,6 +116,7 @@ try {
     $path = if ([IO.Path]::IsPathRooted($PacketPath)) { $PacketPath } else { Join-Path $root $PacketPath }
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "packet path is missing: $PacketPath" }
     $packets = @(Read-Packets -Path $path)
+    $allowPlaceholders = [IO.Path]::GetExtension($path) -ieq ".md"
     if ($packets.Count -eq 0) { throw "no packets found" }
     $types = [System.Collections.Generic.List[string]]::new()
     foreach ($packet in $packets) {
@@ -122,8 +124,8 @@ try {
         $type = [string]$packet.packet_type
         $types.Add($type) | Out-Null
         switch ($type) {
-            "worker_handoff" { Assert-WorkerHandoffPacket -RepoRoot $root -Packet $packet }
-            "pr_ready" { Assert-PrReadyPacket -RepoRoot $root -Packet $packet }
+            "worker_handoff" { Assert-WorkerHandoffPacket -RepoRoot $root -Packet $packet -AllowPlaceholders $allowPlaceholders }
+            "pr_ready" { Assert-PrReadyPacket -RepoRoot $root -Packet $packet -AllowPlaceholders $allowPlaceholders }
             default { throw "unsupported packet_type: $type" }
         }
     }

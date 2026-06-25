@@ -52,14 +52,6 @@ Run and record validation receipts after the preceding slices land, then route t
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/63
-- https://github.com/tannerpolley/superpowers-project/issues/64
-- https://github.com/tannerpolley/superpowers-project/issues/65
-- https://github.com/tannerpolley/superpowers-project/issues/66
-- https://github.com/tannerpolley/superpowers-project/issues/67
-- https://github.com/tannerpolley/superpowers-project/issues/68
-- https://github.com/tannerpolley/superpowers-project/issues/69
-- https://github.com/tannerpolley/superpowers-project/issues/70
 - https://github.com/tannerpolley/superpowers-project/issues/71
 
 ## Non-goals

@@ -27,11 +27,11 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 ## Related Issues
 
-- [#70 Add worker handoff and PR-ready packets](https://github.com/tannerpolley/superpowers-project/issues/70)
 - [#71 Add golden-path workflow fixtures](https://github.com/tannerpolley/superpowers-project/issues/71)
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/70](https://github.com/tannerpolley/superpowers-project/issues/70) closed by [https://github.com/tannerpolley/superpowers-project/pull/80](https://github.com/tannerpolley/superpowers-project/pull/80) on 2026-06-25T18:30:11Z
 - [https://github.com/tannerpolley/superpowers-project/issues/69](https://github.com/tannerpolley/superpowers-project/issues/69) closed by [https://github.com/tannerpolley/superpowers-project/pull/79](https://github.com/tannerpolley/superpowers-project/pull/79) on 2026-06-25T03:54:32Z
 - [https://github.com/tannerpolley/superpowers-project/issues/68](https://github.com/tannerpolley/superpowers-project/issues/68) closed by [https://github.com/tannerpolley/superpowers-project/pull/78](https://github.com/tannerpolley/superpowers-project/pull/78) on 2026-06-24T21:14:54Z
 - [https://github.com/tannerpolley/superpowers-project/issues/67](https://github.com/tannerpolley/superpowers-project/issues/67) closed by [https://github.com/tannerpolley/superpowers-project/pull/77](https://github.com/tannerpolley/superpowers-project/pull/77) on 2026-06-24T18:16:29Z
