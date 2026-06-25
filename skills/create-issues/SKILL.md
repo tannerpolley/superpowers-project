@@ -237,7 +237,7 @@ This skill creates and updates issue tracker artifacts only. It does not create 
 
 ## Native Continuation Gate
 
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` before asking this route's native continuation or permission question. Route-specific artifact inventory must include each created or updated issue mirror, full issue body, GitHub issue link when present, AFK/HITL classification, blockers, dependencies, and validation result. Add the helper-required findings summary with route-specific status for the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, dependencies.
+Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking this route's native continuation or permission question. Route-specific artifact inventory must include each created or updated issue mirror, full issue body, GitHub issue link when present, AFK/HITL classification, blockers, dependencies, and validation result. Add the helper-required findings summary with route-specific status for the created or updated issue mirrors, GitHub issue links when present, AFK/HITL split, blockers, dependencies.
 
 Use `skills/advanced-user-input/SKILL.md` for global native question geometry, Custom Other handling, Revisit behavior, Stop and verified Done terminal rules, and nested-route rules. This skill keeps only route-specific question IDs, route labels, validators, ledgers, artifact lists, and execution routes. Ask the skill-specific native continuation question with `request_user_input` when callable; selected answers are executable routing.
 

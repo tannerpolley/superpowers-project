@@ -119,7 +119,7 @@ A useful report includes:
 
 ## Native Continuation Gate
 
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` before asking this route's native continuation or permission question. Route-specific artifact inventory must include audit output, blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts, repair receipts, and any machine-readable artifacts when present. Add the helper-required findings summary with route-specific status for blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts.
+Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking this route's native continuation or permission question. Route-specific artifact inventory must include audit output, blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts, repair receipts, and any machine-readable artifacts when present. Add the helper-required findings summary with route-specific status for blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts.
 
 Done is valid only at `project_align_final_health_gate`. For `align-project`, that means a healthy audit result with no blocking or repairable findings, no remaining repair route, and a clean git worktree. If `git status --short` is non-empty, `Done` is invalid and the workflow must continue through commit, push, repair, or hold routing instead. Stop remains the terminal option when findings remain.
 

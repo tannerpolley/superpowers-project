@@ -116,7 +116,7 @@ Before reporting setup or repair complete, verify:
 
 ## Native Continuation Gate
 
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` before asking this route's native continuation or permission question. Route-specific artifact inventory must include changed or verified setup docs, tracker config evidence, board evidence, roadmap or tracker decisions, and any machine-readable artifacts when present. Add the helper-required findings summary with route-specific status for the changed or verified artifacts, unresolved roadmap or tracker decisions, GitHub Project board status when relevant.
+Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking this route's native continuation or permission question. Route-specific artifact inventory must include changed or verified setup docs, tracker config evidence, board evidence, roadmap or tracker decisions, and any machine-readable artifacts when present. Add the helper-required findings summary with route-specific status for the changed or verified artifacts, unresolved roadmap or tracker decisions, GitHub Project board status when relevant.
 
 Use `skills/advanced-user-input/SKILL.md` for global native question geometry, Custom Other handling, Revisit behavior, Stop and verified Done terminal rules, and nested-route rules. This skill keeps only route-specific question IDs, route labels, validators, ledgers, artifact lists, and execution routes. Ask the skill-specific native continuation question with `request_user_input` when callable; selected answers are executable routing.
 

@@ -161,6 +161,19 @@ Verified final health gates use exactly three top-level options: Done, Revisit, 
 
 Before any continuation, permission, push, publish, or merge question, complete an artifact review gate. Strict artifact display is mandatory and must happen before the summary or native question. Do not merely say something changed. Show what was created or revised for every produced or materially changed artifact with an exact path or identifier. Render human-readable Markdown artifacts when reasonably sized, including the chosen brainstorm design/spec, the full plan task and step list, and the full issue mirror or created issue body. For implementation or issue-resolution work, show the full changed-artifact inventory before push, plus verification commands, exact test values/results, cleanup evidence, branch state, push/PR proof when present, and any machine-readable ledgers with their key fields and decisions. If an artifact is too large for full chat rendering, show its path, type, action, exact sections changed, representative diff or snippet, and the reason the full render is omitted. Say when an expected artifact type was not produced.
 
+### Artifact Review Card Schema
+
+Use an Artifact Review Card for every continuation, push, publish, and merge gate. The card is a display-before-question artifact: show it in chat before the findings summary and before the native question. Route skills may add route-specific artifact inventory, but they must not remove these fields:
+
+- `Gate`: continuation, push, publish, or merge.
+- `Created/changed`: exact paths or stable external identifiers for every produced or materially changed artifact, plus the action taken.
+- `Proof`: commands, validator receipts, issue/PR evidence, cleanup proof, and exact pass/fail status.
+- `Decisions`: selected route, approval, merge, publish, or continuation decisions that matter for the next action.
+- `Risks`: remaining risk, caveat, or explicit none statement, with a risk owner for every listed item.
+- `Recommended next route`: the next workflow route or terminal gate that the evidence supports.
+
+Large artifact excerpt rule: when a full render is too large for chat, the card must still list the exact path or identifier, artifact type, action taken, exact sections changed, representative excerpt or diff, why the full render is omitted, and where the complete artifact exists.
+
 After the artifact review gate, add a separate findings summary that states what was done, what was fixed, what remains unsatisfactory or risky, the agent's own feedback/opinion, what the results say, what the agent thinks those results mean, what that means for the active goal, what that means for the broader project context, and what next steps are now recommended.
 
 Push, publish, and merge approval questions are invalid until the artifact review gate and findings summary have been shown.
