@@ -29,6 +29,10 @@ Define the source-of-truth rules, validation policy, GitHub tracker contract, an
 
 - None
 
+## Validation Receipts
+
+- `docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md` records final live-sync, tracker, align, validation, cleanup, and clean-state proof for the M0/M1 workflow normalization issue set.
+
 ## Closed Issues
 
 - [https://github.com/tannerpolley/superpowers-project/issues/71](https://github.com/tannerpolley/superpowers-project/issues/71) closed by [https://github.com/tannerpolley/superpowers-project/pull/81](https://github.com/tannerpolley/superpowers-project/pull/81) on 2026-06-25T19:52:21Z

@@ -41,6 +41,10 @@
 
 Run and record validation receipts after the preceding slices land, then route through merge closeout with clean proof.
 
+## Validation Receipt
+
+- `docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md`
+
 ## Acceptance Criteria
 
 - [ ] `scripts/validate.ps1` passes.
