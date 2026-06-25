@@ -251,6 +251,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Active backlog validator failed" }
     }))
 
+    $results.Add((Invoke-Step "Artifact Review Card schema" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-artifact-review-card.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Artifact Review Card tests failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-artifact-review-card.ps1") -RepoRoot $repoRoot | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Artifact Review Card validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Workflow mode entry contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-initiate-workflow-mode-gate.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode entry contract failed" }
