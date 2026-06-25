@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 $checks = [System.Collections.Generic.List[object]]::new()
 $tempRoot = $null
+$agentNativePackage = "@agent-native/core@0.76.9"
 
 function Add-Check {
     param([string]$Name, [bool]$Ok, [string]$Reason)
@@ -45,13 +46,13 @@ try {
 - The source file is `plans/<slug>/plan.mdx`.
 '@
 
-    $checkFixtureRaw = & npx -y @agent-native/core@latest plan local check --dir $planDir 2>&1
+    $checkFixtureRaw = & npx -y $agentNativePackage plan local check --dir $planDir 2>&1
     $checkFixtureText = ($checkFixtureRaw | Out-String).Trim()
     Add-Check -Name "fixture check exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $checkFixtureText
     $checkFixtureJson = Convert-AgentNativeJson -Text $checkFixtureText
     Add-Check -Name "fixture schema validates" -Ok ($checkFixtureJson.ok -eq $true -and $checkFixtureJson.validation -eq "passed") -Reason $checkFixtureText
 
-    $raw = & npx -y @agent-native/core@latest plan local preview --dir $planDir --kind plan 2>&1
+    $raw = & npx -y $agentNativePackage plan local preview --dir $planDir --kind plan 2>&1
     $text = ($raw | Out-String).Trim()
     Add-Check -Name "preview command exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $text
     $json = Convert-AgentNativeJson -Text $text
@@ -67,7 +68,7 @@ try {
     Add-Check -Name "preview target returned" -Ok $previewTargetOk -Reason "preview output or URL missing"
     Add-Check -Name "preview includes plan source" -Ok (@($json.files) -contains "plan.mdx") -Reason "plan.mdx was not reported"
 
-    $verifyRaw = & npx -y @agent-native/core@latest plan local verify --dir $planDir --kind plan --port 0 2>&1
+    $verifyRaw = & npx -y $agentNativePackage plan local verify --dir $planDir --kind plan --port 0 2>&1
     $verifyText = ($verifyRaw | Out-String).Trim()
     Add-Check -Name "fixture bridge verify exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $verifyText
     $verifyJson = Convert-AgentNativeJson -Text $verifyText
@@ -91,13 +92,13 @@ localOnly: true
 - Validation and changed-file evidence belong in the visual companion.
 '@
 
-    $recapCheckRaw = & npx -y @agent-native/core@latest plan local check --dir $recapDir 2>&1
+    $recapCheckRaw = & npx -y $agentNativePackage plan local check --dir $recapDir 2>&1
     $recapCheckText = ($recapCheckRaw | Out-String).Trim()
     Add-Check -Name "recap fixture check exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $recapCheckText
     $recapCheckJson = Convert-AgentNativeJson -Text $recapCheckText
     Add-Check -Name "recap fixture schema validates" -Ok ($recapCheckJson.ok -eq $true -and $recapCheckJson.validation -eq "passed") -Reason $recapCheckText
 
-    $recapPreviewRaw = & npx -y @agent-native/core@latest plan local preview --dir $recapDir --kind recap 2>&1
+    $recapPreviewRaw = & npx -y $agentNativePackage plan local preview --dir $recapDir --kind recap 2>&1
     $recapPreviewText = ($recapPreviewRaw | Out-String).Trim()
     Add-Check -Name "recap preview exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $recapPreviewText
     $recapPreviewJson = Convert-AgentNativeJson -Text $recapPreviewText
@@ -105,20 +106,20 @@ localOnly: true
 
     $repoPlanDir = Join-Path $RepoRoot "plans\agent-native-companion-replacement"
     if (Test-Path -LiteralPath (Join-Path $repoPlanDir "plan.mdx") -PathType Leaf) {
-        $checkRaw = & npx -y @agent-native/core@latest plan local check --dir $repoPlanDir 2>&1
+        $checkRaw = & npx -y $agentNativePackage plan local check --dir $repoPlanDir 2>&1
         $checkText = ($checkRaw | Out-String).Trim()
         Add-Check -Name "checked-in companion check exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $checkText
         $checkJson = Convert-AgentNativeJson -Text $checkText
         Add-Check -Name "checked-in companion schema validates" -Ok ($checkJson.ok -eq $true -and $checkJson.validation -eq "passed") -Reason $checkText
 
-        $repoVerifyRaw = & npx -y @agent-native/core@latest plan local verify --dir $repoPlanDir --kind plan --port 0 2>&1
+        $repoVerifyRaw = & npx -y $agentNativePackage plan local verify --dir $repoPlanDir --kind plan --port 0 2>&1
         $repoVerifyText = ($repoVerifyRaw | Out-String).Trim()
         Add-Check -Name "checked-in companion bridge verify exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $repoVerifyText
         $repoVerifyJson = Convert-AgentNativeJson -Text $repoVerifyText
         Add-Check -Name "checked-in companion bridge verify passes" -Ok ($repoVerifyJson.ok -eq $true -and $repoVerifyJson.bridge.ok -eq $true -and $repoVerifyJson.bridge.localOnly -eq $true) -Reason $repoVerifyText
 
         $repoPreviewPath = Join-Path $tempRoot "repo-companion-preview.html"
-        $repoPreviewRaw = & npx -y @agent-native/core@latest plan local preview --dir $repoPlanDir --kind plan --out $repoPreviewPath 2>&1
+        $repoPreviewRaw = & npx -y $agentNativePackage plan local preview --dir $repoPlanDir --kind plan --out $repoPreviewPath 2>&1
         $repoPreviewText = ($repoPreviewRaw | Out-String).Trim()
         Add-Check -Name "checked-in companion preview exits zero" -Ok ($LASTEXITCODE -eq 0) -Reason $repoPreviewText
         $repoPreviewJson = Convert-AgentNativeJson -Text $repoPreviewText

@@ -73,6 +73,8 @@ Run `scripts/prepare-worker-handoff.ps1 -RepoRoot . -IssueFile <docs/superpowers
 
 Run `scripts/validate-worker-handoff.ps1 -RepoRoot . -HandoffPath <handoff-json>` before sending the handoff to the worker.
 
+Use `docs/superpowers/examples/worker-handoff-packets.md` as the canonical packet example for orchestrator-to-worker handoffs and worker-to-orchestrator PR-ready returns. Validate packet examples and fixtures with `scripts/validate-worker-packets.ps1 -RepoRoot . -PacketPath <packet-json-or-md>` and `scripts/test-worker-packets.ps1`. Worker handoff packets must include source plan, issue mirror, goal command, branch/worktree policy, proof oracle, validation commands, reviewer role, and merge handoff. PR-ready return packets must include branch, diff scope, validation receipt, issue mirror, source plan, proof oracle, and merge route.
+
 ## Superpowers Method Contract
 
 This skill is the delegated Superpowers Project adapter for `superpowers:subagent-driven-development`. The orchestrator must use that delegation discipline, and the worker handoff must require this companion skill set:

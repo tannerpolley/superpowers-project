@@ -45,19 +45,19 @@ Canonical Superpowers specs, implementation plans, issue mirrors, and milestone 
 Before authoring MDX, fetch the Agent-Native block catalog with an available schema-only tool or:
 
 ```powershell
-npx @agent-native/core@latest plan blocks --out <catalog-path>
+npx @agent-native/core@0.76.9 plan blocks --out <catalog-path>
 ```
 
 After writing or revising a forward plan folder, run:
 
 ```powershell
-npx @agent-native/core@latest plan local preview --dir plans/<slug> --kind plan --open
+npx @agent-native/core@0.76.9 plan local preview --dir plans/<slug> --kind plan --open
 ```
 
 After writing or revising a recap folder, run:
 
 ```powershell
-npx @agent-native/core@latest plan local preview --dir plans/<slug> --kind recap --open
+npx @agent-native/core@0.76.9 plan local preview --dir plans/<slug> --kind recap --open
 ```
 
 Report the `plan.mdx` path, artifact kind, and returned preview URL or exact failure.
