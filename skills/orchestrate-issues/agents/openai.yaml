@@ -9,6 +9,8 @@ interface:
     identity and route completed worker PRs through merge-changes. Auto Mode authorization ledger uses
     project_auto_mode_authorization with Bounded Auto Merge and Manual Mode plus bounded-auto-merge. summarize
     artifact review gate status, broader project context, recommended next route, and machine-readable artifacts.
+    Use docs/superpowers/examples/worker-handoff-packets.md and scripts/validate-worker-packets.ps1 for worker
+    handoff and PR-ready return packet fields.
     The orchestrator must use that delegation discipline, and every worker handoff must require superpowers:using-git-worktrees,
     superpowers:test-driven-development, superpowers:executing-plans or superpowers:subagent-driven-development,
     superpowers:verification-before-completion, and superpowers:finishing-a-development-branch. Do not create or

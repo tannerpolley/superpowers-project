@@ -258,6 +258,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Artifact Review Card validator failed" }
     }))
 
+    $results.Add((Invoke-Step "Worker handoff packet schema" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-worker-packets.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Worker packet tests failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-worker-packets.ps1") -RepoRoot $repoRoot -PacketPath "docs/superpowers/examples/worker-handoff-packets.md" | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Worker packet validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Workflow mode entry contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-initiate-workflow-mode-gate.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode entry contract failed" }

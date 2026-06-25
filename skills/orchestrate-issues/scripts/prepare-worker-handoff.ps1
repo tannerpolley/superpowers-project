@@ -73,13 +73,24 @@ try {
         goal_command = Get-FieldValue -Text $text -Name "Goal Command"
         worker_identity = $identityResult.identity
         branch = $identityResult.identity.branch
+        branch_worktree_policy = "worker creates an isolated worktree for the branch"
+        reviewer_role = "main-thread-orchestrator"
         proof_oracle = $proofOracle
+        validation = [ordered]@{
+            required_commands = @(
+                "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\validate-worker-handoff.ps1 -RepoRoot . -HandoffPath <handoff-json>"
+            )
+        }
         topology_handoff = [ordered]@{
             orchestrator_role = "main-thread-orchestrator"
             worker_role = "implementation-worker"
             merge_owner = "merge-changes"
             worker_must_not_merge = $true
             wakeup_policy = "worker handoff or bounded heartbeat"
+        }
+        merge_handoff = [ordered]@{
+            merge_owner = "merge-changes"
+            worker_must_not_merge = $true
         }
         required_skills = @(
             "superpowers:using-git-worktrees",
@@ -100,4 +111,3 @@ try {
 } catch {
     Complete -Ok $false -Reason $_.Exception.Message
 }
-

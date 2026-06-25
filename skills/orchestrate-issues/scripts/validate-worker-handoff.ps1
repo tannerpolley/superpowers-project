@@ -32,7 +32,7 @@ try {
         throw "HandoffJson or HandoffPath is required"
     }
     $handoff = $text | ConvertFrom-Json
-    foreach ($field in @("issue_mirror", "source_plan", "worker_identity", "branch", "proof_oracle", "topology_handoff", "required_skills")) {
+    foreach ($field in @("issue_mirror", "source_plan", "worker_identity", "branch", "branch_worktree_policy", "reviewer_role", "proof_oracle", "validation", "topology_handoff", "merge_handoff", "required_skills")) {
         if (-not (Has-Property -Object $handoff -Name $field)) { throw "handoff missing $field" }
     }
     foreach ($pathField in @("issue_mirror", "source_plan")) {
@@ -53,8 +53,13 @@ try {
     if ([string]$identity.evidence_folder -ne $expectedEvidence) { throw "worker_identity evidence folder mismatch" }
     if (-not ([string]$identity.thread_title).StartsWith("Resolve #$($identity.issue_number): ")) { throw "thread title must start with issue identity" }
     if (-not ([string]$identity.pr_title).StartsWith("Resolve #$($identity.issue_number): ")) { throw "PR title must start with issue identity" }
+    if ([string]::IsNullOrWhiteSpace([string]$handoff.branch_worktree_policy)) { throw "branch_worktree_policy is required" }
+    if ([string]$handoff.reviewer_role -ne "main-thread-orchestrator") { throw "reviewer_role must be main-thread-orchestrator" }
+    if (-not (Has-Property -Object $handoff.validation -Name "required_commands") -or @($handoff.validation.required_commands).Count -eq 0) { throw "validation.required_commands must include at least one command" }
     if ($handoff.topology_handoff.worker_must_not_merge -ne $true) { throw "worker_must_not_merge must be true" }
     if ([string]$handoff.topology_handoff.merge_owner -ne "merge-changes") { throw "merge_owner must be merge-changes" }
+    if ([string]$handoff.merge_handoff.merge_owner -ne "merge-changes") { throw "merge_handoff.merge_owner must be merge-changes" }
+    if ($handoff.merge_handoff.worker_must_not_merge -ne $true) { throw "merge_handoff.worker_must_not_merge must be true" }
     $required = @($handoff.required_skills | ForEach-Object { [string]$_ })
     foreach ($skill in @("superpowers:using-git-worktrees", "superpowers:test-driven-development", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch")) {
         if ($required -notcontains $skill) { throw "required skill missing: $skill" }
@@ -65,4 +70,3 @@ try {
 } catch {
     Complete -Ok $false -Reason $_.Exception.Message
 }
-

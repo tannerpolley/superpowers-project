@@ -236,8 +236,8 @@ workflow_skills:
       - question_id: project_orchestrate_worker_communication_route
         parent_option: Revisit
         options: [Send Worker Message, Refresh Worker Evidence]
-    validators: [skills/orchestrate-issues/scripts/validate-worker-handoff.ps1, skills/orchestrate-issues/scripts/test-scenarios.ps1]
-    artifacts: [docs/superpowers/issues]
+    validators: [skills/orchestrate-issues/scripts/validate-worker-handoff.ps1, skills/orchestrate-issues/scripts/test-scenarios.ps1, scripts/validate-worker-packets.ps1, scripts/test-worker-packets.ps1]
+    artifacts: [docs/superpowers/issues, docs/superpowers/examples/worker-handoff-packets.md]
     next_routes: [merge-changes, resolve-issue]
   resolve-issue:
     purpose: Direct current-thread implementation for one ready GitHub issue mirror.
