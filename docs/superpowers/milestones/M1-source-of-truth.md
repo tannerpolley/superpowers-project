@@ -30,6 +30,10 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 - [#72 Run live-sync tracker and align drift validation](https://github.com/tannerpolley/superpowers-project/issues/72)
 
+## Validation Receipts
+
+- `docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md` records final live-sync, tracker, align, validation, cleanup, and clean-state proof for the M0/M1 workflow normalization issue set.
+
 ## Closed Issues
 
 - [https://github.com/tannerpolley/superpowers-project/issues/65](https://github.com/tannerpolley/superpowers-project/issues/65) closed by [https://github.com/tannerpolley/superpowers-project/pull/75](https://github.com/tannerpolley/superpowers-project/pull/75) on 2026-06-23T07:06:17Z
