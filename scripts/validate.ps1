@@ -265,6 +265,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Worker packet validator failed" }
     }))
 
+    $results.Add((Invoke-Step "Workflow golden path examples" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-workflow-examples.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Workflow example tests failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-workflow-examples.ps1") -RepoRoot $repoRoot -Path "docs/superpowers/examples/workflow-golden-paths.md" | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Workflow example validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Workflow mode entry contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-initiate-workflow-mode-gate.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode entry contract failed" }
