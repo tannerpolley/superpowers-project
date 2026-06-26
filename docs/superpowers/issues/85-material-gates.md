@@ -43,10 +43,22 @@ Convert prose-only material gates into canonical Question id blocks and registry
 
 ## Acceptance Criteria
 
-- [ ] project_setup_board_approval is registered or rewritten into a canonical gate block.
-- [ ] project_issue_resolution_route is registered or removed from active prose.
-- [ ] Native-question-like identifiers are inventoried and enforced.
-- [ ] Allowlisted non-gates include reasons.
+- [x] project_setup_board_approval is registered or rewritten into a canonical gate block.
+- [x] project_issue_resolution_route is registered or removed from active prose.
+- [x] Native-question-like identifiers are inventoried and enforced.
+- [x] Allowlisted non-gates include reasons.
+
+## Implementation Receipt
+
+- Added canonical `Question id` blocks for `project_setup_board_approval` in `skills/setup-project/SKILL.md` and `project_issue_resolution_route` in `skills/initiate-workflow/SKILL.md`.
+- Registered both material gates in `docs/superpowers/workflow-contract.yml` with typed gate entries and exact option geometry.
+- Removed the temporary repo allowlist entries now that the identifiers are registered gates.
+- Added workflow-contract tests proving allowlisted native identifiers fail without a non-empty reason and pass with a reason.
+- Added validator enforcement that every `native_identifier_allowlist` entry has an `id` and non-empty `reason`.
+- Focused verification passed:
+  - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`
+  - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-contract.ps1 -RepoRoot .`
+  - `git diff --check`
 
 ## Blocked by
 

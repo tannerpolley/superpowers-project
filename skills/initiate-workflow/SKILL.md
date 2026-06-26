@@ -76,7 +76,17 @@ Auto Mode is one-route autonomy: if proof is missing, validation fails, GitHub s
 
 External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$superpowers-project:create-issues` hydration first and block execution until mirror validation passes.
 
-When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route` with `Project Resolve`, `Project Orchestrate`, and `Review First` options. Route direct current-thread implementation to `$superpowers-project:resolve-issue`; route delegated worker worktree implementation to `$superpowers-project:orchestrate-issues`.
+When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route`. Route direct current-thread implementation to `$superpowers-project:resolve-issue`; route delegated worker worktree implementation to `$superpowers-project:orchestrate-issues`.
+
+Question id: `project_issue_resolution_route`
+
+Prompt: `How should this issue be executed?`
+
+Options:
+
+- `Project Resolve`: implement the issue directly in the current thread.
+- `Project Orchestrate`: delegate the issue through `$superpowers-project:orchestrate-issues`.
+- `Review First`: inspect the issue mirror and source plan before choosing execution.
 
 ## Artifact Root
 
