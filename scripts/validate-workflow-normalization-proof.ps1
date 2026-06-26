@@ -67,7 +67,7 @@ try {
         'pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1',
         'pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate',
         'pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent',
-        'pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-tracker-roadmap-proof.ps1 -RepoRoot . -IssueNumber 72 -RequiredIssueLabel status:ready -ForbiddenIssueLabel status:blocked -RequiredIssueMilestone "M1 - Source Of Truth"',
+        'pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-tracker-roadmap-proof.ps1 -RepoRoot . -IssueNumber 72 -ForbiddenIssueLabel status:ready -RequiredIssueMilestone "M1 - Source Of Truth"',
         'pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene',
         'pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .',
         'git status --short --branch'

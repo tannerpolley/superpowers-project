@@ -28,7 +28,7 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Related Issues
 
-- [#72 Run live-sync tracker and align drift validation](https://github.com/tannerpolley/superpowers-project/issues/72)
+- None
 
 ## Validation Receipts
 
@@ -36,6 +36,7 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/72](https://github.com/tannerpolley/superpowers-project/issues/72) closed by [https://github.com/tannerpolley/superpowers-project/pull/82](https://github.com/tannerpolley/superpowers-project/pull/82) on 2026-06-25T23:30:10Z
 - [https://github.com/tannerpolley/superpowers-project/issues/65](https://github.com/tannerpolley/superpowers-project/issues/65) closed by [https://github.com/tannerpolley/superpowers-project/pull/75](https://github.com/tannerpolley/superpowers-project/pull/75) on 2026-06-23T07:06:17Z
 - [https://github.com/tannerpolley/superpowers-project/issues/64](https://github.com/tannerpolley/superpowers-project/issues/64) closed by [https://github.com/tannerpolley/superpowers-project/pull/74](https://github.com/tannerpolley/superpowers-project/pull/74) on 2026-06-22T19:55:22Z
 - [https://github.com/tannerpolley/superpowers-project/issues/47](https://github.com/tannerpolley/superpowers-project/issues/47) closed by [https://github.com/tannerpolley/superpowers-project/pull/52](https://github.com/tannerpolley/superpowers-project/pull/52) on 06/15/2026 23:11:37

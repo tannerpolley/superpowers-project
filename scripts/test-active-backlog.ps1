@@ -43,21 +43,21 @@ try {
 
     $validBacklog = Join-Path $tempRoot "valid-active.md"
     Write-BacklogFixture -Path $validBacklog -Rows @(
-        "| 72 | resolve-issue | docs/superpowers/issues/72-live-sync-tracker-align-validation.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 | Run final validation proof. |"
+        "| final-proof | align-project | docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 | Run final validation proof. |"
     )
     $valid = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $validBacklog)
     Add-Check -Name "valid active backlog passes" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true -and $valid.json.ready_count -eq 1) -Reason $valid.raw
 
     $missingProof = Join-Path $tempRoot "missing-proof.md"
     Write-BacklogFixture -Path $missingProof -Rows @(
-        "| 72 | resolve-issue | docs/superpowers/issues/72-live-sync-tracker-align-validation.md | P2 | ready |  | missing proof target |"
+        "| final-proof | align-project | docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md | P2 | ready |  | missing proof target |"
     )
     $missingProofResult = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $missingProof)
     Add-Check -Name "missing proof target fails" -Ok ($missingProofResult.exit_code -ne 0 -and $missingProofResult.raw.Contains("proof target")) -Reason "missing proof target should fail"
 
     $unsupportedRoute = Join-Path $tempRoot "unsupported-route.md"
     Write-BacklogFixture -Path $unsupportedRoute -Rows @(
-        "| 99 | unknown-route | docs/superpowers/issues/72-live-sync-tracker-align-validation.md | P2 | ready | pwsh.exe -File fixture.ps1 | bad route |"
+        "| 99 | unknown-route | docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md | P2 | ready | pwsh.exe -File fixture.ps1 | bad route |"
     )
     $unsupportedRouteResult = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $unsupportedRoute)
     Add-Check -Name "unsupported route owner fails" -Ok ($unsupportedRouteResult.exit_code -ne 0 -and $unsupportedRouteResult.raw.Contains("Route owner")) -Reason "unsupported route should fail"
@@ -72,10 +72,10 @@ try {
     $selectorBacklog = Join-Path $tempRoot "selector-active.md"
     Write-BacklogFixture -Path $selectorBacklog -Rows @(
         "| old-plan | write-plan | docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md | P0 | archived | historical checkbox | archived historical checkbox |",
-        "| 72 | resolve-issue | docs/superpowers/issues/72-live-sync-tracker-align-validation.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 | Run final validation proof. |"
+        "| final-proof | align-project | docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md | P2 | ready | pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 | Run final validation proof. |"
     )
     $selection = Invoke-JsonScript -Path $selector -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $selectorBacklog)
-    Add-Check -Name "selector chooses active backlog item" -Ok ($selection.exit_code -eq 0 -and $selection.json.selected_candidate_id -eq "72") -Reason $selection.raw
+    Add-Check -Name "selector chooses active backlog item" -Ok ($selection.exit_code -eq 0 -and $selection.json.selected_candidate_id -eq "final-proof") -Reason $selection.raw
     Add-Check -Name "selector skips archived historical row" -Ok (@($selection.json.skipped | Where-Object { $_.id -eq "old-plan" -and $_.reason -match "status" }).Count -eq 1) -Reason "archived row should be skipped"
 
     $failed = @($checks | Where-Object { -not $_.ok })

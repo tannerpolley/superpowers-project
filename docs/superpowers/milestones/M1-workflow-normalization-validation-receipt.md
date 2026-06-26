@@ -31,14 +31,14 @@
 | repo validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | pass |
 | live sync validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` | pass |
 | version freshness | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent` | pass |
-| tracker roadmap proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-tracker-roadmap-proof.ps1 -RepoRoot . -IssueNumber 72 -RequiredIssueLabel status:ready -ForbiddenIssueLabel status:blocked -RequiredIssueMilestone "M1 - Source Of Truth"` | pass |
+| tracker roadmap proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-tracker-roadmap-proof.ps1 -RepoRoot . -IssueNumber 72 -ForbiddenIssueLabel status:ready -RequiredIssueMilestone "M1 - Source Of Truth"` | pass |
 | tracker align proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` | pass |
 | cleanup | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` | pass |
 | clean git state | `git status --short --branch` | pass |
 
 ## Tracker And Align Proof
 
-GitHub-aware alignment and tracker hygiene are part of the branch proof. The tracker roadmap proof compares `docs/agents/project-roadmap.json` against GitHub labels, GitHub milestones, and issue #72's status/milestone. The align command verifies source/live drift, local issue mirror structure, milestone linkage, GitHub issue labels, GitHub milestone assignment, GitHub issue type evidence where available, Project V2 tracker hygiene, and closed-mirror lifecycle drift.
+GitHub-aware alignment and tracker hygiene are part of the proof. The tracker roadmap proof compares `docs/agents/project-roadmap.json` against GitHub labels, GitHub milestones, and issue #72's final closed status/milestone. The align command verifies source/live drift, local issue mirror structure, milestone linkage, GitHub issue labels, GitHub milestone assignment, GitHub issue type evidence where available, Project V2 tracker hygiene, and closed-mirror lifecycle drift.
 
 ## Milestone Linkage
 

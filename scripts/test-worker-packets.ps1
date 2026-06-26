@@ -62,7 +62,7 @@ try {
 
     $workerPacket = [ordered]@{
         packet_type = "worker_handoff"
-        issue_mirror = "docs/superpowers/issues/72-live-sync-tracker-align-validation.md"
+        issue_mirror = "docs/superpowers/issues/README.md"
         source_plan = "docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md"
         goal_command = "/goal Add sample worker handoff and PR-ready packets with validation for orchestrated issue work."
         branch = "codex/issue-72-live-sync-tracker-align-validation"
@@ -85,7 +85,7 @@ try {
 
     $prReadyPacket = [ordered]@{
         packet_type = "pr_ready"
-        issue_mirror = "docs/superpowers/issues/72-live-sync-tracker-align-validation.md"
+        issue_mirror = "docs/superpowers/issues/README.md"
         source_plan = "docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md"
         branch = "codex/issue-72-live-sync-tracker-align-validation"
         proof_oracle = @(

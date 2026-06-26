@@ -48,6 +48,7 @@ function Write-Receipt {
         [switch]$MissingTriageLabel
     )
     $triage = if ($MissingTriageLabel) { "" } else { '- `status:triage`' }
+    $blocked = '- `status:blocked`'
     @(
         '# Workflow Normalization Validation Receipt',
         "",
@@ -77,7 +78,7 @@ function Write-Receipt {
         '| repo validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | pass |',
         '| live sync validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` | pass |',
         '| version freshness | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent` | pass |',
-        '| tracker roadmap proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-tracker-roadmap-proof.ps1 -RepoRoot . -IssueNumber 72 -RequiredIssueLabel status:ready -ForbiddenIssueLabel status:blocked -RequiredIssueMilestone "M1 - Source Of Truth"` | pass |',
+        '| tracker roadmap proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-tracker-roadmap-proof.ps1 -RepoRoot . -IssueNumber 72 -ForbiddenIssueLabel status:ready -RequiredIssueMilestone "M1 - Source Of Truth"` | pass |',
         '| tracker align proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` | pass |',
         '| cleanup | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` | pass |',
         '| clean git state | `git status --short --branch` | pass |',
