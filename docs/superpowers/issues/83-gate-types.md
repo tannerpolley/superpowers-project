@@ -43,11 +43,24 @@ Make workflow-contract.yml authoritative for gate type and exact option labels p
 
 ## Acceptance Criteria
 
-- [ ] workflow-contract.yml defines typed gates for material native questions.
-- [ ] Validator parses Question id, Prompt, and Options blocks from active SKILL.md files.
-- [ ] Exact option-label mismatches fail validation.
-- [ ] Known align-project, setup-project, merge-changes, and implement-plan option drift is repaired.
-- [ ] Unregistered native-question-like identifiers fail unless allowlisted with reasons.
+- [x] workflow-contract.yml defines typed gates for material native questions.
+- [x] Validator parses Question id, Prompt, and Options blocks from active SKILL.md files.
+- [x] Exact option-label mismatches fail validation.
+- [x] Known align-project, setup-project, merge-changes, and implement-plan option drift is repaired.
+- [x] Unregistered native-question-like identifiers fail unless allowlisted with reasons.
+
+## Implementation Receipt
+
+- Added typed gate metadata to `docs/superpowers/workflow-contract.yml`, including gate type, prompt, exact option labels, effects, and allowlisted native identifier reasons.
+- Added SKILL.md native gate parsing and contract option helpers in `scripts/lib/workflow-contract.ps1`.
+- Hardened `scripts/validate-workflow-contract.ps1` to compare exact option labels, enforce typed gate rules, and fail unregistered native-question-like identifiers.
+- Expanded `scripts/test-workflow-contract.ps1` fixture coverage for typed gates, exact option drift, and missing gate declarations.
+
+## Proof Receipt
+
+- [x] `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`
+- [x] `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-contract.ps1 -RepoRoot .`
+- [x] `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
 
 ## Blocked by
 

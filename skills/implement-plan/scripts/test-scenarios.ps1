@@ -165,7 +165,7 @@ $scenarios = @(
             if (-not $text.Contains($needle)) { throw "missing route-specific native continuation contract in SKILL.md: $needle" }
             if (-not $metadata.Contains($needle)) { throw "missing route-specific native continuation contract in metadata: $needle" }
         }
-        foreach ($needle in @("Push And Open PR", "Hold")) {
+        foreach ($needle in @("Push Branch", "Hold")) {
             if (-not $metadata.Contains($needle)) { throw "missing route-specific native continuation contract in metadata: $needle" }
         }
         if (-not $metadata.Contains("docs/superpowers/workflow-contract.yml")) { throw "missing compact continuation metadata: docs/superpowers/workflow-contract.yml" }

@@ -8,5 +8,5 @@ interface:
     findings as P0, P1, P2, or P3. Pair with diagnose, thermo-nuclear-code-quality-review,
     improve-codebase-architecture, or react-doctor as applicable. project_audit_next_step can route to
     Yes Prepare Repair Work or Revisit Review Or Extend Findings. Auto Mode uses project_auto_mode_authorization with
-    Bounded Auto Merge and Manual Mode, validate-auto-mode-authorization.ps1, direct-inline-resolve-issue, and source spec handoff.
+    Bounded Auto Merge and Manual Planning, validate-auto-mode-authorization.ps1, direct-inline-resolve-issue, and source spec handoff.
     Use request_user_input for material scope and route decisions.

@@ -6,322 +6,1145 @@ workflow_skills:
   align-project:
     purpose: Structure alignment, migration review, tracker alignment, live sync verification, and repair planning.
     question_ids:
-      - project_align_final_health_gate
-      - project_align_next_step
-      - project_align_plan_issue_route
-      - project_align_prepare_route
-      - project_align_reiteration_route
-      - project_align_repair_group
-      - project_align_review_evidence_route
+    - project_align_final_health_gate
+    - project_align_next_step
+    - project_align_plan_issue_route
+    - project_align_prepare_route
+    - project_align_reiteration_route
+    - project_align_repair_group
+    - project_align_review_evidence_route
     final_health_gate: project_align_final_health_gate
-    final_options: [Done, Revisit, Stop]
-    top_level_options: [Yes, Revisit, Stop]
+    final_options:
+    - Done
+    - Revisit
+    - Stop
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_align_prepare_route
-        parent_option: Yes
-        options: [Prepare Repair, Prepare Issues]
-      - question_id: project_align_reiteration_route
-        parent_option: Revisit
-        options: [Review Evidence, Repair Drift]
-      - question_id: project_align_repair_group
-        parent_option: Revisit
-        options: [Repair Local, Repair Tracker]
-      - question_id: project_align_review_evidence_route
-        parent_option: Revisit
-        options: [Review First, Rerun Evidence]
-      - question_id: project_align_plan_issue_route
-        parent_option: Yes
-        options: [Write Plan, Create Issues]
-    validators: [scripts/validate.ps1, scripts/sync-live.ps1 -Validate]
-    artifacts: [docs/superpowers/milestones, docs/superpowers/issues, docs/superpowers/plans]
-    next_routes: [write-plan, create-issues, merge-changes]
+    - question_id: project_align_prepare_route
+      parent_option: true
+      options:
+      - Create Planning Spec
+      - Plan Or Issue Repair
+    - question_id: project_align_reiteration_route
+      parent_option: Revisit
+      options:
+      - Run Align Again
+      - Review Or Gather Evidence
+    - question_id: project_align_repair_group
+      parent_option: Revisit
+      options:
+      - Apply Repair
+      - Prepare Repair Work
+    - question_id: project_align_review_evidence_route
+      parent_option: Revisit
+      options:
+      - Review First
+      - Gather More Evidence
+    - question_id: project_align_plan_issue_route
+      parent_option: true
+      options:
+      - Plan Repair
+      - Create Issue
+    validators:
+    - scripts/validate.ps1
+    - scripts/sync-live.ps1 -Validate
+    artifacts:
+    - docs/superpowers/milestones
+    - docs/superpowers/issues
+    - docs/superpowers/plans
+    next_routes:
+    - write-plan
+    - create-issues
+    - merge-changes
+    gates:
+    - question_id: project_align_final_health_gate
+      gate_type: final_health
+      prompt: Alignment is healthy. Should I close this workflow as done?
+      options:
+      - label: Done
+        terminal_state: done
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_align_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_align_plan_issue_route
+      gate_type: data_selection
+      prompt: Should I plan the repair or create an issue?
+      parent_option: true
+      options:
+      - label: Plan Repair
+        terminal_state: continue
+      - label: Create Issue
+        terminal_state: continue
+    - question_id: project_align_prepare_route
+      gate_type: data_selection
+      prompt: Which repair artifact should be prepared?
+      parent_option: true
+      options:
+      - label: Create Planning Spec
+        terminal_state: continue
+      - label: Plan Or Issue Repair
+        terminal_state: continue
+    - question_id: project_align_reiteration_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this audit?
+      parent_option: Revisit
+      options:
+      - label: Run Align Again
+        terminal_state: revisit
+      - label: Review Or Gather Evidence
+        terminal_state: revisit
+    - question_id: project_align_repair_group
+      gate_type: nested_revisit_route
+      prompt: How should this audit turn into repair work?
+      parent_option: Revisit
+      options:
+      - label: Apply Repair
+        terminal_state: revisit
+      - label: Prepare Repair Work
+        terminal_state: revisit
+    - question_id: project_align_review_evidence_route
+      gate_type: nested_revisit_route
+      prompt: Should I review the audit or gather more evidence?
+      parent_option: Revisit
+      options:
+      - label: Review First
+        terminal_state: revisit
+      - label: Gather More Evidence
+        terminal_state: revisit
   audit-project:
     purpose: Evidence-backed code, workflow, test, skill, or repo behavior audit findings before repair planning.
     question_ids:
-      - project_audit_next_step
-      - project_audit_progress_route
-      - project_audit_revisit_route
-      - project_auto_mode_authorization
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - project_audit_next_step
+    - project_audit_progress_route
+    - project_audit_revisit_route
+    - project_auto_mode_authorization
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_audit_progress_route
-        parent_option: Yes
-        options: [Write Plan, Create Issues]
-      - question_id: project_audit_revisit_route
-        parent_option: Revisit
-        options: [Review Findings, Revise Audit]
-      - question_id: project_auto_mode_authorization
-        parent_option: Yes
-        options: [Bounded Auto Merge, Manual Mode]
-    validators: [scripts/validate.ps1]
-    artifacts: [docs/superpowers/specs, docs/superpowers/plans]
-    next_routes: [write-plan, create-issues]
+    - question_id: project_audit_progress_route
+      parent_option: true
+      options:
+      - Write Plan
+      - Auto Mode
+      - Create Issues
+    - question_id: project_audit_revisit_route
+      parent_option: Revisit
+      options:
+      - Review First
+      - Gather More Evidence
+      - Rerun Focused Audit
+    - question_id: project_auto_mode_authorization
+      parent_option: true
+      options:
+      - Bounded Auto Merge
+      - Manual Planning
+    validators:
+    - scripts/validate.ps1
+    artifacts:
+    - docs/superpowers/specs
+    - docs/superpowers/plans
+    next_routes:
+    - write-plan
+    - create-issues
+    gates:
+    - question_id: project_audit_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_audit_progress_route
+      gate_type: data_selection
+      prompt: Which repair route should start from the findings spec?
+      parent_option: true
+      options:
+      - label: Write Plan
+        terminal_state: continue
+      - label: Auto Mode
+        terminal_state: continue
+      - label: Create Issues
+        terminal_state: continue
+    - question_id: project_audit_revisit_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit these findings?
+      parent_option: Revisit
+      options:
+      - label: Review First
+        terminal_state: revisit
+      - label: Gather More Evidence
+        terminal_state: revisit
+      - label: Rerun Focused Audit
+        terminal_state: revisit
+    - question_id: project_auto_mode_authorization
+      gate_type: approval
+      prompt: Authorize bounded Auto Mode for this saved audit findings spec?
+      parent_option: true
+      options:
+      - label: Bounded Auto Merge
+        approval_effect: bounded-auto-merge
+      - label: Manual Planning
+        approval_effect: manual-planning
   brainstorm-spec:
     purpose: Repo-backed ideas, specs, PRDs, architecture concepts, and broad feature requests.
     question_ids:
-      - project_brainstorm_multi_spec_route
-      - project_brainstorm_next_step
-      - project_brainstorm_plan_route
-      - project_brainstorm_reiteration_route
-      - project_brainstorm_review_restart_route
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - project_brainstorm_multi_spec_route
+    - project_brainstorm_next_step
+    - project_brainstorm_plan_route
+    - project_brainstorm_reiteration_route
+    - project_brainstorm_review_restart_route
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_brainstorm_plan_route
-        parent_option: Yes
-        options: [Create One Plan, Multi-Spec Planning]
-      - question_id: project_brainstorm_multi_spec_route
-        parent_option: Yes
-        options: [Plan Multiple Specs, Create Multiple Plans]
-      - question_id: project_brainstorm_reiteration_route
-        parent_option: Revisit
-        options: [Revise Spec, Review Or Restart]
-      - question_id: project_brainstorm_review_restart_route
-        parent_option: Revisit
-        options: [Review First, Re-run Brainstorm]
-    validators: [scripts/validate.ps1]
-    artifacts: [docs/superpowers/specs]
-    next_routes: [write-plan]
+    - question_id: project_brainstorm_plan_route
+      parent_option: true
+      options:
+      - Create One Plan
+      - Multi-Spec Planning
+    - question_id: project_brainstorm_multi_spec_route
+      parent_option: true
+      options:
+      - Plan Multiple Specs
+      - Create Multiple Plans
+    - question_id: project_brainstorm_reiteration_route
+      parent_option: Revisit
+      options:
+      - Revise Spec
+      - Review Or Restart
+    - question_id: project_brainstorm_review_restart_route
+      parent_option: Revisit
+      options:
+      - Review First
+      - Re-run Brainstorm
+    validators:
+    - scripts/validate.ps1
+    artifacts:
+    - docs/superpowers/specs
+    next_routes:
+    - write-plan
+    gates:
+    - question_id: project_brainstorm_multi_spec_route
+      gate_type: data_selection
+      prompt: How should multiple specs become plans?
+      parent_option: true
+      options:
+      - label: Plan Multiple Specs
+        terminal_state: continue
+      - label: Create Multiple Plans
+        terminal_state: continue
+    - question_id: project_brainstorm_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_brainstorm_plan_route
+      gate_type: data_selection
+      prompt: How should planning start from this brainstorm?
+      parent_option: true
+      options:
+      - label: Create One Plan
+        terminal_state: continue
+      - label: Multi-Spec Planning
+        terminal_state: continue
+    - question_id: project_brainstorm_reiteration_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this brainstorm output?
+      parent_option: Revisit
+      options:
+      - label: Revise Spec
+        terminal_state: revisit
+      - label: Review Or Restart
+        terminal_state: revisit
+    - question_id: project_brainstorm_review_restart_route
+      gate_type: nested_revisit_route
+      prompt: Should I review this brainstorm or start another one?
+      parent_option: Revisit
+      options:
+      - label: Review First
+        terminal_state: revisit
+      - label: Re-run Brainstorm
+        terminal_state: revisit
   companion-interface:
     purpose: Optional Agent-Native visual-plan or visual-recap review surface.
     question_ids: []
-    final_health_gate:
+    final_health_gate: null
     top_level_options: []
     nested_routes: []
-    validators: [scripts/test-companion-interface.ps1, scripts/test-agent-native-companion-preview.ps1]
-    artifacts: [plans]
-    next_routes: [brainstorm-spec, write-plan, merge-changes]
+    validators:
+    - scripts/test-companion-interface.ps1
+    - scripts/test-agent-native-companion-preview.ps1
+    artifacts:
+    - plans
+    next_routes:
+    - brainstorm-spec
+    - write-plan
+    - merge-changes
+    gates: []
   create-issues:
     purpose: Vertical-slice GitHub issues and synced local issue mirrors.
     question_ids:
-      - project_issue_execution_route
-      - project_issue_next_step
-      - project_issue_orchestrate_route
-      - project_issue_resolve_route
-      - project_issue_reiteration_route
-      - project_issue_review_repair_route
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - project_issue_execution_route
+    - project_issue_next_step
+    - project_issue_orchestrate_route
+    - project_issue_resolve_route
+    - project_issue_reiteration_route
+    - project_issue_review_repair_route
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_issue_execution_route
-        parent_option: Yes
-        options: [Resolve Issues, Orchestrate Issues]
-      - question_id: project_issue_resolve_route
-        parent_option: Yes
-        options: [Resolve First Ready, Resolve Selected]
-      - question_id: project_issue_orchestrate_route
-        parent_option: Yes
-        options: [Orchestrate First Ready, Orchestrate Selected]
-      - question_id: project_issue_reiteration_route
-        parent_option: Revisit
-        options: [Revise Or Reslice Issues, Review Or Repair Issues]
-      - question_id: project_issue_review_repair_route
-        parent_option: Revisit
-        options: [Review First, Repair Issue Mirrors]
-    validators: [skills/create-issues/scripts/validate-issue-mirror.ps1]
-    artifacts: [docs/superpowers/issues]
-    next_routes: [resolve-issue, orchestrate-issues]
+    - question_id: project_issue_execution_route
+      parent_option: true
+      options:
+      - Resolve Issues
+      - Orchestrate Issues
+    - question_id: project_issue_resolve_route
+      parent_option: true
+      options:
+      - Resolve First Ready
+      - Resolve Selected
+    - question_id: project_issue_orchestrate_route
+      parent_option: true
+      options:
+      - Orchestrate First Ready
+      - Orchestrate Selected
+    - question_id: project_issue_reiteration_route
+      parent_option: Revisit
+      options:
+      - Revise Or Reslice Issues
+      - Review Or Repair Issues
+    - question_id: project_issue_review_repair_route
+      parent_option: Revisit
+      options:
+      - Review First
+      - Repair Issue Mirrors
+    validators:
+    - skills/create-issues/scripts/validate-issue-mirror.ps1
+    artifacts:
+    - docs/superpowers/issues
+    next_routes:
+    - resolve-issue
+    - orchestrate-issues
+    gates:
+    - question_id: project_issue_execution_route
+      gate_type: data_selection
+      prompt: How should these issues be executed?
+      parent_option: true
+      options:
+      - label: Resolve Issues
+        terminal_state: continue
+      - label: Orchestrate Issues
+        terminal_state: continue
+    - question_id: project_issue_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_issue_orchestrate_route
+      gate_type: data_selection
+      prompt: Which issue should be delegated to a worker?
+      parent_option: true
+      options:
+      - label: Orchestrate First Ready
+        terminal_state: continue
+      - label: Orchestrate Selected
+        terminal_state: continue
+    - question_id: project_issue_resolve_route
+      gate_type: data_selection
+      prompt: Which issue should be resolved directly?
+      parent_option: true
+      options:
+      - label: Resolve First Ready
+        terminal_state: continue
+      - label: Resolve Selected
+        terminal_state: continue
+    - question_id: project_issue_reiteration_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this issue set?
+      parent_option: Revisit
+      options:
+      - label: Revise Or Reslice Issues
+        terminal_state: revisit
+      - label: Review Or Repair Issues
+        terminal_state: revisit
+    - question_id: project_issue_review_repair_route
+      gate_type: nested_revisit_route
+      prompt: Should I review the issues or repair mirrors?
+      parent_option: Revisit
+      options:
+      - label: Review First
+        terminal_state: revisit
+      - label: Repair Issue Mirrors
+        terminal_state: revisit
   implement-plan:
     purpose: Approved non-issue implementation plan execution with branch-backed proof.
     question_ids:
-      - implement_plan_push_permission
-      - implement_plan_topology
-      - project_implement_next_step
-      - project_implement_reiteration_route
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - implement_plan_push_permission
+    - implement_plan_topology
+    - project_implement_next_step
+    - project_implement_reiteration_route
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: implement_plan_topology
-        parent_option: Yes
-        options: [Inline, Orchestrated Worker]
-      - question_id: implement_plan_push_permission
-        parent_option: Yes
-        options: [Push And Open PR, Hold]
-      - question_id: project_implement_reiteration_route
-        parent_option: Revisit
-        options: [Review First, Revise Branch]
-    validators: [skills/implement-plan/scripts/test-scenarios.ps1]
-    artifacts: [docs/superpowers/plans]
-    next_routes: [merge-changes]
+    - question_id: implement_plan_push_permission
+      parent_option: true
+      options:
+      - Push Branch
+      - Hold
+    - question_id: project_implement_reiteration_route
+      parent_option: Revisit
+      options:
+      - Revise Branch
+      - Review Evidence
+    validators:
+    - skills/implement-plan/scripts/test-scenarios.ps1
+    artifacts:
+    - docs/superpowers/plans
+    next_routes:
+    - merge-changes
+    gates:
+    - question_id: implement_plan_push_permission
+      gate_type: permission
+      prompt: Should I push this implementation branch before merge routing?
+      parent_option: true
+      options:
+      - label: Push Branch
+        permission_effect: push-branch
+      - label: Hold
+        permission_effect: hold
+    - question_id: implement_plan_topology
+      gate_type: topology
+      prompt: How should this approved plan be implemented?
+      parent_option: true
+      allow_terminal_options: true
+      options:
+      - label: Inline
+        topology: inline
+      - label: Worker
+        topology: worker
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_implement_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_implement_reiteration_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this implemented plan?
+      parent_option: Revisit
+      options:
+      - label: Revise Branch
+        terminal_state: revisit
+      - label: Review Evidence
+        terminal_state: revisit
   initiate-workflow:
-    purpose: Route setup, brainstorming, audits, planning, issue creation, issue resolution, orchestration, merge cleanup, and alignment checks.
+    purpose: Route setup, brainstorming, audits, planning, issue creation, issue resolution, orchestration, merge cleanup,
+      and alignment checks.
     question_ids:
-      - project_auto_mode_authorization
-      - project_workflow_mode
-    final_health_gate:
+    - project_auto_mode_authorization
+    - project_workflow_mode
+    final_health_gate: null
     top_level_options: []
     nested_routes:
-      - question_id: project_workflow_mode
-        parent_option: startup
-        options: [Manual Mode, Auto Mode, Looping Mode]
-      - question_id: project_auto_mode_authorization
-        parent_option: Auto Mode
-        options: [Bounded Auto Merge, Manual Mode]
-    validators: [scripts/validate-workflow-mode-ledger.ps1, scripts/validate-auto-mode-authorization.ps1]
-    artifacts: [.superpowers/runs]
-    next_routes: [setup-project, brainstorm-spec, audit-project, write-plan, create-issues, resolve-issue, orchestrate-issues, merge-changes, align-project, loop-controller]
+    - question_id: project_workflow_mode
+      parent_option: startup
+      options:
+      - Manual Mode
+      - Auto Mode
+      - Looping Mode
+    - question_id: project_auto_mode_authorization
+      parent_option: Auto Mode
+      options:
+      - Bounded Auto Merge
+      - Manual Mode
+    validators:
+    - scripts/validate-workflow-mode-ledger.ps1
+    - scripts/validate-auto-mode-authorization.ps1
+    artifacts:
+    - .superpowers/runs
+    next_routes:
+    - setup-project
+    - brainstorm-spec
+    - audit-project
+    - write-plan
+    - create-issues
+    - resolve-issue
+    - orchestrate-issues
+    - merge-changes
+    - align-project
+    - loop-controller
+    gates:
+    - question_id: project_auto_mode_authorization
+      gate_type: approval
+      prompt: Authorize bounded Auto Mode for this initiated workflow route?
+      parent_option: Auto Mode
+      options:
+      - label: Bounded Auto Merge
+        approval_effect: bounded-auto-merge
+      - label: Manual Mode
+        approval_effect: manual-mode
+    - question_id: project_workflow_mode
+      gate_type: workflow_mode
+      prompt: How should I run this Superpowers Project workflow?
+      parent_option: startup
+      options:
+      - label: Manual Mode
+        terminal_state: continue
+      - label: Auto Mode
+        terminal_state: continue
+      - label: Looping Mode
+        terminal_state: continue
   loop-controller:
-    purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation gates.
+    purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation
+      gates.
     question_ids:
-      - project_loop_final_health_gate
-      - project_loop_next_step
+    - project_loop_final_health_gate
+    - project_loop_next_step
     final_health_gate: project_loop_final_health_gate
-    final_options: [Done, Revisit, Stop]
-    top_level_options: [Yes, Revisit, Stop]
+    final_options:
+    - Done
+    - Revisit
+    - Stop
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes: []
-    validators: [skills/loop-controller/scripts/validate-run-ledger.ps1, skills/loop-controller/scripts/validate-budget.ps1, skills/loop-controller/scripts/validate-terminal-closeout.ps1]
-    artifacts: [.superpowers/runs]
-    next_routes: [brainstorm-spec, write-plan, create-issues, resolve-issue, orchestrate-issues, merge-changes, audit-project, align-project]
+    validators:
+    - skills/loop-controller/scripts/validate-run-ledger.ps1
+    - skills/loop-controller/scripts/validate-budget.ps1
+    - skills/loop-controller/scripts/validate-terminal-closeout.ps1
+    artifacts:
+    - .superpowers/runs
+    next_routes:
+    - brainstorm-spec
+    - write-plan
+    - create-issues
+    - resolve-issue
+    - orchestrate-issues
+    - merge-changes
+    - audit-project
+    - align-project
+    gates:
+    - question_id: project_loop_final_health_gate
+      gate_type: final_health
+      prompt: Is this loop run fully complete?
+      options:
+      - label: Done
+        terminal_state: done
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_loop_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the loop workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
   merge-changes:
     purpose: Review, approve, merge, clean up, close linked issues, and record final proof for PR-ready or local branch work.
     question_ids:
-      - project_merge_approval
-      - project_merge_continue_group
-      - project_merge_final_health_gate
-      - project_merge_issue_route
-      - project_merge_next_step
-      - project_merge_planning_route
-      - project_merge_reiteration_group
-      - project_merge_repair_cleanup_route
-      - project_merge_repair_route
+    - project_merge_approval
+    - project_merge_continue_group
+    - project_merge_final_health_gate
+    - project_merge_issue_route
+    - project_merge_next_step
+    - project_merge_planning_route
+    - project_merge_reiteration_group
+    - project_merge_repair_cleanup_route
+    - project_merge_repair_route
     final_health_gate: project_merge_final_health_gate
-    final_options: [Done, Revisit, Stop]
-    top_level_options: [Yes, Revisit, Stop]
+    final_options:
+    - Done
+    - Revisit
+    - Stop
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_merge_approval
-        parent_option: Yes
-        options: [Merge, Hold]
-      - question_id: project_merge_continue_group
-        parent_option: Yes
-        options: [Close Issue, Continue Planning]
-      - question_id: project_merge_issue_route
-        parent_option: Yes
-        options: [Close Linked Issue, Verify Issue State]
-      - question_id: project_merge_planning_route
-        parent_option: Yes
-        options: [Plan More, Create Issues]
-      - question_id: project_merge_reiteration_group
-        parent_option: Revisit
-        options: [Review First, Repair]
-      - question_id: project_merge_repair_cleanup_route
-        parent_option: Revisit
-        options: [Repair Cleanup, Rerun Cleanup]
-      - question_id: project_merge_repair_route
-        parent_option: Revisit
-        options: [Repair Branch, Repair Issue]
-    validators: [skills/merge-changes/scripts/validate-terminal-closeout.ps1, skills/merge-changes/scripts/validate-merge-decision.ps1]
-    artifacts: [docs/superpowers/issues, docs/superpowers/plans]
-    next_routes: [write-plan, create-issues, resolve-issue, orchestrate-issues, align-project]
+    - question_id: project_merge_approval
+      parent_option: true
+      options:
+      - Merge
+      - Decline
+    - question_id: project_merge_continue_group
+      parent_option: true
+      options:
+      - Continue Issues
+      - Start Planning
+    - question_id: project_merge_issue_route
+      parent_option: true
+      options:
+      - Resolve Another
+      - Orchestrate Another
+    - question_id: project_merge_planning_route
+      parent_option: true
+      options:
+      - Plan Next
+      - Brainstorm Next
+    - question_id: project_merge_reiteration_group
+      parent_option: Revisit
+      options:
+      - Review Closeout
+      - Repair / Audit Closeout
+    - question_id: project_merge_repair_cleanup_route
+      parent_option: Revisit
+      options:
+      - Repair Drift
+      - Re-run Cleanup
+    - question_id: project_merge_repair_route
+      parent_option: Revisit
+      options:
+      - Run Align
+      - Repair Or Cleanup
+    validators:
+    - skills/merge-changes/scripts/validate-terminal-closeout.ps1
+    - skills/merge-changes/scripts/validate-merge-decision.ps1
+    artifacts:
+    - docs/superpowers/issues
+    - docs/superpowers/plans
+    next_routes:
+    - write-plan
+    - create-issues
+    - resolve-issue
+    - orchestrate-issues
+    - align-project
+    gates:
+    - question_id: project_merge_approval
+      gate_type: approval
+      parent_option: true
+      options:
+      - label: Merge
+        approval_effect: merge
+      - label: Decline
+        approval_effect: decline
+    - question_id: project_merge_continue_group
+      gate_type: data_selection
+      prompt: Which kind of work should continue after this merge?
+      parent_option: true
+      options:
+      - label: Continue Issues
+        terminal_state: continue
+      - label: Start Planning
+        terminal_state: continue
+    - question_id: project_merge_final_health_gate
+      gate_type: final_health
+      prompt: Closeout proof is clean. Mark this workflow done?
+      options:
+      - label: Done
+        terminal_state: done
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_merge_issue_route
+      gate_type: data_selection
+      prompt: How should the next issue be executed?
+      parent_option: true
+      options:
+      - label: Resolve Another
+        terminal_state: continue
+      - label: Orchestrate Another
+        terminal_state: continue
+    - question_id: project_merge_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_merge_planning_route
+      gate_type: data_selection
+      prompt: How should the next work be shaped?
+      parent_option: true
+      options:
+      - label: Plan Next
+        terminal_state: continue
+      - label: Brainstorm Next
+        terminal_state: continue
+    - question_id: project_merge_reiteration_group
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this merge closeout?
+      parent_option: Revisit
+      options:
+      - label: Review Closeout
+        terminal_state: revisit
+      - label: Repair / Audit Closeout
+        terminal_state: revisit
+    - question_id: project_merge_repair_cleanup_route
+      gate_type: nested_revisit_route
+      prompt: Should I repair drift or rerun cleanup?
+      parent_option: Revisit
+      options:
+      - label: Repair Drift
+        terminal_state: revisit
+      - label: Re-run Cleanup
+        terminal_state: revisit
+    - question_id: project_merge_repair_route
+      gate_type: nested_revisit_route
+      prompt: Which closeout repair route should run?
+      parent_option: Revisit
+      options:
+      - label: Run Align
+        terminal_state: revisit
+      - label: Repair Or Cleanup
+        terminal_state: revisit
   orchestrate-issues:
     purpose: Delegate a ready issue to a Codex worktree worker while the current thread reviews and integrates.
     question_ids:
-      - project_orchestrate_integration_route
-      - project_orchestrate_more_worker_route
-      - project_orchestrate_next_step
-      - project_orchestrate_reiteration_route
-      - project_orchestrate_worker_communication_route
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - project_orchestrate_integration_route
+    - project_orchestrate_more_worker_route
+    - project_orchestrate_next_step
+    - project_orchestrate_reiteration_route
+    - project_orchestrate_worker_communication_route
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_orchestrate_integration_route
-        parent_option: Yes
-        options: [Merge Worker PR, Continue Another Issue]
-      - question_id: project_orchestrate_more_worker_route
-        parent_option: Yes
-        options: [Orchestrate Another, Resolve Another]
-      - question_id: project_orchestrate_reiteration_route
-        parent_option: Revisit
-        options: [Review First, Revise Worker Handoff]
-      - question_id: project_orchestrate_worker_communication_route
-        parent_option: Revisit
-        options: [Send Worker Message, Refresh Worker Evidence]
-    validators: [skills/orchestrate-issues/scripts/validate-worker-handoff.ps1, skills/orchestrate-issues/scripts/test-scenarios.ps1, scripts/validate-worker-packets.ps1, scripts/test-worker-packets.ps1]
-    artifacts: [docs/superpowers/issues, docs/superpowers/examples/worker-handoff-packets.md]
-    next_routes: [merge-changes, resolve-issue]
+    - question_id: project_orchestrate_integration_route
+      parent_option: true
+      options:
+      - Merge
+      - Start More Worker Work
+    - question_id: project_orchestrate_more_worker_route
+      parent_option: true
+      options:
+      - Resolve Another Worker Issue
+      - Start Another Worker
+    - question_id: project_orchestrate_reiteration_route
+      parent_option: Revisit
+      options:
+      - Recover Audit Workers
+      - Worker Communication
+    - question_id: project_orchestrate_worker_communication_route
+      parent_option: Revisit
+      options:
+      - Ask Worker
+      - Reassign Work
+    validators:
+    - skills/orchestrate-issues/scripts/validate-worker-handoff.ps1
+    - skills/orchestrate-issues/scripts/test-scenarios.ps1
+    - scripts/validate-worker-packets.ps1
+    - scripts/test-worker-packets.ps1
+    artifacts:
+    - docs/superpowers/issues
+    - docs/superpowers/examples/worker-handoff-packets.md
+    next_routes:
+    - merge-changes
+    - resolve-issue
+    gates:
+    - question_id: project_orchestrate_integration_route
+      gate_type: data_selection
+      prompt: What should happen with the worker output?
+      parent_option: true
+      options:
+      - label: Merge
+        terminal_state: continue
+      - label: Start More Worker Work
+        terminal_state: continue
+    - question_id: project_orchestrate_more_worker_route
+      gate_type: data_selection
+      prompt: What worker-backed work should start next?
+      parent_option: true
+      options:
+      - label: Resolve Another Worker Issue
+        terminal_state: continue
+      - label: Start Another Worker
+        terminal_state: continue
+    - question_id: project_orchestrate_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_orchestrate_reiteration_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this worker route?
+      parent_option: Revisit
+      options:
+      - label: Recover Audit Workers
+        terminal_state: revisit
+      - label: Worker Communication
+        terminal_state: revisit
+    - question_id: project_orchestrate_worker_communication_route
+      gate_type: nested_revisit_route
+      prompt: How should worker communication continue?
+      parent_option: Revisit
+      options:
+      - label: Ask Worker
+        terminal_state: revisit
+      - label: Reassign Work
+        terminal_state: revisit
   resolve-issue:
     purpose: Direct current-thread implementation for one ready GitHub issue mirror.
     question_ids:
-      - project_resolve_another_issue_route
-      - project_resolve_fix_route
-      - project_resolve_integration_route
-      - project_resolve_next_step
-      - project_resolve_push_permission
-      - project_resolve_reiteration_route
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - project_resolve_another_issue_route
+    - project_resolve_fix_route
+    - project_resolve_integration_route
+    - project_resolve_next_step
+    - project_resolve_push_permission
+    - project_resolve_reiteration_route
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_resolve_push_permission
-        parent_option: Yes
-        options: [Push And Open PR, Hold]
-      - question_id: project_resolve_integration_route
-        parent_option: Yes
-        options: [Merge, Continue Another Issue]
-      - question_id: project_resolve_another_issue_route
-        parent_option: Yes
-        options: [Resolve Another, Orchestrate Another]
-      - question_id: project_resolve_reiteration_route
-        parent_option: Revisit
-        options: [Review First, Revise Or Fix Branch]
-      - question_id: project_resolve_fix_route
-        parent_option: Revisit
-        options: [Revise Branch, Address CI / Checks]
-    validators: [skills/resolve-issue/scripts/validate-setup.ps1, skills/resolve-issue/scripts/validate-pr-ready.ps1, skills/resolve-issue/scripts/validate-terminal-closeout.ps1]
-    artifacts: [docs/superpowers/issues, docs/superpowers/plans]
-    next_routes: [merge-changes, resolve-issue, orchestrate-issues]
+    - question_id: project_resolve_push_permission
+      parent_option: true
+      options:
+      - Push And Open PR
+      - Hold
+    - question_id: project_resolve_integration_route
+      parent_option: true
+      options:
+      - Merge
+      - Continue Another Issue
+    - question_id: project_resolve_another_issue_route
+      parent_option: true
+      options:
+      - Resolve Another
+      - Orchestrate Another
+    - question_id: project_resolve_reiteration_route
+      parent_option: Revisit
+      options:
+      - Review First
+      - Revise Or Fix Branch
+    - question_id: project_resolve_fix_route
+      parent_option: Revisit
+      options:
+      - Revise Branch
+      - Address CI / Checks
+    validators:
+    - skills/resolve-issue/scripts/validate-setup.ps1
+    - skills/resolve-issue/scripts/validate-pr-ready.ps1
+    - skills/resolve-issue/scripts/validate-terminal-closeout.ps1
+    artifacts:
+    - docs/superpowers/issues
+    - docs/superpowers/plans
+    next_routes:
+    - merge-changes
+    - resolve-issue
+    - orchestrate-issues
+    gates:
+    - question_id: project_resolve_another_issue_route
+      gate_type: data_selection
+      prompt: How should the next issue be executed?
+      parent_option: true
+      options:
+      - label: Resolve Another
+        terminal_state: continue
+      - label: Orchestrate Another
+        terminal_state: continue
+    - question_id: project_resolve_fix_route
+      gate_type: nested_revisit_route
+      prompt: Should I revise the branch or address checks?
+      parent_option: Revisit
+      options:
+      - label: Revise Branch
+        terminal_state: revisit
+      - label: Address CI / Checks
+        terminal_state: revisit
+    - question_id: project_resolve_integration_route
+      gate_type: data_selection
+      prompt: What should happen with this PR-ready issue?
+      parent_option: true
+      options:
+      - label: Merge
+        terminal_state: continue
+      - label: Continue Another Issue
+        terminal_state: continue
+    - question_id: project_resolve_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_resolve_push_permission
+      gate_type: permission
+      prompt: Should I push this branch and create the PR now?
+      parent_option: true
+      options:
+      - label: Push And Open PR
+        permission_effect: push-and-open-pr
+      - label: Hold
+        permission_effect: hold
+    - question_id: project_resolve_reiteration_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this PR-ready work?
+      parent_option: Revisit
+      options:
+      - label: Review First
+        terminal_state: revisit
+      - label: Revise Or Fix Branch
+        terminal_state: revisit
   setup-project:
     purpose: Create or maintain setup, milestone map, tracker config, project board configuration, and roadmap artifacts.
     question_ids:
-      - project_setup_next_step
-      - project_setup_reiteration_group
-      - project_setup_reiteration_route
-      - project_setup_work_route
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - project_setup_next_step
+    - project_setup_reiteration_group
+    - project_setup_reiteration_route
+    - project_setup_work_route
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_setup_work_route
-        parent_option: Yes
-        options: [Create Roadmap, Configure Tracker]
-      - question_id: project_setup_reiteration_route
-        parent_option: Revisit
-        options: [Review First, Revise Setup]
-      - question_id: project_setup_reiteration_group
-        parent_option: Revisit
-        options: [Review Roadmap, Repair Tracker]
-    validators: [scripts/validate.ps1]
-    artifacts: [docs/superpowers/PROJECT_CONTEXT.md, docs/superpowers/milestones]
-    next_routes: [brainstorm-spec, align-project]
+    - question_id: project_setup_work_route
+      parent_option: true
+      options:
+      - Brainstorm New Spec
+      - Write Plan
+      - Create Issues
+    - question_id: project_setup_reiteration_route
+      parent_option: Revisit
+      options:
+      - Review Setup
+      - Revise Setup
+    - question_id: project_setup_reiteration_group
+      parent_option: Revisit
+      options:
+      - Review / Revise Setup
+      - Run Align
+    validators:
+    - scripts/validate.ps1
+    artifacts:
+    - docs/superpowers/PROJECT_CONTEXT.md
+    - docs/superpowers/milestones
+    next_routes:
+    - brainstorm-spec
+    - align-project
+    gates:
+    - question_id: project_setup_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_setup_reiteration_group
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this setup work?
+      parent_option: Revisit
+      options:
+      - label: Review / Revise Setup
+        terminal_state: revisit
+      - label: Run Align
+        terminal_state: revisit
+    - question_id: project_setup_reiteration_route
+      gate_type: nested_revisit_route
+      prompt: Should I review or revise setup?
+      parent_option: Revisit
+      options:
+      - label: Review Setup
+        terminal_state: revisit
+      - label: Revise Setup
+        terminal_state: revisit
+    - question_id: project_setup_work_route
+      gate_type: data_selection
+      prompt: Which project workflow should start from setup?
+      parent_option: true
+      options:
+      - label: Brainstorm New Spec
+        terminal_state: continue
+      - label: Write Plan
+        terminal_state: continue
+      - label: Create Issues
+        terminal_state: continue
   write-plan:
     purpose: Turn approved specs or issue mirrors into detailed implementation plans.
     question_ids:
-      - project_plan_issue_count
-      - project_plan_issue_count_multiple
-      - project_plan_issue_execution_route
-      - project_plan_next_step
-      - project_plan_review_grill_route
-      - project_plan_review_route
-      - project_plan_work_route
-    final_health_gate:
-    top_level_options: [Yes, Revisit, Stop]
+    - project_plan_issue_count
+    - project_plan_issue_count_multiple
+    - project_plan_issue_execution_route
+    - project_plan_next_step
+    - project_plan_review_grill_route
+    - project_plan_review_route
+    - project_plan_work_route
+    final_health_gate: null
+    top_level_options:
+    - true
+    - Revisit
+    - Stop
     nested_routes:
-      - question_id: project_plan_work_route
-        parent_option: Yes
-        options: [Project Issue First, Project Implement, Use Ready Issue]
-      - question_id: project_plan_issue_count
-        parent_option: Yes
-        options: [One Issue, Multiple Issues]
-      - question_id: project_plan_issue_count_multiple
-        parent_option: Yes
-        options: [Two Issues, Three Or More]
-      - question_id: project_plan_issue_execution_route
-        parent_option: Yes
-        options: [Resolve Issue, Orchestrate Issues]
-      - question_id: project_plan_review_route
-        parent_option: Revisit
-        options: [Revise Plan, Review Or Grill]
-      - question_id: project_plan_review_grill_route
-        parent_option: Revisit
-        options: [Review First, Re-run Planning Grill]
-    validators: [scripts/validate-plan-outcome-proof.ps1, scripts/validate-plan-task-use-cases.ps1]
-    artifacts: [docs/superpowers/plans]
-    next_routes: [create-issues, implement-plan, resolve-issue, orchestrate-issues]
+    - question_id: project_plan_work_route
+      parent_option: true
+      options:
+      - Project Issue First
+      - Project Implement
+      - Use Ready Issue
+    - question_id: project_plan_issue_count
+      parent_option: true
+      options:
+      - One Issue
+      - Multiple Issues
+    - question_id: project_plan_issue_count_multiple
+      parent_option: true
+      options:
+      - Two Issues
+      - Three Or More
+    - question_id: project_plan_issue_execution_route
+      parent_option: true
+      options:
+      - Resolve Issue
+      - Orchestrate Issues
+    - question_id: project_plan_review_route
+      parent_option: Revisit
+      options:
+      - Revise Plan
+      - Review Or Grill
+    - question_id: project_plan_review_grill_route
+      parent_option: Revisit
+      options:
+      - Review First
+      - Re-run Planning Grill
+    validators:
+    - scripts/validate-plan-outcome-proof.ps1
+    - scripts/validate-plan-task-use-cases.ps1
+    artifacts:
+    - docs/superpowers/plans
+    next_routes:
+    - create-issues
+    - implement-plan
+    - resolve-issue
+    - orchestrate-issues
+    gates:
+    - question_id: project_plan_issue_count
+      gate_type: data_selection
+      prompt: How many issues should be created from this plan?
+      parent_option: true
+      options:
+      - label: One Issue
+        terminal_state: continue
+      - label: Multiple Issues
+        terminal_state: continue
+    - question_id: project_plan_issue_count_multiple
+      gate_type: data_selection
+      prompt: How many multiple issues should this plan create?
+      parent_option: true
+      options:
+      - label: Two Issues
+        terminal_state: continue
+      - label: Three Or More
+        terminal_state: continue
+    - question_id: project_plan_issue_execution_route
+      gate_type: data_selection
+      prompt: Which ready-issue execution route should continue from this plan?
+      parent_option: true
+      options:
+      - label: Resolve Issue
+        terminal_state: continue
+      - label: Orchestrate Issues
+        terminal_state: continue
+    - question_id: project_plan_next_step
+      gate_type: top_level_continuation
+      prompt: Should I continue on with the workflow?
+      options:
+      - label: 'Yes'
+        terminal_state: continue
+      - label: Revisit
+        terminal_state: revisit
+      - label: Stop
+        terminal_state: stop
+    - question_id: project_plan_review_grill_route
+      gate_type: nested_revisit_route
+      prompt: Should I review this plan or re-run the planning grill?
+      parent_option: Revisit
+      options:
+      - label: Review First
+        terminal_state: revisit
+      - label: Re-run Planning Grill
+        terminal_state: revisit
+    - question_id: project_plan_review_route
+      gate_type: nested_revisit_route
+      prompt: How should I revisit this plan?
+      parent_option: Revisit
+      options:
+      - label: Revise Plan
+        terminal_state: revisit
+      - label: Review Or Grill
+        terminal_state: revisit
+    - question_id: project_plan_work_route
+      gate_type: data_selection
+      prompt: Which workflow should continue from this plan?
+      parent_option: true
+      options:
+      - label: Project Issue First
+        terminal_state: continue
+      - label: Project Implement
+        terminal_state: continue
+      - label: Use Ready Issue
+        terminal_state: continue
+native_identifier_allowlist:
+- id: project_setup_board_approval
+  reason: Prose reference to existing board approval evidence; issue 85 will register or rewrite it as a material native gate.
+- id: project_issue_resolution_route
+  reason: Router prose reference for choosing resolve versus orchestrate; issue 85 will register or rewrite it as a material
+    native gate.
