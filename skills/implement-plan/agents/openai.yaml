@@ -8,7 +8,7 @@ interface:
     for route question ids and options. Task # Use Cases are a strict requirement; run
     scripts/validate-plan-task-use-cases.ps1 before implementation. This route is the non-issue adapter for
     superpowers:executing-plans. Require native `/goal` activation, development branch, request_user_input,
-    implement_plan_topology with Inline and Orchestrated Worker. implement_plan_push_permission has Push And Open PR
+    implement_plan_topology with Inline, Worker, and Stop. implement_plan_push_permission has Push Branch
     and Hold. Require branch push proof, outcome proof, readiness review, merge-ready local-branch handoff to
     merge-changes, and no open pull requests for local-only merge handoff. Auto Mode authorization ledger uses
     project_auto_mode_authorization with Bounded Auto Merge and Manual Mode, the plugin-provided Auto Mode validator, bounded-auto-merge, recorded defaults,

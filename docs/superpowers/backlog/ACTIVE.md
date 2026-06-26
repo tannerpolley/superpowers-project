@@ -4,4 +4,10 @@ This file is the explicit Loop Controller candidate source for current maintenan
 
 | ID | Route owner | Source artifact | Priority | Status | Proof target | Reason |
 |---|---|---|---|---|---|---|
-| workflow-normalization-complete | align-project | docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md | P3 | deferred | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | All issue-backed workflow-normalization repair slices are closed; no ready loop candidates remain. |
+| 83 | resolve-issue | docs/superpowers/issues/83-gate-types.md | P1 | ready | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | First score 9+ hardening slice selected by Looping Mode. |
+| 84 | resolve-issue | docs/superpowers/issues/84-metadata-geometry.md | P1 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Blocked until prerequisite hardening issue closes. |
+| 85 | resolve-issue | docs/superpowers/issues/85-material-gates.md | P1 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Blocked until prerequisite hardening issue closes. |
+| 86 | resolve-issue | docs/superpowers/issues/86-loop-state-machine.md | P1 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Blocked until prerequisite hardening issue closes. |
+| 87 | resolve-issue | docs/superpowers/issues/87-scorecard-context.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Blocked until prerequisite hardening issue closes. |
+| 88 | resolve-issue | docs/superpowers/issues/88-prose-polish.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Blocked until prerequisite hardening issue closes. |
+| 89 | resolve-issue | docs/superpowers/issues/89-decision-ledger-examples.md | P2 | blocked | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | Blocked until prerequisite hardening issue closes. |

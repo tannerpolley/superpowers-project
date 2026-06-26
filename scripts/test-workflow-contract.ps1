@@ -71,6 +71,36 @@ Question id: ``alpha_action_route``
 Options:
 
 - ``Do Work``: start the forward route.
+
+Question id: ``alpha_approval``
+
+Options:
+
+- ``Approve``: approve.
+- ``Decline``: decline.
+
+Question id: ``alpha_permission``
+
+Options:
+
+- ``Push``: push.
+- ``Hold``: hold.
+
+Question id: ``alpha_topology``
+
+Options:
+
+- ``Inline``: run inline.
+- ``Worker``: run worker.
+- Stop: stop.
+
+Question id: ``alpha_final_health``
+
+Options:
+
+- Done: finish.
+- Revisit: review.
+- Stop: stop.
 "@
 
     $validContract = Join-Path $tempRoot "valid.yml"
@@ -85,6 +115,10 @@ workflow_skills:
     question_ids:
       - alpha_next_step
       - alpha_action_route
+      - alpha_approval
+      - alpha_permission
+      - alpha_topology
+      - alpha_final_health
     final_health_gate:
     top_level_options:
       - Yes
@@ -95,6 +129,57 @@ workflow_skills:
         parent_option: Yes
         options:
           - Do Work
+    gates:
+      - question_id: alpha_next_step
+        gate_type: top_level_continuation
+        options:
+          - label: Yes
+            terminal_state: continue
+          - label: Revisit
+            terminal_state: revisit
+          - label: Stop
+            terminal_state: stop
+      - question_id: alpha_action_route
+        gate_type: nested_yes_route
+        parent_question_id: alpha_next_step
+        parent_option: Yes
+        options:
+          - label: Do Work
+            terminal_state: continue
+            next_route: alpha
+      - question_id: alpha_approval
+        gate_type: approval
+        options:
+          - label: Approve
+            approval_effect: approve
+          - label: Decline
+            approval_effect: decline
+      - question_id: alpha_permission
+        gate_type: permission
+        options:
+          - label: Push
+            permission_effect: approve-push
+          - label: Hold
+            permission_effect: hold
+      - question_id: alpha_topology
+        gate_type: topology
+        allow_terminal_options: true
+        options:
+          - label: Inline
+            topology: inline
+          - label: Worker
+            topology: worker
+          - label: Stop
+            terminal_state: stop
+      - question_id: alpha_final_health
+        gate_type: final_health
+        options:
+          - label: Done
+            terminal_state: done
+          - label: Revisit
+            terminal_state: revisit
+          - label: Stop
+            terminal_state: stop
     validators:
       - scripts/validate.ps1
     artifacts:
@@ -115,6 +200,10 @@ workflow_skills:
     question_ids:
       - alpha_next_step
       - alpha_action_route
+      - alpha_approval
+      - alpha_permission
+      - alpha_topology
+      - alpha_final_health
     final_health_gate:
     top_level_options:
       - Yes
@@ -126,6 +215,47 @@ workflow_skills:
         options:
           - Do Work
           - Stop
+    gates:
+      - question_id: alpha_next_step
+        gate_type: top_level_continuation
+        options:
+          - label: Yes
+          - label: Revisit
+          - label: Stop
+      - question_id: alpha_action_route
+        gate_type: nested_yes_route
+        parent_question_id: alpha_next_step
+        parent_option: Yes
+        options:
+          - label: Do Work
+          - label: Stop
+      - question_id: alpha_approval
+        gate_type: approval
+        options:
+          - label: Approve
+            approval_effect: approve
+          - label: Decline
+            approval_effect: decline
+      - question_id: alpha_permission
+        gate_type: permission
+        options:
+          - label: Push
+            permission_effect: approve-push
+          - label: Hold
+            permission_effect: hold
+      - question_id: alpha_topology
+        gate_type: topology
+        allow_terminal_options: true
+        options:
+          - label: Inline
+          - label: Worker
+          - label: Stop
+      - question_id: alpha_final_health
+        gate_type: final_health
+        options:
+          - label: Done
+          - label: Revisit
+          - label: Stop
     validators:
       - scripts/validate.ps1
     artifacts:
@@ -134,11 +264,27 @@ workflow_skills:
       - alpha
 "@
 
+    $badOptionContract = Join-Path $tempRoot "bad-option.yml"
+    $badOptionText = Get-Content -LiteralPath $validContract -Raw
+    $badOptionText = $badOptionText.Replace("label: Do Work", "label: Do Different Work")
+    Write-TextFile -Path $badOptionContract -Text $badOptionText
+
+    $missingGateContract = Join-Path $tempRoot "missing-gate.yml"
+    $missingGateText = Get-Content -LiteralPath $validContract -Raw
+    $missingGateText = $missingGateText -replace '(?ms)\n      - question_id: alpha_permission\n        gate_type: permission.*?(?=\n      - question_id: alpha_topology)', ''
+    Write-TextFile -Path $missingGateContract -Text $missingGateText
+
     $valid = Invoke-WorkflowContractValidator -ContractPath $validContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
     Add-Check -Name "fixture contract passes" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true) -Reason $valid.raw
 
     $bad = Invoke-WorkflowContractValidator -ContractPath $badNestedContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
     Add-Check -Name "nested terminal option fails" -Ok ($bad.exit_code -ne 0 -and $bad.raw -match "nested route") -Reason "nested routes must reject terminal options"
+
+    $badOption = Invoke-WorkflowContractValidator -ContractPath $badOptionContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
+    Add-Check -Name "exact option mismatch fails" -Ok ($badOption.exit_code -ne 0 -and $badOption.raw -match "options differ") -Reason "contract options must match skill options"
+
+    $missingGate = Invoke-WorkflowContractValidator -ContractPath $missingGateContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
+    Add-Check -Name "missing typed gate fails" -Ok ($missingGate.exit_code -ne 0 -and $missingGate.raw -match "typed gates") -Reason "every question id needs a typed gate"
 
     $repoContract = Join-Path $RepoRoot "docs\superpowers\workflow-contract.yml"
     $repoResult = Invoke-WorkflowContractValidator -ContractPath $repoContract -SkillRoot (Join-Path $RepoRoot "skills") -WorkflowSkillNames @()
