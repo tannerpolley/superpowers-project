@@ -55,6 +55,7 @@ Make workflow-contract.yml authoritative for gate type and exact option labels p
 - Added SKILL.md native gate parsing and contract option helpers in `scripts/lib/workflow-contract.ps1`.
 - Hardened `scripts/validate-workflow-contract.ps1` to compare exact option labels, enforce typed gate rules, and fail unregistered native-question-like identifiers.
 - Expanded `scripts/test-workflow-contract.ps1` fixture coverage for typed gates, exact option drift, and missing gate declarations.
+- Raised the GitHub validation job timeout from 20 to 30 minutes after CI logs showed all checks passing before timeout cleanup.
 
 ## Proof Receipt
 
