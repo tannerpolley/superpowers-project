@@ -43,10 +43,10 @@ Prevent compact metadata prompts from flattening nested child routes into top-le
 
 ## Acceptance Criteria
 
-- [ ] Metadata validator rejects flattened *_next_step summaries that list child routes beside Stop.
-- [ ] Metadata validator rejects unsupported options for registered gates.
-- [ ] Named metadata prompts use safe nested summaries or pointers to SKILL.md and workflow-contract.yml.
-- [ ] Metadata prompts remain compact.
+- [x] Metadata validator rejects flattened *_next_step summaries that list child routes beside Stop.
+- [x] Metadata validator rejects unsupported options for registered gates.
+- [x] Named metadata prompts use safe nested summaries or pointers to SKILL.md and workflow-contract.yml.
+- [x] Metadata prompts remain compact.
 
 ## Blocked by
 
@@ -63,3 +63,10 @@ Prevent compact metadata prompts from flattening nested child routes into top-le
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-contract.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-skill-metadata-contract.ps1 -RepoRoot .`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+
+## Implementation Receipt
+
+- `scripts/validate-skill-metadata-contract.ps1` now checks every registered gate window against sibling options from the skill's full gate set, so top-level summaries cannot list child route labels.
+- The metadata option matcher now treats underscores as identifier characters, preventing gate ids such as `project_merge_next_step` from satisfying sibling option labels.
+- `scripts/test-skill-metadata-contract.ps1` covers flattened top-level route summaries, unsupported terminal labels in nested routes, duplicated global policy prose, compact passing prompts, and the gate-id boundary regression.
+- Compact skill metadata prompts now point top-level continuation gates back to `SKILL.md` and `docs/superpowers/workflow-contract.yml` for child-route detail instead of listing nested options beside terminal choices.

@@ -58,7 +58,9 @@ function Get-RouteSummaryWindow {
 
 function Test-ContainsWord {
     param([string]$Text, [string]$Needle)
-    $Text.IndexOf($Needle, [StringComparison]::OrdinalIgnoreCase) -ge 0
+    if ([string]::IsNullOrWhiteSpace($Text) -or [string]::IsNullOrWhiteSpace($Needle)) { return $false }
+    $escaped = [regex]::Escape($Needle)
+    [regex]::IsMatch($Text, "(?i)(?<![A-Za-z0-9_-])$escaped(?![A-Za-z0-9_-])")
 }
 
 try {
@@ -96,6 +98,19 @@ try {
 
         foreach ($forbidden in $forbiddenGlobalPolicy) {
             Add-Check "$relativeMetadataPath omits duplicated global policy: $forbidden" (-not (Test-ContainsWord -Text $prompt -Needle $forbidden)) "$relativeMetadataPath contains duplicated global policy instead of a compact reference: $forbidden"
+        }
+
+        $contractGates = @(Get-WorkflowContractGates -SkillContract $skill.Value)
+        $knownGateOptions = @($contractGates | ForEach-Object { Get-WorkflowContractOptionLabels -Gate $_ } | Sort-Object -Unique)
+        foreach ($gate in $contractGates) {
+            $questionId = [string]$gate.question_id
+            if ([string]::IsNullOrWhiteSpace($questionId) -or -not (Test-ContainsWord -Text $prompt -Needle $questionId)) { continue }
+            $window = Get-RouteSummaryWindow -Prompt $prompt -QuestionId $questionId
+            $allowed = @(Get-WorkflowContractOptionLabels -Gate $gate)
+            $unsupportedOptions = @($knownGateOptions | Where-Object { $allowed -notcontains $_ })
+            foreach ($option in $unsupportedOptions) {
+                Add-Check "$relativeMetadataPath $questionId omits sibling option $option" (-not (Test-ContainsWord -Text $window -Needle $option)) "$relativeMetadataPath flattens unsupported option '$option' into $questionId; contract options are $($allowed -join ', ')"
+            }
         }
 
         foreach ($route in @($skill.Value.nested_routes)) {

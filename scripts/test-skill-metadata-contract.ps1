@@ -25,7 +25,9 @@ workflow_skills:
   write-plan:
     purpose: Turn approved specs or issue mirrors into detailed implementation plans.
     question_ids:
+      - project_plan_next_step
       - project_plan_issue_execution_route
+      - project_plan_detail_route
     final_health_gate:
     top_level_options: [Yes, Revisit, Stop]
     nested_routes:
@@ -35,6 +37,26 @@ workflow_skills:
     validators: [scripts/validate-plan-outcome-proof.ps1]
     artifacts: [docs/superpowers/plans]
     next_routes: [resolve-issue, orchestrate-issues]
+    gates:
+      - question_id: project_plan_next_step
+        gate_type: top_level_continuation
+        options:
+          - label: Yes
+          - label: Revisit
+          - label: Stop
+      - question_id: project_plan_issue_execution_route
+        gate_type: data_selection
+        parent_question_id: project_plan_next_step
+        parent_option: Yes
+        options:
+          - label: Resolve Issue
+          - label: Orchestrate Issues
+      - question_id: project_plan_detail_route
+        gate_type: data_selection
+        parent_question_id: project_plan_next_step
+        parent_option: Yes
+        options:
+          - label: Plan
 "@ | Set-Content -LiteralPath (Join-Path $root "docs\superpowers\workflow-contract.yml") -Encoding utf8NoBOM
     @"
 ---
@@ -95,6 +117,31 @@ Invoke-Scenario "metadata route contradiction fails" {
     }
 }
 
+Invoke-Scenario "flattened top-level route summary fails" {
+    $fixture = New-FixtureRepo
+    try {
+        Set-FixtureMetadata -Root $fixture -Prompt "Use write-plan. Read SKILL.md and docs/superpowers/workflow-contract.yml. project_plan_next_step has Resolve Issue, Orchestrate Issues, and Stop."
+        $result = Invoke-Validator -Root $fixture
+        if ($result.exit_code -eq 0) { throw "validator accepted child routes flattened into project_plan_next_step" }
+        if ($result.output -notmatch "project_plan_next_step" -or $result.output -notmatch "Resolve Issue") {
+            throw "failure did not name the flattened top-level gate and child option: $($result.output)"
+        }
+    } finally {
+        if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
+    }
+}
+
+Invoke-Scenario "gate identifier does not satisfy sibling option label" {
+    $fixture = New-FixtureRepo
+    try {
+        Set-FixtureMetadata -Root $fixture -Prompt "Use write-plan. Read SKILL.md and docs/superpowers/workflow-contract.yml. project_plan_next_step summarizes output and can continue."
+        $result = Invoke-Validator -Root $fixture
+        if ($result.exit_code -ne 0) { throw "validator treated question id text as an unsupported option label: $($result.output)" }
+    } finally {
+        if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
+    }
+}
+
 Invoke-Scenario "duplicated global policy fails" {
     $fixture = New-FixtureRepo
     try {
@@ -112,7 +159,7 @@ Invoke-Scenario "duplicated global policy fails" {
 Invoke-Scenario "compact fixture passes" {
     $fixture = New-FixtureRepo
     try {
-        Set-FixtureMetadata -Root $fixture -Prompt "Use write-plan for implementation planning from approved Superpowers Project specs or issue mirrors. Read SKILL.md for exact gates and docs/superpowers/workflow-contract.yml for route question ids and child options. Preserve request_user_input gates; project_plan_issue_execution_route has Resolve Issue and Orchestrate Issues only."
+        Set-FixtureMetadata -Root $fixture -Prompt "Use write-plan for implementation planning from approved Superpowers Project specs or issue mirrors. Read SKILL.md for exact gates and docs/superpowers/workflow-contract.yml for route question ids and child options. Preserve request_user_input gates; project_plan_next_step summarizes output and can continue. project_plan_issue_execution_route has Resolve Issue and Orchestrate Issues only."
         $result = Invoke-Validator -Root $fixture
         if ($result.exit_code -ne 0) { throw "compact metadata was rejected: $($result.output)" }
     } finally {
