@@ -6,7 +6,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md
 **Classification:** AFK
-**Labels:** type:task, status:blocked
+**Labels:** type:task, status:ready
 **Goal Command:** /goal Resolve Skill Prose Polish And Artifact Card Clarity using docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md and docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md. Complete acceptance criteria and proof oracle, then hand off to merge-changes.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -50,7 +50,7 @@ Remove machine-patched duplicate route prose while preserving strict Artifact Re
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/84
+- None
 
 ## Non-goals
 
@@ -64,4 +64,3 @@ Remove machine-patched duplicate route prose while preserving strict Artifact Re
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-global-policy-deduplication.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-artifact-review-card.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-
