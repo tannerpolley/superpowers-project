@@ -6,7 +6,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md
 **Classification:** AFK
-**Labels:** type:task, status:blocked
+**Labels:** type:task, status:ready
 **Goal Command:** /goal Resolve Register All Material Native Gates using docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md and docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md. Complete acceptance criteria and proof oracle, then hand off to merge-changes.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -50,7 +50,7 @@ Convert prose-only material gates into canonical Question id blocks and registry
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/83
+- None
 
 ## Non-goals
 
@@ -63,4 +63,3 @@ Convert prose-only material gates into canonical Question id blocks and registry
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-contract.ps1 -RepoRoot .`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-

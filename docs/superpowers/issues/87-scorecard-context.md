@@ -51,7 +51,6 @@ Record validator-backed 9+ score evidence and clarify the source-of-truth roles 
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/83
 - https://github.com/tannerpolley/superpowers-project/issues/86
 
 ## Non-goals
@@ -65,4 +64,3 @@ Record validator-backed 9+ score evidence and clarify the source-of-truth roles 
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-scorecard-proof.ps1`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-scorecard-proof.ps1 -RepoRoot .`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-
