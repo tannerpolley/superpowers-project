@@ -209,7 +209,7 @@ $scenarios = @(
         foreach ($needle in @("Outcome Summary", "Outcome Source", "Interface", "Cutover", "Stop Criteria")) {
             Assert-Contains $metadata $needle "missing metadata outcome summary policy: $needle"
         }
-        foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_issue_next_step", "Resolve First Ready", "Resolve Selected", "Review First", "Stop", "start the selected next skill")) {
+        foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_issue_next_step", "top-level continuation gate", "docs/superpowers/workflow-contract.yml", "child routes", "starting the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }
         foreach ($needle in @("external GitHub issue hydration", "hydrate-external-issue.ps1", "Source Plan: TBD", "local mirror and source plan")) {
@@ -549,11 +549,9 @@ $(New-OutcomeProofSummary -SourcePlan "docs/superpowers/specs/2026-06-02-bug-des
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
             "project_issue_next_step",
-            "Resolve First Ready",
-            "Resolve Selected",
-            "Review First",
-            "Stop",
-            "start the selected next skill"
+            "top-level continuation gate",
+            "child routes",
+            "starting the selected next skill"
         )) {
             if (-not $metadata.Contains($needle)) { throw "missing compact continuation metadata: $needle" }
         }

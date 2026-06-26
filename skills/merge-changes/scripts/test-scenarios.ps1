@@ -283,7 +283,7 @@ Invoke-Scenario "metadata is present" {
     Assert-Contains $metadata "default_prompt:" "missing metadata default_prompt"
     Assert-Contains $metadata "issue-backed PR URL" "missing PR intake"
     Assert-Contains $metadata "request_user_input" "missing native UI merge gate"
-    foreach ($needle in @("summarize", "artifact review gate", "readiness_review", "plan_alignment", "reality_evidence", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_merge_next_step", "Run Align", "Resolve Another", "Review Closeout", "Stop", "start the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
+    foreach ($needle in @("summarize", "artifact review gate", "readiness_review", "plan_alignment", "reality_evidence", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_merge_next_step", "top-level continuation gate", "docs/superpowers/workflow-contract.yml", "child routes", "starting the selected next skill", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop", "verified final Done")) {
         Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
     }
     foreach ($needle in @("pr-issue", "local-branch", "Reassess Plan", "Reassess Spec", "request_agent_input", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "preauthorized-after-clean-premerge")) {
@@ -894,11 +894,9 @@ Invoke-Scenario "local branch closeout helper refuses malformed approval and wro
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
             "project_merge_next_step",
-            "Run Align",
-            "Resolve Another",
-            "Review Closeout",
-            "Stop",
-            "start the selected next skill"
+            "top-level continuation gate",
+            "child routes",
+            "starting the selected next skill"
         )) {
             if (-not $metadataText.Contains($needle)) { throw "missing compact continuation metadata: $needle" }
         }

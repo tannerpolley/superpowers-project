@@ -547,7 +547,7 @@ try {
 
     Invoke-Scenario "metadata declares executable continuation routing" {
         $metadata = Get-Content -LiteralPath (Join-Path $skillRoot "agents\openai.yaml") -Raw
-        foreach ($needle in @("summarize", "artifact review gate", "Outcome Summary", "outcome_proof", "readiness review", "plan_alignment", "reality_evidence", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_resolve_next_step", "Merge", "Resolve Another", "Review First", "Stop", "start the selected next skill", "project_resolve_push_permission", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop")) {
+        foreach ($needle in @("summarize", "artifact review gate", "Outcome Summary", "outcome_proof", "readiness review", "plan_alignment", "reality_evidence", "verification evidence", "broader project context", "recommended next route", "machine-readable artifacts", "project_resolve_next_step", "top-level continuation gate", "docs/superpowers/workflow-contract.yml", "child routes", "starting the selected next skill", "project_resolve_push_permission", "Auto Mode authorization ledger", "project_auto_mode_authorization", "bounded-auto-merge", "collect-continuation-ledger.ps1", "validate-terminal-closeout.ps1", "explicit Stop")) {
             Assert-True ($metadata.Contains($needle)) "missing metadata continuation route: $needle"
         }
     }
@@ -580,7 +580,7 @@ try {
             "project_resolve_push_permission",
             "Push And Open PR",
             "Hold",
-            "start the selected next skill"
+            "starting the selected next skill"
         )) {
             Assert-True ($metadata.Contains($needle)) "missing compact continuation metadata: $needle"
         }

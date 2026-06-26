@@ -118,7 +118,7 @@ $scenarios = @(
         Assert-Contains $metadata "live plugin sync drift" "missing metadata live sync drift"
         Assert-Contains $metadata "nested canonical milestone artifact folders are drift" "missing metadata nested artifact drift"
         Assert-Contains $metadata "generated index/view output" "missing metadata generated view exception"
-        foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_align_next_step", "Apply Repair", "Create Planning Spec", "Run Align Again", "Stop", "start the selected next skill")) {
+        foreach ($needle in @("summarize", "artifact review gate", "broader project context", "recommended next route", "machine-readable artifacts", "project_align_next_step", "top-level continuation gate", "docs/superpowers/workflow-contract.yml", "child routes", "starting the selected next skill")) {
             Assert-Contains $metadata $needle "missing metadata continuation route: $needle"
         }
     }
@@ -542,11 +542,9 @@ $scenarios = @(
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
             "project_align_next_step",
-            "Apply Repair",
-            "Create Planning Spec",
-            "Run Align Again",
-            "Stop",
-            "start the selected next skill"
+            "top-level continuation gate",
+            "child routes",
+            "starting the selected next skill"
         )) {
             if (-not $metadata.Contains($needle)) { throw "missing compact continuation metadata: $needle" }
         }

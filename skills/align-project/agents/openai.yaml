@@ -9,6 +9,6 @@ interface:
     with -Mode LocalDocs or -Mode GitHubAware as SKILL.md requires; findings are blocking, repairable,
     informational, or healthy and require native repair approval before mutation. Rule: nested canonical milestone artifact folders are drift
     unless explicitly generated index/view output. summarize machine-readable artifacts,
-    artifact review gate status, broader project context, and recommended next route. project_align_next_step has
-    Apply Repair, Create Planning Spec, Run Align Again, and Stop; start the selected next skill. Use
+    artifact review gate status, broader project context, and recommended next route. project_align_next_step is
+    the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml for child routes before starting the selected next skill. Use
     request_user_input before tracker or live mutations.

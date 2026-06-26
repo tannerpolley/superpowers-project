@@ -50,7 +50,7 @@ try {
     try {
         Assert-Contains -Text $metadata -Needle 'setup' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers/PROJECT_CONTEXT.md' -Reason "metadata missing project context path"
-        foreach ($needle in @('summarize','project_setup_next_step','Brainstorm New Spec','Write Plan','Create Issues','Run Align','Stop','start the selected next skill')) {
+        foreach ($needle in @('summarize','project_setup_next_step','top-level continuation gate','docs/superpowers/workflow-contract.yml','child routes','starting the selected next skill')) {
             Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing continuation route: $needle"
         }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"
@@ -212,12 +212,9 @@ try {
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
             "project_setup_next_step",
-            "Brainstorm New Spec",
-            "Write Plan",
-            "Create Issues",
-            "Run Align",
-            "Stop",
-            "start the selected next skill"
+            "top-level continuation gate",
+            "child routes",
+            "starting the selected next skill"
         )) {
             if (-not $metadata.Contains($needle)) { throw "missing compact continuation metadata: $needle" }
         }

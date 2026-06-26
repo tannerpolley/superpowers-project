@@ -8,7 +8,7 @@ interface:
     docs/superpowers/PROJECT_CONTEXT.md, keep canonical specs/plans/issues in flat canonical roots, and treat
     Milestone pages are index views with frontmatter plus milestone indexes. summarize artifact review gate status,
     what the agent thinks those results mean, machine-readable artifacts, broader project context, and recommended next route.
-    project_setup_next_step has Brainstorm New Spec, Write Plan, Create Issues, Run Align, and Stop;
-    start the selected next skill. GitHub Project board setup covers board creation. Use request_user_input before
+    project_setup_next_step is the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml
+    for planning, issue, and alignment child routes before starting the selected next skill. GitHub Project board setup covers board creation. Use request_user_input before
     creating or repairing tracker state. Metadata should identify setup scope without
     replacing the detailed setup contract.

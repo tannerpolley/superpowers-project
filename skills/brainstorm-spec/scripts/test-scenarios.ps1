@@ -139,10 +139,8 @@ $scenarios = @(
             "broader project context",
             "machine-readable artifacts",
             "project_brainstorm_next_step",
-            "Continue From Spec",
-            "Revise / Review Brainstorm",
-            "Stop",
-            "Manual Planning",
+            "top-level continuation gate",
+            "child routes",
             "loaded thread may still be using older skill text",
             "re-ask the missed native route",
             "stale-thread recovery",
@@ -225,6 +223,8 @@ $scenarios = @(
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
             "project_brainstorm_next_step",
+            "top-level continuation gate",
+            "child routes",
             "project_brainstorm_plan_route",
             "project_brainstorm_reiteration_route",
             "start the selected next skill"
