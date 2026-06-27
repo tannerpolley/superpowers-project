@@ -44,6 +44,8 @@ try {
 
 Route-specific gate.
 Strict artifact display is mandatory and must happen before the summary or native question.
+Add the helper-required findings summary with route-specific status.
+After artifacts are shown, add a separate findings summary that repeats helper policy.
 The top-level closeout question must use exactly three trajectory options.
 '@
     $duplicate = Invoke-Validator -FixtureRoot $duplicateRoot

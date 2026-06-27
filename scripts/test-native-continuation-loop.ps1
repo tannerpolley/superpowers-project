@@ -84,6 +84,8 @@ function Get-QuestionBlock {
 $checks = [System.Collections.Generic.List[object]]::new()
 $skillRoot = Join-Path $RepoRoot "skills"
 . (Join-Path $RepoRoot "scripts\lib\project-skills.ps1")
+$helperPath = Join-Path $skillRoot "advanced-user-input\SKILL.md"
+$helperText = if (Test-Path -LiteralPath $helperPath -PathType Leaf) { Get-Content -LiteralPath $helperPath -Raw } else { "" }
 $workflowSkillNames = @(Get-ProjectWorkflowSkillNames -RepoRoot $RepoRoot)
 $finalCapableSkillNames = @(Get-ProjectFinalCapableSkillNames)
 $intermediateSkillNames = @($workflowSkillNames | Where-Object { $finalCapableSkillNames -notcontains $_ })
@@ -134,9 +136,10 @@ foreach ($skillName in $workflowSkillNames) {
 
     Add-Check $checks "$skillName contains artifact review gate" ($text.Contains('artifact review gate')) "$skillPath must contain closeout artifact review wording"
     Add-Check $checks "$skillName references helper-required artifact review" ($text.Contains('artifact review gate required by `skills/advanced-user-input/SKILL.md`')) "$skillPath must reference helper-owned artifact review gate"
-    Add-Check $checks "$skillName preserves route-specific artifact inventory" ($text.Contains('Route-specific artifact inventory must include')) "$skillPath must preserve route-specific artifact inventory"
-    Add-Check $checks "$skillName preserves route-specific findings summary" ($text.Contains('helper-required findings summary')) "$skillPath must preserve route-specific findings summary"
-    Add-Check $checks "$skillName contains findings interpretation wording" ($text.Contains('route-specific status')) "$skillPath must interpret the route-specific closeout result"
+    Add-Check $checks "$skillName preserves route-specific artifact inventory" ($text.Contains('route-specific artifact inventory:') -or $text.Contains('Route-specific artifact inventory must include')) "$skillPath must preserve route-specific artifact inventory"
+    Add-Check $checks "$skillName delegates findings summary to helper" ($text.Contains('skills/advanced-user-input/SKILL.md') -and $helperText.Contains('After the artifact review gate, add a separate findings summary')) "$skillPath must delegate findings-summary policy to $helperPath"
+    Add-Check $checks "$skillName omits helper-required summary duplication" (-not $text.Contains('Add the helper-required findings summary')) "$skillPath must not duplicate helper-required findings summary prose"
+    Add-Check $checks "$skillName uses centralized findings interpretation wording" ($helperText.Contains('what the results say') -and $helperText.Contains('what that means for the active goal')) "$helperPath must own findings interpretation wording"
     Add-Check $checks "$skillName omits old direction-coded option labels" (-not [regex]::IsMatch($text, '(?m)^\s*-\s+(Down|Left|Right):')) "$skillPath must not expose Down/Left/Right as option names"
 
     $agentPath = Join-Path $skillRoot "$skillName\agents\openai.yaml"

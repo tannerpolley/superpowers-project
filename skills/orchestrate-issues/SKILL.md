@@ -95,7 +95,7 @@ If the user gives only a GitHub issue URL, no local mirror exists, or the local 
 
 ## Native Continuation Gate
 
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking this route's native continuation or permission question. Route-specific artifact inventory must include the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, worker-changed artifact inventory, verification evidence status, exact test values/results when provided by the worker, and machine-readable handoff ledgers. Add the helper-required findings summary with route-specific status for the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, verification evidence status.
+Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking any route continuation or permission question, with this route-specific artifact inventory: the issue mirror, derived branch, worker thread title, evidence folder, PR URL if available, worker-changed artifact inventory, verification evidence status, exact test values/results when provided by the worker, and machine-readable handoff ledgers.
 
 Use `skills/advanced-user-input/SKILL.md` for global native question geometry, Custom Other handling, Revisit behavior, Stop and verified Done terminal rules, and nested-route rules. This skill keeps only route-specific question IDs, route labels, validators, ledgers, artifact lists, and execution routes. Ask the skill-specific native continuation question with `request_user_input` when callable; selected answers are executable routing.
 

@@ -173,14 +173,13 @@ $scenarios = @(
         $text = Get-Content -LiteralPath $skillFile -Raw
         foreach ($needle in @(
             "## Native Continuation Gate",
-            "helper-required findings summary",
+            "skills/advanced-user-input/SKILL.md",
             "artifact review gate",
-            "Route-specific artifact inventory",
+            "route-specific artifact inventory:",
             "Outcome Proof",
             "Implementation Boundaries",
             "Task # Use Cases",
             "what counts as test complete",
-            "scientific or engineering numerical metrics",
             "Review First",
             "stop",
             "request_user_input",

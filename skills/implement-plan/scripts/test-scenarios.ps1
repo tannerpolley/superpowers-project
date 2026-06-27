@@ -119,9 +119,8 @@ $scenarios = @(
         foreach ($needle in @(
             "artifact review gate",
             "verification evidence",
-            "broader project context",
-            "recommended next route",
-            "helper-required findings summary",
+            "skills/advanced-user-input/SKILL.md",
+            "route-specific artifact inventory:",
             "merge-ready drafts",
             "Do not ask for push approval first and explain later"
         )) {
