@@ -62,9 +62,9 @@ function Get-ValidExamplesMarkdown {
 **Example ID:** looping-mode-candidate-selection
 **Route sequence:** initiate-workflow -> loop-controller -> resolve-issue -> merge-changes -> loop-controller
 **Question IDs:** project_workflow_mode, project_loop_next_step, project_resolve_push_permission, project_resolve_next_step, project_resolve_integration_route, project_merge_approval, project_merge_final_health_gate, project_loop_next_step
-**Artifacts:** .superpowers/runs/<run-id>/run-ledger.json; .superpowers/runs/<run-id>/budget-ledger.json; docs/superpowers/backlog/ACTIVE.md; closeout ledger
-**Validators:** skills/loop-controller/scripts/validate-run-ledger.ps1; skills/loop-controller/scripts/validate-budget.ps1; skills/loop-controller/scripts/select-candidate.ps1
-**Stop point:** project_loop_next_step after budget recheck and candidate selection proof.
+**Artifacts:** docs/superpowers/loop-mode-contract.yml; .superpowers/runs/<run-id>/run-ledger.json; .superpowers/runs/<run-id>/budget-ledger.json; .superpowers/runs/<run-id>/loop-state-machine.json; docs/superpowers/backlog/ACTIVE.md; closeout ledger
+**Validators:** skills/loop-controller/scripts/validate-run-ledger.ps1; skills/loop-controller/scripts/validate-budget.ps1; skills/loop-controller/scripts/select-candidate.ps1; skills/loop-controller/scripts/validate-loop-state-machine.ps1
+**Stop point:** project_loop_next_step after owner-route proof, verifier proof, budget recheck, and state-machine proof.
 '@
 }
 
@@ -88,9 +88,19 @@ try {
     Add-Check -Name "missing stop point fails" -Ok ($missingStop.exit_code -ne 0 -and $missingStop.raw.Contains("Stop point")) -Reason "missing stop point should fail"
 
     $loopWithoutBudgetPath = Join-Path $tempRoot "loop-without-budget.md"
-    (Get-ValidExamplesMarkdown).Replace(" after budget recheck and candidate selection proof", " after candidate selection proof") | Set-Content -LiteralPath $loopWithoutBudgetPath -Encoding utf8NoBOM
+    (Get-ValidExamplesMarkdown).Replace("budget recheck, and ", "") | Set-Content -LiteralPath $loopWithoutBudgetPath -Encoding utf8NoBOM
     $loopWithoutBudget = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $loopWithoutBudgetPath)
     Add-Check -Name "loop example requires budget recheck" -Ok ($loopWithoutBudget.exit_code -ne 0 -and $loopWithoutBudget.raw.Contains("budget recheck")) -Reason "loop example without budget recheck should fail"
+
+    $loopWithoutStateMachinePath = Join-Path $tempRoot "loop-without-state-machine.md"
+    (Get-ValidExamplesMarkdown).
+        Replace("docs/superpowers/loop-mode-contract.yml; ", "").
+        Replace("; .superpowers/runs/<run-id>/loop-state-machine.json", "").
+        Replace("; skills/loop-controller/scripts/validate-loop-state-machine.ps1", "").
+        Replace(", and state-machine proof", "") |
+        Set-Content -LiteralPath $loopWithoutStateMachinePath -Encoding utf8NoBOM
+    $loopWithoutStateMachine = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $loopWithoutStateMachinePath)
+    Add-Check -Name "loop example requires state-machine proof" -Ok ($loopWithoutStateMachine.exit_code -ne 0 -and $loopWithoutStateMachine.raw.Contains("state-machine")) -Reason "loop example without state-machine proof should fail"
 
     $autoContinuesPath = Join-Path $tempRoot "auto-continues.md"
     (Get-ValidExamplesMarkdown).Replace("after one route only; Auto Mode does not continue to another candidate", "after continuing to another candidate") | Set-Content -LiteralPath $autoContinuesPath -Encoding utf8NoBOM

@@ -244,6 +244,39 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Loop Controller contract failed" }
     }))
 
+    $results.Add((Invoke-Step "Loop Controller state machine" {
+        $stateRoot = Join-Path ([IO.Path]::GetTempPath()) ("loop-state-validate-" + [guid]::NewGuid().ToString("N"))
+        $statePath = Join-Path $stateRoot "loop-state.json"
+        try {
+            New-Item -ItemType Directory -Path $stateRoot -Force | Out-Null
+            @{
+                selected_mode = "looping"
+                status = "running"
+                dirty_repo_status = ""
+                selection_authority = "looping-mode-ledger"
+                candidates_ready_count = 1
+                iterations = @(
+                    @{
+                        selected_candidate_id = "fixture"
+                        selected_candidate_ids = @("fixture")
+                        candidate_source = "active-backlog"
+                        selected_route = "resolve-issue"
+                        owner_route = "resolve-issue"
+                        owner_result = @{ status = "merged"; proof = "fixture closeout" }
+                        budget_check_before_selection = @{ ok = $true }
+                        budget_recheck_after_candidate = @{ ok = $true }
+                        continuation_decision = @{ question_id = "project_loop_next_step"; selected_option = "Yes"; terminal_state = "continue" }
+                    }
+                )
+                skipped = @()
+            } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $statePath -Encoding utf8NoBOM
+            & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $skillRoot "loop-controller\scripts\validate-loop-state-machine.ps1") -RepoRoot $repoRoot -StatePath $statePath | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "Loop Controller state machine failed" }
+        } finally {
+            if (Test-Path -LiteralPath $stateRoot) { Remove-Item -LiteralPath $stateRoot -Recurse -Force }
+        }
+    }))
+
     $results.Add((Invoke-Step "Active backlog candidate signal" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-active-backlog.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Active backlog tests failed" }

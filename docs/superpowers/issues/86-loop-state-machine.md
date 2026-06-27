@@ -43,11 +43,18 @@ Make Looping Mode a strict validated coordinator with phase order, one-candidate
 
 ## Acceptance Criteria
 
-- [ ] Loop phases and invariants are documented in source-owned contract.
-- [ ] Loop state-machine validator exists and is wired into validation.
-- [ ] Second candidate selection is blocked until project_loop_next_step is recorded.
-- [ ] Auto Mode authorization cannot drive Looping Mode queue draining.
-- [ ] No-ready, budget-exhausted, dirty-repo, owner-mismatch, and historical-checkbox fixtures pass or fail correctly.
+- [x] Loop phases and invariants are documented in source-owned contract.
+- [x] Loop state-machine validator exists and is wired into validation.
+- [x] Second candidate selection is blocked until project_loop_next_step is recorded.
+- [x] Auto Mode authorization cannot drive Looping Mode queue draining.
+- [x] No-ready, budget-exhausted, dirty-repo, owner-mismatch, and historical-checkbox fixtures pass or fail correctly.
+
+## Implementation Receipt
+
+- Added `docs/superpowers/loop-mode-contract.yml` as the source-owned Looping Mode phase and invariant contract.
+- Added `skills/loop-controller/scripts/validate-loop-state-machine.ps1` to enforce one-candidate iterations, continuation gates, budget checks, clean-repo gates, no-ready proof, owner routing, historical checkbox handling, Auto Mode separation, and final Done proof.
+- Wired the state-machine validator into loop-controller docs, scenario fixtures, golden-path example validation, and `scripts/validate.ps1`.
+- Verified the focused proof oracle with `scripts/test-loop-controller.ps1`, `skills/loop-controller/scripts/test-scenarios.ps1`, `scripts/validate-workflow-examples.ps1`, and `git diff --check`.
 
 ## Blocked by
 

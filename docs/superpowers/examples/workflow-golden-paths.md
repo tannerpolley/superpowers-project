@@ -55,13 +55,13 @@ Flow:
 **Example ID:** looping-mode-candidate-selection
 **Route sequence:** initiate-workflow -> loop-controller -> resolve-issue -> merge-changes -> loop-controller
 **Question IDs:** project_workflow_mode, project_loop_next_step, project_resolve_push_permission, project_resolve_next_step, project_resolve_integration_route, project_merge_approval, project_merge_final_health_gate, project_loop_next_step
-**Artifacts:** .superpowers/runs/<run-id>/run-ledger.json; .superpowers/runs/<run-id>/budget-ledger.json; docs/superpowers/backlog/ACTIVE.md; closeout ledger
-**Validators:** skills/loop-controller/scripts/validate-run-ledger.ps1; skills/loop-controller/scripts/validate-budget.ps1; skills/loop-controller/scripts/select-candidate.ps1
-**Stop point:** project_loop_next_step after budget recheck and candidate selection proof.
+**Artifacts:** docs/superpowers/loop-mode-contract.yml; .superpowers/runs/<run-id>/run-ledger.json; .superpowers/runs/<run-id>/budget-ledger.json; .superpowers/runs/<run-id>/loop-state-machine.json; docs/superpowers/backlog/ACTIVE.md; closeout ledger
+**Validators:** skills/loop-controller/scripts/validate-run-ledger.ps1; skills/loop-controller/scripts/validate-budget.ps1; skills/loop-controller/scripts/select-candidate.ps1; skills/loop-controller/scripts/validate-loop-state-machine.ps1
+**Stop point:** project_loop_next_step after owner-route proof, verifier proof, budget recheck, and state-machine proof.
 
 Flow:
 
 1. Select Looping Mode at `project_workflow_mode`.
 2. Let `loop-controller` select exactly one ready candidate from the active backlog.
 3. Route that candidate to its owner and then through `merge-changes` when a PR is ready.
-4. Return to `loop-controller`, validate the run ledger and budget ledger, then ask `project_loop_next_step` before selecting another candidate.
+4. Return to `loop-controller`, validate the run ledger, budget ledger, verifier proof, and loop state-machine ledger, then ask `project_loop_next_step` before selecting another candidate.
