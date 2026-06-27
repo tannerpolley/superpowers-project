@@ -6,7 +6,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md
 **Classification:** AFK
-**Labels:** type:task, status:blocked
+**Labels:** type:task, status:ready
 **Goal Command:** /goal Resolve Decision Ledger Examples using docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md and docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md. Complete acceptance criteria and proof oracle, then hand off to merge-changes.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -51,7 +51,7 @@ Add practical spec and plan Decision Ledger examples that validate and are refer
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/87
+- None
 
 ## Non-goals
 
@@ -65,4 +65,3 @@ Add practical spec and plan Decision Ledger examples that validate and are refer
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path .\docs\superpowers\specs\2026-06-26-score-9-loop-mode-hardening-spec.md -Kind spec`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path .\docs\superpowers\plans\2026-06-26-score-9-loop-mode-hardening-plan.md -Kind plan`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-
