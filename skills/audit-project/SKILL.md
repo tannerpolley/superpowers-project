@@ -83,7 +83,7 @@ In `debug_question_mode`, do not call `request_user_input`. Record a Native Ques
 Debug mode must not approve mutation. Debug mode must not perform repairs or pretend a live user approved mutation.
 ## Native Continuation Gate
 
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking this route's native continuation or permission question. Route-specific artifact inventory must include the findings spec, evidence snippets, P0/P1/P2/P3 findings, healthy checks, skipped checks, open questions, and any machine-readable artifacts when present. Add the helper-required findings summary with route-specific status for P0, P1, P2, and P3 findings, healthy checks, skipped checks, open questions.
+Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking any route continuation or permission question, with this route-specific artifact inventory: the findings spec, evidence snippets, P0/P1/P2/P3 findings, healthy checks, skipped checks, open questions, and any machine-readable artifacts when present.
 
 Use `skills/advanced-user-input/SKILL.md` for global native question geometry, Custom Other handling, Revisit behavior, Stop and verified Done terminal rules, and nested-route rules. This skill keeps only route-specific question IDs, route labels, validators, ledgers, artifact lists, and execution routes. Ask the skill-specific native continuation question with `request_user_input` when callable; selected answers are executable routing.
 

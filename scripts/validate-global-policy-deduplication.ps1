@@ -52,6 +52,9 @@ foreach ($needle in @(
 $duplicatedGlobalPolicy = @(
     "Strict artifact display is mandatory and must happen before the summary or native question.",
     "Do not merely say something changed.",
+    "Add the helper-required findings summary",
+    "After artifacts are shown, add a separate findings summary",
+    "permission question. Route-specific artifact inventory",
     "After the artifact review gate, add a separate findings summary that states what was done, what was fixed, what remains unsatisfactory or risky",
     "The top-level closeout question must use exactly three trajectory options",
     "Do not show Continue children beside Revisit and Stop in the same top-level question.",
