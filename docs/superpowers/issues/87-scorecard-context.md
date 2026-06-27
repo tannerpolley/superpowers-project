@@ -43,11 +43,19 @@ Record validator-backed 9+ score evidence and clarify the source-of-truth roles 
 
 ## Acceptance Criteria
 
-- [ ] Scorecard receipt exists and validates every target area at >= 9.
-- [ ] Receipt includes command receipts and source artifact links.
-- [ ] M0 and M1 milestone pages link the receipt.
-- [ ] Project context and README explain contract, active backlog, examples, receipts, .chatgpt, and .superpowers roles.
-- [ ] Docs do not call .chatgpt or .superpowers canonical project docs.
+- [x] Scorecard receipt exists and validates every target area at >= 9.
+- [x] Receipt includes command receipts and source artifact links.
+- [x] M0 and M1 milestone pages link the receipt.
+- [x] Project context and README explain contract, active backlog, examples, receipts, .chatgpt, and .superpowers roles.
+- [x] Docs do not call .chatgpt or .superpowers canonical project docs.
+
+## Implementation Receipt
+
+- Added `docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md` with scorecard rows, command receipts, source artifact links, Looping Mode proof, live sync/tracker proof, and source-role notes.
+- Added `scripts/validate-scorecard-proof.ps1` and `scripts/test-scorecard-proof.ps1` with fixtures for valid receipts, below-9 targets, missing command receipts, missing loop proof, and generated-state canonical claims.
+- Linked the receipt from `docs/superpowers/milestones/M0-governance.md` and `docs/superpowers/milestones/M1-source-of-truth.md`.
+- Updated `README.md`, `docs/superpowers/PROJECT_CONTEXT.md`, and generated `docs/superpowers/OUTCOME_WORKFLOW.md` to explain workflow contract, active backlog, examples, packet examples, receipts, `.chatgpt/**`, and `.superpowers/**` roles.
+- Wired scorecard proof validation into `scripts/validate.ps1`.
 
 ## Blocked by
 

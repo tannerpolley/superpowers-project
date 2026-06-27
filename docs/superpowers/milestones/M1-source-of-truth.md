@@ -33,6 +33,7 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 ## Validation Receipts
 
 - `docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md` records final live-sync, tracker, align, validation, cleanup, and clean-state proof for the M0/M1 workflow normalization issue set.
+- `docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md` records score 9+ hardening evidence, Looping Mode state-machine proof, source-role documentation, and command receipts.
 
 ## Closed Issues
 

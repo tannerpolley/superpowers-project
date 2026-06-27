@@ -79,7 +79,7 @@ Pass/fail metrics are command exit codes, validator JSON or console receipts, fi
 - Change the public artifact roots.
 - Make GitHub Projects mandatory.
 - Edit deployed live copies directly.
-- Treat `.chatgpt/**` or `.superpowers/**` as canonical documentation.
+- Do not treat `.chatgpt/**` or `.superpowers/**` as canonical documentation.
 - Collapse merge closeout, issue execution, or loop-controller boundaries into one shortcut.
 
 ## Issue Slices
