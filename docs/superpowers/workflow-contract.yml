@@ -486,6 +486,7 @@ workflow_skills:
       and alignment checks.
     question_ids:
     - project_auto_mode_authorization
+    - project_issue_resolution_route
     - project_workflow_mode
     final_health_gate: null
     top_level_options: []
@@ -501,6 +502,12 @@ workflow_skills:
       options:
       - Bounded Auto Merge
       - Manual Mode
+    - question_id: project_issue_resolution_route
+      parent_option: issue request
+      options:
+      - Project Resolve
+      - Project Orchestrate
+      - Review First
     validators:
     - scripts/validate-workflow-mode-ledger.ps1
     - scripts/validate-auto-mode-authorization.ps1
@@ -538,6 +545,17 @@ workflow_skills:
         terminal_state: continue
       - label: Looping Mode
         terminal_state: continue
+    - question_id: project_issue_resolution_route
+      gate_type: data_selection
+      prompt: How should this issue be executed?
+      parent_option: issue request
+      options:
+      - label: Project Resolve
+        terminal_state: continue
+      - label: Project Orchestrate
+        terminal_state: continue
+      - label: Review First
+        terminal_state: revisit
   loop-controller:
     purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation
       gates.
@@ -944,6 +962,7 @@ workflow_skills:
   setup-project:
     purpose: Create or maintain setup, milestone map, tracker config, project board configuration, and roadmap artifacts.
     question_ids:
+    - project_setup_board_approval
     - project_setup_next_step
     - project_setup_reiteration_group
     - project_setup_reiteration_route
@@ -979,6 +998,17 @@ workflow_skills:
     - brainstorm-spec
     - align-project
     gates:
+    - question_id: project_setup_board_approval
+      gate_type: approval
+      prompt: Create or verify the GitHub Project board now?
+      parent_option: board setup
+      options:
+      - label: Create Board
+        approval_effect: create
+      - label: Verify Only
+        approval_effect: verify-only
+      - label: Stop
+        approval_effect: stop
     - question_id: project_setup_next_step
       gate_type: top_level_continuation
       prompt: Should I continue on with the workflow?
@@ -1142,9 +1172,4 @@ workflow_skills:
         terminal_state: continue
       - label: Use Ready Issue
         terminal_state: continue
-native_identifier_allowlist:
-- id: project_setup_board_approval
-  reason: Prose reference to existing board approval evidence; issue 85 will register or rewrite it as a material native gate.
-- id: project_issue_resolution_route
-  reason: Router prose reference for choosing resolve versus orchestrate; issue 85 will register or rewrite it as a material
-    native gate.
+native_identifier_allowlist: []

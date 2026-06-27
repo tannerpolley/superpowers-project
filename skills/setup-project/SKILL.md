@@ -98,7 +98,17 @@ When a repo is GitHub-linked, `$superpowers-project:setup-project` can create or
 
 Board setup is optional project-management evidence. GitHub Projects must not become canonical storage for specs, plans, issue mirrors, or milestone pages. The canonical artifacts remain under `docs/superpowers`.
 
-Before creating or mutating a board, summarize the proposed board title, repository, milestone/status fields, issue-linking scope, and dry-run evidence, then ask native question `project_setup_board_approval` with `Create Board`, `Verify Only`, and `Stop` options. Do not call `gh project` mutation commands unless the selected action is `create`.
+Before creating or mutating a board, summarize the proposed board title, repository, milestone/status fields, issue-linking scope, and dry-run evidence, then ask native question `project_setup_board_approval`. Do not call `gh project` mutation commands unless the selected action is `create`.
+
+Question id: `project_setup_board_approval`
+
+Prompt: `Create or verify the GitHub Project board now?`
+
+Options:
+
+- `Create Board`: create or reuse the GitHub Project board after approval.
+- `Verify Only`: validate existing board configuration without mutation.
+- `Stop`: stop before board mutation.
 
 Use `scripts/prepare-github-project-board.ps1 -Mode Plan` before native approval. After native approval selects `Create Board`, use `-Mode Create` with structured `NativeApprovalJson`; the script creates or reuses the board, ensures required fields, links approved issue URLs, and records board configuration in `docs/agents/project-roadmap.json`. Use `-Mode ValidateConfig` for existing-board evidence. When useful for humans, mirror the board summary in `docs/agents/project-roadmap.md`.
 

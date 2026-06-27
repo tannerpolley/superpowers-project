@@ -13,7 +13,7 @@ interface:
     recommended next route, selected native answers, executable routing, and start selected continuation routes.
     Support one-route autonomy and bounded repeated maintenance autonomy. Implement approved plan without a GitHub issue
     through implement-plan on a development branch; non-trivial issue-backed work routes through
-    project_issue_resolution_route.
+    project_issue_resolution_route with Project Resolve, Project Orchestrate, and Review First.
     Routing is not complete until the paired Superpowers companion method is also enforced: brainstorm-spec with
     superpowers:brainstorming; write-plan with superpowers:writing-plans; implement-plan with
     superpowers:executing-plans plus required TDD/debug/verification companions; create-issues with downstream

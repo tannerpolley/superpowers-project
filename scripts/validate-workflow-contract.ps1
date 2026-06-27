@@ -51,6 +51,12 @@ function Get-AllowlistedNativeIdentifiers {
     $allowlist
 }
 
+function Get-NativeIdentifierAllowlistEntries {
+    param($Contract)
+    if ($null -eq $Contract.native_identifier_allowlist) { return @() }
+    @($Contract.native_identifier_allowlist | Where-Object { $null -ne $_ })
+}
+
 function Test-GateTypeRules {
     param([object]$Gate)
 
@@ -122,6 +128,12 @@ try {
     $contract = Read-WorkflowContract -Path $ContractPath
     $nativeIdentifierAllowlist = Get-AllowlistedNativeIdentifiers -Contract $contract
     Add-Check -Name "contract file parses" -Ok $true -Reason "passed"
+
+    foreach ($entry in @(Get-NativeIdentifierAllowlistEntries -Contract $contract)) {
+        $id = if ($entry.PSObject.Properties.Name -contains "id") { [string]$entry.id } else { "" }
+        $reason = if ($entry.PSObject.Properties.Name -contains "reason") { [string]$entry.reason } else { "" }
+        Add-Check -Name "native identifier allowlist reason: $id" -Ok (-not [string]::IsNullOrWhiteSpace($id) -and -not [string]::IsNullOrWhiteSpace($reason)) -Reason "native_identifier_allowlist entries require id and non-empty reason"
+    }
 
     $workflowSkillsObject = $contract.workflow_skills
     if ($null -eq $workflowSkillsObject) { Complete -Ok $false -Reason "workflow_skills is required" }

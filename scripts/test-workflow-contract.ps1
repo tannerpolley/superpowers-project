@@ -101,6 +101,8 @@ Options:
 - Done: finish.
 - Revisit: review.
 - Stop: stop.
+
+The prose-only token ``alpha_shadow_route`` is intentionally not a native gate.
 "@
 
     $validContract = Join-Path $tempRoot "valid.yml"
@@ -274,6 +276,23 @@ workflow_skills:
     $missingGateText = $missingGateText -replace '(?ms)\n      - question_id: alpha_permission\n        gate_type: permission.*?(?=\n      - question_id: alpha_topology)', ''
     Write-TextFile -Path $missingGateContract -Text $missingGateText
 
+    $missingAllowlistReasonContract = Join-Path $tempRoot "missing-allowlist-reason.yml"
+    $missingAllowlistReasonText = (Get-Content -LiteralPath $validContract -Raw).TrimEnd() + @"
+
+native_identifier_allowlist:
+  - id: alpha_shadow_route
+"@
+    Write-TextFile -Path $missingAllowlistReasonContract -Text $missingAllowlistReasonText
+
+    $validAllowlistReasonContract = Join-Path $tempRoot "valid-allowlist-reason.yml"
+    $validAllowlistReasonText = (Get-Content -LiteralPath $validContract -Raw).TrimEnd() + @"
+
+native_identifier_allowlist:
+  - id: alpha_shadow_route
+    reason: Example prose token used in documentation, not a native question.
+"@
+    Write-TextFile -Path $validAllowlistReasonContract -Text $validAllowlistReasonText
+
     $valid = Invoke-WorkflowContractValidator -ContractPath $validContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
     Add-Check -Name "fixture contract passes" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true) -Reason $valid.raw
 
@@ -285,6 +304,12 @@ workflow_skills:
 
     $missingGate = Invoke-WorkflowContractValidator -ContractPath $missingGateContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
     Add-Check -Name "missing typed gate fails" -Ok ($missingGate.exit_code -ne 0 -and $missingGate.raw -match "typed gates") -Reason "every question id needs a typed gate"
+
+    $missingAllowlistReason = Invoke-WorkflowContractValidator -ContractPath $missingAllowlistReasonContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
+    Add-Check -Name "allowlisted identifier without reason fails" -Ok ($missingAllowlistReason.exit_code -ne 0 -and $missingAllowlistReason.raw -match "native_identifier_allowlist entries require") -Reason "allowlisted native identifiers must include reasons"
+
+    $validAllowlistReason = Invoke-WorkflowContractValidator -ContractPath $validAllowlistReasonContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
+    Add-Check -Name "allowlisted identifier with reason passes" -Ok ($validAllowlistReason.exit_code -eq 0 -and $validAllowlistReason.json.ok -eq $true) -Reason $validAllowlistReason.raw
 
     $repoContract = Join-Path $RepoRoot "docs\superpowers\workflow-contract.yml"
     $repoResult = Invoke-WorkflowContractValidator -ContractPath $repoContract -SkillRoot (Join-Path $RepoRoot "skills") -WorkflowSkillNames @()
