@@ -6,7 +6,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md
 **Classification:** AFK
-**Labels:** type:task, status:blocked
+**Labels:** type:task, status:ready
 **Goal Command:** /goal Resolve Scorecard Proof Receipt And Project Context Narrative using docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md and docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md. Complete acceptance criteria and proof oracle, then hand off to merge-changes.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -51,7 +51,7 @@ Record validator-backed 9+ score evidence and clarify the source-of-truth roles 
 
 ## Blocked by
 
-- https://github.com/tannerpolley/superpowers-project/issues/86
+- None
 
 ## Non-goals
 
