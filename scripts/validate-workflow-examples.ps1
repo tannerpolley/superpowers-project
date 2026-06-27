@@ -118,6 +118,9 @@ try {
     if ($loopExample) {
         Add-Check -Name "looping mode example uses loop continuation gate" -Ok (@($loopExample.question_ids) -contains "project_loop_next_step") -Reason "Looping Mode example must include project_loop_next_step"
         Add-Check -Name "looping mode example requires budget recheck" -Ok ([string]$loopExample.stop_point -match 'budget recheck') -Reason "Looping Mode example must mention budget recheck"
+        Add-Check -Name "looping mode example uses state machine validator" -Ok (@($loopExample.validators) -contains "skills/loop-controller/scripts/validate-loop-state-machine.ps1") -Reason "Looping Mode example must include validate-loop-state-machine.ps1"
+        Add-Check -Name "looping mode example lists source contract" -Ok (@($loopExample.artifacts) -contains "docs/superpowers/loop-mode-contract.yml") -Reason "Looping Mode example must list docs/superpowers/loop-mode-contract.yml"
+        Add-Check -Name "looping mode example stops at state-machine proof" -Ok ([string]$loopExample.stop_point -match 'state-machine proof') -Reason "Looping Mode stop point must mention state-machine proof"
     }
 
     $failed = @($checks | Where-Object { -not $_.ok })

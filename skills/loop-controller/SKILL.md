@@ -43,6 +43,22 @@ Existing skills own work:
 - `$superpowers-project:audit-project` owns evidence-backed audit findings.
 - `$superpowers-project:align-project` owns source/live/tracker drift repair.
 
+## Loop State Machine
+
+The source-owned loop contract is `docs/superpowers/loop-mode-contract.yml`. The required phase order is:
+
+1. startup version check
+2. workflow mode ledger validation
+3. run ledger validation
+4. budget check before selection
+5. select exactly one candidate
+6. route to the owner skill
+7. record verifier proof
+8. re-check budget
+9. ask `project_loop_next_step` before selecting another candidate
+
+Second candidate selection is invalid until `project_loop_next_step` records `Yes` with `terminal_state: continue` after the prior candidate has owner-route proof and a budget recheck. Auto Mode authorization may be carried as historical route evidence, but it must not be used as the authority to drain a Looping Mode queue.
+
 ## Run State
 
 Default generated run state lives under `.superpowers/runs/<run-id>`. Do not commit generated run ledgers unless a later approved plan explicitly requests durable committed run history.
@@ -77,6 +93,12 @@ Validate terminal closeout with:
 
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-terminal-closeout.ps1 -RepoRoot <repo-root> -RunResultPath <run-result-path>
+```
+
+Validate loop state-machine ledgers with:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-loop-state-machine.ps1 -RepoRoot <repo-root> -StatePath <state-path>
 ```
 
 Write metrics reports with:

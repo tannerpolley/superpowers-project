@@ -152,7 +152,181 @@ try {
 
     $verifierScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-verifier-ledger.ps1"
     $terminalScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-terminal-closeout.ps1"
+    $stateMachineScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-loop-state-machine.ps1"
     $metricsScript = Join-Path $RepoRoot "skills\loop-controller\scripts\write-metrics-report.ps1"
+
+    $oneCandidateStatePath = Join-Path $tempRoot "loop-state-one-candidate.json"
+    @{
+        selected_mode = "looping"
+        status = "running"
+        dirty_repo_status = ""
+        selection_authority = "looping-mode-ledger"
+        candidates_ready_count = 1
+        iterations = @(
+            @{
+                selected_candidate_id = "86"
+                selected_candidate_ids = @("86")
+                candidate_source = "active-backlog"
+                selected_route = "resolve-issue"
+                owner_route = "resolve-issue"
+                owner_result = @{ status = "merged"; proof = "pr-ready and closeout proof" }
+                budget_check_before_selection = @{ ok = $true }
+                budget_recheck_after_candidate = @{ ok = $true }
+                continuation_decision = @{ question_id = "project_loop_next_step"; selected_option = "Yes"; terminal_state = "continue" }
+            }
+        )
+        skipped = @()
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $oneCandidateStatePath -Encoding utf8NoBOM
+    $oneCandidateState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $oneCandidateStatePath)
+    Add-Check -Name "loop state accepts one candidate iteration" -Ok ($oneCandidateState.exit_code -eq 0 -and $oneCandidateState.json.ok -eq $true) -Reason $oneCandidateState.raw
+
+    $missingContinuationStatePath = Join-Path $tempRoot "loop-state-missing-continuation.json"
+    @{
+        selected_mode = "looping"
+        status = "running"
+        dirty_repo_status = ""
+        selection_authority = "looping-mode-ledger"
+        candidates_ready_count = 2
+        iterations = @(
+            @{
+                selected_candidate_id = "86"
+                selected_candidate_ids = @("86")
+                candidate_source = "active-backlog"
+                selected_route = "resolve-issue"
+                owner_route = "resolve-issue"
+                owner_result = @{ status = "merged"; proof = "closeout proof" }
+                budget_check_before_selection = @{ ok = $true }
+                budget_recheck_after_candidate = @{ ok = $true }
+            },
+            @{
+                selected_candidate_id = "88"
+                selected_candidate_ids = @("88")
+                candidate_source = "active-backlog"
+                selected_route = "resolve-issue"
+                owner_route = "resolve-issue"
+                owner_result = @{ status = "selected"; proof = "second selection" }
+                budget_check_before_selection = @{ ok = $true }
+            }
+        )
+        skipped = @()
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $missingContinuationStatePath -Encoding utf8NoBOM
+    $missingContinuationState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $missingContinuationStatePath)
+    Add-Check -Name "loop state blocks second candidate before continuation" -Ok ($missingContinuationState.exit_code -ne 0 -and $missingContinuationState.json.reason.Contains("project_loop_next_step")) -Reason "second candidate selection must require continuation gate"
+
+    $noReadyStatePath = Join-Path $tempRoot "loop-state-no-ready.json"
+    @{
+        selected_mode = "looping"
+        status = "paused"
+        dirty_repo_status = ""
+        selection_authority = "looping-mode-ledger"
+        candidates_ready_count = 0
+        iterations = @()
+        no_ready_proof = @{ source = "select-candidate"; reason = "no ready candidates" }
+        skipped = @()
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $noReadyStatePath -Encoding utf8NoBOM
+    $noReadyState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $noReadyStatePath)
+    Add-Check -Name "loop state accepts explicit no-ready proof" -Ok ($noReadyState.exit_code -eq 0 -and $noReadyState.json.ok -eq $true) -Reason $noReadyState.raw
+
+    $autoMisuseStatePath = Join-Path $tempRoot "loop-state-auto-misuse.json"
+    @{
+        selected_mode = "looping"
+        status = "running"
+        dirty_repo_status = ""
+        selection_authority = "auto-mode"
+        auto_mode_authorization_path = ".superpowers/runs/fixture/auto-mode.json"
+        candidates_ready_count = 1
+        iterations = @(
+            @{
+                selected_candidate_id = "86"
+                selected_candidate_ids = @("86")
+                candidate_source = "active-backlog"
+                selected_route = "resolve-issue"
+                owner_route = "resolve-issue"
+                owner_result = @{ status = "merged"; proof = "closeout proof" }
+                budget_check_before_selection = @{ ok = $true }
+                budget_recheck_after_candidate = @{ ok = $true }
+            }
+        )
+        skipped = @()
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $autoMisuseStatePath -Encoding utf8NoBOM
+    $autoMisuseState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $autoMisuseStatePath)
+    Add-Check -Name "loop state rejects Auto Mode queue authority" -Ok ($autoMisuseState.exit_code -ne 0 -and $autoMisuseState.json.reason.Contains("Auto Mode")) -Reason "Auto Mode must not authorize Looping Mode queue draining"
+
+    $budgetExhaustedStatePath = Join-Path $tempRoot "loop-state-budget-exhausted.json"
+    @{
+        selected_mode = "looping"
+        status = "running"
+        dirty_repo_status = ""
+        selection_authority = "looping-mode-ledger"
+        candidates_ready_count = 1
+        iterations = @(
+            @{
+                selected_candidate_id = "86"
+                selected_candidate_ids = @("86")
+                candidate_source = "active-backlog"
+                selected_route = "resolve-issue"
+                owner_route = "resolve-issue"
+                owner_result = @{ status = "selected"; proof = "selection" }
+                budget_check_before_selection = @{ ok = $false; reason = "candidates_completed exhausted" }
+            }
+        )
+        skipped = @()
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $budgetExhaustedStatePath -Encoding utf8NoBOM
+    $budgetExhaustedState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $budgetExhaustedStatePath)
+    Add-Check -Name "loop state rejects exhausted budget before selection" -Ok ($budgetExhaustedState.exit_code -ne 0 -and $budgetExhaustedState.json.reason.Contains("budget")) -Reason "budget exhaustion should block candidate selection"
+
+    $dirtyRepoStatePath = Join-Path $tempRoot "loop-state-dirty-repo.json"
+    @{
+        selected_mode = "looping"
+        status = "running"
+        dirty_repo_status = " M docs/superpowers/backlog/ACTIVE.md"
+        selection_authority = "looping-mode-ledger"
+        candidates_ready_count = 1
+        iterations = @()
+        skipped = @()
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $dirtyRepoStatePath -Encoding utf8NoBOM
+    $dirtyRepoState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $dirtyRepoStatePath)
+    Add-Check -Name "loop state rejects dirty repo before selection" -Ok ($dirtyRepoState.exit_code -ne 0 -and $dirtyRepoState.json.reason.Contains("dirty repo")) -Reason "dirty repo should block candidate selection"
+
+    $ownerMismatchStatePath = Join-Path $tempRoot "loop-state-owner-mismatch.json"
+    @{
+        selected_mode = "looping"
+        status = "running"
+        dirty_repo_status = ""
+        selection_authority = "looping-mode-ledger"
+        candidates_ready_count = 1
+        iterations = @(
+            @{
+                selected_candidate_id = "86"
+                selected_candidate_ids = @("86")
+                candidate_source = "active-backlog"
+                selected_route = "resolve-issue"
+                owner_route = "orchestrate-issues"
+                owner_result = @{ status = "merged"; proof = "wrong owner" }
+                budget_check_before_selection = @{ ok = $true }
+                budget_recheck_after_candidate = @{ ok = $true }
+            }
+        )
+        skipped = @()
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $ownerMismatchStatePath -Encoding utf8NoBOM
+    $ownerMismatchState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $ownerMismatchStatePath)
+    Add-Check -Name "loop state rejects owner route mismatch" -Ok ($ownerMismatchState.exit_code -ne 0 -and $ownerMismatchState.json.reason.Contains("owner route")) -Reason "candidate owner route must match selected route"
+
+    $historicalSkippedStatePath = Join-Path $tempRoot "loop-state-historical-skipped.json"
+    @{
+        selected_mode = "looping"
+        status = "paused"
+        dirty_repo_status = ""
+        selection_authority = "looping-mode-ledger"
+        candidates_ready_count = 0
+        iterations = @()
+        no_ready_proof = @{ source = "select-candidate"; reason = "no ready candidates" }
+        skipped = @(
+            @{ id = "archived-plan-checkbox"; source = "historical-checkbox"; reason = "historical checkbox rejected by status" }
+        )
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $historicalSkippedStatePath -Encoding utf8NoBOM
+    $historicalSkippedState = Invoke-JsonScript -Path $stateMachineScript -Arguments @("-RepoRoot", $RepoRoot, "-StatePath", $historicalSkippedStatePath)
+    Add-Check -Name "loop state accepts skipped historical checkbox proof" -Ok ($historicalSkippedState.exit_code -eq 0 -and $historicalSkippedState.json.ok -eq $true) -Reason $historicalSkippedState.raw
 
     $verifierPath = Join-Path $tempRoot "verifier-ledger.json"
     @{
