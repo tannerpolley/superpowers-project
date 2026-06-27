@@ -41,6 +41,15 @@ The companion route uses BuilderIO/Agent-Native MDX as a visual guide and audit 
 - Skip the companion for tiny obvious edits that review faster as a plain diff or short chat note.
 - Native Codex chat and `request_user_input` remain the approval boundary for push, publish, merge, live sync, GitHub mutation, and final Done.
 
+## Source-Of-Truth Roles
+
+- `docs/superpowers/workflow-contract.yml` is the route contract for material native gates, gate types, exact option labels, and approval or permission effects.
+- `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source; historical plan checkboxes and closed issue mirrors are not active candidates.
+- `docs/superpowers/examples/workflow-golden-paths.md` is an examples surface, not the route authority.
+- `docs/superpowers/examples/worker-handoff-packets.md` is packet shape evidence for orchestrated worker handoffs.
+- `docs/superpowers/milestones/*receipt*.md` files are validation receipts and milestone history, not active backlog.
+- `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.
+
 ## Docker Agent-Native Preview
 
 To host the checked-in Agent-Native companion preview from a container:
@@ -214,4 +223,3 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
 After install, start with `$superpowers-project:initiate-workflow` in Codex to route setup, brainstorming, code/workflow audits, planning, issue creation, issue resolution, orchestration, merge cleanup, or alignment checks.
-

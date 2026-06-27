@@ -314,6 +314,13 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Workflow normalization proof validator failed" }
     }))
 
+    $results.Add((Invoke-Step "Scorecard proof receipt" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-scorecard-proof.ps1") | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Scorecard proof tests failed" }
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-scorecard-proof.ps1") -RepoRoot $repoRoot | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Scorecard proof validator failed" }
+    }))
+
     $results.Add((Invoke-Step "Workflow mode entry contract" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-initiate-workflow-mode-gate.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Workflow mode entry contract failed" }

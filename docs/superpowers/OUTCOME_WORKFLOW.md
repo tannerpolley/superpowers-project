@@ -15,6 +15,15 @@
 - Issue mirrors: `docs/superpowers/issues/`
 - Milestone index pages: `docs/superpowers/milestones/`
 
+## Source-Of-Truth Roles
+
+- `docs/superpowers/workflow-contract.yml` is the route contract for native question IDs, gate types, exact option labels, and material approval boundaries.
+- `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source.
+- `docs/superpowers/examples/workflow-golden-paths.md` is an examples surface, not the route authority.
+- `docs/superpowers/examples/worker-handoff-packets.md` is packet shape evidence for worker orchestration.
+- `docs/superpowers/milestones/*receipt*.md` files are validation receipts and milestone history, not active backlog.
+- `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.
+
 ## Plan Task Use Cases
 
 - `Task # Use Cases` is a strict requirement for plan making, plan implementation, and issue resolution.

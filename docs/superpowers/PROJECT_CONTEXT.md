@@ -12,6 +12,15 @@ Superpowers Project extends Superpowers with durable project context, roadmap an
 - Milestone pages: `docs/superpowers/milestones/`
 - Agent-Native review artifacts: `plans/<slug>/plan.mdx` with optional `canvas.mdx` or `prototype.mdx`; use visual-plan artifacts for forward-looking specs and implementation plans, and visual-recap artifacts for after-action PR, branch, validation, audit, merge, and workflow proof. These are rich review and audit surfaces, not replacements for canonical Superpowers specs, plans, issue mirrors, or milestone pages.
 
+## Source-Of-Truth Roles
+
+- `docs/superpowers/workflow-contract.yml` is the route contract for native question IDs, gate types, exact option labels, and material approval boundaries.
+- `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source. Historical plan checkboxes, milestone receipts, and closed issue mirrors are not active candidates.
+- `docs/superpowers/examples/workflow-golden-paths.md` is an examples surface for expected workflow shape.
+- `docs/superpowers/examples/worker-handoff-packets.md` is packet shape evidence for worker orchestration.
+- `docs/superpowers/milestones/*receipt*.md` files are validation receipts and milestone history.
+- `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.
+
 ## Roadmap And Milestones
 
 The project roadmap has three active GitHub-backed milestones:
