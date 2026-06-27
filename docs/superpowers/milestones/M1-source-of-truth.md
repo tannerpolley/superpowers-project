@@ -37,6 +37,7 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/87](https://github.com/tannerpolley/superpowers-project/issues/87) closed by [https://github.com/tannerpolley/superpowers-project/pull/94](https://github.com/tannerpolley/superpowers-project/pull/94) on 2026-06-27T18:36:57Z
 - [https://github.com/tannerpolley/superpowers-project/issues/86](https://github.com/tannerpolley/superpowers-project/issues/86) closed by [https://github.com/tannerpolley/superpowers-project/pull/93](https://github.com/tannerpolley/superpowers-project/pull/93) on 2026-06-27T16:24:10Z
 - [https://github.com/tannerpolley/superpowers-project/issues/85](https://github.com/tannerpolley/superpowers-project/issues/85) closed by [https://github.com/tannerpolley/superpowers-project/pull/92](https://github.com/tannerpolley/superpowers-project/pull/92) on 2026-06-27T00:21:49Z
 - [https://github.com/tannerpolley/superpowers-project/issues/84](https://github.com/tannerpolley/superpowers-project/issues/84) closed by [https://github.com/tannerpolley/superpowers-project/pull/91](https://github.com/tannerpolley/superpowers-project/pull/91) on 2026-06-26T23:02:59Z
