@@ -112,6 +112,8 @@ Plans created from source specs must carry forward source-spec decisions that st
 
 `Deferred?` must use `Yes` or `No`. Deferred rows must name a concrete risk owner and downstream impact; they are not allowed to hide missing scope, proof, owner, or cutover decisions.
 
+Use `docs/superpowers/examples/decision-ledger-examples.md#plan-style-decision-ledger-example` as the practical example shape for plan Decision Ledgers.
+
 Before saving or presenting a plan as ready, run the repo-root validator:
 
 ```powershell
