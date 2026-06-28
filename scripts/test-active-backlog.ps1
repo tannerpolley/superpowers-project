@@ -48,6 +48,11 @@ try {
     $valid = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $validBacklog)
     Add-Check -Name "valid active backlog passes" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true -and $valid.json.ready_count -eq 1) -Reason $valid.raw
 
+    $emptyBacklog = Join-Path $tempRoot "empty-active.md"
+    Write-BacklogFixture -Path $emptyBacklog -Rows @()
+    $empty = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $emptyBacklog)
+    Add-Check -Name "empty active backlog passes" -Ok ($empty.exit_code -eq 0 -and $empty.json.ok -eq $true -and $empty.json.entry_count -eq 0 -and $empty.json.ready_count -eq 0) -Reason $empty.raw
+
     $missingProof = Join-Path $tempRoot "missing-proof.md"
     Write-BacklogFixture -Path $missingProof -Rows @(
         "| final-proof | align-project | docs/superpowers/milestones/M1-workflow-normalization-validation-receipt.md | P2 | ready |  | missing proof target |"

@@ -105,7 +105,6 @@ function Read-ActiveBacklog {
         }
         $entries.Add($entry) | Out-Null
     }
-    if ($entries.Count -eq 0) { throw "active backlog table has no entries" }
     @($entries)
 }
 
