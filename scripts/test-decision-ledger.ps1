@@ -47,6 +47,17 @@ Regular body.
 "@
 }
 
+function Get-ExampleMarkdownBlock {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][ValidateSet("spec", "plan")][string]$Kind
+    )
+    $pattern = '(?ms)<!--\s*decision-ledger-example:\s*' + [regex]::Escape($Kind) + '\s*-->\s*```markdown\r?\n(?<body>.*?)\r?\n```'
+    $match = [regex]::Match($Text, $pattern)
+    if (-not $match.Success) { return $null }
+    $match.Groups["body"].Value.Trim()
+}
+
 try {
     $tempDir = Join-Path ([IO.Path]::GetTempPath()) ("decision-ledger-" + [guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
@@ -108,9 +119,38 @@ try {
     $deferredNoImpactResult = Invoke-Validator -ValidatorRepoRoot $fixtureRepo -ArtifactPath $deferredNoImpact -Kind "plan"
     Add-Check -Name "deferred decision without downstream impact fails" -Ok ($deferredNoImpactResult.exit_code -ne 0 -and [string]$deferredNoImpactResult.json.reason -match "downstream impact") -Reason "deferred decision without downstream impact should fail"
 
+    $examplesRelative = "docs\superpowers\examples\decision-ledger-examples.md"
+    $examplesPath = Join-Path $RepoRoot $examplesRelative
+    $examplesExists = Test-Path -LiteralPath $examplesPath -PathType Leaf
+    Add-Check -Name "Decision Ledger examples file exists" -Ok $examplesExists -Reason "$examplesRelative is missing"
+    if ($examplesExists) {
+        $examplesText = Get-Content -LiteralPath $examplesPath -Raw
+        foreach ($needle in @("user answer", "repo evidence", "planning grill", "deferred decision", "Risk owner", "downstream impact")) {
+            Add-Check -Name "examples mention $needle" -Ok $examplesText.Contains($needle) -Reason "examples missing $needle"
+        }
+
+        $exampleSpecBody = Get-ExampleMarkdownBlock -Text $examplesText -Kind "spec"
+        Add-Check -Name "spec-style example block exists" -Ok (-not [string]::IsNullOrWhiteSpace($exampleSpecBody)) -Reason "spec example block is missing"
+        if (-not [string]::IsNullOrWhiteSpace($exampleSpecBody)) {
+            $exampleSpec = "docs/superpowers/specs/example-decision-ledger-spec.md"
+            Set-Content -LiteralPath (Join-Path $fixtureRepo $exampleSpec) -Encoding utf8NoBOM -Value $exampleSpecBody
+            $exampleSpecResult = Invoke-Validator -ValidatorRepoRoot $fixtureRepo -ArtifactPath $exampleSpec -Kind "spec"
+            Add-Check -Name "spec-style example validates" -Ok ($exampleSpecResult.exit_code -eq 0 -and $exampleSpecResult.json.ok -eq $true -and $exampleSpecResult.json.row_count -ge 4) -Reason ([string]$exampleSpecResult.json.reason)
+        }
+
+        $examplePlanBody = Get-ExampleMarkdownBlock -Text $examplesText -Kind "plan"
+        Add-Check -Name "plan-style example block exists" -Ok (-not [string]::IsNullOrWhiteSpace($examplePlanBody)) -Reason "plan example block is missing"
+        if (-not [string]::IsNullOrWhiteSpace($examplePlanBody)) {
+            $examplePlan = "docs/superpowers/plans/example-decision-ledger-plan.md"
+            Set-Content -LiteralPath (Join-Path $fixtureRepo $examplePlan) -Encoding utf8NoBOM -Value $examplePlanBody
+            $examplePlanResult = Invoke-Validator -ValidatorRepoRoot $fixtureRepo -ArtifactPath $examplePlan -Kind "plan"
+            Add-Check -Name "plan-style example validates" -Ok ($examplePlanResult.exit_code -eq 0 -and $examplePlanResult.json.ok -eq $true -and $examplePlanResult.json.row_count -ge 4) -Reason ([string]$examplePlanResult.json.reason)
+        }
+    }
+
     foreach ($relative in @("skills\brainstorm-spec\SKILL.md", "skills\write-plan\SKILL.md")) {
         $text = Get-Content -LiteralPath (Join-Path $RepoRoot $relative) -Raw
-        foreach ($needle in @("## Decision Ledger", "Decision", "Source", "Answer", "Impact", "Deferred?", "Risk owner", "validate-decision-ledger.ps1")) {
+        foreach ($needle in @("## Decision Ledger", "Decision", "Source", "Answer", "Impact", "Deferred?", "Risk owner", "validate-decision-ledger.ps1", "docs/superpowers/examples/decision-ledger-examples.md")) {
             Add-Check -Name "$relative contains $needle" -Ok $text.Contains($needle) -Reason "$relative missing $needle"
         }
     }

@@ -106,6 +106,8 @@ A saved spec should include:
 
 Every saved spec MUST include a `## Decision Ledger` section with a Markdown table. The required columns are `Decision`, `Source`, `Answer`, `Impact`, `Deferred?`, and `Risk owner`. Record every material user, repo-evidence, grill, scope, owner, interface, cutover, proof, and tradeoff decision that shaped the spec. `Deferred?` must use `Yes` or `No`; deferred rows must still name a concrete risk owner and downstream impact. Open questions are allowed only when represented as deferred rows with an owner and impact.
 
+Use `docs/superpowers/examples/decision-ledger-examples.md#spec-style-decision-ledger-example` as the practical example shape for spec Decision Ledgers.
+
 Before reporting a spec ready, run the repo-root validator:
 
 ```powershell
