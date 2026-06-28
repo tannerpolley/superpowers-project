@@ -28,13 +28,15 @@ Options:
 
 Selecting Auto Mode at project_workflow_mode is the Auto Mode invocation. Do not invoke Auto Mode again from `$superpowers-project:brainstorm-spec` after a saved spec. The workflow mode ledger records the startup selection before task routing; downstream routes may consume it only for one selected or derived route and must stop at route closeout.
 
-Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json` and validate it with:
+Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json`. Resolve the workflow-mode validator from the loaded Superpowers Project plugin root, then validate the ledger with:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
 ```
 
 Canonical marker: `scripts/validate-workflow-mode-ledger.ps1`.
+
+Do not run `.\scripts\validate-workflow-mode-ledger.ps1` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
 
 When Auto Mode needs the bounded route authority used by downstream planning, implementation, verification, merge, or live-sync proof, record an Auto Mode authorization ledger tied to the startup mode selection and the source artifact. The valid authority is `Bounded Auto Merge`. Resolve the Auto Mode validator from the loaded Superpowers Project plugin root. This is the plugin-provided Auto Mode validator:
 

@@ -54,6 +54,16 @@ try {
     $valid = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-RunLedgerPath", $validLedger)
     Add-Check -Name "valid run ledger passes" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true) -Reason $valid.raw
 
+    $externalRoot = Join-Path $tempRoot "external-target-repo"
+    $externalRunRoot = Join-Path $externalRoot ".superpowers\runs\fixture-run"
+    New-Item -ItemType Directory -Path $externalRunRoot -Force | Out-Null
+    $externalLedger = Join-Path $externalRunRoot "loop-run-ledger.json"
+    $externalLedgerObject = Get-Content -LiteralPath $validLedger -Raw | ConvertFrom-Json
+    $externalLedgerObject.repo_root = $externalRoot
+    $externalLedgerObject | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $externalLedger -Encoding utf8NoBOM
+    $externalRunLedger = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $externalRoot, "-RunLedgerPath", ".superpowers\runs\fixture-run\loop-run-ledger.json")
+    Add-Check -Name "external project repo run ledger passes" -Ok ($externalRunLedger.exit_code -eq 0 -and $externalRunLedger.json.ok -eq $true) -Reason "Plugin-rooted loop validator must accept a target repo without loop-controller scripts"
+
     $invalidLedger = Join-Path $tempRoot "missing-contract-hash.json"
     $invalid = Get-Content -LiteralPath $validLedger -Raw | ConvertFrom-Json
     $invalid.PSObject.Properties.Remove("plugin_contract_hash")

@@ -54,7 +54,7 @@
 - `Auto Mode` is one-route autonomy only; it must stop at route closeout and must not continue to another candidate.
 - `Looping Mode` is bounded repeated maintenance autonomy; it routes through `$superpowers-project:loop-controller` to select one ready candidate at a time, route the actual work to the owning skill, and re-check budget before another candidate.
 - Workflow mode ledgers record `selected_mode`, repo identity, plugin manifest version, `contract_hash`, autonomy scope, mutation scope, route policy, proof policy, stop conditions, and downstream ledger paths.
-- Validate workflow mode ledgers with `scripts/validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>`.
+- Validate workflow mode ledgers with `<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>` from the loaded Superpowers Project plugin root.
 
 ## Workflow Skills
 
@@ -98,7 +98,7 @@
 
 ## Startup Version Check
 
-- At Superpowers Project startup, agents must run `scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent` and print the banner before selecting a project workflow route.
+- At Superpowers Project startup, agents must run `<Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent` from the loaded Superpowers Project plugin root and print the banner before selecting a project workflow route.
 - If the active agent knows its loaded plugin or skill root, it must also pass `-ObservedPluginRoot` or `-ObservedSkillRoot`.
 - The banner reports the manifest version, source commit, source dirty state, `contract_hash`, source/live freshness, observed-root freshness, and stale cache candidate count.
 

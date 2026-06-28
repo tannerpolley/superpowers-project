@@ -30,14 +30,25 @@ try {
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "## Looping Mode Input" -Name "looping mode input boundary exists"
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "selected_mode: looping" -Name "looping mode ledger marker exists"
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent" -Name "startup version check exists"
+    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "<Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1" -Name "startup version check is plugin-rooted"
+    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "<Superpowers Project plugin root>\skills\loop-controller\scripts\validate-run-ledger.ps1" -Name "run ledger validator is plugin-rooted"
+    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "not a required file in the active target repo" -Name "target repos do not need source loop contract"
     Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "validate-loop-state-machine.ps1" -Name "state machine validator is documented"
     Assert-Contains -Path "docs\superpowers\loop-mode-contract.yml" -Needle "one_candidate_per_iteration" -Name "loop mode contract exists"
     Assert-Contains -Path "skills\loop-controller\scripts\validate-loop-state-machine.ps1" -Needle "project_loop_next_step" -Name "state machine validator exists"
     Assert-Contains -Path "skills\loop-controller\agents\openai.yaml" -Needle "loop-controller" -Name "metadata exists"
     Assert-Contains -Path ".codex-plugin\plugin.json" -Needle '$superpowers-project:loop-controller' -Name "plugin prompt lists route"
     Assert-Contains -Path "README.md" -Needle '$superpowers-project:loop-controller' -Name "README lists route"
+    Assert-Contains -Path "README.md" -Needle "<Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1" -Name "README startup version check is plugin-rooted"
     Assert-Contains -Path "docs\superpowers\PROJECT_CONTEXT.md" -Needle "loop-controller" -Name "project context lists skill"
     Assert-Contains -Path "scripts\lib\project-skills.ps1" -Needle '"loop-controller"' -Name "final-capable list includes loop-controller"
+
+    $skillText = Get-Content -LiteralPath (Join-Path $RepoRoot "skills\loop-controller\SKILL.md") -Raw
+    Add-Check -Name "loop startup command does not use active repo script" -Ok (-not $skillText.Contains("-File .\scripts\get-agent-plugin-version.ps1")) -Reason "Loop Controller must not tell other repos to run an active-repo version script"
+    Add-Check -Name "loop validators do not use active repo skill scripts" -Ok (-not $skillText.Contains("-File .\skills\loop-controller\scripts\")) -Reason "Loop Controller must not tell other repos to run active-repo loop scripts"
+
+    $readmeText = Get-Content -LiteralPath (Join-Path $RepoRoot "README.md") -Raw
+    Add-Check -Name "README version checker does not use active repo script" -Ok (-not $readmeText.Contains("-File .\scripts\get-agent-plugin-version.ps1")) -Reason "README must not tell other repos to run an active-repo version script"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "loop-controller-contract"; checks = $checks } | ConvertTo-Json -Depth 8

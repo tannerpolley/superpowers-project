@@ -36,15 +36,21 @@ try {
     }
 
     Add-Check "router names mode ledger" $skill.Contains("workflow mode ledger") "router must require a workflow mode ledger"
-    Add-Check "router names root validator" $skill.Contains("scripts/validate-workflow-mode-ledger.ps1") "router must name the root mode-ledger validator"
+    Add-Check "router names workflow mode validator" $skill.Contains("scripts/validate-workflow-mode-ledger.ps1") "router must name the mode-ledger validator"
+    Add-Check "workflow mode validator path is plugin-rooted" $skill.Contains("<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1") "router must point to the loaded plugin root workflow-mode validator"
+    Add-Check "workflow mode validator does not use active-repo command" (-not $skill.Contains("-File .\scripts\validate-workflow-mode-ledger.ps1")) "router must not tell other repos to run an active-repo workflow-mode validator"
     Add-Check "auto mode is one-route only" $skill.Contains("one-route autonomy") "Auto Mode must be one-route only"
     Add-Check "looping mode delegates to loop controller" $skill.Contains('$superpowers-project:loop-controller') "Looping Mode must delegate to Loop Controller"
     Add-Check "auto mode is invoked at initiate workflow" $skill.Contains("Selecting `Auto Mode` at `project_workflow_mode` is the Auto Mode invocation") "Auto Mode invocation must live at initiate-workflow"
     Add-Check "auto validator path is plugin-rooted" $skill.Contains("<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1") "router must point to the loaded plugin root Auto Mode validator"
     Add-Check "README auto validator path is plugin-rooted" $readme.Contains("<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1") "README must point to the loaded plugin root Auto Mode validator"
     Add-Check "summary auto validator path is plugin-rooted" $summary.Contains("<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1") "summary must point to the loaded plugin root Auto Mode validator"
+    Add-Check "README workflow mode validator path is plugin-rooted" $readme.Contains("<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1") "README must point to the loaded plugin root workflow-mode validator"
     Add-Check "README does not use active-repo auto validator" (-not $readme.Contains("-File .\scripts\validate-auto-mode-authorization.ps1")) "README must not tell other repos to run an active-repo Auto Mode validator"
     Add-Check "summary does not use active-repo auto validator" (-not $summary.Contains("-File .\scripts\validate-auto-mode-authorization.ps1")) "summary must not tell other repos to run an active-repo Auto Mode validator"
+    Add-Check "README does not use active-repo workflow validator" (-not $readme.Contains("-File .\scripts\validate-workflow-mode-ledger.ps1")) "README must not tell other repos to run an active-repo workflow-mode validator"
+    Add-Check "summary workflow mode validator path is plugin-rooted" $summary.Contains("<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1") "summary must point to the loaded plugin root workflow-mode validator"
+    Add-Check "summary does not use active-repo workflow validator" (-not $summary.Contains("-File .\scripts\validate-workflow-mode-ledger.ps1")) "summary must not tell other repos to run an active-repo workflow-mode validator"
     Add-Check "brainstorm does not own Auto Mode authorization" (-not $skill.Contains("After `$superpowers-project:brainstorm-spec` saves a spec, Auto Mode")) "router must not describe Auto Mode as a post-brainstorm invocation"
 
     $failed = @($checks | Where-Object { -not $_.ok })
@@ -55,4 +61,3 @@ try {
     [pscustomobject]@{ ok = $false; phase = "initiate-workflow-mode-gate"; reason = $_.Exception.Message; checks = $checks } | ConvertTo-Json -Depth 8
     exit 1
 }
-

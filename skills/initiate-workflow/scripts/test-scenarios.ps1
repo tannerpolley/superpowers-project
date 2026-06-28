@@ -20,7 +20,7 @@ try {
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
 
     try {
-        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the plugin-provided Auto Mode validator','<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1','stop outside policy','artifact review gate','machine-readable artifacts','skills/advanced-user-input/SKILL.md','route-specific artifact inventory:','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','scripts/validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
+        foreach ($needle in @('setup','orchestrate-issues','brainstorm-spec','write-plan','create-issues','resolve-issue','merge-changes','audit-project','align-project','superpowers:brainstorming','superpowers:writing-plans','superpowers:executing-plans','request_user_input','docs/superpowers','/goal','Continuation Routing','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','Auto Mode authorization ledger','the plugin-provided Auto Mode validator','<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1','stop outside policy','artifact review gate','machine-readable artifacts','skills/advanced-user-input/SKILL.md','route-specific artifact inventory:','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
             Assert-Contains -Text $skill -Needle $needle -Reason "missing router contract: $needle"
         }
         foreach ($needle in @('## Native Continuation Gate','artifact review gate','Review First','stop','start the selected next skill','selected answers','executable routing','skills/advanced-user-input/SKILL.md','machine-readable artifacts')) {
@@ -32,7 +32,7 @@ try {
     try {
         Assert-Contains -Text $metadata -Needle 'workflow' -Reason "metadata missing skill name"
         Assert-Contains -Text $metadata -Needle 'docs/superpowers' -Reason "metadata missing artifact root"
-        foreach ($needle in @('artifact review gate','what the agent thinks those results mean','machine-readable artifacts','broader project context','recommended next route','selected native answers','executable routing','start selected continuation routes','setup','orchestrate-issues','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','authorization ledger','<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','scripts/validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
+        foreach ($needle in @('artifact review gate','what the agent thinks those results mean','machine-readable artifacts','broader project context','recommended next route','selected native answers','executable routing','start selected continuation routes','setup','orchestrate-issues','project_issue_resolution_route','project_auto_mode_authorization','Bounded Auto Merge','authorization ledger','<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1','project_workflow_mode','Manual Mode','Looping Mode','workflow mode ledger','<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1','one-route autonomy','bounded repeated maintenance autonomy')) {
             Assert-Contains -Text $metadata -Needle $needle -Reason "metadata missing router continuation contract: $needle"
         }
         Add-Result -Name "metadata present" -Ok $true -Reason "passed"
@@ -41,6 +41,8 @@ try {
     try {
         foreach ($needle in @(
             "Selecting `Auto Mode` at `project_workflow_mode` is the Auto Mode invocation",
+            "Resolve the workflow-mode validator from the loaded Superpowers Project plugin root",
+            "<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1",
             "Resolve the Auto Mode validator from the loaded Superpowers Project plugin root",
             "<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1"
         )) {

@@ -4,7 +4,8 @@ interface:
   default_prompt: >-
     Use $superpowers-project:loop-controller for bounded repeated maintenance across ready candidates in Looping
     Mode. Read SKILL.md for run ledgers, budget ledgers, candidate inventory, verifier proof, metrics, and terminal
-    closeout; read docs/superpowers/workflow-contract.yml for route question ids and options. Generated state lives
+    closeout; resolve plugin-owned validators and docs from the loaded Superpowers Project plugin root, not from
+    the active target repo, and read docs/superpowers/workflow-contract.yml for route question ids and options. Generated state lives
     under .superpowers/runs and is not canonical committed backlog. Select one candidate at a time, validate budget
     and run ledgers, route actual work to the owning skill, then ask the next native continuation or final health
     gate.

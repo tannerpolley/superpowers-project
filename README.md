@@ -109,10 +109,10 @@ Auto Mode ledgers are validated by the plugin-provided validator from the loaded
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
 ```
 
-Workflow mode ledgers are validated before mode-driven routing:
+Workflow mode ledgers are validated by the plugin-provided validator from the loaded Superpowers Project plugin root before mode-driven routing:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
 ```
 
 ## Task # Use Cases
@@ -169,19 +169,19 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 At Superpowers Project startup, agents should print a concise version banner before selecting a workflow route:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent
 ```
 
 Use the JSON version tracker when an agent needs machine-readable proof of the exact Superpowers Project plugin copy it is using:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -RequireCurrent
 ```
 
 The checker reports the manifest version, source commit, and runtime `contract_hash` for source, live install, local cache candidates, and an optional observed plugin or skill root. If an agent has an observed skill root from its loaded context, pass it explicitly:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
 ```
 
 If source and live are current but the observed surface differs, run validated live sync. Live sync refreshes the live user install and matching local plugin cache roots that already exist, so existing threads can see updated files when they re-read plugin skill bodies. It cannot rewrite prompt text already loaded into an agent context; if the observed surface still differs after sync, start a fresh agent session.
