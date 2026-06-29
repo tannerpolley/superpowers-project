@@ -47,12 +47,21 @@
 
 Implement hierarchy rollup receipts, align-project drift reporting, and loop-controller leaf filtering.
 
+## GitHub Parent/Sub-Issue Contract
+
+- Leaf closeout should record GitHub parent URL, sibling child states, `subIssuesSummary` progress, and local proof receipts.
+- Parent or wrapper closeout must require native approval plus evidence that required children are closed or explicitly skipped.
+- `align-project` should report drift when GitHub parent/sub-issue links, local mirror hierarchy fields, milestones, labels, title policy, or child state disagree.
+- `loop-controller` must select only executable leaf issues for implementation routes and reserve parent or wrapper issues for rollup, align, or repair routes.
+- Historical migration reports may propose title cleanup or reparenting, but they must not mutate GitHub without approval.
+
 ## Acceptance Criteria
 
 - [ ] Leaf closeout records parent and child state.
 - [ ] Parent closeout requires child proof and native approval.
 - [ ] align-project reports title and hierarchy drift.
 - [ ] loop-controller excludes parent and wrapper implementation candidates.
+- [ ] Loop metrics and verifier ledgers record selected leaf, skipped rollups, and parent progress.
 
 ## Blocked by
 

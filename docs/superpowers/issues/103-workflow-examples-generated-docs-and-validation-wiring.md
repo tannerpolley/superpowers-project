@@ -47,9 +47,17 @@
 
 Update examples, generated docs, README, and validation wiring for the hierarchy workflow.
 
+## GitHub Parent/Sub-Issue Contract
+
+- Examples must show the same model users see in GitHub: parent issue with a Sub-issues section, nested child rows, progress summary, and parent links on child issues.
+- Docs must distinguish GitHub Milestones from pseudo sub-milestone parent issues: milestones track roadmap buckets, parent issues group work inside a milestone.
+- Validation must prove flat, issue-set, and pseudo sub-milestone workflows end with clean titles and synchronized GitHub/local hierarchy metadata.
+- Final proof must include source validation, live-sync validation, version freshness, cleanup, clean Git state, and GitHub parent progress.
+
 ## Acceptance Criteria
 
 - [ ] Examples cover flat, issue-set, pseudo sub-milestone, hydration, rollup, and migration.
+- [ ] Examples include GitHub UI concepts: Sub-issues section, child parent link, nested rows, and progress count.
 - [ ] Generated docs are current.
 - [ ] Full validation and live-sync validation pass.
 - [ ] Cleanup and Git status proof are recorded.

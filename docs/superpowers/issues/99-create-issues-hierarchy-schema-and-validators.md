@@ -47,12 +47,21 @@
 
 Create shared hierarchy helpers, hierarchy validator, and dry hierarchy planning script.
 
+## GitHub Parent/Sub-Issue Contract
+
+- Model GitHub's real parent/sub-issue shape, including parent links on child issues, nested child rows on parent issues, and `subIssuesSummary` progress.
+- Treat `flat`, `issue-set`, and `sub-milestone` as explicit hierarchy modes; flat mirrors stay valid without parent fields.
+- Treat `parent` and `plan-wrapper` mirrors as rollup records with `Executable: false`.
+- Treat `leaf` mirrors as the only executable hierarchy records and require a valid parent link when hierarchy is active.
+- Validate mirror fields against GitHub JSON fixture fields instead of relying only on title text or local checklist state.
+
 ## Acceptance Criteria
 
 - [ ] Flat mirrors remain valid.
 - [ ] Parent and wrapper mirrors require Executable false.
 - [ ] Leaf mirrors require Executable true and parent metadata.
-- [ ] Dry commands include parent-first publication order.
+- [ ] GitHub fixture parity checks compare mirror parent and child fields to `parent`, `subIssues`, and `subIssuesSummary`.
+- [ ] Dry commands include parent-first publication order and child attachment order.
 
 ## Blocked by
 
