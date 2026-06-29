@@ -161,6 +161,24 @@ function Resolve-IssueTypeId {
     $null
 }
 
+function Get-HierarchyTrackerEvidence {
+    param($Roadmap)
+    $requiredLabels = @("type:issue-set", "type:sub-milestone", "type:plan-wrapper")
+    $configuredLabels = @()
+    if (Has-Property -Object $Roadmap -Name "labels") {
+        $configuredLabels = @($Roadmap.labels | ForEach-Object { [string]$_ })
+    }
+    $missingLabels = @($requiredLabels | Where-Object { $configuredLabels -notcontains $_ })
+    [ordered]@{
+        source = "docs/agents/project-roadmap.json"
+        checked = $true
+        mode = "compatibility-labels"
+        required_labels = $requiredLabels
+        available = ($missingLabels.Count -eq 0)
+        missing_labels = $missingLabels
+    }
+}
+
 function Get-FieldValue {
     param([string]$Text, [string]$Name)
     $escaped = [regex]::Escape($Name)
@@ -335,6 +353,7 @@ try {
     if ([string]$roadmap.tracker -ne "github") { throw "GitHub Project board setup requires a GitHub tracker" }
     if ([string]::IsNullOrWhiteSpace([string]$roadmap.repository)) { throw "roadmap repository is required" }
     $nativeIssueTypes = Get-NativeIssueTypes -Repository ([string]$roadmap.repository) -FixturePath $IssueTypeFixturePath
+    $hierarchyTracker = Get-HierarchyTrackerEvidence -Roadmap $roadmap
 
     if ($Mode -eq "Plan") {
         $fields = @("Status", "Milestone", "Issue Type", "Agent State")
@@ -346,6 +365,7 @@ try {
             project_policy = "optional-dashboard-evidence"
             fields = $fields
             native_issue_types = $nativeIssueTypes
+            hierarchy_tracker = $hierarchyTracker
             issue_linking_scope = "link ready issue mirrors and milestone-owned GitHub issues after approval"
             dry_run_commands = @(
                 "gh api graphql -f query='repository.issueTypes(first:20) { nodes { id name isEnabled } }'",
@@ -371,6 +391,7 @@ try {
             owner_skill = "setup-project"
             repository = [string]$roadmap.repository
             native_issue_types = $nativeIssueTypes
+            hierarchy_tracker = $hierarchyTracker
             board_title = $BoardTitle
             project_number = [int]$board.number
             project_url = [string]$board.url

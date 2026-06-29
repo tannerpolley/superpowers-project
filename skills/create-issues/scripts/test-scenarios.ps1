@@ -9,6 +9,7 @@ $skillFile = Join-Path $skillRoot "SKILL.md"
 $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
 $validatorFile = Join-Path $scriptRoot "validate-issue-mirror.ps1"
 $hydrationFile = Join-Path $scriptRoot "hydrate-external-issue.ps1"
+$titlePolicyValidatorFile = Join-Path $scriptRoot "validate-issue-title-policy.ps1"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -244,6 +245,29 @@ $scenarios = @(
         $text = Get-Content -LiteralPath $skillFile -Raw
         Assert-NotContains $text "docs/milestones/<milestone-folder>/issues" "old milestone issue path must not be active"
         Assert-NotContains $text "docs/issues" "top-level issue path must not be active"
+    }
+    Invoke-Scenario "title policy validator rejects milestone metadata in new titles" {
+        if (-not (Test-Path -LiteralPath $titlePolicyValidatorFile -PathType Leaf)) { throw "missing validate-issue-title-policy.ps1" }
+        $cleanRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $titlePolicyValidatorFile -Title "Decision Ledger Examples" -KnownMilestoneTitles "M1 - Source Of Truth" -KnownMilestoneNumbers "M0","M1","M2" -Json
+        if ($LASTEXITCODE -ne 0) { throw ($cleanRaw | Out-String) }
+        $clean = ($cleanRaw | Out-String) | ConvertFrom-Json
+        if (-not $clean.ok) { throw "clean title should pass: $($clean.reason)" }
+
+        foreach ($badTitle in @(
+            "M1: Decision Ledger Examples",
+            "M1 Decision Ledger Examples",
+            "M1.2 Decision Ledger Examples",
+            "[M0] Artifact Review Card Schema",
+            "[M0]Artifact Review Card Schema",
+            "Source Of Truth: Decision Ledger Examples",
+            "Source Of Truth Decision Ledger Examples",
+            "1. Decision Ledger Examples"
+        )) {
+            $badRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $titlePolicyValidatorFile -Title $badTitle -KnownMilestoneTitles "M1 - Source Of Truth" -KnownMilestoneNumbers "M0","M1","M2" -Json
+            $bad = ($badRaw | Out-String) | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0 -or $bad.ok) { throw "bad title should fail: $badTitle" }
+            if ([string]::IsNullOrWhiteSpace([string]$bad.reason)) { throw "bad title failure should name the reason: $badTitle" }
+        }
     }
     Invoke-Scenario "issue mirror validator accepts happy AFK issue" {
         if (-not (Test-Path -LiteralPath $validatorFile -PathType Leaf)) { throw "missing validate-issue-mirror.ps1" }

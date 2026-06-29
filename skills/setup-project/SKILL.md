@@ -89,8 +89,11 @@ When the repo is GitHub-linked, record the tracker config in project docs and ke
 - Source spec or source plan path
 - AFK/HITL classification policy
 - Goal Command or native goal activation expectations
+- Optional hierarchy labels for grouped work: `type:issue-set`, `type:sub-milestone`, and `type:plan-wrapper`
 
 Issue mirrors should match GitHub issue body and status closely enough that an agent can audit drift before changing code.
+
+GitHub Milestones carry milestone identity. Parent/sub-issue relationships carry optional grouped-work hierarchy. New issue titles should stay clean and should not encode milestone names, milestone numbers, pseudo sub-milestone ordinals, or hierarchy ordering.
 
 ## GitHub Project Board Setup
 
@@ -110,7 +113,7 @@ Options:
 - `Verify Only`: validate existing board configuration without mutation.
 - `Stop`: stop before board mutation.
 
-Use `scripts/prepare-github-project-board.ps1 -Mode Plan` before native approval. After native approval selects `Create Board`, use `-Mode Create` with structured `NativeApprovalJson`; the script creates or reuses the board, ensures required fields, links approved issue URLs, and records board configuration in `docs/agents/project-roadmap.json`. Use `-Mode ValidateConfig` for existing-board evidence. When useful for humans, mirror the board summary in `docs/agents/project-roadmap.md`.
+Use `scripts/prepare-github-project-board.ps1 -Mode Plan` before native approval. After native approval selects `Create Board`, use `-Mode Create` with structured `NativeApprovalJson`; the script creates or reuses the board, ensures required fields, verifies hierarchy tracker labels from `docs/agents/project-roadmap.json`, links approved issue URLs, and records board configuration in `docs/agents/project-roadmap.json`. Use `-Mode ValidateConfig` for existing-board evidence. When useful for humans, mirror the board summary in `docs/agents/project-roadmap.md`.
 
 For repositories that support native GitHub issue types, setup must inspect `repository.issueTypes` through GraphQL and use `UpdateIssueInput.issueTypeId` when assigning the local issue mirror's `Issue Type` to a GitHub issue. Keep compatibility labels such as `type:task`, `type:bug`, and `type:feature`. If GraphQL reports no enabled native issue types, say so explicitly and continue with label-only behavior. Do not conclude native issue types are unavailable merely because high-level `gh issue create` or `gh issue edit` lacks a `--type` flag.
 

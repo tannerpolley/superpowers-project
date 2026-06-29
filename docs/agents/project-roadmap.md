@@ -14,6 +14,13 @@ Issue mirrors:
 
 - `docs/superpowers/issues/<issue-number>-<slug>.md`
 
+Hierarchy tracking:
+
+- GitHub Milestones carry milestone identity.
+- GitHub parent/sub-issue links carry grouped-work hierarchy.
+- `type:issue-set`, `type:sub-milestone`, and `type:plan-wrapper` identify non-leaf rollup records when the workflow uses hierarchy.
+- Issue titles stay clean and do not encode milestone names, milestone numbers, or hierarchy ordering.
+
 GitHub Project board:
 
 - Optional dashboard evidence owned by `$superpowers-project:setup-project`.
