@@ -7,6 +7,11 @@ This repo uses GitHub labels as the tracker vocabulary for Superpowers Project i
 - `type:bug`: broken behavior or regression.
 - `type:feature`: new user-visible or agent-visible capability.
 - `type:task`: maintenance, docs, setup, process, or validation work.
+- `type:issue-set`: parent issue that groups one approved multi-issue plan.
+- `type:sub-milestone`: parent issue that acts as a pseudo sub-milestone inside a real GitHub Milestone.
+- `type:plan-wrapper`: non-executable wrapper issue that groups leaf issues for one plan under a pseudo sub-milestone.
+
+Hierarchy labels identify rollup records. They do not replace GitHub Milestones, and they do not make parent or wrapper issues executable.
 
 ## Status Labels
 

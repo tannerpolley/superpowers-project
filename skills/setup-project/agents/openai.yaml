@@ -3,7 +3,7 @@ interface:
   short_description: "Set up project context, roadmap, milestones, tracker config, and GitHub project board evidence."
   default_prompt: >-
     Use $superpowers-project:setup-project to create or maintain project context, roadmap, milestone pages, tracker
-    configuration, labels, issue type planning, and GitHub Project setup. Read SKILL.md for setup gates and
+    configuration, labels, hierarchy tracker labels, issue type planning, and GitHub Project setup. Read SKILL.md for setup gates and
     docs/superpowers/workflow-contract.yml for route question ids and options. Start from
     docs/superpowers/PROJECT_CONTEXT.md, keep canonical specs/plans/issues in flat canonical roots, and treat
     Milestone pages are index views with frontmatter plus milestone indexes. summarize artifact review gate status,

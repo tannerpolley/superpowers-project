@@ -17,6 +17,9 @@
 - `type:bug`
 - `type:feature`
 - `type:task`
+- `type:issue-set`
+- `type:sub-milestone`
+- `type:plan-wrapper`
 - `status:triage`
 - `status:ready`
 - `status:blocked`

@@ -39,6 +39,8 @@ Milestone pages under `docs/superpowers/milestones/` are the durable project map
 - GitHub Projects policy: optional dashboard evidence created or verified by `$superpowers-project:setup-project` only after native approval
 - Label vocabulary: `docs/agents/triage-labels.md`
 - Tracker config: `docs/agents/issue-tracker.md` and `docs/agents/project-roadmap.json`
+- Hierarchy policy: GitHub Milestones carry milestone identity, parent/sub-issue links carry optional grouped-work hierarchy, and issue titles stay clean.
+- Hierarchy labels: `type:issue-set`, `type:sub-milestone`, and `type:plan-wrapper` identify rollup issues when hierarchy is enabled.
 
 ## Execution Model
 

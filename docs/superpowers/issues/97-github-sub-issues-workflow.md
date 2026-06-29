@@ -5,7 +5,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-29-github-sub-issues-workflow-design.md
 **Source Plan:** docs/superpowers/plans/2026-06-29-github-sub-issues-workflow-plan.md
 **Classification:** HITL
-**Labels:** type:feature, status:triage
+**Labels:** type:feature, type:sub-milestone, status:triage
 **Goal Command:** Non-executable rollup issue
 **Hierarchy Mode:** sub-milestone
 **Sub-Issue Role:** parent

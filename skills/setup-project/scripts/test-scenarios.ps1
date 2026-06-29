@@ -181,8 +181,22 @@ try {
     } catch { Add-Result -Name "github native issue type planning contract passes" -Ok $false -Reason $_.Exception.Message }
 
     try {
+        $planRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "prepare-github-project-board.ps1") -RepoRoot $repoRoot -Mode Plan
+        if ($LASTEXITCODE -ne 0) { throw ($planRaw | Out-String) }
+        $plan = ($planRaw | Out-String) | ConvertFrom-Json
+        if (-not $plan.ok) { throw $plan.reason }
+        if ($plan.evidence.PSObject.Properties.Name -notcontains "hierarchy_tracker") { throw "board plan missing hierarchy tracker evidence" }
+        $requiredLabels = @($plan.evidence.hierarchy_tracker.required_labels | ForEach-Object { [string]$_ })
+        foreach ($label in @("type:issue-set", "type:sub-milestone", "type:plan-wrapper")) {
+            if ($requiredLabels -notcontains $label) { throw "hierarchy tracker evidence missing required label: $label" }
+        }
+        if ($plan.evidence.hierarchy_tracker.available -ne $true) { throw "hierarchy tracker labels should be available in roadmap config" }
+        Add-Result -Name "github hierarchy tracker planning contract passes" -Ok $true -Reason "passed"
+    } catch { Add-Result -Name "github hierarchy tracker planning contract passes" -Ok $false -Reason $_.Exception.Message }
+
+    try {
         $scriptText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "prepare-github-project-board.ps1") -Raw
-        foreach ($needle in @('ValidateSet("Plan", "ValidateConfig", "Create")', "NativeApprovalJson", "project_setup_board_approval", "project field-create", "project item-add", "github_project_board", "repository.issueTypes", "UpdateIssueInput.issueTypeId", "issueTypeId", "label-only")) {
+        foreach ($needle in @('ValidateSet("Plan", "ValidateConfig", "Create")', "NativeApprovalJson", "project_setup_board_approval", "project field-create", "project item-add", "github_project_board", "repository.issueTypes", "UpdateIssueInput.issueTypeId", "issueTypeId", "label-only", "hierarchy_tracker", "type:sub-milestone")) {
             Assert-Contains -Text $scriptText -Needle $needle -Reason "board create script missing contract: $needle"
         }
         Add-Result -Name "github project board create mode contract is present" -Ok $true -Reason "passed"
