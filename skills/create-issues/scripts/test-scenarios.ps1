@@ -10,6 +10,9 @@ $yamlFile = Join-Path $skillRoot "agents\openai.yaml"
 $validatorFile = Join-Path $scriptRoot "validate-issue-mirror.ps1"
 $hydrationFile = Join-Path $scriptRoot "hydrate-external-issue.ps1"
 $titlePolicyValidatorFile = Join-Path $scriptRoot "validate-issue-title-policy.ps1"
+$hierarchyLibFile = Join-Path $scriptRoot "lib\issue-hierarchy.ps1"
+$hierarchyValidatorFile = Join-Path $scriptRoot "validate-issue-hierarchy.ps1"
+$hierarchyPlanBuilderFile = Join-Path $scriptRoot "build-issue-hierarchy-plan.ps1"
 
 function Invoke-Scenario {
     param([string]$Name, [scriptblock]$Body)
@@ -49,6 +52,26 @@ function Run-Hydration {
     )
     $output = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $hydrationFile -RepoRoot $RepoRoot -IssueUrl $IssueUrl -IssueBodyPath $IssueBodyPath
     if ($LASTEXITCODE -ne 0) { throw ($output | Out-String) }
+    $output | ConvertFrom-Json
+}
+
+function Run-HierarchyValidator {
+    param(
+        [string]$RepoRoot,
+        [string]$IssuePath,
+        [string]$GitHubIssueFixturePath
+    )
+    $args = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $hierarchyValidatorFile, "-RepoRoot", $RepoRoot, "-IssueMirrorPath", $IssuePath, "-Json")
+    if (-not [string]::IsNullOrWhiteSpace($GitHubIssueFixturePath)) {
+        $args += @("-GitHubIssueFixturePath", $GitHubIssueFixturePath)
+    }
+    $output = & pwsh.exe @args
+    $output | ConvertFrom-Json
+}
+
+function Run-HierarchyPlanBuilder {
+    param([string[]]$Arguments)
+    $output = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $hierarchyPlanBuilderFile @Arguments
     $output | ConvertFrom-Json
 }
 
@@ -267,6 +290,174 @@ $scenarios = @(
             $bad = ($badRaw | Out-String) | ConvertFrom-Json
             if ($LASTEXITCODE -eq 0 -or $bad.ok) { throw "bad title should fail: $badTitle" }
             if ([string]::IsNullOrWhiteSpace([string]$bad.reason)) { throw "bad title failure should name the reason: $badTitle" }
+        }
+    }
+    Invoke-Scenario "issue hierarchy validator covers flat parent wrapper leaf and GitHub parity" {
+        foreach ($requiredFile in @($hierarchyLibFile, $hierarchyValidatorFile)) {
+            if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) { throw "missing hierarchy validation file: $requiredFile" }
+        }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("create-issues-hierarchy-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\issues") -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\plans") -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $root "docs\superpowers\plans\2026-06-02-sample-plan.md") -Value "# Sample Plan" -Encoding utf8NoBOM
+
+            $base = @"
+**GitHub Milestone:** M1 - Source Of Truth
+**Issue Type:** task
+**Source Plan:** docs/superpowers/plans/2026-06-02-sample-plan.md
+**Classification:** AFK
+**Goal Command:** /goal Resolve sample issue
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
+
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
+## Acceptance Criteria
+
+- [ ] Hierarchy fixture validates
+
+$(New-OutcomeProofSummary)
+"@
+            $flat = Join-Path $root "docs\superpowers\issues\10-flat.md"
+            @"
+# Flat
+
+**GitHub Issue:** https://github.com/example/repo/issues/10
+$base
+"@ | Set-Content -LiteralPath $flat -Encoding utf8NoBOM
+
+            $parent = Join-Path $root "docs\superpowers\issues\11-parent.md"
+            @"
+# Parent
+
+**GitHub Issue:** https://github.com/example/repo/issues/11
+$base
+**Hierarchy Mode:** sub-milestone
+**Sub-Issue Role:** parent
+**Executable:** false
+**Parent Issue:** None
+**Parent Mirror:** None
+**Child Issues:** https://github.com/example/repo/issues/12, https://github.com/example/repo/issues/13
+**Rollup Policy:** all-required-children-closed
+**Title Policy:** Clean GitHub title
+"@ | Set-Content -LiteralPath $parent -Encoding utf8NoBOM
+
+            $wrapper = Join-Path $root "docs\superpowers\issues\12-wrapper.md"
+            @"
+# Wrapper
+
+**GitHub Issue:** https://github.com/example/repo/issues/12
+$base
+**Hierarchy Mode:** sub-milestone
+**Sub-Issue Role:** plan-wrapper
+**Executable:** false
+**Parent Issue:** https://github.com/example/repo/issues/11
+**Parent Mirror:** docs/superpowers/issues/11-parent.md
+**Child Issues:** https://github.com/example/repo/issues/13
+**Rollup Policy:** all-required-children-closed
+**Title Policy:** Clean GitHub title
+"@ | Set-Content -LiteralPath $wrapper -Encoding utf8NoBOM
+
+            $leaf = Join-Path $root "docs\superpowers\issues\13-leaf.md"
+            @"
+# Leaf
+
+**GitHub Issue:** https://github.com/example/repo/issues/13
+$base
+**Hierarchy Mode:** sub-milestone
+**Sub-Issue Role:** leaf
+**Executable:** true
+**Parent Issue:** https://github.com/example/repo/issues/12
+**Parent Mirror:** docs/superpowers/issues/12-wrapper.md
+**Child Issues:** None
+**Rollup Policy:** none
+**Title Policy:** Clean GitHub title
+"@ | Set-Content -LiteralPath $leaf -Encoding utf8NoBOM
+
+            $invalidParent = Join-Path $root "docs\superpowers\issues\14-invalid-parent.md"
+            (Get-Content -LiteralPath $parent -Raw).Replace("**Executable:** false", "**Executable:** true") | Set-Content -LiteralPath $invalidParent -Encoding utf8NoBOM
+
+            foreach ($valid in @($flat, $parent, $wrapper, $leaf)) {
+                $result = Run-HierarchyValidator -RepoRoot $root -IssuePath $valid
+                if (-not $result.ok) { throw "expected hierarchy mirror to pass: $valid -> $($result.reason)" }
+            }
+            $invalid = Run-HierarchyValidator -RepoRoot $root -IssuePath $invalidParent
+            if ($invalid.ok -or $invalid.reason -notmatch "Executable false") { throw "expected executable parent to fail with explicit reason" }
+
+            $fixturePath = Join-Path $root "parent-github.json"
+            @{
+                number = 11
+                url = "https://github.com/example/repo/issues/11"
+                parent = $null
+                subIssues = @{ nodes = @(
+                    @{ number = 12; url = "https://github.com/example/repo/issues/12"; title = "Wrapper"; state = "OPEN" },
+                    @{ number = 13; url = "https://github.com/example/repo/issues/13"; title = "Leaf"; state = "OPEN" }
+                ); totalCount = 2 }
+                subIssuesSummary = @{ total = 2; completed = 0; percentCompleted = 0 }
+            } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $fixturePath -Encoding utf8NoBOM
+            $parity = Run-HierarchyValidator -RepoRoot $root -IssuePath $parent -GitHubIssueFixturePath $fixturePath
+            if (-not $parity.ok) { throw "expected GitHub fixture parity to pass: $($parity.reason)" }
+            $badFixturePath = Join-Path $root "bad-parent-github.json"
+            (Get-Content -LiteralPath $fixturePath -Raw).Replace("https://github.com/example/repo/issues/13", "https://github.com/example/repo/issues/99") | Set-Content -LiteralPath $badFixturePath -Encoding utf8NoBOM
+            $badParity = Run-HierarchyValidator -RepoRoot $root -IssuePath $parent -GitHubIssueFixturePath $badFixturePath
+            if ($badParity.ok -or $badParity.reason -notmatch "subIssues") { throw "expected GitHub subIssues parity drift to fail" }
+
+            $integrated = Run-Validator -RepoRoot $root -IssuePath $invalidParent -MilestoneRequired
+            if ($integrated.ok -or $integrated.reason -notmatch "Executable false") { throw "issue mirror validator should delegate hierarchy failures" }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "hierarchy dry command builder emits parent first wrapper leaf order" {
+        if (-not (Test-Path -LiteralPath $hierarchyPlanBuilderFile -PathType Leaf)) { throw "missing build-issue-hierarchy-plan.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("create-issues-hierarchy-plan-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path (Join-Path $root "docs\superpowers\plans") -Force | Out-Null
+            $plan = Join-Path $root "docs\superpowers\plans\2026-06-02-sample-plan.md"
+            Set-Content -LiteralPath $plan -Value "# Sample Plan" -Encoding utf8NoBOM
+            $result = Run-HierarchyPlanBuilder -Arguments @(
+                "-RepoRoot", $root,
+                "-SourcePlanPath", "docs/superpowers/plans/2026-06-02-sample-plan.md",
+                "-HierarchyMode", "sub-milestone",
+                "-GitHubMilestoneTitle", "M1 - Source Of Truth",
+                "-ParentTitle", "GitHub Sub-Issues Workflow",
+                "-WrapperTitles", "Create Issues",
+                "-LeafTitles", "Hierarchy Schema,Hydration Routing",
+                "-ExistingChildIssueUrls", "https://github.com/example/repo/issues/77",
+                "-Labels", "type:task,status:ready",
+                "-Json"
+            )
+            if (-not $result.ok) { throw $result.reason }
+            $roles = @($result.publication_order | ForEach-Object { $_.role })
+            if (($roles -join ",") -ne "parent,plan-wrapper,leaf,leaf,existing-child") { throw "unexpected publication order: $($roles -join ',')" }
+            $commands = (@($result.dry_commands) -join "`n")
+            foreach ($needle in @("gh issue create", "--parent", "gh issue edit", "--add-sub-issue", "--milestone `"M1 - Source Of Truth`"")) {
+                if (-not $commands.Contains($needle)) { throw "dry commands missing $needle" }
+            }
+            $bad = Run-HierarchyPlanBuilder -Arguments @(
+                "-RepoRoot", $root,
+                "-SourcePlanPath", "docs/superpowers/plans/2026-06-02-sample-plan.md",
+                "-HierarchyMode", "issue-set",
+                "-GitHubMilestoneTitle", "M1 - Source Of Truth",
+                "-ParentTitle", "M1: Bad Parent",
+                "-LeafTitles", "Clean Leaf",
+                "-Json"
+            )
+            if ($bad.ok -or $bad.reason -notmatch "title encodes") { throw "expected title-policy failure from dry planner" }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
         }
     }
     Invoke-Scenario "issue mirror validator accepts happy AFK issue" {

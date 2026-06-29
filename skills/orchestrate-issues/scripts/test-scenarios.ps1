@@ -18,8 +18,11 @@ function New-FixtureRepo {
     New-Item -ItemType Directory -Force -Path (Join-Path $temp "docs/superpowers/plans") | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $temp "scripts/lib") | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $temp "skills/create-issues/scripts") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $temp "skills/create-issues/scripts/lib") | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $temp "skills/orchestrate-issues/scripts") | Out-Null
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/create-issues/scripts/validate-issue-mirror.ps1") -Destination (Join-Path $temp "skills/create-issues/scripts/validate-issue-mirror.ps1")
+    Copy-Item -LiteralPath (Join-Path $repoRoot "skills/create-issues/scripts/validate-issue-hierarchy.ps1") -Destination (Join-Path $temp "skills/create-issues/scripts/validate-issue-hierarchy.ps1")
+    Copy-Item -LiteralPath (Join-Path $repoRoot "skills/create-issues/scripts/lib/issue-hierarchy.ps1") -Destination (Join-Path $temp "skills/create-issues/scripts/lib/issue-hierarchy.ps1")
     Copy-Item -LiteralPath (Join-Path $repoRoot "scripts/lib/outcome-proof.ps1") -Destination (Join-Path $temp "scripts/lib/outcome-proof.ps1")
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/orchestrate-issues/scripts/derive-worker-identity.ps1") -Destination (Join-Path $temp "skills/orchestrate-issues/scripts/derive-worker-identity.ps1")
     Copy-Item -LiteralPath (Join-Path $repoRoot "skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1") -Destination (Join-Path $temp "skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1")
