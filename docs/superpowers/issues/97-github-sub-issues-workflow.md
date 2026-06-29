@@ -47,11 +47,20 @@
 
 Coordinate the six executable sub-issues that implement optional GitHub sub-issue hierarchy across the Superpowers Project workflow.
 
+## GitHub Parent/Sub-Issue Contract
+
+- This issue is the GitHub UI parent and pseudo sub-milestone inside `M1 - Source Of Truth`.
+- The GitHub Sub-issues section must show every executable child as a nested row with clean titles, child state, assignees when present, and GitHub's built-in progress summary.
+- Child issues must show this issue as their GitHub parent; local mirrors must preserve the same parent relationship.
+- This parent issue is a rollup record only. It must never enter implementation, worker handoff, branch setup, or PR-ready execution paths.
+- Parent closeout requires GitHub child state plus local closeout proof, not just a manually edited checklist.
+
 ## Acceptance Criteria
 
 - [ ] All six child issues are published as clean-title sub-issues under this parent.
 - [ ] Each child issue has a local mirror with source plan linkage and proof oracle.
-- [ ] Rollup closeout evidence records child state before this parent closes.
+- [ ] GitHub `subIssues`, `subIssuesSummary`, and child `parent` fields agree with local mirrors.
+- [ ] Rollup closeout evidence records child state and proof receipts before this parent closes.
 
 ## Blocked by
 

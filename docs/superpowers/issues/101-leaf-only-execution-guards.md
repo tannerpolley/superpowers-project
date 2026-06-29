@@ -47,12 +47,21 @@
 
 Add leaf-only guards to direct and worker issue execution paths.
 
+## GitHub Parent/Sub-Issue Contract
+
+- Execution routes must treat GitHub parent and wrapper issues as navigation or rollup records, not implementation work.
+- Direct `resolve-issue` setup must fail before branch or worktree creation when `Sub-Issue Role` is `parent` or `plan-wrapper`, or when `Executable` is false.
+- Worker `orchestrate-issues` handoff must enforce the same rule before worker packet creation.
+- Leaf issues under a parent remain executable when mirror metadata, source plan, milestone, and proof oracle are valid.
+- Old flat mirrors without hierarchy metadata remain executable through existing validation when otherwise valid.
+
 ## Acceptance Criteria
 
 - [ ] Parent mirrors fail direct execution preflight.
 - [ ] Wrapper mirrors fail worker handoff preparation.
 - [ ] Leaf mirrors under a parent pass when execution metadata is valid.
 - [ ] Existing flat mirrors remain compatible.
+- [ ] Failure receipts name the non-executable role and point agents back to parent rollup or leaf selection.
 
 ## Blocked by
 

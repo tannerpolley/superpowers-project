@@ -47,11 +47,21 @@
 
 Update create-issues instructions, metadata, external hydration, and hierarchy examples.
 
+## GitHub Parent/Sub-Issue Contract
+
+- `create-issues` should offer hierarchy only when grouped work exists; single-issue and flat projects stay flat.
+- Publication must create or attach issues in GitHub UI order: parent first, optional wrapper second, executable leaves last.
+- New child publication should use GitHub-native parent/sub-issue fields rather than encoding parent, milestone, or order in titles.
+- External hydration must read GitHub parent/sub-issue state and write the same hierarchy metadata into local mirrors before execution routing.
+- Any GitHub mutation that creates, attaches, detaches, or reorders sub-issues requires native approval and a dry command receipt first.
+
 ## Acceptance Criteria
 
 - [ ] Native gates cover hierarchy mode, parent title, child list, milestone, labels, and publication approval.
+- [ ] Dry publication receipts show `gh issue create --parent` or the supported equivalent for new children and `gh issue edit --add-sub-issue` for existing child attachment.
 - [ ] Hydration reads parent, subIssues, subIssuesSummary, milestone, labels, issueType, title, url, and number.
-- [ ] Examples show clean titles and GitHub Milestone fields.
+- [ ] Hydrated mirrors preserve parent URL, child issue URLs, rollup policy, title policy, role, and executability.
+- [ ] Examples show clean titles, GitHub Milestone fields, and GitHub parent/sub-issue relationships.
 
 ## Blocked by
 

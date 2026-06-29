@@ -164,6 +164,17 @@ try {
         Add-Check -Name "bug evidence" -Ok $true -Reason "passed"
     }
 
+    $hierarchyValidator = Join-Path $PSScriptRoot "validate-issue-hierarchy.ps1"
+    if (-not (Test-Path -LiteralPath $hierarchyValidator -PathType Leaf)) {
+        Complete -Ok $false -Reason "hierarchy validator is missing"
+    }
+    $hierarchyOutput = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $hierarchyValidator -RepoRoot $root -IssueMirrorPath $relativeIssuePath -Json
+    $hierarchyResult = ($hierarchyOutput | Out-String) | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or -not $hierarchyResult.ok) {
+        Complete -Ok $false -Reason ([string]$hierarchyResult.reason)
+    }
+    Add-Check -Name "hierarchy metadata" -Ok $true -Reason "passed"
+
     Complete -Ok $true -Reason "passed"
 } catch {
     Complete -Ok $false -Reason $_.Exception.Message

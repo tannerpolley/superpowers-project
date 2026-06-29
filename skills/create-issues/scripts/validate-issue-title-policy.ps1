@@ -41,7 +41,14 @@ function Get-MilestoneAliases {
     @($aliases | Select-Object -Unique)
 }
 
+function Expand-ListArgument {
+    param([string[]]$Values)
+    @($Values | ForEach-Object { [string]$_ -split '\s*,\s*' } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
 try {
+    $KnownMilestoneTitles = @(Expand-ListArgument -Values $KnownMilestoneTitles)
+    $KnownMilestoneNumbers = @(Expand-ListArgument -Values $KnownMilestoneNumbers)
     $clean = $Title.Trim()
     if ([string]::IsNullOrWhiteSpace($clean)) {
         Complete -Ok $false -Reason "title is empty"
