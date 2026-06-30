@@ -19,7 +19,7 @@ Run `skills/align-project/scripts/align-project.ps1` before proposing or applyin
 Supported modes:
 
 - `-Mode LocalDocs`: inspect local project docs, issue mirrors, native UI contracts, ignored-path traps, closed mirror lifecycle policy, and live sync surfaces without network.
-- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, `-LabelFixturePath`, and `-ProjectFixturePath` for deterministic smoke tests.
+- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, parent/sub-issue hierarchy drift, clean-title migration candidates, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, `-LabelFixturePath`, and `-ProjectFixturePath` for deterministic smoke tests.
 - `-TrackerHygiene`: inspect GitHub issue routing-label drift and canonical Project V2 state drift. Reports closed/open status mismatches, missing `status:*` routing labels on open issues, missing Project items, mirror-to-Project field drift, and remaining Project V2 draft items.
 - `-ApplyTrackerRepairs`: after native approval, emit a repair receipt for conservative tracker repairs: remove `status:*` labels from closed issues, mark closed Project items `Done`, add mirrored open issues back to the canonical Project, and sync valid Project fields from mirror metadata.
 
@@ -79,6 +79,8 @@ Check for drift across:
 - specs vs plans
 - plans vs issue mirrors
 - issue mirrors vs GitHub issues
+- issue mirror hierarchy fields vs GitHub parent/sub-issue links
+- GitHub titles vs clean-title policy migration candidates
 - closed mirror lifecycle drift
 - issue labels vs label vocabulary
 - issue execution fields vs native `/goal` requirements

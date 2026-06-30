@@ -138,6 +138,22 @@ function Get-StringArray {
     @($Value | ForEach-Object { [string]$_ })
 }
 
+function ConvertTo-IssueLinks {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value) -or $Value.Trim().Equals("None", [StringComparison]::OrdinalIgnoreCase)) { return @() }
+    @($Value -split '\s*,\s*|\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and $_ -ne "None" })
+}
+
+function ConvertTo-NullableBool {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
+    switch -Regex ($Value.Trim()) {
+        '^(?i:true|yes)$' { return $true }
+        '^(?i:false|no)$' { return $false }
+        default { return $null }
+    }
+}
+
 function Read-JsonArray {
     param([string]$Path, [string]$Name)
     if ([string]::IsNullOrWhiteSpace($Path)) { return @() }
@@ -208,6 +224,12 @@ function Get-IssueMirrors {
                 $labels = @($labelText -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
             }
             $issueUrl = Get-FieldValue -Text $text -Name "GitHub Issue"
+            $hierarchyMode = Get-FieldValue -Text $text -Name "Hierarchy Mode"
+            $subIssueRole = Get-FieldValue -Text $text -Name "Sub-Issue Role"
+            $parentIssue = Get-FieldValue -Text $text -Name "Parent Issue"
+            $parentMirror = Get-FieldValue -Text $text -Name "Parent Mirror"
+            $rollupPolicy = Get-FieldValue -Text $text -Name "Rollup Policy"
+            $titlePolicy = Get-FieldValue -Text $text -Name "Title Policy"
             [pscustomobject]@{
                 path = ConvertTo-RepoPath -Root $Root -Path $_.FullName
                 full_name = $_.FullName
@@ -221,6 +243,14 @@ function Get-IssueMirrors {
                 mirror_retention = Get-FieldValue -Text $text -Name "Mirror Retention"
                 project_status = Get-FieldValue -Text $text -Name "Project Status"
                 project_priority = Get-FieldValue -Text $text -Name "Project Priority"
+                hierarchy_mode = if ([string]::IsNullOrWhiteSpace($hierarchyMode)) { "" } else { $hierarchyMode.Trim().ToLowerInvariant() }
+                sub_issue_role = if ([string]::IsNullOrWhiteSpace($subIssueRole)) { "" } else { $subIssueRole.Trim().ToLowerInvariant() }
+                executable = ConvertTo-NullableBool -Value (Get-FieldValue -Text $text -Name "Executable")
+                parent_issue = if ([string]::IsNullOrWhiteSpace($parentIssue)) { "" } else { $parentIssue.Trim() }
+                parent_mirror = if ([string]::IsNullOrWhiteSpace($parentMirror)) { "" } else { $parentMirror.Trim() }
+                child_issues = @(ConvertTo-IssueLinks -Value (Get-FieldValue -Text $text -Name "Child Issues"))
+                rollup_policy = if ([string]::IsNullOrWhiteSpace($rollupPolicy)) { "" } else { $rollupPolicy.Trim().ToLowerInvariant() }
+                title_policy = if ([string]::IsNullOrWhiteSpace($titlePolicy)) { "" } else { $titlePolicy.Trim() }
             }
         })
 }
@@ -309,6 +339,9 @@ query($owner:String!, $name:String!) {
         issueType { id name }
         labels(first: 50) { nodes { name } }
         milestone { title }
+        parent { number title url state }
+        subIssues(first: 100) { nodes { number title url state } }
+        subIssuesSummary { total completed percentCompleted }
       }
     }
   }
@@ -328,6 +361,9 @@ query($owner:String!, $name:String!) {
             milestone = $_.milestone
             node_id = $_.id
             issueType = $_.issueType
+            parent = $_.parent
+            subIssues = $_.subIssues
+            subIssuesSummary = $_.subIssuesSummary
         }
     })
 }
@@ -337,6 +373,79 @@ function Read-ProjectFixture {
     if ([string]::IsNullOrWhiteSpace($Path)) { return $null }
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "project fixture does not exist: $Path" }
     Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+}
+
+function Test-MirrorHasHierarchy {
+    param($Mirror)
+    -not [string]::IsNullOrWhiteSpace([string]$Mirror.hierarchy_mode) -or
+        -not [string]::IsNullOrWhiteSpace([string]$Mirror.sub_issue_role) -or
+        -not [string]::IsNullOrWhiteSpace([string]$Mirror.parent_issue) -or
+        @($Mirror.child_issues).Count -gt 0
+}
+
+function Get-GitHubParentNumber {
+    param($Issue)
+    if ($null -eq $Issue -or $Issue.PSObject.Properties.Name -notcontains "parent" -or $null -eq $Issue.parent) { return $null }
+    if ($Issue.parent.PSObject.Properties.Name -contains "number" -and $null -ne $Issue.parent.number) { return [int]$Issue.parent.number }
+    $null
+}
+
+function Get-GitHubSubIssueNodes {
+    param($Issue)
+    if ($null -eq $Issue -or $Issue.PSObject.Properties.Name -notcontains "subIssues" -or $null -eq $Issue.subIssues) { return @() }
+    if ($Issue.subIssues.PSObject.Properties.Name -contains "nodes") { return @($Issue.subIssues.nodes) }
+    if ($Issue.subIssues -is [array]) { return @($Issue.subIssues) }
+    @()
+}
+
+function Get-GitHubSubIssuesSummaryTotal {
+    param($Issue, [object[]]$Nodes)
+    if ($null -ne $Issue -and $Issue.PSObject.Properties.Name -contains "subIssuesSummary" -and $null -ne $Issue.subIssuesSummary) {
+        if ($Issue.subIssuesSummary.PSObject.Properties.Name -contains "total") { return [int]$Issue.subIssuesSummary.total }
+        if ($Issue.subIssuesSummary.PSObject.Properties.Name -contains "totalCount") { return [int]$Issue.subIssuesSummary.totalCount }
+    }
+    $Nodes.Count
+}
+
+function Get-HierarchyDriftFields {
+    param($Mirror, $Issue)
+    $drift = [System.Collections.Generic.List[string]]::new()
+    $role = [string]$Mirror.sub_issue_role
+    if ($role -in @("leaf", "plan-wrapper")) {
+        $mirrorParent = Get-IssueNumber -IssueUrl ([string]$Mirror.parent_issue) -Path ""
+        $githubParent = Get-GitHubParentNumber -Issue $Issue
+        if ($null -eq $githubParent -or ($null -ne $mirrorParent -and $githubParent -ne $mirrorParent)) {
+            $drift.Add("parent") | Out-Null
+        }
+    }
+    if ($role -in @("parent", "plan-wrapper")) {
+        $githubNodes = @(Get-GitHubSubIssueNodes -Issue $Issue)
+        $githubChildUrls = @($githubNodes | ForEach-Object { [string]$_.url } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object)
+        $mirrorChildUrls = @($Mirror.child_issues | Sort-Object)
+        if (($githubChildUrls -join "`n") -ne ($mirrorChildUrls -join "`n")) {
+            $drift.Add("subIssues") | Out-Null
+        }
+        $summaryTotal = Get-GitHubSubIssuesSummaryTotal -Issue $Issue -Nodes $githubNodes
+        if ($summaryTotal -ne $mirrorChildUrls.Count) {
+            $drift.Add("subIssuesSummary") | Out-Null
+        }
+    }
+    @($drift)
+}
+
+function Test-TitlePolicyMigrationCandidate {
+    param($Mirror, $Issue)
+    if ([string]$Mirror.title_policy -ne "Clean GitHub title") { return $false }
+    $title = [string]$Issue.title
+    if ([string]::IsNullOrWhiteSpace($title)) { return $false }
+    $milestoneTitle = ""
+    if ($null -ne $Issue.milestone -and $Issue.milestone.PSObject.Properties.Name -contains "title") { $milestoneTitle = [string]$Issue.milestone.title }
+    if (-not [string]::IsNullOrWhiteSpace($milestoneTitle) -and $title.IndexOf($milestoneTitle, [StringComparison]::OrdinalIgnoreCase) -ge 0) { return $true }
+    if ($title -match '(?i)^\s*M\d+\b') { return $true }
+    if ($title -match '(?i)\[[^\]]*M\d+[^\]]*\]') { return $true }
+    if ($title -match '(?i)\bsub-?milestone\s+\d+\b') { return $true }
+    if ($title -match '^\s*\d+(?:\.\d+)+\s+') { return $true }
+    $false
 }
 
 function Get-ProjectItems {
@@ -578,6 +687,17 @@ function Invoke-GitHubAwareAudit {
                 if ($actualIssueType -ne $expectedIssueType) { $drift.Add("native_issue_type") | Out-Null }
             } else {
                 Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "native-issue-type-label-only" -Severity "informational" -Dimension "native-issue-type" -Message "GitHub issue has no native issue type; label-only behavior remains active unless the repository has native issue types configured." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url; expected_issue_type = [string]$mirror.issue_type })
+            }
+        }
+        if (Test-MirrorHasHierarchy -Mirror $mirror) {
+            $hierarchyDrift = @(Get-HierarchyDriftFields -Mirror $mirror -Issue $issue)
+            if ($hierarchyDrift.Count -gt 0) {
+                Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "hierarchy-drift" -Severity "repairable" -Dimension "parent-sub-issues" -Message "Issue mirror hierarchy differs from inspected GitHub parent/sub-issue evidence and is a selective migration candidate." -Artifact $mirror.path -Evidence @{ fields = @($hierarchyDrift); github_issue = $issue.url; role = [string]$mirror.sub_issue_role })
+            } else {
+                Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "hierarchy-drift" -Severity "healthy" -Dimension "parent-sub-issues" -Message "Issue mirror hierarchy matches inspected GitHub parent/sub-issue evidence." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url; role = [string]$mirror.sub_issue_role })
+            }
+            if (Test-TitlePolicyMigrationCandidate -Mirror $mirror -Issue $issue) {
+                Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "title-policy-migration-candidate" -Severity "repairable" -Dimension "title-policy" -Message "GitHub issue title still encodes milestone or hierarchy structure and needs approved title cleanup." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url; title = [string]$issue.title; title_policy = [string]$mirror.title_policy })
             }
         }
 

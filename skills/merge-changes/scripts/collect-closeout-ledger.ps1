@@ -8,6 +8,9 @@ param(
     [string]$IssueNumber,
     [string]$IssueJson,
     [string]$IssueFixturePath,
+    [string]$ParentIssueJson,
+    [string]$ParentIssueFixturePath,
+    [string]$HierarchyRollupJson,
     [string]$MergeDecisionJson,
     [string]$CleanupHookOutput,
     [string]$ResolveGoalCompletionProofJson,
@@ -88,7 +91,159 @@ function Get-IssueEvidence {
         return Read-JsonInput -Json $IssueJson -Path $IssueFixturePath -Name "issue evidence"
     }
     if ([string]::IsNullOrWhiteSpace($IssueNumber)) { throw "IssueNumber or IssueJson is required" }
-    Invoke-GhJson -Arguments @("issue", "view", $IssueNumber, "--json", "number,url,state,body,title,closedAt")
+    Invoke-GhJson -Arguments @("issue", "view", $IssueNumber, "--json", "number,url,state,body,title,closedAt,parent,subIssues,subIssuesSummary")
+}
+
+function Get-ParentIssueEvidence {
+    param($Hierarchy)
+    if (-not [string]::IsNullOrWhiteSpace($ParentIssueJson) -or -not [string]::IsNullOrWhiteSpace($ParentIssueFixturePath)) {
+        return Read-JsonInput -Json $ParentIssueJson -Path $ParentIssueFixturePath -Name "parent issue evidence"
+    }
+    if ($null -eq $Hierarchy -or $null -eq $Hierarchy.parent_number) { return $null }
+    if (-not [string]::IsNullOrWhiteSpace($IssueJson) -or -not [string]::IsNullOrWhiteSpace($IssueFixturePath)) { return $null }
+    Invoke-GhJson -Arguments @("issue", "view", ([string]$Hierarchy.parent_number), "--json", "number,url,state,title,subIssues,subIssuesSummary")
+}
+
+function ConvertTo-HierarchyBool {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
+    switch -Regex ($Value.Trim()) {
+        '^(?i:true|yes)$' { return $true }
+        '^(?i:false|no)$' { return $false }
+        default { return $null }
+    }
+}
+
+function Get-IssueNumberFromUrl {
+    param([string]$Url)
+    if ([string]::IsNullOrWhiteSpace($Url)) { return $null }
+    $match = [regex]::Match($Url, '/issues/(?<number>\d+)(?:\b|$)')
+    if ($match.Success) { return [int]$match.Groups["number"].Value }
+    $null
+}
+
+function Read-HierarchyFromMirror {
+    param([string]$RepoRoot, $Setup)
+    if (-not (Test-Property -Object $Setup -Name "issue_mirror")) { return $null }
+    $issueMirror = Normalize-RepoPath ([string]$Setup.issue_mirror)
+    if ([string]::IsNullOrWhiteSpace($issueMirror)) { return $null }
+    $mirrorPath = Resolve-RepoFile -RepoRoot $RepoRoot -Path $issueMirror
+    if (-not (Test-Path -LiteralPath $mirrorPath -PathType Leaf)) { return $null }
+    $text = Get-Content -LiteralPath $mirrorPath -Raw
+    $mode = Get-FieldValue -Text $text -Name "Hierarchy Mode"
+    $role = Get-FieldValue -Text $text -Name "Sub-Issue Role"
+    if ([string]::IsNullOrWhiteSpace($mode) -and [string]::IsNullOrWhiteSpace($role)) { return $null }
+    $parentIssue = Get-FieldValue -Text $text -Name "Parent Issue"
+    $parentMirror = Get-FieldValue -Text $text -Name "Parent Mirror"
+    [pscustomobject]@{
+        issue_mirror = $issueMirror
+        mode = if ([string]::IsNullOrWhiteSpace($mode)) { "flat" } else { $mode.Trim().ToLowerInvariant() }
+        role = if ([string]::IsNullOrWhiteSpace($role)) { "none" } else { $role.Trim().ToLowerInvariant() }
+        executable = ConvertTo-HierarchyBool -Value (Get-FieldValue -Text $text -Name "Executable")
+        parent_issue = if ([string]::IsNullOrWhiteSpace($parentIssue)) { "" } else { $parentIssue.Trim() }
+        parent_mirror = if ([string]::IsNullOrWhiteSpace($parentMirror)) { "" } else { Normalize-RepoPath $parentMirror.Trim() }
+        child_issues = @(ConvertTo-IssueLinks -Value (Get-FieldValue -Text $text -Name "Child Issues"))
+        rollup_policy = if ([string]::IsNullOrWhiteSpace((Get-FieldValue -Text $text -Name "Rollup Policy"))) { "" } else { (Get-FieldValue -Text $text -Name "Rollup Policy").Trim().ToLowerInvariant() }
+        title_policy = Get-FieldValue -Text $text -Name "Title Policy"
+        parent_number = Get-IssueNumberFromUrl -Url $parentIssue
+    }
+}
+
+function ConvertTo-IssueLinks {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value) -or $Value.Trim().Equals("None", [StringComparison]::OrdinalIgnoreCase)) { return @() }
+    @($Value -split '\s*,\s*|\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and $_ -ne "None" })
+}
+
+function Get-GitHubSubIssueNodes {
+    param($Issue)
+    if ($null -eq $Issue -or $Issue.PSObject.Properties.Name -notcontains "subIssues" -or $null -eq $Issue.subIssues) { return @() }
+    if ($Issue.subIssues.PSObject.Properties.Name -contains "nodes") { return @($Issue.subIssues.nodes) }
+    if ($Issue.subIssues -is [array]) { return @($Issue.subIssues) }
+    @()
+}
+
+function Get-SubIssuesSummary {
+    param($Issue, [object[]]$Nodes)
+    if ($null -ne $Issue -and $Issue.PSObject.Properties.Name -contains "subIssuesSummary" -and $null -ne $Issue.subIssuesSummary) {
+        $summary = $Issue.subIssuesSummary
+        return [ordered]@{
+            total = if ($summary.PSObject.Properties.Name -contains "total") { [int]$summary.total } elseif ($summary.PSObject.Properties.Name -contains "totalCount") { [int]$summary.totalCount } else { $Nodes.Count }
+            completed = if ($summary.PSObject.Properties.Name -contains "completed") { [int]$summary.completed } elseif ($summary.PSObject.Properties.Name -contains "completedCount") { [int]$summary.completedCount } else { @($Nodes | Where-Object { [string]$_.state -eq "CLOSED" }).Count }
+            percent_completed = if ($summary.PSObject.Properties.Name -contains "percentCompleted") { [int]$summary.percentCompleted } else { 0 }
+        }
+    }
+    $total = $Nodes.Count
+    $completed = @($Nodes | Where-Object { [string]$_.state -eq "CLOSED" }).Count
+    [ordered]@{ total = $total; completed = $completed; percent_completed = if ($total -eq 0) { 0 } else { [int](($completed / $total) * 100) } }
+}
+
+function ConvertTo-ChildStateRecord {
+    param($Node)
+    $state = if ($Node.PSObject.Properties.Name -contains "state") { [string]$Node.state } else { "" }
+    [ordered]@{
+        number = if ($Node.PSObject.Properties.Name -contains "number") { [int]$Node.number } else { $null }
+        url = if ($Node.PSObject.Properties.Name -contains "url") { [string]$Node.url } else { "" }
+        title = if ($Node.PSObject.Properties.Name -contains "title") { [string]$Node.title } else { "" }
+        state = $state
+        disposition = if ($state.Equals("CLOSED", [StringComparison]::OrdinalIgnoreCase)) { "closed" } else { "open" }
+        required = $true
+    }
+}
+
+function Get-HierarchyRollupEvidence {
+    param([string]$RepoRoot, $Setup, $Issue, $ProvidedRollup)
+    if ($null -ne $ProvidedRollup) { return $ProvidedRollup }
+    $hierarchy = Read-HierarchyFromMirror -RepoRoot $RepoRoot -Setup $Setup
+    if ($null -eq $hierarchy -or $hierarchy.mode -eq "flat") { return $null }
+    $parentIssue = Get-ParentIssueEvidence -Hierarchy $hierarchy
+    $parentNodes = @(Get-GitHubSubIssueNodes -Issue $parentIssue)
+    if ($hierarchy.role -eq "leaf") {
+        $leafUrl = if ((Test-Property -Object $Issue -Name "url") -and -not [string]::IsNullOrWhiteSpace([string]$Issue.url)) { [string]$Issue.url } else { [string]$Setup.issue_url }
+        $siblingStates = @($parentNodes | ForEach-Object { ConvertTo-ChildStateRecord -Node $_ })
+        if ($siblingStates.Count -eq 0) {
+            $siblingStates = @([ordered]@{ number = Get-IssueNumberFromUrl -Url $leafUrl; url = $leafUrl; title = if (Test-Property -Object $Issue -Name "title") { [string]$Issue.title } else { "" }; state = [string]$Issue.state; disposition = "closed"; required = $true })
+        }
+        return [ordered]@{
+            role = "leaf"
+            leaf_issue_url = $leafUrl
+            parent_issue_url = $hierarchy.parent_issue
+            parent_mirror = $hierarchy.parent_mirror
+            sibling_child_states = @($siblingStates)
+            sub_issues_summary = Get-SubIssuesSummary -Issue $parentIssue -Nodes $parentNodes
+            local_receipts = [ordered]@{
+                issue_mirror = $hierarchy.issue_mirror
+                parent_mirror = $hierarchy.parent_mirror
+                hierarchy_mode = $hierarchy.mode
+                rollup_policy = $hierarchy.rollup_policy
+                title_policy = $hierarchy.title_policy
+            }
+            parent_closeout = [ordered]@{
+                auto_closed = $false
+                requires_native_approval = $true
+                approval = $null
+            }
+        }
+    }
+    $childStates = @((Get-GitHubSubIssueNodes -Issue $Issue) | ForEach-Object { ConvertTo-ChildStateRecord -Node $_ })
+    return [ordered]@{
+        role = $hierarchy.role
+        issue_url = if ((Test-Property -Object $Issue -Name "url") -and -not [string]::IsNullOrWhiteSpace([string]$Issue.url)) { [string]$Issue.url } else { [string]$Setup.issue_url }
+        child_states = @($childStates)
+        rollup_policy = $hierarchy.rollup_policy
+        sub_issues_summary = Get-SubIssuesSummary -Issue $Issue -Nodes $childStates
+        local_receipts = [ordered]@{
+            issue_mirror = $hierarchy.issue_mirror
+            hierarchy_mode = $hierarchy.mode
+            rollup_policy = $hierarchy.rollup_policy
+            title_policy = $hierarchy.title_policy
+        }
+        parent_closeout = [ordered]@{
+            auto_closed = $false
+            requires_native_approval = $true
+            approval = $null
+        }
+    }
 }
 
 function Find-MilestonePage {
@@ -174,6 +329,8 @@ try {
     $mergeDecision = Read-JsonInput -Json $MergeDecisionJson -Name "merge decision"
     $resolveGoal = Read-JsonInput -Json $ResolveGoalCompletionProofJson -Name "resolve goal completion proof"
     $providedMirrorCleanup = if ([string]::IsNullOrWhiteSpace($MirrorCleanupJson)) { $null } else { Read-JsonInput -Json $MirrorCleanupJson -Name "mirror cleanup proof" }
+    $providedHierarchyRollup = if ([string]::IsNullOrWhiteSpace($HierarchyRollupJson)) { $null } else { Read-JsonInput -Json $HierarchyRollupJson -Name "hierarchy rollup proof" }
+    $hierarchyRollup = Get-HierarchyRollupEvidence -RepoRoot $root -Setup $setup -Issue $issue -ProvidedRollup $providedHierarchyRollup
     $mirrorCleanup = Get-MirrorCleanupConfirmation -RepoRoot $root -Setup $setup -Pr $pr -Issue $issue -ProvidedCleanup $providedMirrorCleanup
     $branch = Normalize-RepoPath ([string]$setup.branch)
     $localBranch = Invoke-GitCapture -RepoRoot $root -Arguments @("show-ref", "--verify", "--quiet", "refs/heads/$branch")
@@ -238,10 +395,12 @@ try {
         resolve_goal_completion_proof = $resolveGoal
         mirror_cleanup_confirmation = $mirrorCleanup
     }
+    if ($null -ne $hierarchyRollup) {
+        $ledger["hierarchy_rollup"] = $hierarchyRollup
+    }
     $ledgerPath = New-OutputPath -OutputDir $OutputDir
     $ledger | ConvertTo-Json -Depth 32 | Set-Content -LiteralPath $ledgerPath -Encoding utf8NoBOM
     Write-CollectorResult -Ok $true -Reason "closeout ledger collected" -Ledger $ledger -LedgerPath $ledgerPath -Pr $pr -Issue $issue
 } catch {
     Write-CollectorResult -Ok $false -Reason $_.Exception.Message
 }
-
