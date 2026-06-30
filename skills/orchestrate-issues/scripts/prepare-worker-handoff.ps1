@@ -37,6 +37,35 @@ function Get-SectionBulletValues {
     @($match.Groups["body"].Value -split "`r?`n" | Where-Object { $_ -match '^\s*-\s+(.+?)\s*$' } | ForEach-Object { $Matches[1].Trim() })
 }
 
+function ConvertTo-HandoffBool {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
+    switch -Regex ($Value.Trim().ToLowerInvariant()) {
+        '^(true|yes|1)$' { return $true }
+        '^(false|no|0)$' { return $false }
+        default { throw "Executable must be true or false when hierarchy metadata is present" }
+    }
+}
+
+function Assert-ExecutableIssueMirror {
+    param([string]$Text)
+    $role = [string](Get-FieldValue -Text $Text -Name "Sub-Issue Role")
+    $executableRaw = [string](Get-FieldValue -Text $Text -Name "Executable")
+    $hierarchyMode = [string](Get-FieldValue -Text $Text -Name "Hierarchy Mode")
+    $hasHierarchy = -not [string]::IsNullOrWhiteSpace($role) -or -not [string]::IsNullOrWhiteSpace($executableRaw) -or -not [string]::IsNullOrWhiteSpace($hierarchyMode)
+    if (-not $hasHierarchy) { return }
+
+    $normalizedRole = $role.Trim().ToLowerInvariant()
+    $executable = ConvertTo-HandoffBool -Value $executableRaw
+    if ($normalizedRole -in @("parent", "plan-wrapper")) {
+        throw "Sub-Issue Role $normalizedRole is not executable (Executable: false); select an executable leaf issue instead"
+    }
+    if ($null -ne $executable -and -not $executable) {
+        $namedRole = if ([string]::IsNullOrWhiteSpace($normalizedRole)) { "unknown" } else { $normalizedRole }
+        throw "Sub-Issue Role $namedRole is not executable (Executable: false); select an executable leaf issue instead"
+    }
+}
+
 try {
     $root = (Resolve-Path -LiteralPath $RepoRoot).Path
     $issuePath = if ([IO.Path]::IsPathRooted($IssueFile)) {
@@ -55,6 +84,7 @@ try {
     $validationText = ($validationRaw | Out-String).Trim()
     if ($LASTEXITCODE -ne 0) { throw "issue mirror validation failed: $validationText" }
     $text = Get-Content -LiteralPath $issuePath -Raw
+    Assert-ExecutableIssueMirror -Text $text
     $sourcePlan = Get-FieldValue -Text $text -Name "Source Plan"
     if ([string]::IsNullOrWhiteSpace($sourcePlan) -or $sourcePlan -eq "none") { throw "Source Plan is required for worker orchestration" }
     $sourcePlanPath = if ([IO.Path]::IsPathRooted($sourcePlan)) { $sourcePlan } else { Join-Path $root $sourcePlan }
