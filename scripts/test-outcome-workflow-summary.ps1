@@ -33,6 +33,7 @@ try {
 
     foreach ($needle in @(
         '$superpowers-project:*',
+        'project_brainstorm_visual_companion',
         'project_brainstorm_plan_route',
         'project_merge_final_health_gate',
         'debug_question_mode',

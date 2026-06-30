@@ -8,10 +8,12 @@ interface:
     using flat canonical roots and loose specs. Use superpowers:brainstorming, inspect knowable context first, and ask
     unresolved scope, naming, acceptance, route, and tradeoff decisions through request_user_input. Upstream Brainstorming Checklist Gate:
     The upstream superpowers:brainstorming checklist is mandatory; Design 1 and Design 2 compare 2-3 approaches with approval after each section across architecture, components, data flow, error handling, and testing;
-    User reviews written spec. Auto Mode routing belongs to initiate-workflow. summarize
+    User reviews written spec. Visual companion offers use project_brainstorm_visual_companion as a standalone
+    request_user_input prompt when callable; a prose-only companion offer is invalid. Auto Mode routing belongs to initiate-workflow. summarize
     artifact review gate status, what the result means for the next workflow step, broader project context, and
     machine-readable artifacts. project_brainstorm_next_step is the top-level continuation gate; use SKILL.md and
     docs/superpowers/workflow-contract.yml for child routes. If a loaded thread may still be using older skill text, re-ask the missed native route
-    for stale-thread recovery. project_brainstorm_plan_route has Create One Plan and Multi-Spec Planning.
+    for stale-thread recovery. project_brainstorm_visual_companion has Use Visual Companion and Skip Visual Companion.
+    project_brainstorm_plan_route has Create One Plan and Multi-Spec Planning.
     project_brainstorm_reiteration_route has Revise Spec and Review Or Restart; start the selected next skill.
     Agent-Native visual-plan review is opt-in through companion-interface.
