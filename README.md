@@ -50,6 +50,18 @@ The companion route uses BuilderIO/Agent-Native MDX as a visual guide and audit 
 - `docs/superpowers/milestones/*receipt*.md` files are validation receipts and milestone history, not active backlog.
 - `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.
 
+## GitHub Milestones And Sub-Issues
+
+GitHub Milestones remain the milestone tracker. Parent issues and optional plan-wrapper issues group work inside a milestone; they do not replace milestones or encode milestone identity in titles.
+
+- New issue titles stay clean. Milestone names, milestone numbers, hierarchy ordinals, and pseudo sub-milestone numbers belong in GitHub fields and local mirror metadata.
+- Supported hierarchy modes are `flat`, `issue-set`, and `sub-milestone`.
+- Parent and plan-wrapper mirrors are rollup records with `Executable: false`.
+- Only `Sub-Issue Role: leaf` with `Executable: true` can enter `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
+- Leaf merge closeout records `hierarchy_rollup` parent progress from GitHub `subIssuesSummary`; parent or wrapper closeout still needs native approval plus child proof.
+- `$superpowers-project:align-project` reports parent/sub-issue drift and clean-title migration candidates before any GitHub mutation.
+- `$superpowers-project:loop-controller` skips parent and plan-wrapper implementation candidates and reserves them for rollup, alignment, or tracker repair.
+
 ## Docker Agent-Native Preview
 
 To host the checked-in Agent-Native companion preview from a container:
