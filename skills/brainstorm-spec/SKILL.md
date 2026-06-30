@@ -29,7 +29,7 @@ The upstream `superpowers:brainstorming` checklist is mandatory. The project ada
 For every brainstorm run, the agent MUST create checklist tasks and complete them in order before moving to the next phase:
 
 1. Explore project context before asking user-facing questions unless the repo cannot be read.
-2. Offer visual companion in its own message when visual or spatial questions are ahead.
+2. Offer the visual companion through `project_brainstorm_visual_companion` when visual or spatial questions are ahead. When `request_user_input` is callable, this offer must be its own standalone native prompt; a prose-only chat pause does not satisfy the upstream standalone-message requirement.
 3. Ask clarifying questions one at a time until the decision shape is sharp enough to design.
 4. Propose 2-3 approaches named `Design 1`, `Design 2`, and optional `Design 3`, each with tradeoffs and a recommendation. At least Design 1 and Design 2 must be real alternatives; do not collapse them into one preferred answer.
 5. The agent must present design sections and get approval after each section. Required sections include architecture, components, data flow, error handling, and testing.
@@ -39,6 +39,19 @@ For every brainstorm run, the agent MUST create checklist tasks and complete the
 9. Transition only to `$superpowers-project:write-plan` or `superpowers:writing-plans` after the checklist, written spec, self-review, artifact display, and user review are complete.
 
 Do NOT invoke implementation, issue creation, branch work, PR work, merge work, or planning before this gate is satisfied. Auto Mode routing belongs to `$superpowers-project:initiate-workflow`; this skill may continue only into planning, revisit, or stop after the saved spec passes artifact review and user review.
+
+## Visual Companion Native Gate
+
+When visual or spatial questions are ahead, ask this gate before clarifying questions. If `request_user_input` is callable, use native input. If native input is not callable, ask the same choice as one standalone chat message and wait for the answer. Do not satisfy this gate with prose-only narration or by ending the turn without a bounded choice.
+
+Question id: `project_brainstorm_visual_companion`
+
+Prompt: `Use a visual companion for this brainstorm?`
+
+Options:
+
+- `Use Visual Companion`: create or refresh the Agent-Native visual-plan companion before continuing clarifying questions.
+- `Skip Visual Companion`: continue the brainstorm in native/chat questions without a companion artifact; this can be revisited later.
 
 ## Native Question Debug Mode
 
@@ -82,7 +95,7 @@ Use the smallest supporting set:
 
 ## Companion Interface Opt-In
 
-When the user asks for the companion, or when rendered specs, design alternatives, project-context evidence, or saved spec previews would be too large for chat, use `$superpowers-project:companion-interface` to create or refresh a repo-owned Agent-Native visual-plan MDX artifact. Include project context evidence, design alternatives, user decisions, open questions, saved spec path, and recommended next route.
+When the user asks for the companion, selects `Use Visual Companion` at `project_brainstorm_visual_companion`, or when rendered specs, design alternatives, project-context evidence, or saved spec previews would be too large for chat, use `$superpowers-project:companion-interface` to create or refresh a repo-owned Agent-Native visual-plan MDX artifact. Include project context evidence, design alternatives, user decisions, open questions, saved spec path, and recommended next route.
 
 The companion is an evidence surface only; native approval, user review, and continuation decisions still happen through chat or `request_user_input`.
 

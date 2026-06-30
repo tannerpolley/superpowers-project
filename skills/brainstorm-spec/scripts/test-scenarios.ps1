@@ -79,6 +79,31 @@ $scenarios = @(
             Assert-Contains $text $needle "missing native UI/grill pressure contract: $needle"
         }
     }
+    Invoke-Scenario "initiate to brainstorm visual companion gate is native" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            "project_brainstorm_visual_companion",
+            "standalone native prompt",
+            "prose-only chat pause does not satisfy",
+            "Do not satisfy this gate with prose-only narration",
+            "Use a visual companion for this brainstorm?",
+            "Use Visual Companion",
+            "Skip Visual Companion"
+        )) {
+            Assert-Contains $text $needle "missing native visual companion gate in SKILL.md: $needle"
+        }
+        foreach ($needle in @(
+            "project_brainstorm_visual_companion",
+            "request_user_input prompt",
+            "prose-only companion offer is invalid",
+            "Use Visual Companion",
+            "Skip Visual Companion",
+            "Auto Mode routing belongs to initiate-workflow"
+        )) {
+            Assert-Contains $metadata $needle "missing native visual companion gate in metadata: $needle"
+        }
+    }
     Invoke-Scenario "upstream brainstorming checklist gate is mandatory" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         $metadata = Get-Content -LiteralPath $yamlFile -Raw
@@ -88,7 +113,8 @@ $scenarios = @(
             "MUST create checklist tasks",
             "complete them in order",
             "Explore project context",
-            "Offer visual companion",
+            "Offer the visual companion",
+            "standalone native prompt",
             "Ask clarifying questions one at a time",
             "Design 1",
             "Design 2",
@@ -111,6 +137,7 @@ $scenarios = @(
             "Design 1",
             "Design 2",
             "2-3 approaches",
+            "project_brainstorm_visual_companion",
             "approval after each section",
             "architecture, components, data flow, error handling, and testing",
             "User reviews written spec",
@@ -138,6 +165,7 @@ $scenarios = @(
             "what the result means for the next workflow step",
             "broader project context",
             "machine-readable artifacts",
+            "project_brainstorm_visual_companion",
             "project_brainstorm_next_step",
             "top-level continuation gate",
             "child routes",
@@ -167,6 +195,7 @@ $scenarios = @(
             "stop",
             "request_user_input",
             "start the selected next skill",
+            "project_brainstorm_visual_companion",
             "project_brainstorm_next_step",
             "Continue From Spec",
             "Revise / Review Brainstorm",
@@ -222,6 +251,7 @@ $scenarios = @(
         }
         foreach ($needle in @(
             "docs/superpowers/workflow-contract.yml",
+            "project_brainstorm_visual_companion",
             "project_brainstorm_next_step",
             "top-level continuation gate",
             "child routes",

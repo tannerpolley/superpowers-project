@@ -213,6 +213,7 @@ workflow_skills:
     - project_brainstorm_plan_route
     - project_brainstorm_reiteration_route
     - project_brainstorm_review_restart_route
+    - project_brainstorm_visual_companion
     final_health_gate: null
     top_level_options:
     - true
@@ -244,6 +245,7 @@ workflow_skills:
     artifacts:
     - docs/superpowers/specs
     next_routes:
+    - companion-interface
     - write-plan
     gates:
     - question_id: project_brainstorm_multi_spec_route
@@ -292,6 +294,15 @@ workflow_skills:
         terminal_state: revisit
       - label: Re-run Brainstorm
         terminal_state: revisit
+    - question_id: project_brainstorm_visual_companion
+      gate_type: data_selection
+      prompt: Use a visual companion for this brainstorm?
+      options:
+      - label: Use Visual Companion
+        terminal_state: continue
+        next_route: companion-interface
+      - label: Skip Visual Companion
+        terminal_state: continue
   companion-interface:
     purpose: Optional Agent-Native visual-plan or visual-recap review surface.
     question_ids: []
