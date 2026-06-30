@@ -69,6 +69,70 @@ Before publishing, ask the user to approve:
 
 Publish issues in dependency order so blockers get real GitHub issue identifiers first.
 
+## Hierarchy Publication Paths
+
+Use GitHub-native hierarchy only when the source material has grouped work. Keep single issues and unrelated batches in `flat` mode. Use `issue-set` when one parent issue should group a coordinated set of executable leaves. Use `sub-milestone` when a large parent issue acts as a pseudo sub-milestone inside a real GitHub Milestone, with optional plan-wrapper issues and executable leaves below it.
+
+Before publication, ask route-specific native questions when `request_user_input` is callable:
+
+Question id: `project_issue_hierarchy_mode`
+
+Prompt: `How should this issue set be represented in GitHub?`
+
+Options:
+
+- `Flat Issues`: create normal executable issues with GitHub Milestones and no parent issue.
+- `Issue Set`: create one clean-title parent and executable child issues.
+- `Sub-Milestone`: create a clean-title parent, optional wrapper issues, and executable child issues.
+
+Question id: `project_issue_hierarchy_parent`
+
+Prompt: `What parent issue title or existing parent should own this hierarchy?`
+
+Options:
+
+- `Use Proposed Parent`: validate the proposed clean title and continue.
+- `Use Existing Parent`: attach new or existing child issues under an existing GitHub parent issue.
+- `Revise Parent`: revise the parent title or hierarchy before any mutation.
+
+Question id: `project_issue_hierarchy_wrapper`
+
+Prompt: `Should this hierarchy include plan-wrapper issues?`
+
+Options:
+
+- `No Wrapper`: attach executable leaves directly to the parent.
+- `Use Wrappers`: create or attach non-executable wrapper issues before leaves.
+
+Question id: `project_issue_hierarchy_children`
+
+Prompt: `Which child issues belong under the selected parent or wrapper?`
+
+Options:
+
+- `Use Proposed Children`: validate titles, dependencies, and executability.
+- `Revise Children`: revise child boundaries before publication.
+
+Question id: `project_issue_hierarchy_tracker_fields`
+
+Prompt: `Which GitHub Milestone, labels, and issue types should be applied?`
+
+Options:
+
+- `Use Proposed Tracker Fields`: apply the selected GitHub Milestone, labels, and issue type metadata.
+- `Revise Tracker Fields`: change milestone, labels, or issue types before publication.
+
+Question id: `project_issue_hierarchy_publish`
+
+Prompt: `Approve this dry command receipt for GitHub issue mutation?`
+
+Options:
+
+- `Publish Approved Commands`: run the exact validated commands.
+- `Revise Before Publish`: return to hierarchy planning before any GitHub mutation.
+
+Run `validate-issue-title-policy.ps1` for every new parent, wrapper, and leaf title. clean-title validation runs before any GitHub mutation. Run `build-issue-hierarchy-plan.ps1` before publication and show its dry command receipt in the artifact review card. The receipt must show parent-first publication order, `gh issue create --parent` for new children or wrappers under a parent, and `gh issue edit --add-sub-issue` for attaching existing child issues. Do not encode milestone names, milestone numbers, hierarchy order, or pseudo sub-milestone numbers in issue titles.
+
 ## Issue Mirror Contract
 
 Write issue mirrors to `docs/superpowers/issues/<issue-number>-<slug>.md` after GitHub publication, or `docs/superpowers/issues/<slug>.md` before publication.
@@ -110,6 +174,7 @@ Each mirror must include:
 - Merge Policy
 - Worktree Cleanup Policy
 - Orchestrator Wakeup Policy
+- Hierarchy Mode, Sub-Issue Role, Executable, Parent Issue, Parent Mirror, Child Issues, Rollup Policy, and Title Policy when GitHub hierarchy is present
 - Acceptance Criteria as checkboxes
 - Blocked by
 - Non-goals
@@ -215,20 +280,21 @@ External GitHub issues are intake, not ready execution inputs, until they have l
 
 Protocol:
 
-1. Read the GitHub issue body from `IssueBodyPath` for fixture work or from `gh issue view <url>` for live tracker work.
+1. Read fixture data from `IssueJsonPath`, body fixture text from `IssueBodyPath`, or live tracker data with `gh issue view <url> --json body,parent,subIssues,subIssuesSummary,milestone,labels,issueType,title,url,number`.
 2. Create or update `docs/superpowers/issues/<issue-number>-<slug>.md`.
 3. Preserve the issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command.
-4. Create or update `## Outcome Summary` with `Outcome Source`, `Interface`, `Cutover`, `Acceptance Proof`, `Stop Criteria`, and `Avoid` before validation.
-5. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
-6. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
-7. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
+4. Preserve GitHub hierarchy into mirror fields: `Hierarchy Mode`, `Sub-Issue Role`, `Executable`, `Parent Issue`, `Parent Mirror`, `Child Issues`, `Rollup Policy`, and `Title Policy`.
+5. Create or update `## Outcome Summary` with `Outcome Source`, `Interface`, `Cutover`, `Acceptance Proof`, `Stop Criteria`, and `Avoid` before validation.
+6. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
+7. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
+8. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
 
 Hydration may create a source plan and pass mirror validation in the same command, but the original GitHub issue remains intake until the local mirror and source plan exist and validation has passed. Do not hand raw GitHub issue text to execution skills.
 
 Script contract:
 
 ```powershell
-scripts/hydrate-external-issue.ps1 -RepoRoot . -IssueUrl <github-issue-url> [-IssueBodyPath <body.md>] [-IssueTitle <title>] [-OutputPlanSlug <slug>]
+scripts/hydrate-external-issue.ps1 -RepoRoot . -IssueUrl <github-issue-url> [-IssueBodyPath <body.md>] [-IssueJsonPath <issue.json>] [-IssueTitle <title>] [-OutputPlanSlug <slug>]
 ```
 
 ## Execution Boundary

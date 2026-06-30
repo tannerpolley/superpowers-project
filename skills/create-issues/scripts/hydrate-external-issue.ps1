@@ -3,6 +3,7 @@ param(
     [string]$RepoRoot = (Get-Location).Path,
     [Parameter(Mandatory = $true)][string]$IssueUrl,
     [string]$IssueBodyPath,
+    [string]$IssueJsonPath,
     [string]$IssueTitle,
     [string]$OutputPlanSlug
 )
@@ -83,15 +84,37 @@ function ConvertTo-Slug {
     $slug
 }
 
-function Get-BodyText {
-    param([string]$Path, [string]$Url)
-    if (-not [string]::IsNullOrWhiteSpace($Path)) {
-        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "IssueBodyPath file is missing" }
-        return Get-Content -LiteralPath $Path -Raw
+function Get-ObjectProperty {
+    param($Object, [string]$Name)
+    if ($null -eq $Object) { return $null }
+    if ($Object.PSObject.Properties.Name -contains $Name) { return $Object.$Name }
+    $null
+}
+
+function Get-IssueRecord {
+    param([string]$BodyPath, [string]$JsonPath, [string]$Url)
+    if (-not [string]::IsNullOrWhiteSpace($JsonPath)) {
+        if (-not (Test-Path -LiteralPath $JsonPath -PathType Leaf)) { throw "IssueJsonPath file is missing" }
+        return Get-Content -LiteralPath $JsonPath -Raw | ConvertFrom-Json
     }
-    $raw = & gh issue view $Url --json body --jq ".body" 2>&1
+    if (-not [string]::IsNullOrWhiteSpace($BodyPath)) {
+        if (-not (Test-Path -LiteralPath $BodyPath -PathType Leaf)) { throw "IssueBodyPath file is missing" }
+        return [pscustomobject]@{
+            body = Get-Content -LiteralPath $BodyPath -Raw
+            title = $IssueTitle
+            url = $Url
+            number = Get-IssueNumber -Url $Url
+            milestone = $null
+            labels = @()
+            issueType = $null
+            parent = $null
+            subIssues = @{ nodes = @(); totalCount = 0 }
+            subIssuesSummary = @{ total = 0; completed = 0; percentCompleted = 0 }
+        }
+    }
+    $raw = & gh issue view $Url --json body,parent,subIssues,subIssuesSummary,milestone,labels,issueType,title,url,number 2>&1
     if ($LASTEXITCODE -ne 0) { throw "gh issue view failed: $(($raw | Out-String).Trim())" }
-    ($raw | Out-String).TrimEnd()
+    ($raw | Out-String) | ConvertFrom-Json
 }
 
 function Get-Title {
@@ -100,6 +123,137 @@ function Get-Title {
     $match = [regex]::Match($Text, "(?m)^#\s+(.+?)\s*$")
     if ($match.Success) { return $match.Groups[1].Value.Trim() }
     throw "issue body must start with a markdown title or IssueTitle must be provided"
+}
+
+function Set-MarkdownTitle {
+    param([string]$Text, [string]$Title)
+    if ([regex]::IsMatch($Text, "(?m)^#\s+.+$")) {
+        return [regex]::Replace($Text, "(?m)^#\s+.+$", "# $Title", 1)
+    }
+    "# $Title`n`n$Text"
+}
+
+function Get-IssueRecordUrl {
+    param($Issue, [string]$Fallback)
+    $url = [string](Get-ObjectProperty -Object $Issue -Name "url")
+    if ([string]::IsNullOrWhiteSpace($url)) { return $Fallback }
+    $url
+}
+
+function Get-IssueRecordNumber {
+    param($Issue, [string]$Url)
+    $number = Get-ObjectProperty -Object $Issue -Name "number"
+    if ($null -ne $number -and -not [string]::IsNullOrWhiteSpace([string]$number)) { return [int]$number }
+    Get-IssueNumber -Url $Url
+}
+
+function Get-GitHubTitle {
+    param($Issue)
+    $title = [string](Get-ObjectProperty -Object $Issue -Name "title")
+    if ([string]::IsNullOrWhiteSpace($title)) { return "" }
+    $title.Trim()
+}
+
+function Get-GitHubMilestoneTitle {
+    param($Issue)
+    $milestone = Get-ObjectProperty -Object $Issue -Name "milestone"
+    if ($null -eq $milestone) { return "" }
+    $title = [string](Get-ObjectProperty -Object $milestone -Name "title")
+    if ([string]::IsNullOrWhiteSpace($title)) { return "" }
+    $title.Trim()
+}
+
+function Get-GitHubIssueTypeName {
+    param($Issue)
+    $issueType = Get-ObjectProperty -Object $Issue -Name "issueType"
+    if ($null -eq $issueType) { return "" }
+    if ($issueType -is [string]) { return $issueType.Trim() }
+    $name = [string](Get-ObjectProperty -Object $issueType -Name "name")
+    if ([string]::IsNullOrWhiteSpace($name)) { return "" }
+    $name.Trim()
+}
+
+function Get-GitHubLabelNames {
+    param($Issue)
+    $labels = Get-ObjectProperty -Object $Issue -Name "labels"
+    if ($null -eq $labels) { return @() }
+    @($labels | ForEach-Object {
+        if ($_ -is [string]) { $_.Trim() }
+        else {
+            $name = [string](Get-ObjectProperty -Object $_ -Name "name")
+            if (-not [string]::IsNullOrWhiteSpace($name)) { $name.Trim() }
+        }
+    } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Get-GitHubSubIssueNodes {
+    param($Issue)
+    $subIssues = Get-ObjectProperty -Object $Issue -Name "subIssues"
+    if ($null -eq $subIssues) { return @() }
+    $nodes = Get-ObjectProperty -Object $subIssues -Name "nodes"
+    if ($null -eq $nodes) { return @() }
+    @($nodes)
+}
+
+function Get-GitHubSubIssueUrls {
+    param($Issue)
+    @(Get-GitHubSubIssueNodes -Issue $Issue | ForEach-Object {
+        $url = [string](Get-ObjectProperty -Object $_ -Name "url")
+        if (-not [string]::IsNullOrWhiteSpace($url)) { $url.Trim() }
+    })
+}
+
+function ConvertTo-ParentMirrorPath {
+    param($Parent)
+    if ($null -eq $Parent) { return "None" }
+    $number = Get-ObjectProperty -Object $Parent -Name "number"
+    $title = [string](Get-ObjectProperty -Object $Parent -Name "title")
+    if ($null -eq $number -or [string]::IsNullOrWhiteSpace($title)) { return "None" }
+    "docs/superpowers/issues/$([int]$number)-$(ConvertTo-Slug -Value $title).md"
+}
+
+function Set-GitHubTrackerFields {
+    param([string]$Text, $Issue, [string]$Url)
+    $result = Set-FieldValue -Text $Text -Name "GitHub Issue" -Value $Url
+    $milestoneTitle = Get-GitHubMilestoneTitle -Issue $Issue
+    if (-not [string]::IsNullOrWhiteSpace($milestoneTitle)) {
+        $result = Set-FieldValue -Text $result -Name "GitHub Milestone" -Value $milestoneTitle
+    }
+    $issueType = Get-GitHubIssueTypeName -Issue $Issue
+    if (-not [string]::IsNullOrWhiteSpace($issueType)) {
+        $result = Set-FieldValue -Text $result -Name "Issue Type" -Value $issueType
+    }
+    $labels = @(Get-GitHubLabelNames -Issue $Issue)
+    if ($labels.Count -gt 0) {
+        $result = Set-FieldValue -Text $result -Name "Labels" -Value ($labels -join ", ")
+    }
+    $result
+}
+
+function Set-HierarchyFields {
+    param([string]$Text, $Issue)
+    $parent = Get-ObjectProperty -Object $Issue -Name "parent"
+    $parentUrl = if ($null -ne $parent) { [string](Get-ObjectProperty -Object $parent -Name "url") } else { "" }
+    $childUrls = @(Get-GitHubSubIssueUrls -Issue $Issue)
+    $hasParent = -not [string]::IsNullOrWhiteSpace($parentUrl)
+    $hasChildren = $childUrls.Count -gt 0
+    if (-not $hasParent -and -not $hasChildren) { return $Text }
+
+    $role = if ($hasParent -and $hasChildren) { "plan-wrapper" } elseif ($hasParent) { "leaf" } else { "parent" }
+    $executable = if ($role -eq "leaf") { "true" } else { "false" }
+    $rollup = if ($role -eq "leaf") { "none" } else { "all-required-children-closed" }
+    $parentIssue = if ($hasParent) { $parentUrl.Trim() } else { "None" }
+    $parentMirror = if ($hasParent) { ConvertTo-ParentMirrorPath -Parent $parent } else { "None" }
+    $childIssues = if ($hasChildren) { $childUrls -join ", " } else { "None" }
+
+    $result = Set-FieldValue -Text $Text -Name "Hierarchy Mode" -Value "sub-milestone"
+    $result = Set-FieldValue -Text $result -Name "Sub-Issue Role" -Value $role
+    $result = Set-FieldValue -Text $result -Name "Executable" -Value $executable
+    $result = Set-FieldValue -Text $result -Name "Parent Issue" -Value $parentIssue
+    $result = Set-FieldValue -Text $result -Name "Parent Mirror" -Value $parentMirror
+    $result = Set-FieldValue -Text $result -Name "Child Issues" -Value $childIssues
+    $result = Set-FieldValue -Text $result -Name "Rollup Policy" -Value $rollup
+    Set-FieldValue -Text $result -Name "Title Policy" -Value "Clean GitHub title"
 }
 
 function Test-UnresolvedSourcePlan {
@@ -162,9 +316,15 @@ try {
         $root = Resolve-Path -LiteralPath $RepoRoot
     }
     $rootPath = $root.Path
-    $body = Get-BodyText -Path $IssueBodyPath -Url $IssueUrl
-    $title = Get-Title -Text $body -Provided $IssueTitle
-    $number = Get-IssueNumber -Url $IssueUrl
+    $issue = Get-IssueRecord -BodyPath $IssueBodyPath -JsonPath $IssueJsonPath -Url $IssueUrl
+    $body = [string](Get-ObjectProperty -Object $issue -Name "body")
+    if ([string]::IsNullOrWhiteSpace($body)) { throw "GitHub issue body is empty" }
+    $recordTitle = Get-GitHubTitle -Issue $issue
+    $providedTitle = if (-not [string]::IsNullOrWhiteSpace($IssueTitle)) { $IssueTitle } elseif (-not [string]::IsNullOrWhiteSpace($recordTitle)) { $recordTitle } else { "" }
+    $title = Get-Title -Text $body -Provided $providedTitle
+    $body = Set-MarkdownTitle -Text $body -Title $title
+    $issueUrlValue = Get-IssueRecordUrl -Issue $issue -Fallback $IssueUrl
+    $number = Get-IssueRecordNumber -Issue $issue -Url $issueUrlValue
     $slug = ConvertTo-Slug -Value $title
 
     $sourcePlan = Get-FieldValue -Text $body -Name "Source Plan"
@@ -182,8 +342,9 @@ try {
         $createdPlan = $true
     }
 
-    $mirrorText = Set-FieldValue -Text $body -Name "GitHub Issue" -Value $IssueUrl
+    $mirrorText = Set-GitHubTrackerFields -Text $body -Issue $issue -Url $issueUrlValue
     $mirrorText = Set-FieldValue -Text $mirrorText -Name "Source Plan" -Value ($sourcePlan -replace '\\', '/')
+    $mirrorText = Set-HierarchyFields -Text $mirrorText -Issue $issue
     $mirrorText = Set-OutcomeSummary -Text $mirrorText -SourcePlan ($sourcePlan -replace '\\', '/') -Title $title
 
     $mirrorRelative = "docs/superpowers/issues/$number-$slug.md"

@@ -6,6 +6,7 @@ interface:
     mirrors under docs/superpowers/issues. Read SKILL.md for mirror schema, tracker metadata, and native gates; read
     docs/superpowers/workflow-contract.yml for route question ids and options. Create vertical slices with flat
     canonical roots; issue mirrors include the GitHub issue number. missing or malformed workflow metadata is blocking for every issue mirror.
+    For hierarchy modes, support flat, issue-set, and sub-milestone publication; require a dry command receipt and read SKILL.md for hierarchy route details.
     Outcome Summary requires Outcome Source, Interface, Cutover, and Stop Criteria. For external GitHub issue hydration,
     use hydrate-external-issue.ps1; Source Plan: TBD means intake only until a local mirror and source plan exist.
     summarize artifact review gate status, broader project context, recommended next route, and machine-readable
