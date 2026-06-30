@@ -111,6 +111,8 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin ro
 
 The active repo is the project being operated on. The plugin root is where this skill and its bundled scripts were loaded from. Keep those roots distinct during Looping Mode startup and validation.
 
+When a candidate source is an issue mirror under `docs/superpowers/issues`, implementation routes (`resolve-issue` and `orchestrate-issues`) may select only hierarchy leaves with `Executable: true`. Parent and plan-wrapper mirrors are skipped with reserved route evidence so a later loop can route them to rollup closeout, `align-project`, or tracker repair instead of starting implementation work.
+
 ## Native Continuation Loop
 
 Follow `skills/advanced-user-input/SKILL.md` for global native continuation, Custom Other, Revisit, Stop, verified Done, and artifact review policy. This skill keeps route-specific gates, artifacts, validators, ledgers, and routing rules local.

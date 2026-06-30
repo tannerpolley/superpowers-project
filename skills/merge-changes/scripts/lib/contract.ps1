@@ -373,3 +373,114 @@ function Assert-OrchestratedWorkerCloseout {
         throw "physical worktree folder removal cannot run before worker thread archival"
     }
 }
+
+function Get-HierarchyChildStateRecords {
+    param($Value)
+    if ($null -eq $Value) { return @() }
+    @($Value | Where-Object { $null -ne $_ })
+}
+
+function Test-HierarchyChildClosedOrSkipped {
+    param($Child)
+    $state = if (Test-Property -Object $Child -Name "state") { [string]$Child.state } else { "" }
+    $disposition = if (Test-Property -Object $Child -Name "disposition") { [string]$Child.disposition } else { "" }
+    if ($state.Equals("CLOSED", [StringComparison]::OrdinalIgnoreCase)) { return $true }
+    if ($disposition -in @("closed", "skipped")) { return $true }
+    $hasSkipped = Test-Property -Object $Child -Name "skipped"
+    if ($hasSkipped -and $Child.skipped -eq $true) { return $true }
+    $false
+}
+
+function Assert-HierarchyParentCloseoutPolicy {
+    param($Policy, [switch]$RequireApproval)
+    if ($null -eq $Policy -or $Policy -is [string]) { throw "hierarchy rollup parent_closeout must be structured" }
+    $hasAutoClosed = Test-Property -Object $Policy -Name "auto_closed"
+    if ($hasAutoClosed -and $Policy.auto_closed -eq $true) {
+        throw "hierarchy rollup must not auto-close parent or wrapper issues"
+    }
+    $hasRequiresNativeApproval = Test-Property -Object $Policy -Name "requires_native_approval"
+    if (-not $hasRequiresNativeApproval -or $Policy.requires_native_approval -ne $true) {
+        throw "hierarchy rollup parent closeout must require native approval"
+    }
+    if (-not $RequireApproval) { return }
+    $hasApproval = Test-Property -Object $Policy -Name "approval"
+    if (-not $hasApproval -or $Policy.approval -is [string] -or $null -eq $Policy.approval) {
+        throw "parent or wrapper rollup closeout requires native approval evidence"
+    }
+    $approval = $Policy.approval
+    foreach ($field in @("question_id", "source", "selected_action")) {
+        $hasField = Test-Property -Object $approval -Name $field
+        if (-not $hasField -or [string]::IsNullOrWhiteSpace([string]$approval.$field)) {
+            throw "parent or wrapper rollup approval missing $field"
+        }
+    }
+    if ([string]$approval.question_id -ne "project_rollup_closeout_approval") {
+        throw "parent or wrapper rollup approval question_id mismatch"
+    }
+    if ([string]$approval.source -notin @("request_user_input", "debug_question_mode")) {
+        throw "parent or wrapper rollup approval source must be request_user_input or debug_question_mode"
+    }
+    if ([string]$approval.selected_action -ne "close-rollup") {
+        throw "parent or wrapper rollup approval must select close-rollup"
+    }
+}
+
+function Assert-HierarchyRollupCloseout {
+    param($Rollup)
+    if ($null -eq $Rollup -or $Rollup -is [string]) { throw "hierarchy_rollup must be structured" }
+    foreach ($field in @("role", "local_receipts", "parent_closeout")) {
+        if (-not (Test-Property -Object $Rollup -Name $field)) { throw "hierarchy_rollup missing $field" }
+    }
+    $role = ([string]$Rollup.role).Trim().ToLowerInvariant()
+    if ($role -notin @("leaf", "parent", "plan-wrapper")) { throw "hierarchy_rollup role must be leaf, parent, or plan-wrapper" }
+    if ($Rollup.local_receipts -is [string] -or $null -eq $Rollup.local_receipts) {
+        throw "hierarchy_rollup local_receipts must be structured"
+    }
+    foreach ($field in @("issue_mirror", "hierarchy_mode", "title_policy")) {
+        $hasField = Test-Property -Object $Rollup.local_receipts -Name $field
+        if (-not $hasField -or [string]::IsNullOrWhiteSpace([string]$Rollup.local_receipts.$field)) {
+            throw "hierarchy_rollup local_receipts missing $field"
+        }
+    }
+
+    if ($role -eq "leaf") {
+        foreach ($field in @("leaf_issue_url", "parent_issue_url", "parent_mirror", "sibling_child_states", "sub_issues_summary")) {
+            if (-not (Test-Property -Object $Rollup -Name $field)) { throw "leaf hierarchy_rollup missing $field" }
+        }
+        if ([string]::IsNullOrWhiteSpace([string]$Rollup.leaf_issue_url)) { throw "leaf hierarchy_rollup requires leaf_issue_url" }
+        if ([string]::IsNullOrWhiteSpace([string]$Rollup.parent_issue_url)) { throw "leaf hierarchy_rollup requires parent_issue_url" }
+        if ([string]::IsNullOrWhiteSpace([string]$Rollup.parent_mirror)) { throw "leaf hierarchy_rollup requires parent_mirror" }
+        Assert-HierarchyParentCloseoutPolicy -Policy $Rollup.parent_closeout
+        $siblings = @(Get-HierarchyChildStateRecords -Value $Rollup.sibling_child_states)
+        if ($siblings.Count -eq 0) { throw "leaf hierarchy_rollup requires sibling_child_states" }
+        $leafSeenClosed = @($siblings | Where-Object {
+            $hasUrl = Test-Property -Object $_ -Name "url"
+            $hasUrl -and [string]$_.url -eq [string]$Rollup.leaf_issue_url -and (Test-HierarchyChildClosedOrSkipped -Child $_)
+        }).Count -gt 0
+        if (-not $leafSeenClosed) { throw "leaf hierarchy_rollup must include the closed leaf in sibling_child_states" }
+        $summary = $Rollup.sub_issues_summary
+        if ($summary -is [string] -or $null -eq $summary) { throw "leaf hierarchy_rollup sub_issues_summary must be structured" }
+        foreach ($field in @("total", "completed")) {
+            if (-not (Test-Property -Object $summary -Name $field)) { throw "leaf hierarchy_rollup sub_issues_summary missing $field" }
+        }
+        if ([int]$summary.completed -gt [int]$summary.total) { throw "leaf hierarchy_rollup completed count cannot exceed total" }
+        return
+    }
+
+    foreach ($field in @("issue_url", "child_states", "rollup_policy")) {
+        if (-not (Test-Property -Object $Rollup -Name $field)) { throw "parent hierarchy_rollup missing $field" }
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$Rollup.rollup_policy) -or [string]$Rollup.rollup_policy -eq "none") {
+        throw "parent or wrapper hierarchy_rollup requires rollup_policy"
+    }
+    Assert-HierarchyParentCloseoutPolicy -Policy $Rollup.parent_closeout -RequireApproval
+    $children = @(Get-HierarchyChildStateRecords -Value $Rollup.child_states)
+    if ($children.Count -eq 0) { throw "parent or wrapper hierarchy_rollup requires child_states" }
+    foreach ($child in $children) {
+        $required = if (Test-Property -Object $child -Name "required") { $child.required } else { $true }
+        if ($required -eq $false) { continue }
+        if (-not (Test-HierarchyChildClosedOrSkipped -Child $child)) {
+            throw "parent or wrapper rollup closeout requires every required child to be closed or explicitly skipped"
+        }
+    }
+}

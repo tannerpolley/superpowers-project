@@ -517,6 +517,52 @@ $scenarios = @(
         }
     }
 
+    Invoke-Scenario "align-project reports hierarchy drift and title migration candidates" {
+        $repo = New-TestRepo
+        try {
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/20-parent.md") -Value "# Parent`n`n**GitHub Issue:** https://github.com/example/repo/issues/20`n**GitHub Milestone:** M1 - Source Of Truth`n**Issue Type:** sub-milestone`n**Labels:** type:sub-milestone, status:ready`n**Hierarchy Mode:** sub-milestone`n**Sub-Issue Role:** parent`n**Executable:** false`n**Parent Issue:** None`n**Parent Mirror:** None`n**Child Issues:** https://github.com/example/repo/issues/21, https://github.com/example/repo/issues/22`n**Rollup Policy:** all-required-children-closed`n**Title Policy:** Clean GitHub title`n`n## Acceptance Criteria`n`n- [ ] Parent rollup is audited.`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/21-leaf.md") -Value "# Leaf`n`n**GitHub Issue:** https://github.com/example/repo/issues/21`n**GitHub Milestone:** M1 - Source Of Truth`n**Issue Type:** task`n**Labels:** type:task, status:ready`n**Hierarchy Mode:** sub-milestone`n**Sub-Issue Role:** leaf`n**Executable:** true`n**Parent Issue:** https://github.com/example/repo/issues/20`n**Parent Mirror:** docs/superpowers/issues/20-parent.md`n**Child Issues:** None`n**Rollup Policy:** none`n**Title Policy:** Clean GitHub title`n`n## Acceptance Criteria`n`n- [ ] Leaf remains executable.`n" -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            @{
+                issues = @(
+                    @{
+                        number = 20
+                        url = "https://github.com/example/repo/issues/20"
+                        state = "OPEN"
+                        title = "M1 - Parent Rollup"
+                        body = "parent"
+                        labels = @("type:sub-milestone", "status:ready")
+                        milestone = @{ title = "M1 - Source Of Truth" }
+                        issueType = @{ name = "Sub Milestone" }
+                        subIssues = @{ nodes = @(@{ number = 21; url = "https://github.com/example/repo/issues/21"; title = "Leaf"; state = "OPEN" }) }
+                        subIssuesSummary = @{ total = 1; completed = 0; percentCompleted = 0 }
+                    },
+                    @{
+                        number = 21
+                        url = "https://github.com/example/repo/issues/21"
+                        state = "OPEN"
+                        title = "Leaf"
+                        body = "leaf"
+                        labels = @("type:task", "status:ready")
+                        milestone = @{ title = "M1 - Source Of Truth" }
+                        issueType = @{ name = "Task" }
+                        parent = @{ number = 404; url = "https://github.com/example/repo/issues/404"; title = "Wrong Parent"; state = "OPEN" }
+                    }
+                )
+            } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $issueFixture -Encoding utf8NoBOM
+            & git -C $repo add . | Out-Null
+            & git -C $repo commit -m hierarchy-drift | Out-Null
+            $audit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
+            if (-not $audit.ok) { throw $audit.reason }
+            $repairableText = ConvertTo-JsonText $audit.findings.repairable -Depth 24
+            Assert-Contains $repairableText "hierarchy-drift" "hierarchy drift was not reported"
+            Assert-Contains $repairableText "title-policy-migration-candidate" "title cleanup migration candidate was not reported"
+            Assert-Contains $repairableText "parent-sub-issues" "hierarchy drift did not use parent/sub-issue dimension"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
+
     Invoke-Scenario "native continuation policy avoids nested stop routes" {
         $text = Get-Content -LiteralPath $skillFile -Raw
         $metadata = Get-Content -LiteralPath $yamlFile -Raw

@@ -147,6 +147,22 @@ try {
     Add-Check -Name "selector accepts broad maintenance candidates" -Ok ($maintenanceSelection.exit_code -eq 0 -and $maintenanceSelection.json.selected_candidate_id -eq "ready-plan") -Reason $maintenanceSelection.raw
     Add-Check -Name "broad maintenance selector keeps skipped list" -Ok ($null -ne $maintenanceSelection.json.skipped) -Reason "broad maintenance skipped list missing"
 
+    $hierarchyInventoryPath = Join-Path $tempRoot "hierarchy-candidate-inventory.json"
+    @{
+        candidates = @(
+            @{ id = "rollup-parent"; source = "ready-issue-mirror"; route = "resolve-issue"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/97-github-sub-issues-workflow.md"; reason = "parent rollup should not execute" },
+            @{ id = "plan-wrapper"; source = "ready-issue-mirror"; route = "orchestrate-issues"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/97-github-sub-issues-workflow.md"; reason = "wrapper should route to repair"; hierarchy_role = "plan-wrapper"; executable = $false },
+            @{ id = "leaf-issue"; source = "ready-issue-mirror"; route = "resolve-issue"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/102-merge-rollup-align-migration-audit-and-loop-selection.md"; reason = "leaf issue is executable" }
+        )
+    } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $hierarchyInventoryPath -Encoding utf8NoBOM
+    $hierarchySelection = Invoke-JsonScript -Path $selectorScript -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $hierarchyInventoryPath)
+    Add-Check -Name "selector chooses executable hierarchy leaf" -Ok ($hierarchySelection.exit_code -eq 0 -and $hierarchySelection.json.selected_candidate_id -eq "leaf-issue") -Reason $hierarchySelection.raw
+    Add-Check -Name "selector skips hierarchy rollups for implementation" -Ok (
+        @($hierarchySelection.json.skipped | Where-Object { $_.id -eq "rollup-parent" -and $_.hierarchy_role -eq "parent" -and $_.reserved_route -eq "rollup-align-or-tracker-repair" }).Count -eq 1 -and
+        @($hierarchySelection.json.skipped | Where-Object { $_.id -eq "plan-wrapper" -and $_.hierarchy_role -eq "plan-wrapper" -and $_.reserved_route -eq "rollup-align-or-tracker-repair" }).Count -eq 1
+    ) -Reason "parent and wrapper candidates should be skipped with reserved route evidence"
+    Add-Check -Name "selector records selected leaf hierarchy evidence" -Ok ($hierarchySelection.json.selected_hierarchy.role -eq "leaf" -and $hierarchySelection.json.selected_hierarchy.executable -eq $true) -Reason "selected leaf hierarchy evidence missing"
+
     $activeBacklogPath = Join-Path $tempRoot "active-backlog.md"
     @(
         "# Active Backlog Fixture",

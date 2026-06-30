@@ -56,6 +56,10 @@ try {
     }
     Assert-CommonCloseoutProof -Completion $completion -Setup $setup -RequireRemoteDelete $true
     Assert-OrchestratedWorkerCloseout -Completion $completion -Setup $setup
+    $hasHierarchyRollup = Test-Property -Object $completion -Name "hierarchy_rollup"
+    if ($hasHierarchyRollup -and $null -ne $completion.hierarchy_rollup) {
+        Assert-HierarchyRollupCloseout -Rollup $completion.hierarchy_rollup
+    }
     $branch = Normalize-RepoPath ([string]$setup.branch)
     $resolveGoal = $completion.resolve_goal_completion_proof
     if ($resolveGoal -is [string]) { throw "resolve goal completion proof must be structured" }
@@ -91,7 +95,7 @@ try {
         if ([string]$summary.issue_url -ne [string]$completion.issue_url) { throw "milestone summary issue_url must match completion issue_url" }
         if ([string]$summary.pr_url -ne [string]$completion.pr_url) { throw "milestone summary pr_url must match completion pr_url" }
     }
-    Complete-Contract -Phase $phase -Reason "closeout checks passed" -Evidence @{ mode = $mode; pr_url = [string]$completion.pr_url; issue_url = [string]$completion.issue_url; branch_deleted = $branch; repo_clean = $true; mirror_cleanup = $true }
+    Complete-Contract -Phase $phase -Reason "closeout checks passed" -Evidence @{ mode = $mode; pr_url = [string]$completion.pr_url; issue_url = [string]$completion.issue_url; branch_deleted = $branch; repo_clean = $true; mirror_cleanup = $true; hierarchy_rollup = $hasHierarchyRollup }
 } catch {
     Stop-Contract -Phase $phase -Reason $_.Exception.Message -Evidence @{}
 }

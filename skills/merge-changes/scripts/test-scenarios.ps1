@@ -180,6 +180,69 @@ function New-MirrorCleanupConfirmation {
     }
 }
 
+function New-HierarchyLeafRollup {
+    param([bool]$AutoClosed = $false)
+    @{
+        role = "leaf"
+        leaf_issue_url = "https://github.com/example/repo/issues/12"
+        parent_issue_url = "https://github.com/example/repo/issues/10"
+        parent_mirror = "docs/superpowers/issues/10-parent.md"
+        sibling_child_states = @(
+            @{ number = 11; url = "https://github.com/example/repo/issues/11"; title = "Sibling"; state = "OPEN"; disposition = "open"; required = $true },
+            @{ number = 12; url = "https://github.com/example/repo/issues/12"; title = "Sample"; state = "CLOSED"; disposition = "closed"; required = $true }
+        )
+        sub_issues_summary = @{ total = 2; completed = 1; percent_completed = 50 }
+        local_receipts = @{
+            issue_mirror = "docs/superpowers/issues/12-sample.md"
+            parent_mirror = "docs/superpowers/issues/10-parent.md"
+            hierarchy_mode = "issue-set"
+            rollup_policy = "none"
+            title_policy = "Clean GitHub title"
+        }
+        parent_closeout = @{
+            auto_closed = $AutoClosed
+            requires_native_approval = $true
+            approval = $null
+        }
+    }
+}
+
+function New-HierarchyParentRollup {
+    param([switch]$WithApproval, [switch]$OpenRequiredChild)
+    @{
+        role = "parent"
+        issue_url = "https://github.com/example/repo/issues/10"
+        child_states = @(
+            @{ number = 11; url = "https://github.com/example/repo/issues/11"; title = "Closed child"; state = "CLOSED"; disposition = "closed"; required = $true },
+            @{ number = 12; url = "https://github.com/example/repo/issues/12"; title = "Skipped child"; state = $(if ($OpenRequiredChild) { "OPEN" } else { "CLOSED" }); disposition = $(if ($OpenRequiredChild) { "open" } else { "skipped" }); required = $true; skip_reason = $(if ($OpenRequiredChild) { "" } else { "approved follow-up split" }) }
+        )
+        rollup_policy = "all-required-children-closed"
+        sub_issues_summary = @{ total = 2; completed = $(if ($OpenRequiredChild) { 1 } else { 2 }); percent_completed = $(if ($OpenRequiredChild) { 50 } else { 100 }) }
+        local_receipts = @{
+            issue_mirror = "docs/superpowers/issues/10-parent.md"
+            hierarchy_mode = "issue-set"
+            rollup_policy = "all-required-children-closed"
+            title_policy = "Clean GitHub title"
+        }
+        parent_closeout = @{
+            auto_closed = $false
+            requires_native_approval = $true
+            approval = if ($WithApproval) {
+                @{ question_id = "project_rollup_closeout_approval"; source = "request_user_input"; selected_action = "close-rollup" }
+            } else {
+                $null
+            }
+        }
+    }
+}
+
+function Add-HierarchyMirrorAndMilestone {
+    param([string]$Repo)
+    Add-SampleMirrorAndMilestone -Repo $Repo
+    Set-Content -LiteralPath (Join-Path $Repo "docs/superpowers/issues/10-parent.md") -Value "# Parent`n`n**GitHub Issue:** https://github.com/example/repo/issues/10`n**GitHub Milestone:** M1 - Source Of Truth`n**Hierarchy Mode:** issue-set`n**Sub-Issue Role:** parent`n**Executable:** false`n**Parent Issue:** None`n**Parent Mirror:** None`n**Child Issues:** https://github.com/example/repo/issues/12`n**Rollup Policy:** all-required-children-closed`n**Title Policy:** Clean GitHub title`n" -Encoding utf8NoBOM
+    Set-Content -LiteralPath (Join-Path $Repo "docs/superpowers/issues/12-sample.md") -Value "# Sample`n`n**GitHub Issue:** https://github.com/example/repo/issues/12`n**GitHub Milestone:** M1 - Source Of Truth`n**Hierarchy Mode:** issue-set`n**Sub-Issue Role:** leaf`n**Executable:** true`n**Parent Issue:** https://github.com/example/repo/issues/10`n**Parent Mirror:** docs/superpowers/issues/10-parent.md`n**Child Issues:** None`n**Rollup Policy:** none`n**Title Policy:** Clean GitHub title`n" -Encoding utf8NoBOM
+}
+
 function New-OrchestratedWorkerCloseout {
     param([bool]$Archived = $true, [bool]$RemovedAfterArchive = $true)
     @{
@@ -419,6 +482,66 @@ Invoke-Scenario "happy closeout records clean proof" {
     if ($result.evidence.repo_clean -ne $true) { throw "clean proof was not recorded" }
 }
 
+Invoke-Scenario "leaf closeout records hierarchy rollup without parent auto-close" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $completion = @{
+        pr_url = "https://github.com/example/repo/pull/5"
+        issue_url = "https://github.com/example/repo/issues/12"
+        merge_decision = (New-MergeDecision | ConvertFrom-Json)
+        merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+        linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+        default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+        branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+        worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+        fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+        cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+        clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+        resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        mirror_cleanup_confirmation = New-MirrorCleanupConfirmation
+        hierarchy_rollup = New-HierarchyLeafRollup
+    } | ConvertTo-Json -Depth 24 -Compress
+    $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", $completion, "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $result.ok) { throw $result.reason }
+    if ($result.evidence.hierarchy_rollup -ne $true) { throw "closeout did not report hierarchy rollup evidence" }
+
+    $bad = $completion | ConvertFrom-Json
+    $bad.hierarchy_rollup.parent_closeout.auto_closed = $true
+    $blocked = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", ($bad | ConvertTo-Json -Depth 24 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if ($blocked.ok -or $blocked.reason -notmatch "auto-close") { throw "expected parent auto-close attempt to block" }
+}
+
+Invoke-Scenario "parent rollup closeout requires approval and child proof" {
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ state = "CLOSED"; body = "- [x] Parent rollup is resolved" } | ConvertTo-Json -Depth 8 -Compress
+    $base = @{
+        pr_url = "https://github.com/example/repo/pull/5"
+        issue_url = "https://github.com/example/repo/issues/12"
+        merge_decision = (New-MergeDecision | ConvertFrom-Json)
+        merge_confirmation = @{ source = "gh pr view"; state = "MERGED" }
+        linked_issue_closed_confirmation = @{ source = "gh issue view"; state = "CLOSED" }
+        default_branch_sync = @{ command = "git pull --ff-only origin main"; exit_code = 0 }
+        branch_cleanup_confirmation = @{ deleted_local = $true; deleted_remote = $true; only_goal_owned_removed = $true; local_delete_target = "codex/sample-issue"; remote_delete_target = "codex/sample-issue"; remote_deleted_branches = @("codex/sample-issue") }
+        worktree_cleanup_confirmation = @{ owned_worktree_removed = $true; worktree_path = "C:/tmp/sample-worktree" }
+        fetch_prune_result = @{ command = "git fetch --prune"; exit_code = 0 }
+        cleanup_hook_result = @{ command = "codex-cleanup"; exit_code = 0; output = "clean" }
+        clean_repo_proof = @{ source = "git status --short"; exit_code = 0; status_output = "" }
+        resolve_goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
+        mirror_cleanup_confirmation = New-MirrorCleanupConfirmation
+    }
+    $base.hierarchy_rollup = New-HierarchyParentRollup -WithApproval -OpenRequiredChild
+    $missingProof = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", ($base | ConvertTo-Json -Depth 24 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if ($missingProof.ok -or $missingProof.reason -notmatch "closed or explicitly skipped") { throw "expected open required child to block parent rollup closeout" }
+
+    $base.hierarchy_rollup = New-HierarchyParentRollup
+    $missingApproval = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", ($base | ConvertTo-Json -Depth 24 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if ($missingApproval.ok -or $missingApproval.reason -notmatch "native approval") { throw "expected missing rollup approval to block" }
+
+    $base.hierarchy_rollup = New-HierarchyParentRollup -WithApproval
+    $approved = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-CompletionLedgerJson", ($base | ConvertTo-Json -Depth 24 -Compress), "-PrJson", $pr, "-IssueJson", $issue)
+    if (-not $approved.ok) { throw $approved.reason }
+}
+
 Invoke-Scenario "inline closeout ignores null worker fields" {
     $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
     $issue = @{ state = "CLOSED"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
@@ -620,6 +743,51 @@ Invoke-Scenario "collect-closeout-ledger emits evidence accepted by closeout" {
     )
     if (-not $collected.ok) { throw $collected.reason }
     if (-not (Test-Path -LiteralPath $collected.ledger_path -PathType Leaf)) { throw "collector did not write closeout ledger" }
+    $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerPath", $setupPath, "-CompletionLedgerPath", $collected.ledger_path, "-PrJson", $collected.pr_json, "-IssueJson", $collected.issue_json)
+    if (-not $result.ok) { throw $result.reason }
+}
+
+Invoke-Scenario "collect-closeout-ledger records parent progress for leaf hierarchy mirror" {
+    $repo = New-TestRepo
+    Add-HierarchyMirrorAndMilestone -Repo $repo
+    & git -C $repo add . | Out-Null
+    & git -C $repo commit -m hierarchy-fixture | Out-Null
+    $setupPath = Join-Path $tempRoot "closeout-hierarchy-setup-ledger.json"
+    New-SetupLedger | Set-Content -LiteralPath $setupPath -Encoding utf8NoBOM
+    $pr = @{ url = "https://github.com/example/repo/pull/5"; state = "MERGED"; body = "Closes #12" } | ConvertTo-Json -Depth 8 -Compress
+    $issue = @{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "CLOSED"; title = "Sample"; body = "- [x] Sample issue is resolved"; closedAt = "2026-06-03T01:00:00Z" } | ConvertTo-Json -Depth 8 -Compress
+    $parentIssue = @{
+        number = 10
+        url = "https://github.com/example/repo/issues/10"
+        state = "OPEN"
+        title = "Parent"
+        subIssues = @{
+            nodes = @(
+                @{ number = 11; url = "https://github.com/example/repo/issues/11"; title = "Sibling"; state = "OPEN" },
+                @{ number = 12; url = "https://github.com/example/repo/issues/12"; title = "Sample"; state = "CLOSED" }
+            )
+        }
+        subIssuesSummary = @{ total = 2; completed = 1; percentCompleted = 50 }
+    } | ConvertTo-Json -Depth 12 -Compress
+    $goal = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" } | ConvertTo-Json -Depth 8 -Compress
+    $mirrorCleanup = New-MirrorCleanupConfirmation -Deleted $false -Retained $true -Policy "retain" -RetentionReason "fixture" | ConvertTo-Json -Depth 12 -Compress
+    $outputDir = Join-Path $tempRoot "closeout-hierarchy-output"
+    $collected = Invoke-JsonScript -ScriptName "collect-closeout-ledger.ps1" -Arguments @(
+        "-RepoRoot", $repo,
+        "-SetupLedgerPath", $setupPath,
+        "-PrJson", $pr,
+        "-IssueJson", $issue,
+        "-ParentIssueJson", $parentIssue,
+        "-MergeDecisionJson", (New-MergeDecision),
+        "-CleanupHookOutput", "No matching leftover Codex processes under repo root.",
+        "-ResolveGoalCompletionProofJson", $goal,
+        "-MirrorCleanupJson", $mirrorCleanup,
+        "-OutputDir", $outputDir
+    )
+    if (-not $collected.ok) { throw $collected.reason }
+    if ($null -eq $collected.ledger.hierarchy_rollup) { throw "collector did not record hierarchy_rollup" }
+    if ([string]$collected.ledger.hierarchy_rollup.parent_issue_url -ne "https://github.com/example/repo/issues/10") { throw "collector did not preserve parent issue URL" }
+    if ($collected.ledger.hierarchy_rollup.parent_closeout.auto_closed -ne $false) { throw "collector must not auto-close parent rollup" }
     $result = Invoke-JsonScript -ScriptName "closeout.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerPath", $setupPath, "-CompletionLedgerPath", $collected.ledger_path, "-PrJson", $collected.pr_json, "-IssueJson", $collected.issue_json)
     if (-not $result.ok) { throw $result.reason }
 }
