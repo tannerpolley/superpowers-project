@@ -312,6 +312,12 @@ workflow_skills:
     purpose: Vertical-slice GitHub issues and synced local issue mirrors.
     question_ids:
     - project_issue_execution_route
+    - project_issue_hierarchy_children
+    - project_issue_hierarchy_mode
+    - project_issue_hierarchy_parent
+    - project_issue_hierarchy_publish
+    - project_issue_hierarchy_tracker_fields
+    - project_issue_hierarchy_wrapper
     - project_issue_next_step
     - project_issue_orchestrate_route
     - project_issue_resolve_route
@@ -328,6 +334,33 @@ workflow_skills:
       options:
       - Resolve Issues
       - Orchestrate Issues
+    - question_id: project_issue_hierarchy_mode
+      parent_option: true
+      options:
+      - Flat Issues
+      - Issue Set
+      - Sub-Milestone
+    - question_id: project_issue_hierarchy_parent
+      parent_option: true
+      options:
+      - Use Proposed Parent
+      - Use Existing Parent
+      - Revise Parent
+    - question_id: project_issue_hierarchy_wrapper
+      parent_option: true
+      options:
+      - No Wrapper
+      - Use Wrappers
+    - question_id: project_issue_hierarchy_children
+      parent_option: true
+      options:
+      - Use Proposed Children
+      - Revise Children
+    - question_id: project_issue_hierarchy_tracker_fields
+      parent_option: true
+      options:
+      - Use Proposed Tracker Fields
+      - Revise Tracker Fields
     - question_id: project_issue_resolve_route
       parent_option: true
       options:
@@ -383,6 +416,64 @@ workflow_skills:
       - label: Orchestrate First Ready
         terminal_state: continue
       - label: Orchestrate Selected
+        terminal_state: continue
+    - question_id: project_issue_hierarchy_children
+      gate_type: data_selection
+      prompt: Which child issues belong under the selected parent or wrapper?
+      parent_option: true
+      options:
+      - label: Use Proposed Children
+        terminal_state: continue
+      - label: Revise Children
+        terminal_state: revisit
+    - question_id: project_issue_hierarchy_mode
+      gate_type: data_selection
+      prompt: How should this issue set be represented in GitHub?
+      parent_option: true
+      options:
+      - label: Flat Issues
+        terminal_state: continue
+      - label: Issue Set
+        terminal_state: continue
+      - label: Sub-Milestone
+        terminal_state: continue
+    - question_id: project_issue_hierarchy_parent
+      gate_type: data_selection
+      prompt: What parent issue title or existing parent should own this hierarchy?
+      parent_option: true
+      options:
+      - label: Use Proposed Parent
+        terminal_state: continue
+      - label: Use Existing Parent
+        terminal_state: continue
+      - label: Revise Parent
+        terminal_state: revisit
+    - question_id: project_issue_hierarchy_publish
+      gate_type: approval
+      prompt: Approve this dry command receipt for GitHub issue mutation?
+      parent_option: true
+      options:
+      - label: Publish Approved Commands
+        approval_effect: publish-approved-commands
+      - label: Revise Before Publish
+        approval_effect: revise-before-publish
+    - question_id: project_issue_hierarchy_tracker_fields
+      gate_type: data_selection
+      prompt: Which GitHub Milestone, labels, and issue types should be applied?
+      parent_option: true
+      options:
+      - label: Use Proposed Tracker Fields
+        terminal_state: continue
+      - label: Revise Tracker Fields
+        terminal_state: revisit
+    - question_id: project_issue_hierarchy_wrapper
+      gate_type: data_selection
+      prompt: Should this hierarchy include plan-wrapper issues?
+      parent_option: true
+      options:
+      - label: No Wrapper
+        terminal_state: continue
+      - label: Use Wrappers
         terminal_state: continue
     - question_id: project_issue_resolve_route
       gate_type: data_selection

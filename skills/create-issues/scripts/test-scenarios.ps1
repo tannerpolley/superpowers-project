@@ -48,9 +48,13 @@ function Run-Hydration {
     param(
         [string]$RepoRoot,
         [string]$IssueUrl,
-        [string]$IssueBodyPath
+        [string]$IssueBodyPath,
+        [string]$IssueJsonPath
     )
-    $output = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $hydrationFile -RepoRoot $RepoRoot -IssueUrl $IssueUrl -IssueBodyPath $IssueBodyPath
+    $args = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $hydrationFile, "-RepoRoot", $RepoRoot, "-IssueUrl", $IssueUrl)
+    if (-not [string]::IsNullOrWhiteSpace($IssueBodyPath)) { $args += @("-IssueBodyPath", $IssueBodyPath) }
+    if (-not [string]::IsNullOrWhiteSpace($IssueJsonPath)) { $args += @("-IssueJsonPath", $IssueJsonPath) }
+    $output = & pwsh.exe @args
     if ($LASTEXITCODE -ne 0) { throw ($output | Out-String) }
     $output | ConvertFrom-Json
 }
@@ -238,6 +242,38 @@ $scenarios = @(
         }
         foreach ($needle in @("external GitHub issue hydration", "hydrate-external-issue.ps1", "Source Plan: TBD", "local mirror and source plan")) {
             Assert-Contains $metadata $needle "missing metadata hydration route: $needle"
+        }
+    }
+    Invoke-Scenario "hierarchy publication route uses native gates before mutation" {
+        $text = Get-Content -LiteralPath $skillFile -Raw
+        $metadata = Get-Content -LiteralPath $yamlFile -Raw
+        foreach ($needle in @(
+            "## Hierarchy Publication Paths",
+            '`flat`',
+            '`issue-set`',
+            '`sub-milestone`',
+            "project_issue_hierarchy_mode",
+            "project_issue_hierarchy_parent",
+            "project_issue_hierarchy_wrapper",
+            "project_issue_hierarchy_children",
+            "project_issue_hierarchy_tracker_fields",
+            "project_issue_hierarchy_publish",
+            "build-issue-hierarchy-plan.ps1",
+            "validate-issue-title-policy.ps1",
+            "dry command receipt",
+            "clean-title validation runs before any GitHub mutation",
+            "gh issue create --parent",
+            "gh issue edit --add-sub-issue"
+        )) {
+            Assert-Contains $text $needle "missing hierarchy publication route contract: $needle"
+        }
+        foreach ($needle in @(
+            "hierarchy modes",
+            "flat, issue-set, and sub-milestone",
+            "dry command receipt",
+            "read SKILL.md for hierarchy route details"
+        )) {
+            Assert-Contains $metadata $needle "missing compact hierarchy metadata: $needle"
         }
     }
     Invoke-Scenario "native continuation gate is present" {
@@ -733,6 +769,59 @@ $(New-OutcomeProofSummary -SourcePlan "docs/superpowers/specs/2026-06-02-bug-des
             $bodyPath = Join-Path $root "issue-body.md"
             New-ExternalIssueBody -Path $bodyPath -SourcePlan "TBD"
             $result = Run-Hydration -RepoRoot $root -IssueUrl "https://github.com/example/repo/issues/31" -IssueBodyPath $bodyPath
+            $validation = Run-Validator -RepoRoot $root -IssuePath $result.issue_mirror -MilestoneRequired
+            if (-not $validation.ok) { throw $validation.reason }
+        } finally {
+            if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "external GitHub hierarchy JSON hydrates local mirror metadata" {
+        if (-not (Test-Path -LiteralPath $hydrationFile -PathType Leaf)) { throw "missing hydrate-external-issue.ps1" }
+        $root = Join-Path ([IO.Path]::GetTempPath()) ("create-issues-hydration-hierarchy-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType Directory -Path $root -Force | Out-Null
+            $bodyPath = Join-Path $root "issue-body.md"
+            New-ExternalIssueBody -Path $bodyPath -SourcePlan "TBD"
+            $fixturePath = Join-Path $root "github-issue.json"
+            @{
+                number = 42
+                title = "External Hydration"
+                url = "https://github.com/example/repo/issues/42"
+                body = Get-Content -LiteralPath $bodyPath -Raw
+                milestone = @{ title = "M1 - Source Of Truth" }
+                labels = @(
+                    @{ name = "type:task" },
+                    @{ name = "status:ready" }
+                )
+                issueType = @{ name = "task" }
+                parent = @{
+                    number = 41
+                    title = "GitHub Sub-Issues Workflow"
+                    url = "https://github.com/example/repo/issues/41"
+                    state = "OPEN"
+                }
+                subIssues = @{ nodes = @(); totalCount = 0 }
+                subIssuesSummary = @{ total = 0; completed = 0; percentCompleted = 0 }
+            } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $fixturePath -Encoding utf8NoBOM
+            $result = Run-Hydration -RepoRoot $root -IssueUrl "https://github.com/example/repo/issues/42" -IssueJsonPath $fixturePath
+            if (-not $result.ok) { throw $result.reason }
+            $mirror = Get-Content -LiteralPath (Join-Path $root $result.issue_mirror) -Raw
+            foreach ($needle in @(
+                "**GitHub Issue:** https://github.com/example/repo/issues/42",
+                "**GitHub Milestone:** M1 - Source Of Truth",
+                "**Issue Type:** task",
+                "**Labels:** type:task, status:ready",
+                "**Hierarchy Mode:** sub-milestone",
+                "**Sub-Issue Role:** leaf",
+                "**Executable:** true",
+                "**Parent Issue:** https://github.com/example/repo/issues/41",
+                "**Parent Mirror:** docs/superpowers/issues/41-github-sub-issues-workflow.md",
+                "**Child Issues:** None",
+                "**Rollup Policy:** none",
+                "**Title Policy:** Clean GitHub title"
+            )) {
+                Assert-Contains $mirror $needle "hydrated hierarchy mirror did not preserve: $needle"
+            }
             $validation = Run-Validator -RepoRoot $root -IssuePath $result.issue_mirror -MilestoneRequired
             if (-not $validation.ok) { throw $validation.reason }
         } finally {
