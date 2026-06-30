@@ -48,6 +48,15 @@ function Get-ValidExamplesMarkdown {
 **Validators:** skills/create-issues/scripts/validate-issue-mirror.ps1; skills/resolve-issue/scripts/validate-pr-ready.ps1; skills/merge-changes/scripts/closeout.ps1
 **Stop point:** project_merge_final_health_gate after the linked issue is closed.
 
+## Sub-Issue Hierarchy To Parent Rollup
+
+**Example ID:** sub-issue-hierarchy-to-parent-rollup
+**Route sequence:** write-plan -> create-issues -> resolve-issue -> merge-changes -> align-project -> loop-controller
+**Question IDs:** project_plan_next_step, project_plan_issue_count, project_issue_hierarchy_mode, project_issue_hierarchy_parent, project_issue_hierarchy_children, project_issue_hierarchy_publish, project_resolve_push_permission, project_resolve_next_step, project_merge_approval, project_merge_final_health_gate, project_align_next_step, project_loop_next_step
+**Artifacts:** docs/superpowers/plans/<approved-plan>.md; docs/superpowers/issues/<parent>.md; docs/superpowers/issues/<leaf>.md; GitHub Sub-issues section; hierarchy_rollup closeout ledger; parent progress count
+**Validators:** skills/create-issues/scripts/validate-issue-hierarchy.ps1; skills/merge-changes/scripts/closeout.ps1; skills/align-project/scripts/align-project.ps1; skills/loop-controller/scripts/select-candidate.ps1; scripts/test-workflow-examples.ps1
+**Stop point:** project_loop_next_step after leaf closeout records parent progress, parent rollup remains approval-gated, and loop selection skips non-leaf implementation candidates.
+
 ## Audit To Auto Mode Single Route
 
 **Example ID:** audit-to-auto-mode-single-route
@@ -75,7 +84,7 @@ try {
     Get-ValidExamplesMarkdown | Set-Content -LiteralPath $validPath -Encoding utf8NoBOM
 
     $valid = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $validPath)
-    Add-Check -Name "valid workflow examples pass" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true -and $valid.json.example_count -eq 4) -Reason $valid.raw
+    Add-Check -Name "valid workflow examples pass" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true -and $valid.json.example_count -eq 5) -Reason $valid.raw
 
     $unknownQuestionPath = Join-Path $tempRoot "unknown-question.md"
     (Get-ValidExamplesMarkdown).Replace("project_plan_work_route", "project_plan_route_that_does_not_exist") | Set-Content -LiteralPath $unknownQuestionPath -Encoding utf8NoBOM
@@ -106,6 +115,17 @@ try {
     (Get-ValidExamplesMarkdown).Replace("after one route only; Auto Mode does not continue to another candidate", "after continuing to another candidate") | Set-Content -LiteralPath $autoContinuesPath -Encoding utf8NoBOM
     $autoContinues = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $autoContinuesPath)
     Add-Check -Name "auto mode example requires one-route stop" -Ok ($autoContinues.exit_code -ne 0 -and $autoContinues.raw.Contains("one route")) -Reason "auto mode continuing to another candidate should fail"
+
+    $badSubIssuesPath = Join-Path $tempRoot "bad-sub-issues.md"
+    @(
+        "# GitHub Sub-Issues Workflow Examples",
+        "",
+        "## Flat Issue",
+        "",
+        "Clean title fixture only."
+    ) | Set-Content -LiteralPath $badSubIssuesPath -Encoding utf8NoBOM
+    $badSubIssues = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-Path", $validPath, "-SubIssuesPath", $badSubIssuesPath)
+    Add-Check -Name "sub-issue examples require GitHub UI and rollup coverage" -Ok ($badSubIssues.exit_code -ne 0 -and $badSubIssues.raw.Contains("Sub-issues section") -and $badSubIssues.raw.Contains("Rollup Closeout")) -Reason "sub-issue examples without UI and rollup coverage should fail"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "workflow-examples"; checks = $checks } | ConvertTo-Json -Depth 8

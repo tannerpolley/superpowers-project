@@ -2,6 +2,7 @@
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path,
     [string]$Path = "docs/superpowers/examples/workflow-golden-paths.md",
+    [string]$SubIssuesPath = "docs/superpowers/examples/sub-issues-workflow-examples.md",
     [string]$ContractPath = "docs/superpowers/workflow-contract.yml"
 )
 
@@ -63,6 +64,54 @@ function Read-WorkflowExamples {
     })
 }
 
+function Test-GhIssueCreateTitlesAreClean {
+    param([string]$Text)
+    $matches = @([regex]::Matches($Text, 'gh issue create\s+--title\s+"(?<title>[^"]+)"'))
+    if ($matches.Count -eq 0) { return $false }
+    foreach ($match in $matches) {
+        $title = $match.Groups["title"].Value
+        if ($title -match '(?i)^\s*M\d+\b') { return $false }
+        if ($title -match '(?i)\[[^\]]*M\d+[^\]]*\]') { return $false }
+        if ($title -match '(?i)\bsub-?milestone\s+\d+\b') { return $false }
+        if ($title -match '^\s*\d+(?:\.\d+)+\s+') { return $false }
+    }
+    $true
+}
+
+function Test-SubIssueExamples {
+    param([string]$Root, [string]$InputPath)
+    $subIssuePath = Resolve-InputPath -Root $Root -InputPath $InputPath
+    if (-not (Test-Path -LiteralPath $subIssuePath -PathType Leaf)) {
+        Add-Check -Name "sub-issue examples file exists" -Ok $false -Reason "sub-issue examples file is missing: $InputPath"
+        return
+    }
+    $text = Get-Content -LiteralPath $subIssuePath -Raw
+    foreach ($needle in @(
+        "## Flat Issue",
+        "## Issue Set",
+        "## Pseudo Sub-Milestone",
+        "## External Hydration",
+        "## Rollup Closeout",
+        "## Selective Migration",
+        "Sub-issues section",
+        "Nested child rows",
+        "Child parent link",
+        "Progress count",
+        "GitHub Milestone",
+        "Parent Issue",
+        "Parent Mirror",
+        "subIssuesSummary",
+        "Clean GitHub title",
+        "requires_native_approval",
+        "project_rollup_closeout_approval",
+        "native approval"
+    )) {
+        Add-Check -Name "sub-issue examples contain $needle" -Ok $text.Contains($needle) -Reason "sub-issue examples missing $needle"
+    }
+    Add-Check -Name "sub-issue examples keep gh create titles clean" -Ok (Test-GhIssueCreateTitlesAreClean -Text $text) -Reason "gh issue create titles must not encode milestone identity"
+    Add-Check -Name "sub-issue examples distinguish milestones from parent issues" -Ok ($text.Contains("does not replace the milestone")) -Reason "sub-issue examples must distinguish GitHub Milestones from parent issues"
+}
+
 try {
     $root = (Resolve-Path -LiteralPath $RepoRoot).Path
     $examplePath = Resolve-InputPath -Root $root -InputPath $Path
@@ -84,6 +133,7 @@ try {
     $requiredIds = @(
         "idea-to-local-merge",
         "spec-to-issues-to-merge",
+        "sub-issue-hierarchy-to-parent-rollup",
         "audit-to-auto-mode-single-route",
         "looping-mode-candidate-selection"
     )
@@ -122,6 +172,16 @@ try {
         Add-Check -Name "looping mode example lists source contract" -Ok (@($loopExample.artifacts) -contains "docs/superpowers/loop-mode-contract.yml") -Reason "Looping Mode example must list docs/superpowers/loop-mode-contract.yml"
         Add-Check -Name "looping mode example stops at state-machine proof" -Ok ([string]$loopExample.stop_point -match 'state-machine proof') -Reason "Looping Mode stop point must mention state-machine proof"
     }
+
+    $hierarchyExample = @($examples | Where-Object { $_.id -eq "sub-issue-hierarchy-to-parent-rollup" } | Select-Object -First 1)
+    if ($hierarchyExample) {
+        Add-Check -Name "sub-issue hierarchy example uses create hierarchy gates" -Ok ((@($hierarchyExample.question_ids) -contains "project_issue_hierarchy_mode") -and (@($hierarchyExample.question_ids) -contains "project_issue_hierarchy_publish")) -Reason "Sub-issue hierarchy example must include create-issues hierarchy gates"
+        Add-Check -Name "sub-issue hierarchy example validates hierarchy and closeout" -Ok ((@($hierarchyExample.validators) -contains "skills/create-issues/scripts/validate-issue-hierarchy.ps1") -and (@($hierarchyExample.validators) -contains "skills/merge-changes/scripts/closeout.ps1")) -Reason "Sub-issue hierarchy example must include hierarchy and closeout validators"
+        Add-Check -Name "sub-issue hierarchy example records parent progress" -Ok ([string]$hierarchyExample.stop_point -match 'parent progress') -Reason "Sub-issue hierarchy stop point must mention parent progress"
+        Add-Check -Name "sub-issue hierarchy example blocks parent auto-close" -Ok ([string]$hierarchyExample.stop_point -match 'approval-gated') -Reason "Sub-issue hierarchy stop point must mention approval-gated parent rollup"
+    }
+
+    Test-SubIssueExamples -Root $root -InputPath $SubIssuesPath
 
     $failed = @($checks | Where-Object { -not $_.ok })
     Complete -Ok ($failed.Count -eq 0) -Reason $(if ($failed.Count -eq 0) { "workflow examples passed" } else { "workflow examples failed" }) -ExampleCount $examples.Count

@@ -59,7 +59,16 @@ try {
         'Looping Mode',
         'selected_mode',
         'validate-workflow-mode-ledger.ps1',
-        '<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1'
+        '<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1',
+        'GitHub Milestones And Sub-Issues',
+        'Hierarchy modes are `flat`, `issue-set`, and `sub-milestone`',
+        'Sub-Issue Role: leaf',
+        'Executable: true',
+        'hierarchy_rollup',
+        'subIssuesSummary',
+        'parent/sub-issue drift',
+        'clean-title migration candidates',
+        'rollup, alignment, or tracker repair'
     )) {
         Add-Check -Name "summary contains $needle" -Ok $current.Contains($needle) -Reason "outcome workflow missing $needle"
     }
@@ -85,4 +94,3 @@ try {
         }
     }
 }
-

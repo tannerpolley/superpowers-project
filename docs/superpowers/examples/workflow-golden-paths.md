@@ -34,6 +34,23 @@ Flow:
 3. Use `resolve-issue` for the selected ready issue.
 4. Use `merge-changes` to merge, verify issue closure, remove the closed mirror, and preserve milestone history.
 
+## Sub-Issue Hierarchy To Parent Rollup
+
+**Example ID:** sub-issue-hierarchy-to-parent-rollup
+**Route sequence:** write-plan -> create-issues -> resolve-issue -> merge-changes -> align-project -> loop-controller
+**Question IDs:** project_plan_next_step, project_plan_issue_count, project_issue_hierarchy_mode, project_issue_hierarchy_parent, project_issue_hierarchy_children, project_issue_hierarchy_publish, project_resolve_push_permission, project_resolve_next_step, project_merge_approval, project_merge_final_health_gate, project_align_next_step, project_loop_next_step
+**Artifacts:** docs/superpowers/plans/<approved-plan>.md; docs/superpowers/issues/<parent>.md; docs/superpowers/issues/<leaf>.md; GitHub Sub-issues section; hierarchy_rollup closeout ledger; parent progress count
+**Validators:** skills/create-issues/scripts/validate-issue-hierarchy.ps1; skills/merge-changes/scripts/closeout.ps1; skills/align-project/scripts/align-project.ps1; skills/loop-controller/scripts/select-candidate.ps1; scripts/test-workflow-examples.ps1
+**Stop point:** project_loop_next_step after leaf closeout records parent progress, parent rollup remains approval-gated, and loop selection skips non-leaf implementation candidates.
+
+Flow:
+
+1. Use `write-plan` to identify grouped work that should stay inside one GitHub Milestone.
+2. Use `create-issues` to create a clean-title parent plus executable leaf issues linked through GitHub sub-issues.
+3. Use `resolve-issue` only on `Sub-Issue Role: leaf` mirrors with `Executable: true`.
+4. Use `merge-changes` to close the leaf and record parent progress without closing the parent automatically.
+5. Use `align-project` and `loop-controller` to report hierarchy drift and route remaining parent or wrapper records to rollup, alignment, or tracker repair.
+
 ## Audit To Auto Mode Single Route
 
 **Example ID:** audit-to-auto-mode-single-route

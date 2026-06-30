@@ -29,6 +29,18 @@ gh issue create --title "Hydrate External Issue Mirrors" --milestone "M1 - Sourc
 
 Use `issue-set` mode when one parent groups a small set of executable leaves.
 
+GitHub UI shape:
+
+```text
+Parent issue: Create Issues Workflow
+Sub-issues section: 1 of 2 complete
+Nested child rows:
+- Hydrate External Issues
+- Build Hierarchy Command Plan
+Child parent link: Create Issues Workflow
+Progress count source: GitHub subIssuesSummary
+```
+
 Parent mirror:
 
 ```markdown
@@ -70,6 +82,8 @@ gh issue create --title "Hierarchy Schema And Validators" --milestone "M1 - Sour
 gh issue create --title "Publication Hydration And Routing" --milestone "M1 - Source Of Truth" --label "type:task" --label "status:ready" --parent "https://github.com/example/repo/issues/31"
 ```
 
+The real GitHub Milestone remains `M1 - Source Of Truth`. The parent issue groups the work inside that milestone; it does not replace the milestone.
+
 ## External Hydration
 
 Hydration reads GitHub JSON fields and writes local mirror metadata before execution routing.
@@ -95,6 +109,46 @@ Hydrated leaf mirror:
 **Child Issues:** None
 **Rollup Policy:** none
 **Title Policy:** Clean GitHub title
+```
+
+## Rollup Closeout
+
+Leaf closeout records parent progress but does not close the parent issue automatically.
+
+```json
+{
+  "hierarchy_rollup": {
+    "role": "leaf",
+    "leaf_issue_url": "https://github.com/example/repo/issues/42",
+    "parent_issue_url": "https://github.com/example/repo/issues/31",
+    "parent_mirror": "docs/superpowers/issues/31-create-issues.md",
+    "sibling_child_states": [
+      { "url": "https://github.com/example/repo/issues/41", "state": "CLOSED", "disposition": "closed", "required": true },
+      { "url": "https://github.com/example/repo/issues/42", "state": "CLOSED", "disposition": "closed", "required": true },
+      { "url": "https://github.com/example/repo/issues/43", "state": "OPEN", "disposition": "open", "required": true }
+    ],
+    "sub_issues_summary": { "total": 3, "completed": 2, "percent_completed": 67 },
+    "parent_closeout": { "auto_closed": false, "requires_native_approval": true }
+  }
+}
+```
+
+Parent or wrapper closeout needs a separate native approval ledger and child proof:
+
+```json
+{
+  "role": "parent",
+  "rollup_policy": "all-required-children-closed",
+  "child_states": [
+    { "url": "https://github.com/example/repo/issues/41", "state": "CLOSED", "disposition": "closed", "required": true },
+    { "url": "https://github.com/example/repo/issues/43", "state": "OPEN", "disposition": "skipped", "required": true, "skip_reason": "approved follow-up split" }
+  ],
+  "parent_closeout": {
+    "auto_closed": false,
+    "requires_native_approval": true,
+    "approval": { "question_id": "project_rollup_closeout_approval", "selected_action": "close-rollup" }
+  }
+}
 ```
 
 ## Selective Migration

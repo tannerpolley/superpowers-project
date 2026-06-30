@@ -305,6 +305,11 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Workflow example validator failed" }
     }))
 
+    $results.Add((Invoke-Step "GitHub sub-issue workflow examples" {
+        & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "validate-workflow-examples.ps1") -RepoRoot $repoRoot -Path "docs/superpowers/examples/workflow-golden-paths.md" -SubIssuesPath "docs/superpowers/examples/sub-issues-workflow-examples.md" | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "GitHub sub-issue workflow examples failed" }
+    }))
+
     $results.Add((Invoke-Step "Workflow normalization proof" {
         & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-tracker-roadmap-proof.ps1") | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Tracker roadmap proof tests failed" }
