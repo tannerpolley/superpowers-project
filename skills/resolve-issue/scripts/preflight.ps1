@@ -19,6 +19,7 @@ try {
     $sourcePlan = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$handoff.source_plan) -Prefix "docs/superpowers/plans" -Name "source plan"
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $issueMirror) -PathType Leaf)) { throw "issue mirror file is missing" }
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $sourcePlan) -PathType Leaf)) { throw "source plan does not exist" }
+    Assert-ExecutableIssueMirror -Text (Get-Content -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $issueMirror) -Raw)
     $dirty = Invoke-GitSimple -RepoRoot $root -Arguments @("status", "--porcelain=v1")
     if ($dirty.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($dirty.Stdout)) { throw "unrelated dirty changes are present" }
     Complete-Contract -Phase $phase -Reason "preflight passed" -Evidence @{ issue_mirror = $issueMirror; source_plan = $sourcePlan; branch = Normalize-RepoPath ([string]$handoff.branch) }

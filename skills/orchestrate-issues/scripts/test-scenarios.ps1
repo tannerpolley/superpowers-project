@@ -79,6 +79,32 @@ function New-FixtureRepo {
     $temp
 }
 
+function Set-IssueHierarchyFields {
+    param(
+        [string]$FixtureRoot,
+        [ValidateSet("parent", "plan-wrapper", "leaf")][string]$Role,
+        [bool]$Executable,
+        [string]$ParentIssue = "None",
+        [string]$ParentMirror = "None",
+        [string]$ChildIssues = "None",
+        [string]$RollupPolicy = "none"
+    )
+    $issuePath = Join-Path $FixtureRoot "docs/superpowers/issues/10-audit-project-audit-gate.md"
+    $text = Get-Content -LiteralPath $issuePath -Raw
+    $fields = @"
+**Hierarchy Mode:** sub-milestone
+**Sub-Issue Role:** $Role
+**Executable:** $($Executable.ToString().ToLowerInvariant())
+**Parent Issue:** $ParentIssue
+**Parent Mirror:** $ParentMirror
+**Child Issues:** $ChildIssues
+**Rollup Policy:** $RollupPolicy
+**Title Policy:** Clean GitHub title
+"@
+    $updated = $text -replace "(?m)^(\*\*Script Gate Mode:\*\* .+)$", "`$1`n$fields"
+    Set-Content -LiteralPath $issuePath -Value $updated -Encoding utf8NoBOM
+}
+
 try {
     $skill = Get-Content -LiteralPath $skillFile -Raw
     $metadata = Get-Content -LiteralPath $metadataFile -Raw
@@ -118,6 +144,40 @@ try {
             if ($LASTEXITCODE -ne 0) { throw ($validatedRaw | Out-String) }
             $validated = ($validatedRaw | Out-String) | ConvertFrom-Json
             if (-not $validated.ok) { throw $validated.reason }
+        } finally {
+            if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
+        }
+    }
+
+    Invoke-Scenario "worker handoff rejects non-leaf hierarchy mirrors" {
+        foreach ($case in @(
+            @{ role = "parent"; parent = "None"; parentMirror = "None"; child = "https://github.com/tannerpolley/superpowers-project/issues/11"; rollup = "all-required-children-closed" },
+            @{ role = "plan-wrapper"; parent = "https://github.com/tannerpolley/superpowers-project/issues/9"; parentMirror = "docs/superpowers/issues/9-parent.md"; child = "https://github.com/tannerpolley/superpowers-project/issues/11"; rollup = "all-required-children-closed" }
+        )) {
+            $fixture = New-FixtureRepo
+            try {
+                Set-IssueHierarchyFields -FixtureRoot $fixture -Role $case.role -Executable $false -ParentIssue $case.parent -ParentMirror $case.parentMirror -ChildIssues $case.child -RollupPolicy $case.rollup
+                $preparedRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $fixture "skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1") -RepoRoot $fixture -IssueFile "docs/superpowers/issues/10-audit-project-audit-gate.md" -OutputPath "handoff/worker-handoff.json" 2>&1
+                $prepared = ($preparedRaw | Out-String) | ConvertFrom-Json
+                if ($LASTEXITCODE -eq 0 -or $prepared.ok) { throw "expected $($case.role) mirror to be rejected before worker packet creation" }
+                if ($prepared.reason -notmatch "Sub-Issue Role $($case.role)" -or $prepared.reason -notmatch "Executable: false") { throw "expected non-leaf rejection reason, got: $($prepared.reason)" }
+                if (Test-Path -LiteralPath (Join-Path $fixture "handoff/worker-handoff.json")) { throw "worker packet should not be written for $($case.role)" }
+            } finally {
+                if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
+            }
+        }
+    }
+
+    Invoke-Scenario "worker handoff allows hierarchy leaf mirrors" {
+        $fixture = New-FixtureRepo
+        try {
+            Set-IssueHierarchyFields -FixtureRoot $fixture -Role "leaf" -Executable $true -ParentIssue "https://github.com/tannerpolley/superpowers-project/issues/9" -ParentMirror "docs/superpowers/issues/9-parent.md"
+            $out = "handoff/worker-handoff.json"
+            $preparedRaw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $fixture "skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1") -RepoRoot $fixture -IssueFile "docs/superpowers/issues/10-audit-project-audit-gate.md" -OutputPath $out
+            if ($LASTEXITCODE -ne 0) { throw ($preparedRaw | Out-String) }
+            $prepared = ($preparedRaw | Out-String) | ConvertFrom-Json
+            if (-not $prepared.ok) { throw $prepared.reason }
+            if (-not (Test-Path -LiteralPath (Join-Path $fixture $out))) { throw "leaf worker packet was not written" }
         } finally {
             if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
         }

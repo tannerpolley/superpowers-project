@@ -4,7 +4,8 @@ interface:
   default_prompt: >-
     Use $superpowers-project:orchestrate-issues when a ready issue should be delegated to a worker thread/worktree
     and reviewed by the current thread. Read SKILL.md for worker identity, handoff, communication, and integration
-    gates; read docs/superpowers/workflow-contract.yml for route question ids and options. This route is the
+    gates. GitHub hierarchy parents and plan-wrappers are rollup records; worker execution is leaf-only and requires Sub-Issue Role leaf with Executable true when hierarchy fields exist.
+    Read docs/superpowers/workflow-contract.yml for route question ids and options. This route is the
     delegated adapter for superpowers:subagent-driven-development. Use derive-worker-identity.ps1 for worker-thread
     identity and route completed worker PRs through merge-changes. Auto Mode authorization ledger uses
     project_auto_mode_authorization with Bounded Auto Merge and Manual Mode plus bounded-auto-merge. summarize

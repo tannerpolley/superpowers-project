@@ -42,6 +42,7 @@ function Read-IssueMirrorProof {
     $issuePath = Resolve-RepoFile -RepoRoot $RepoRoot -Path $IssueMirror
     if (-not (Test-Path -LiteralPath $issuePath -PathType Leaf)) { throw "issue mirror file is missing: $relativeIssueMirror" }
     $text = Get-Content -LiteralPath $issuePath -Raw
+    Assert-ExecutableIssueMirror -Text $text
     $sourcePlan = Get-FieldValue -Text $text -Name "Source Plan"
     if ([string]::IsNullOrWhiteSpace($sourcePlan) -or $sourcePlan -eq "none") { throw "source plan is required in issue mirror" }
     $relativeSourcePlan = Assert-UnderRepoPath -RepoRoot $RepoRoot -Path $sourcePlan -Prefix "docs/superpowers/plans" -Name "source plan"
@@ -89,6 +90,7 @@ try {
     $sourcePlan = Assert-UnderRepoPath -RepoRoot $root -Path ([string]$handoff.source_plan) -Prefix "docs/superpowers/plans" -Name "source plan"
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $issueMirror) -PathType Leaf)) { throw "issue mirror file is missing" }
     if (-not (Test-Path -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $sourcePlan) -PathType Leaf)) { throw "source plan does not exist" }
+    Assert-ExecutableIssueMirror -Text (Get-Content -LiteralPath (Resolve-RepoFile -RepoRoot $root -Path $issueMirror) -Raw)
     if (-not (Test-Property -Object $handoff -Name "outcome_proof")) { throw "handoff outcome proof is required" }
     Assert-OutcomeProof -Proof $handoff.outcome_proof
 

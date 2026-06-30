@@ -106,6 +106,35 @@ function Get-IssueNumberFromUrl {
     $null
 }
 
+function ConvertTo-ContractBool {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
+    switch -Regex ($Value.Trim().ToLowerInvariant()) {
+        '^(true|yes|1)$' { return $true }
+        '^(false|no|0)$' { return $false }
+        default { throw "Executable must be true or false when hierarchy metadata is present" }
+    }
+}
+
+function Assert-ExecutableIssueMirror {
+    param([string]$Text)
+    $role = [string](Get-FieldValue -Text $Text -Name "Sub-Issue Role")
+    $executableRaw = [string](Get-FieldValue -Text $Text -Name "Executable")
+    $hierarchyMode = [string](Get-FieldValue -Text $Text -Name "Hierarchy Mode")
+    $hasHierarchy = -not [string]::IsNullOrWhiteSpace($role) -or -not [string]::IsNullOrWhiteSpace($executableRaw) -or -not [string]::IsNullOrWhiteSpace($hierarchyMode)
+    if (-not $hasHierarchy) { return }
+
+    $normalizedRole = $role.Trim().ToLowerInvariant()
+    $executable = ConvertTo-ContractBool -Value $executableRaw
+    if ($normalizedRole -in @("parent", "plan-wrapper")) {
+        throw "Sub-Issue Role $normalizedRole is not executable (Executable: false); select an executable leaf issue instead"
+    }
+    if ($null -ne $executable -and -not $executable) {
+        $namedRole = if ([string]::IsNullOrWhiteSpace($normalizedRole)) { "unknown" } else { $normalizedRole }
+        throw "Sub-Issue Role $namedRole is not executable (Executable: false); select an executable leaf issue instead"
+    }
+}
+
 function Get-PullNumberFromUrl {
     param([string]$PullUrl)
     if ($PullUrl -match '/pull/(?<n>\d+)(?:$|[?#])') { return [int]$Matches.n }

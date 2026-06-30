@@ -24,6 +24,7 @@ Stop before creating a worker thread when any of these are true:
 - The source plan is missing.
 - The target is only a raw GitHub issue URL, an external intake issue, or a mirror with `Source Plan: TBD`.
 - The issue mirror is not ready for agent work.
+- The issue mirror is a GitHub hierarchy parent or plan-wrapper, or has `Executable: false`; worker execution is leaf-only.
 - Native goal activation proof is missing in the orchestrator thread when the run is goal-backed.
 - Worker identity cannot be derived from one canonical issue number and slug.
 - A branch, thread title, evidence folder, or PR title would not match the derived worker identity.
@@ -70,6 +71,8 @@ Debug mode must not approve mutation. Debug mode must not create real worker thr
 ## Worker Handoff
 
 Run `scripts/prepare-worker-handoff.ps1 -RepoRoot . -IssueFile <docs/superpowers/issues/<issue>.md> -OutputPath <temp-or-handoff-json>` before starting a worker. It validates the issue mirror, source plan, proof oracle, and derived worker identity, then emits a handoff ledger.
+
+GitHub hierarchy parent and plan-wrapper mirrors are rollup records. `prepare-worker-handoff.ps1` must reject them before worker identity derivation or handoff file creation. Only `Sub-Issue Role: leaf` with `Executable: true`, plus old flat mirrors with no hierarchy fields, can become worker handoffs.
 
 Run `scripts/validate-worker-handoff.ps1 -RepoRoot . -HandoffPath <handoff-json>` before sending the handoff to the worker.
 

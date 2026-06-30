@@ -51,6 +51,7 @@ Stop immediately when any of these are true:
 - The linked source plan does not exist.
 - The linked source plan fails `scripts/validate-plan-task-use-cases.ps1`.
 - The issue mirror lacks acceptance criteria, proof oracle, AFK/HITL classification, or Outcome Summary.
+- The issue mirror is a GitHub hierarchy parent or plan-wrapper, or has `Executable: false`; direct execution is leaf-only.
 - Native goal proof is missing, a plain string, inactive, or not from `get_goal`.
 - Setup ledger lacks structured `outcome_proof`, or contains `goal_board_path`, `goalbuddy_checker`, or `docs/goals`.
 - Code edits or implementation tests begin before setup validation passes.
@@ -83,6 +84,8 @@ Follow this order exactly:
 `$superpowers-project:resolve-issue` is the direct current-thread route. If the user wants a worker thread, use `$superpowers-project:orchestrate-issues`.
 
 If the user gives only a GitHub issue URL, no local mirror exists, or the mirror has an unresolved source plan, use `$superpowers-project:create-issues` hydration first. `$superpowers-project:resolve-issue` starts only after the local mirror and source plan exist and mirror validation passes.
+
+GitHub sub-issue parent and plan-wrapper mirrors are rollup records, not executable work. When hierarchy metadata is present, only `Sub-Issue Role: leaf` with `Executable: true` can enter direct execution. Old flat mirrors with no hierarchy fields keep the existing execution path.
 
 When the requested route is ambiguous and `request_user_input` is callable, the router should ask native question `project_issue_resolution_route` before starting either skill. If `$superpowers-project:resolve-issue` receives an execution decision whose selected mode is `orchestrated-worker`, stop immediately with the reason: `orchestrated worker execution is owned by orchestrate-issues; use resolve-issue only for direct current-thread execution`.
 

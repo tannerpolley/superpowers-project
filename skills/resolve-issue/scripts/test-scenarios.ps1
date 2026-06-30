@@ -86,10 +86,12 @@ function Write-IssueMirror {
     param(
         [string]$Repo,
         [string]$RelativePath = "docs/superpowers/issues/12-sample.md",
-        [string]$SourcePlan = "docs/superpowers/plans/2026-06-02-sample-plan.md"
+        [string]$SourcePlan = "docs/superpowers/plans/2026-06-02-sample-plan.md",
+        [string]$AdditionalFields = ""
     )
     $path = Join-Path $Repo $RelativePath
     New-Item -ItemType Directory -Path (Split-Path -Parent $path) -Force | Out-Null
+    $extra = if ([string]::IsNullOrWhiteSpace($AdditionalFields)) { "" } else { "$($AdditionalFields.Trim())`n" }
 @"
 # Sample Issue
 
@@ -100,6 +102,7 @@ function Write-IssueMirror {
 **Classification:** AFK
 **Goal Command:** /goal Resolve sample issue
 **Branch:** codex/sample-issue
+$extra
 
 ## Outcome Summary
 
@@ -123,6 +126,27 @@ function Write-IssueMirror {
 - pwsh -NoProfile -Command 'exit 0'
 "@ | Set-Content -LiteralPath $path -Encoding utf8NoBOM
     $RelativePath
+}
+
+function New-HierarchyFields {
+    param(
+        [ValidateSet("parent", "plan-wrapper", "leaf")][string]$Role,
+        [bool]$Executable,
+        [string]$ParentIssue = "None",
+        [string]$ParentMirror = "None",
+        [string]$ChildIssues = "None",
+        [string]$RollupPolicy = "none"
+    )
+@"
+**Hierarchy Mode:** sub-milestone
+**Sub-Issue Role:** $Role
+**Executable:** $($Executable.ToString().ToLowerInvariant())
+**Parent Issue:** $ParentIssue
+**Parent Mirror:** $ParentMirror
+**Child Issues:** $ChildIssues
+**Rollup Policy:** $RollupPolicy
+**Title Policy:** Clean GitHub title
+"@
 }
 
 function New-Handoff {
@@ -286,6 +310,26 @@ try {
         $missingPlanMirror = Write-IssueMirror -Repo $repo -RelativePath "docs/superpowers/issues/13-missing-plan.md" -SourcePlan "docs/superpowers/plans/missing.md"
         $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "Inspect", "-RepoRoot", $repo, "-IssueMirror", $missingPlanMirror)
         Assert-True (-not $result.ok -and $result.reason -match "source plan") "expected missing source plan failure"
+    }
+
+    Invoke-Scenario "non-leaf hierarchy mirrors cannot enter direct execution" {
+        $parentMirror = Write-IssueMirror -Repo $repo -RelativePath "docs/superpowers/issues/20-parent.md" -AdditionalFields (New-HierarchyFields -Role "parent" -Executable $false -ChildIssues "https://github.com/example/repo/issues/21" -RollupPolicy "all-required-children-closed")
+        $parent = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "Inspect", "-RepoRoot", $repo, "-IssueMirror", $parentMirror)
+        Assert-True (-not $parent.ok -and $parent.reason -match "Sub-Issue Role parent" -and $parent.reason -match "Executable: false") "expected parent mirror to be rejected before direct setup"
+
+        $wrapperMirror = Write-IssueMirror -Repo $repo -RelativePath "docs/superpowers/issues/21-wrapper.md" -AdditionalFields (New-HierarchyFields -Role "plan-wrapper" -Executable $false -ParentIssue "https://github.com/example/repo/issues/20" -ParentMirror "docs/superpowers/issues/20-parent.md" -ChildIssues "https://github.com/example/repo/issues/22" -RollupPolicy "all-required-children-closed")
+        $wrapper = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "Inspect", "-RepoRoot", $repo, "-IssueMirror", $wrapperMirror)
+        Assert-True (-not $wrapper.ok -and $wrapper.reason -match "Sub-Issue Role plan-wrapper" -and $wrapper.reason -match "Executable: false") "expected wrapper mirror to be rejected before direct setup"
+    }
+
+    Invoke-Scenario "leaf and legacy flat mirrors can enter direct execution" {
+        $leafMirror = Write-IssueMirror -Repo $repo -RelativePath "docs/superpowers/issues/22-leaf.md" -AdditionalFields (New-HierarchyFields -Role "leaf" -Executable $true -ParentIssue "https://github.com/example/repo/issues/20" -ParentMirror "docs/superpowers/issues/20-parent.md")
+        $leaf = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "Inspect", "-RepoRoot", $repo, "-IssueMirror", $leafMirror)
+        Assert-True ($leaf.ok) $leaf.reason
+
+        $flatMirror = Write-IssueMirror -Repo $repo -RelativePath "docs/superpowers/issues/23-flat.md"
+        $flat = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "Inspect", "-RepoRoot", $repo, "-IssueMirror", $flatMirror)
+        Assert-True ($flat.ok) $flat.reason
     }
 
     Invoke-Scenario "missing goal activation proof blocks" {
