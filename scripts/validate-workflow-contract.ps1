@@ -177,6 +177,34 @@ try {
         $extraGateIds = @($contractGateIds | Where-Object { $contractQuestionIds -notcontains $_ })
         Add-Check -Name "$skillName typed gates cover question ids" -Ok ($missingGateIds.Count -eq 0 -and $extraGateIds.Count -eq 0) -Reason "$skillName gate/question mismatch. Missing: $($missingGateIds -join ', '); extra: $($extraGateIds -join ', ')"
 
+        $allOptionLabels = @($contractGates | ForEach-Object { Get-OptionLabels -Gate $_ } | Sort-Object -Unique)
+        $routeTriggers = @(Get-WorkflowSkillRouteTriggers -SkillPath $skillPath)
+        $unknownRouteTriggers = @($routeTriggers | Where-Object { $allOptionLabels -notcontains $_ })
+        Add-Check -Name "$skillName route trigger labels are declared" -Ok ($unknownRouteTriggers.Count -eq 0) -Reason "$skillName route trigger label(s) are not declared contract options: $($unknownRouteTriggers -join ', ')"
+
+        $metadataPath = Join-Path (Split-Path -Parent $skillPath) "agents\openai.yaml"
+        if (Test-Path -LiteralPath $metadataPath -PathType Leaf) {
+            $metadataText = Get-Content -LiteralPath $metadataPath -Raw
+            $topLevelGate = @($contractGates | Where-Object { [string]$_.gate_type -eq "top_level_continuation" } | Select-Object -First 1)
+            $topLevelLabels = if ($topLevelGate.Count -gt 0) { @(Get-OptionLabels -Gate $topLevelGate[0]) } else { @() }
+            $childLabels = @($contractGates |
+                Where-Object { [string]$_.gate_type -ne "top_level_continuation" } |
+                ForEach-Object { Get-OptionLabels -Gate $_ } |
+                Where-Object { $_ -notin @("Yes", "Revisit", "Stop", "Done") } |
+                Sort-Object -Unique)
+            $compositeHits = [System.Collections.Generic.List[string]]::new()
+            foreach ($topLabel in $topLevelLabels) {
+                foreach ($childLabel in $childLabels) {
+                    $pattern = "(?i)\b$([regex]::Escape($topLabel))\s+$([regex]::Escape($childLabel))\b"
+                    if ([regex]::IsMatch($metadataText, $pattern)) {
+                        $compositeHits.Add("$topLabel $childLabel") | Out-Null
+                    }
+                }
+            }
+            $uniqueCompositeHits = @($compositeHits | Sort-Object -Unique)
+            Add-Check -Name "$skillName metadata avoids composite route labels" -Ok ($uniqueCompositeHits.Count -eq 0) -Reason "$skillName metadata contains composite route label(s): $($uniqueCompositeHits -join ', ')"
+        }
+
         $declaredIds = @($allContractQuestionIds + @($nativeIdentifierAllowlist.Keys) | Sort-Object -Unique)
         $proseIdentifiers = @(Get-WorkflowNativeIdentifiers -SkillPath $skillPath)
         $unregisteredIdentifiers = @($proseIdentifiers | Where-Object { $declaredIds -notcontains $_ })

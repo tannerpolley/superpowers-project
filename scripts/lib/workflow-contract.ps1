@@ -140,3 +140,13 @@ function Get-WorkflowNativeIdentifiers {
         ForEach-Object { $_.Value } |
         Sort-Object -Unique)
 }
+
+function Get-WorkflowSkillRouteTriggers {
+    param([Parameter(Mandatory = $true)][string]$SkillPath)
+
+    $text = Get-Content -LiteralPath $SkillPath -Raw
+    @([regex]::Matches($text, 'If\s+the\s+user\s+selects\s+`([^`]+)`') |
+        ForEach-Object { $_.Groups[1].Value.Trim() } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        Sort-Object -Unique)
+}

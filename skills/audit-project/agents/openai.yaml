@@ -6,7 +6,8 @@ interface:
     that should become repair specs or issue slices. Read SKILL.md for audit output requirements and
     docs/superpowers/workflow-contract.yml for route question ids, options, validators, and next routes. Classify
     findings as P0, P1, P2, or P3. Pair with diagnose, thermo-nuclear-code-quality-review,
-    improve-codebase-architecture, or react-doctor as applicable. project_audit_next_step can route to
-    Yes Prepare Repair Work or Revisit Review Or Extend Findings. Auto Mode uses project_auto_mode_authorization with
+    improve-codebase-architecture, or react-doctor as applicable. project_audit_next_step uses Yes, Revisit,
+    and Stop. Yes asks project_audit_progress_route with Write Plan, Auto Mode, and Create Issues. Revisit asks project_audit_revisit_route
+    with Review First, Gather More Evidence, and Rerun Focused Audit. Auto Mode uses project_auto_mode_authorization with
     Bounded Auto Merge and Manual Planning, validate-auto-mode-authorization.ps1, direct-inline-resolve-issue, and source spec handoff.
     Use request_user_input for material scope and route decisions.

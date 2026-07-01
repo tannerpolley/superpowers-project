@@ -23,31 +23,31 @@ workflow_skills:
     - Revisit
     - Stop
     nested_routes:
-    - question_id: project_align_prepare_route
+    - question_id: project_align_repair_group
       parent_option: true
+      options:
+      - Apply Repair
+      - Prepare Repair Work
+    - question_id: project_align_prepare_route
+      parent_option: Prepare Repair Work
       options:
       - Create Planning Spec
       - Plan Or Issue Repair
+    - question_id: project_align_plan_issue_route
+      parent_option: Plan Or Issue Repair
+      options:
+      - Plan Repair
+      - Create Issue
     - question_id: project_align_reiteration_route
       parent_option: Revisit
       options:
       - Run Align Again
       - Review Or Gather Evidence
-    - question_id: project_align_repair_group
-      parent_option: Revisit
-      options:
-      - Apply Repair
-      - Prepare Repair Work
     - question_id: project_align_review_evidence_route
-      parent_option: Revisit
+      parent_option: Review Or Gather Evidence
       options:
       - Review First
       - Gather More Evidence
-    - question_id: project_align_plan_issue_route
-      parent_option: true
-      options:
-      - Plan Repair
-      - Create Issue
     validators:
     - scripts/validate.ps1
     - scripts/sync-live.ps1 -Validate
@@ -83,7 +83,7 @@ workflow_skills:
     - question_id: project_align_plan_issue_route
       gate_type: data_selection
       prompt: Should I plan the repair or create an issue?
-      parent_option: true
+      parent_option: Plan Or Issue Repair
       options:
       - label: Plan Repair
         terminal_state: continue
@@ -92,7 +92,7 @@ workflow_skills:
     - question_id: project_align_prepare_route
       gate_type: data_selection
       prompt: Which repair artifact should be prepared?
-      parent_option: true
+      parent_option: Prepare Repair Work
       options:
       - label: Create Planning Spec
         terminal_state: continue
@@ -108,18 +108,18 @@ workflow_skills:
       - label: Review Or Gather Evidence
         terminal_state: revisit
     - question_id: project_align_repair_group
-      gate_type: nested_revisit_route
+      gate_type: nested_yes_route
       prompt: How should this audit turn into repair work?
-      parent_option: Revisit
+      parent_option: true
       options:
       - label: Apply Repair
-        terminal_state: revisit
+        terminal_state: continue
       - label: Prepare Repair Work
-        terminal_state: revisit
+        terminal_state: continue
     - question_id: project_align_review_evidence_route
       gate_type: nested_revisit_route
       prompt: Should I review the audit or gather more evidence?
-      parent_option: Revisit
+      parent_option: Review Or Gather Evidence
       options:
       - label: Review First
         terminal_state: revisit

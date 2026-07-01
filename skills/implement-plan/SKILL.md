@@ -135,7 +135,7 @@ Options:
 - Revisit: review, fix, rerun verification, or update push permission.
 - Stop: break the continuation loop.
 
-If the user selects `Revise / Review Branch`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_implement_reiteration_route`
 

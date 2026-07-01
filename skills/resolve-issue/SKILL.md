@@ -255,7 +255,7 @@ Options:
 - Revisit: review, revise, fix checks, or re-run verification.
 - Stop: break the continuation loop.
 
-If the user selects `Integrate Resolved Issue`, ask:
+If the user selects `Yes`, ask:
 
 Question id: `project_resolve_integration_route`
 
@@ -277,7 +277,7 @@ Options:
 - `Resolve Another`: start `$superpowers-project:resolve-issue` for another ready issue mirror.
 - `Orchestrate Another`: start `$superpowers-project:orchestrate-issues` for another worker-suitable issue.
 
-If the user selects `Review / Revise PR-Ready Work`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_resolve_reiteration_route`
 

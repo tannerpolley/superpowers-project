@@ -105,6 +105,21 @@ Options:
 The prose-only token ``alpha_shadow_route`` is intentionally not a native gate.
 "@
 
+    $alphaText = Get-Content -LiteralPath $alphaSkill -Raw
+    $badRouteTriggerSkillRoot = Join-Path $tempRoot "bad-route-trigger-skills"
+    Write-TextFile -Path (Join-Path $badRouteTriggerSkillRoot "alpha\SKILL.md") -Text ($alphaText + @"
+
+If the user selects ``Not A Real Option``, ask:
+"@)
+
+    $badCompositeMetadataSkillRoot = Join-Path $tempRoot "bad-composite-metadata-skills"
+    Write-TextFile -Path (Join-Path $badCompositeMetadataSkillRoot "alpha\SKILL.md") -Text $alphaText
+    Write-TextFile -Path (Join-Path $badCompositeMetadataSkillRoot "alpha\agents\openai.yaml") -Text @"
+interface:
+  default_prompt: >-
+    alpha_next_step can route to Yes Do Work.
+"@
+
     $validContract = Join-Path $tempRoot "valid.yml"
     Write-TextFile -Path $validContract -Text @"
 version: 1
@@ -310,6 +325,12 @@ native_identifier_allowlist:
 
     $validAllowlistReason = Invoke-WorkflowContractValidator -ContractPath $validAllowlistReasonContract -SkillRoot $skillRoot -WorkflowSkillNames @("alpha")
     Add-Check -Name "allowlisted identifier with reason passes" -Ok ($validAllowlistReason.exit_code -eq 0 -and $validAllowlistReason.json.ok -eq $true) -Reason $validAllowlistReason.raw
+
+    $badRouteTrigger = Invoke-WorkflowContractValidator -ContractPath $validContract -SkillRoot $badRouteTriggerSkillRoot -WorkflowSkillNames @("alpha")
+    Add-Check -Name "unknown route trigger label fails" -Ok ($badRouteTrigger.exit_code -ne 0 -and $badRouteTrigger.raw -match "route trigger label") -Reason "skill route triggers must reference declared option labels"
+
+    $badCompositeMetadata = Invoke-WorkflowContractValidator -ContractPath $validContract -SkillRoot $badCompositeMetadataSkillRoot -WorkflowSkillNames @("alpha")
+    Add-Check -Name "metadata composite route label fails" -Ok ($badCompositeMetadata.exit_code -ne 0 -and $badCompositeMetadata.raw -match "composite route label") -Reason "metadata must not concatenate top-level and child route labels"
 
     $repoContract = Join-Path $RepoRoot "docs\superpowers\workflow-contract.yml"
     $repoResult = Invoke-WorkflowContractValidator -ContractPath $repoContract -SkillRoot (Join-Path $RepoRoot "skills") -WorkflowSkillNames @()

@@ -57,7 +57,7 @@ Before presenting a plan as ready, ask or record direct answers for:
 
 When the project is scientific or engineering-oriented, ask for numerical metrics, thresholds, tolerances, units, and validation coverage. Record those answers in the plan acceptance criteria and proof oracle. If those prompts are not applicable, record that with a clear reason before routing into work.
 
-Do not route to `Continue Into Work` until the test-complete and metrics answers exist or are explicitly marked not applicable with a clear reason.
+Do not route through the `Yes` progress branch until the test-complete and metrics answers exist or are explicitly marked not applicable with a clear reason.
 
 ## Outcome Proof Gate
 
@@ -241,7 +241,7 @@ Options:
 - Revisit: choose whether to revise, review, ask follow-up questions, or re-run the planning grill.
 - Stop: break the continuation loop.
 
-If the user selects `Continue Into Work`, immediately ask:
+If the user selects `Yes`, immediately ask:
 
 Question id: `project_plan_work_route`
 
@@ -253,7 +253,7 @@ Options:
 - `Project Implement`: continue to `$superpowers-project:implement-plan` using the saved plan path without creating issue mirrors.
 - `Use Ready Issue`: choose an existing ready issue execution route.
 
-If the user selects `Create Issue` or `Project Issue First`, ask:
+If the user selects `Project Issue First`, ask:
 
 Question id: `project_plan_issue_count`
 
@@ -288,7 +288,7 @@ Options:
 - `Resolve Issue`: start `$superpowers-project:resolve-issue` for an existing ready issue mirror.
 - `Orchestrate Issues`: start `$superpowers-project:orchestrate-issues` for worker-thread execution.
 
-If the user selects `Revise / Review Plan`, immediately ask:
+If the user selects `Revisit`, immediately ask:
 
 Question id: `project_plan_review_route`
 
@@ -310,7 +310,7 @@ Options:
 - `Review First`: show the rendered artifact and ask for follow-up confirmation, then return to `project_plan_next_step`.
 - `Re-run Planning Grill`: run the planning grill again for an existing spec with no ready plan.
 
-Recommend `Continue Into Work`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation. Recommend `Use Ready Issue` only when a compatible ready issue mirror already exists and the plan should route into that execution path.
+Recommend `Yes`, then `Project Issue First`, when the GitHub issue backbone is desired. Recommend `Project Implement` for branch-backed non-issue implementation. Recommend `Use Ready Issue` only when a compatible ready issue mirror already exists and the plan should route into that execution path.
 
 Route summary:
 

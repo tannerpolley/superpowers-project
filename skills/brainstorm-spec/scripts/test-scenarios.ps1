@@ -198,7 +198,7 @@ $scenarios = @(
             "project_brainstorm_visual_companion",
             "project_brainstorm_next_step",
             "Continue From Spec",
-            "Revise / Review Brainstorm",
+            "Revisit",
             "Manual Planning",
             "loaded thread may still be using older skill text",
             "re-ask the missed native route",

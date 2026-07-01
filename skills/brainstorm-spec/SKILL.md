@@ -173,7 +173,7 @@ Options:
 - `Plan Multiple Specs`: create one `$superpowers-project:write-plan` from multiple existing specs; prompt for spec selection if not already known.
 - `Create Multiple Plans`: create multiple related plans from multiple specs; prompt for spec-to-plan grouping if not already known.
 
-If the user selects `Revise / Review Brainstorm`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_brainstorm_reiteration_route`
 

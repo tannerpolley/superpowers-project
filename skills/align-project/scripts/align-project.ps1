@@ -267,7 +267,9 @@ function Get-MilestonePages {
             if ([string]::IsNullOrWhiteSpace($title)) {
                 $title = (($text -split "`r?`n" | Select-Object -First 1) -replace '^#\s+', '').Trim()
             }
-            $issueNumbers = @([regex]::Matches($text, 'docs/superpowers/issues/(?<n>\d+)-[^`\)\s]+\.md') | ForEach-Object { [int]$_.Groups["n"].Value } | Sort-Object -Unique)
+            $localIssueNumbers = @([regex]::Matches($text, 'docs/superpowers/issues/(?<n>\d+)-[^`\)\s]+\.md') | ForEach-Object { [int]$_.Groups["n"].Value })
+            $githubIssueNumbers = @([regex]::Matches($text, 'github\.com/[^/\s\)]+/[^/\s\)]+/issues/(?<n>\d+)') | ForEach-Object { [int]$_.Groups["n"].Value })
+            $issueNumbers = @($localIssueNumbers + $githubIssueNumbers | Sort-Object -Unique)
             [pscustomobject]@{
                 path = ConvertTo-RepoPath -Root $Root -Path $_.FullName
                 title = $title
@@ -282,7 +284,10 @@ function Get-LabelVocabulary {
     $path = Get-RepoFile -Root $Root -RelativePath "docs/agents/triage-labels.md"
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return @() }
     $text = Get-Content -LiteralPath $path -Raw
-    @([regex]::Matches($text, '`(?<label>(type|status):[^`]+)`') | ForEach-Object { $_.Groups["label"].Value } | Sort-Object -Unique)
+    @([regex]::Matches($text, '`(?<label>(type|status):[^`]+)`') |
+        ForEach-Object { $_.Groups["label"].Value } |
+        Where-Object { $_ -notmatch '\*' } |
+        Sort-Object -Unique)
 }
 
 function Test-GitIgnored {
@@ -366,6 +371,52 @@ query($owner:String!, $name:String!) {
             subIssuesSummary = $_.subIssuesSummary
         }
     })
+}
+
+function Read-GitHubMilestones {
+    param([string]$Root, [string]$FixturePath)
+    $fixture = @(Read-JsonArray -Path $FixturePath -Name "milestone")
+    if ($fixture.Count -gt 0) { return $fixture }
+
+    $repo = Get-RepoSlug -Root $Root
+    if ([string]::IsNullOrWhiteSpace($repo)) { return @() }
+    $gh = Get-Command gh -ErrorAction SilentlyContinue
+    if ($null -eq $gh) { return @() }
+
+    $milestoneRaw = & gh api "repos/$repo/milestones?state=all&per_page=100" 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace(($milestoneRaw | Out-String))) { return @() }
+    $milestones = @($milestoneRaw | ConvertFrom-Json)
+
+    $issueRaw = & gh issue list --repo $repo --state all --limit 1000 --json number,milestone 2>$null
+    $issues = if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($issueRaw | Out-String))) {
+        @($issueRaw | ConvertFrom-Json)
+    } else {
+        @()
+    }
+
+    @($milestones | ForEach-Object {
+        $title = [string]$_.title
+        [pscustomobject]@{
+            title = $title
+            state = [string]$_.state
+            issues = @($issues | Where-Object { $null -ne $_.milestone -and [string]$_.milestone.title -eq $title } | ForEach-Object { [int]$_.number })
+        }
+    })
+}
+
+function Read-GitHubLabels {
+    param([string]$Root, [string]$FixturePath)
+    $fixture = @(Read-JsonArray -Path $FixturePath -Name "label")
+    if ($fixture.Count -gt 0) { return $fixture }
+
+    $repo = Get-RepoSlug -Root $Root
+    if ([string]::IsNullOrWhiteSpace($repo)) { return @() }
+    $gh = Get-Command gh -ErrorAction SilentlyContinue
+    if ($null -eq $gh) { return @() }
+
+    $raw = & gh label list --repo $repo --limit 200 --json name 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace(($raw | Out-String))) { return @() }
+    @($raw | ConvertFrom-Json)
 }
 
 function Read-ProjectFixture {
@@ -515,7 +566,8 @@ function Invoke-TrackerHygieneAudit {
         if ($null -ne $issue.number) { $issuesByNumber[[int]$issue.number] = $issue }
     }
 
-    $projectItems = @(Get-ProjectItems -Project $ProjectFixture)
+    $hasProjectEvidence = $null -ne $ProjectFixture
+    $projectItems = if ($hasProjectEvidence) { @(Get-ProjectItems -Project $ProjectFixture) } else { @() }
     foreach ($item in @($projectItems | Where-Object { [string]$_.type -eq "DraftIssue" })) {
         Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "project-draft-item" -Severity "informational" -Dimension "tracker-hygiene" -Message "Project V2 draft item remains unpublished and must be handled manually." -Artifact ([string]$item.id) -Evidence @{ title = [string]$item.title; status = [string]$item.status })
     }
@@ -526,8 +578,8 @@ function Invoke-TrackerHygieneAudit {
         $issueLabels = @(Get-StringArray (@($issue.labels | ForEach-Object { if ($_.PSObject.Properties.Name -contains "name") { $_.name } else { $_ } })))
         $statusLabels = @($issueLabels | Where-Object { $_ -match '^status:' })
         $issueObjectId = if (-not [string]::IsNullOrWhiteSpace([string]$issue.node_id)) { [string]$issue.node_id } else { "issue:$($issue.number)" }
-        $item = @(Find-ProjectItemForIssue -Items $projectItems -IssueNumber ([int]$mirror.number) | Select-Object -First 1)
-        $hasProjectItem = $item.Count -gt 0
+        $item = if ($hasProjectEvidence) { @(Find-ProjectItemForIssue -Items $projectItems -IssueNumber ([int]$mirror.number) | Select-Object -First 1) } else { @() }
+        $hasProjectItem = $hasProjectEvidence -and $item.Count -gt 0
 
         if ([string]$issue.state -eq "CLOSED") {
             if ($statusLabels.Count -gt 0) {
@@ -538,7 +590,7 @@ function Invoke-TrackerHygieneAudit {
                     }
                 }
             }
-            if ($hasProjectItem -and [string]$item[0].status -ne "Done") {
+            if ($hasProjectEvidence -and $hasProjectItem -and [string]$item[0].status -ne "Done") {
                 Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "closed-project-not-done" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Closed GitHub issue Project item is not Done." -Artifact ([string]$item[0].id) -Evidence @{ issue_number = [int]$issue.number; from = [string]$item[0].status; to = "Done" })
                 if ($ApplyRepairs) {
                     Add-RepairReceiptEntry -Receipt $RepairReceipt -Action "set-project-status" -ObjectType "project-item" -ObjectId ([string]$item[0].id) -Field "Status" -From ([string]$item[0].status) -To "Done" -Evidence @{ issue_number = [int]$issue.number; content_id = $issueObjectId }
@@ -550,6 +602,8 @@ function Invoke-TrackerHygieneAudit {
         if ($statusLabels.Count -eq 0) {
             Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "missing-routing-label" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Open GitHub issue has no status routing label." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url })
         }
+
+        if (-not $hasProjectEvidence) { continue }
 
         if (-not $hasProjectItem) {
             Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "missing-project-item" -Severity "repairable" -Dimension "tracker-hygiene" -Message "Mirrored open issue is missing from the canonical Project V2 board." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url; content_id = $issueObjectId })
@@ -656,8 +710,8 @@ function Invoke-GitHubAwareAudit {
     )
     $githubIssues = @(Read-GitHubIssues -Root $Root -FixturePath $IssueFixturePath)
     $projectFixture = Read-ProjectFixture -Path $ProjectFixturePath
-    $githubMilestones = @(Read-JsonArray -Path $MilestoneFixturePath -Name "milestone")
-    $githubLabels = @(Read-JsonArray -Path $LabelFixturePath -Name "label")
+    $githubMilestones = @(Read-GitHubMilestones -Root $Root -FixturePath $MilestoneFixturePath)
+    $githubLabels = @(Read-GitHubLabels -Root $Root -FixturePath $LabelFixturePath)
     $issuesByNumber = @{}
     foreach ($issue in $githubIssues) {
         if ($null -ne $issue.number) { $issuesByNumber[[int]$issue.number] = $issue }
@@ -754,9 +808,8 @@ function Invoke-GitHubAwareAudit {
     if ($TrackerHygiene) {
         if ($null -eq $projectFixture) {
             Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "project-v2-state" -Severity "informational" -Dimension "tracker-hygiene" -Message "Project V2 state evidence was not inspected." -Artifact "GitHub Project V2")
-        } else {
-            Invoke-TrackerHygieneAudit -Findings $Findings -Mirrors $Mirrors -GitHubIssues $githubIssues -ProjectFixture $projectFixture -ApplyRepairs:$ApplyTrackerRepairs.IsPresent -RepairReceipt $script:repairReceipt
         }
+        Invoke-TrackerHygieneAudit -Findings $Findings -Mirrors $Mirrors -GitHubIssues $githubIssues -ProjectFixture $projectFixture -ApplyRepairs:$ApplyTrackerRepairs.IsPresent -RepairReceipt $script:repairReceipt
     }
 }
 

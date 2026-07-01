@@ -149,7 +149,7 @@ Options:
 - Revisit: review findings, rerun Align, or gather more evidence before deciding.
 - Stop: pause without claiming final completion.
 
-If the user selects `Apply Or Prepare Repair`, ask:
+If the user selects `Yes`, ask:
 
 Question id: `project_align_repair_group`
 
@@ -182,7 +182,7 @@ Options:
 - `Plan Repair`: start `$superpowers-project:write-plan` from the audit findings.
 - `Create Issue`: start `$superpowers-project:create-issues` only when the repair is already issue-ready.
 
-If the user selects `Rerun / Review Alignment`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_align_reiteration_route`
 

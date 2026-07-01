@@ -452,6 +452,27 @@ $scenarios = @(
         }
     }
 
+    Invoke-Scenario "tracker hygiene reports closed status labels without Project V2 fixture" {
+        $repo = New-TestRepo
+        try {
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/issues/12-closed-status.md") -Value "# Closed Status`n`n**GitHub Issue:** https://github.com/example/repo/issues/12`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:task, status:ready`n`n## Acceptance Criteria`n`n- [ ] Closed status labels are reported without Project V2 evidence.`n" -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            @{
+                issues = @(
+                    @{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "CLOSED"; title = "Closed Status"; body = "body"; labels = @("type:task", "status:ready"); milestone = @{ title = "M1 - Source Of Truth" }; node_id = "ISSUE_12" }
+                )
+            } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $issueFixture -Encoding utf8NoBOM
+
+            $audit = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-TrackerHygiene", "-IssueFixturePath", $issueFixture)
+            if (-not $audit.ok) { throw $audit.reason }
+            $findingText = $audit.findings | ConvertTo-Json -Depth 20 -Compress
+            Assert-Contains $findingText "closed-status-label-drift" "closed status label drift must be reported without Project V2 fixture"
+            Assert-Contains $findingText "project-v2-state" "Project V2 skipped evidence must remain explicit"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
+
     Invoke-Scenario "GitHub-aware audit resolves target repo from roadmap and git remote" {
         $targetRepo = New-TestRepo
         $remoteRepo = New-TestRepo

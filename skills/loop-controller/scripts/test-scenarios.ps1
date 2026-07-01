@@ -147,15 +147,21 @@ try {
     Add-Check -Name "selector accepts broad maintenance candidates" -Ok ($maintenanceSelection.exit_code -eq 0 -and $maintenanceSelection.json.selected_candidate_id -eq "ready-plan") -Reason $maintenanceSelection.raw
     Add-Check -Name "broad maintenance selector keeps skipped list" -Ok ($null -ne $maintenanceSelection.json.skipped) -Reason "broad maintenance skipped list missing"
 
+    $hierarchyRepo = Join-Path $tempRoot "hierarchy-target-repo"
+    $hierarchyIssueRoot = Join-Path $hierarchyRepo "docs\superpowers\issues"
+    New-Item -ItemType Directory -Path $hierarchyIssueRoot -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $hierarchyIssueRoot "fixture-parent-rollup.md") -Value "# Parent Rollup`n`n**Hierarchy Mode:** issue-set`n**Sub-Issue Role:** parent`n**Executable:** false`n**Parent Issue:** None`n**Parent Mirror:** None`n" -Encoding utf8NoBOM
+    Set-Content -LiteralPath (Join-Path $hierarchyIssueRoot "fixture-plan-wrapper.md") -Value "# Plan Wrapper`n`n**Hierarchy Mode:** issue-set`n**Sub-Issue Role:** plan-wrapper`n**Executable:** false`n**Parent Issue:** None`n**Parent Mirror:** None`n" -Encoding utf8NoBOM
+    Set-Content -LiteralPath (Join-Path $hierarchyIssueRoot "fixture-leaf.md") -Value "# Leaf Issue`n`n**Hierarchy Mode:** issue-set`n**Sub-Issue Role:** leaf`n**Executable:** true`n**Parent Issue:** https://github.com/example/repo/issues/97`n**Parent Mirror:** docs/superpowers/issues/fixture-parent-rollup.md`n" -Encoding utf8NoBOM
     $hierarchyInventoryPath = Join-Path $tempRoot "hierarchy-candidate-inventory.json"
     @{
         candidates = @(
-            @{ id = "rollup-parent"; source = "ready-issue-mirror"; route = "resolve-issue"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/97-github-sub-issues-workflow.md"; reason = "parent rollup should not execute" },
-            @{ id = "plan-wrapper"; source = "ready-issue-mirror"; route = "orchestrate-issues"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/97-github-sub-issues-workflow.md"; reason = "wrapper should route to repair"; hierarchy_role = "plan-wrapper"; executable = $false },
-            @{ id = "leaf-issue"; source = "ready-issue-mirror"; route = "resolve-issue"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/102-merge-rollup-align-migration-audit-and-loop-selection.md"; reason = "leaf issue is executable" }
+            @{ id = "rollup-parent"; source = "ready-issue-mirror"; route = "resolve-issue"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/fixture-parent-rollup.md"; reason = "parent rollup should not execute" },
+            @{ id = "plan-wrapper"; source = "ready-issue-mirror"; route = "orchestrate-issues"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/fixture-plan-wrapper.md"; reason = "wrapper should route to repair"; hierarchy_role = "plan-wrapper"; executable = $false },
+            @{ id = "leaf-issue"; source = "ready-issue-mirror"; route = "resolve-issue"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/fixture-leaf.md"; reason = "leaf issue is executable" }
         )
     } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $hierarchyInventoryPath -Encoding utf8NoBOM
-    $hierarchySelection = Invoke-JsonScript -Path $selectorScript -Arguments @("-RepoRoot", $RepoRoot, "-InventoryPath", $hierarchyInventoryPath)
+    $hierarchySelection = Invoke-JsonScript -Path $selectorScript -Arguments @("-RepoRoot", $hierarchyRepo, "-InventoryPath", $hierarchyInventoryPath)
     Add-Check -Name "selector chooses executable hierarchy leaf" -Ok ($hierarchySelection.exit_code -eq 0 -and $hierarchySelection.json.selected_candidate_id -eq "leaf-issue") -Reason $hierarchySelection.raw
     Add-Check -Name "selector skips hierarchy rollups for implementation" -Ok (
         @($hierarchySelection.json.skipped | Where-Object { $_.id -eq "rollup-parent" -and $_.hierarchy_role -eq "parent" -and $_.reserved_route -eq "rollup-align-or-tracker-repair" }).Count -eq 1 -and

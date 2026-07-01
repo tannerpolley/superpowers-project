@@ -112,7 +112,7 @@ Options:
 - Revisit: recover, ask worker/orchestrator questions, or reassign work.
 - Stop: break the continuation loop.
 
-If the user selects `Integrate Worker Output`, ask:
+If the user selects `Yes`, ask:
 
 Question id: `project_orchestrate_integration_route`
 
@@ -134,7 +134,7 @@ Options:
 - `Resolve Another Worker Issue`: start another worker-backed issue route when one is ready.
 - `Start Another Worker`: create another worker thread for a selected ready issue.
 
-If the user selects `Recover / Review Worker Route`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_orchestrate_reiteration_route`
 

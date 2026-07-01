@@ -143,7 +143,7 @@ Options:
 - Revisit: revisit setup, review output, or audit drift.
 - Stop: break the continuation loop.
 
-If the user selects `Continue Project Work`, ask:
+If the user selects `Yes`, ask:
 
 Question id: `project_setup_work_route`
 
@@ -155,7 +155,7 @@ Options:
 - `Write Plan`: start `$superpowers-project:write-plan` from an approved spec or issue mirror.
 - `Create Issues`: start `$superpowers-project:create-issues` for vertical slices and GitHub issue mirrors.
 
-If the user selects `Revise / Review Setup`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_setup_reiteration_group`
 

@@ -97,7 +97,7 @@ Options:
 - Revisit: review findings, gather more evidence, or rerun a narrower audit lane.
 - Stop: break the continuation loop.
 
-If the user selects `Prepare Repair Work`, ask:
+If the user selects `Yes`, ask:
 
 Question id: `project_audit_progress_route`
 
@@ -144,7 +144,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin ro
 
 If the ledger passes, continue into `$superpowers-project:write-plan` with the audit findings spec as the source spec. If validation fails or a needed decision falls outside the ledger policy, stop outside policy and return to manual planning instead of inventing approval.
 
-If the user selects `Review Or Extend Findings`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_audit_revisit_route`
 

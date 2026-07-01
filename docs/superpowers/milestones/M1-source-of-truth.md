@@ -18,6 +18,8 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
 - `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md`
 - `docs/superpowers/specs/2026-06-21-workflow-contract-normalization-design.md`
+- `docs/superpowers/specs/2026-06-29-github-sub-issues-workflow-design.md`
+- `docs/superpowers/specs/2026-07-01-post-issue-resolution-project-audit-findings.md`
 
 ## Related Plans
 
@@ -25,6 +27,8 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 - `docs/superpowers/plans/2026-06-03-setup-orchestration-plan.md`
 - `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
 - `docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md`
+- `docs/superpowers/plans/2026-06-29-github-sub-issues-workflow-plan.md`
+- `docs/superpowers/plans/2026-07-01-post-issue-resolution-audit-finding-repairs-plan.md`
 
 ## Related Issues
 
@@ -37,6 +41,13 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 
 ## Closed Issues
 
+- [https://github.com/tannerpolley/superpowers-project/issues/97](https://github.com/tannerpolley/superpowers-project/issues/97) closed directly after child rollout completion on 2026-06-30T16:13:35Z.
+- [https://github.com/tannerpolley/superpowers-project/issues/103](https://github.com/tannerpolley/superpowers-project/issues/103) closed by [https://github.com/tannerpolley/superpowers-project/pull/110](https://github.com/tannerpolley/superpowers-project/pull/110) on 2026-06-30T14:57:28Z.
+- [https://github.com/tannerpolley/superpowers-project/issues/102](https://github.com/tannerpolley/superpowers-project/issues/102) closed by [https://github.com/tannerpolley/superpowers-project/pull/109](https://github.com/tannerpolley/superpowers-project/pull/109) on 2026-06-30T14:02:28Z.
+- [https://github.com/tannerpolley/superpowers-project/issues/101](https://github.com/tannerpolley/superpowers-project/issues/101) closed by [https://github.com/tannerpolley/superpowers-project/pull/108](https://github.com/tannerpolley/superpowers-project/pull/108) on 2026-06-30T04:45:37Z.
+- [https://github.com/tannerpolley/superpowers-project/issues/100](https://github.com/tannerpolley/superpowers-project/issues/100) closed by [https://github.com/tannerpolley/superpowers-project/pull/107](https://github.com/tannerpolley/superpowers-project/pull/107) on 2026-06-30T02:56:30Z.
+- [https://github.com/tannerpolley/superpowers-project/issues/99](https://github.com/tannerpolley/superpowers-project/issues/99) closed by [https://github.com/tannerpolley/superpowers-project/pull/106](https://github.com/tannerpolley/superpowers-project/pull/106) on 2026-06-29T23:28:07Z.
+- [https://github.com/tannerpolley/superpowers-project/issues/98](https://github.com/tannerpolley/superpowers-project/issues/98) closed by [https://github.com/tannerpolley/superpowers-project/pull/104](https://github.com/tannerpolley/superpowers-project/pull/104) on 2026-06-29T21:13:06Z.
 - [https://github.com/tannerpolley/superpowers-project/issues/89](https://github.com/tannerpolley/superpowers-project/issues/89) closed by [https://github.com/tannerpolley/superpowers-project/pull/96](https://github.com/tannerpolley/superpowers-project/pull/96) on 2026-06-28T02:15:49Z
 - [https://github.com/tannerpolley/superpowers-project/issues/88](https://github.com/tannerpolley/superpowers-project/issues/88) closed by [https://github.com/tannerpolley/superpowers-project/pull/95](https://github.com/tannerpolley/superpowers-project/pull/95) on 2026-06-27T22:22:55Z
 - [https://github.com/tannerpolley/superpowers-project/issues/87](https://github.com/tannerpolley/superpowers-project/issues/87) closed by [https://github.com/tannerpolley/superpowers-project/pull/94](https://github.com/tannerpolley/superpowers-project/pull/94) on 2026-06-27T18:36:57Z

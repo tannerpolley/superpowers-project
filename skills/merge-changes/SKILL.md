@@ -138,7 +138,7 @@ Options:
 - Revisit: review evidence, audit drift, repair closeout, or rerun cleanup.
 - Stop: break the continuation loop.
 
-If the user selects `Continue Project Execution`, ask:
+If the user selects `Yes`, ask:
 
 Question id: `project_merge_continue_group`
 
@@ -171,7 +171,7 @@ Options:
 - `Plan Next`: start `$superpowers-project:write-plan` from an approved spec or issue mirror.
 - `Brainstorm Next`: start `$superpowers-project:brainstorm-spec` for the next idea, spec, or architecture direction.
 
-If the user selects `Review / Repair Closeout`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_merge_reiteration_group`
 
@@ -206,7 +206,7 @@ Options:
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 
-Record the selected route in a structured continuation decision ledger. If the answer is `Stop`, or if `project_merge_final_health_gate` records verified `Done`, collect the ledger and run `scripts/validate-terminal-closeout.ps1` before any final success-style response. If the answer is any non-terminal route such as `Continue Project Execution`, `Continue Issues`, `Start Planning`, `Review Closeout`, `Run Align`, `Repair Drift`, or `Re-run Cleanup`, the ledger must still be recorded, and the thread must continue into that route instead of terminating.
+Record the selected route in a structured continuation decision ledger. If the answer is `Stop`, or if `project_merge_final_health_gate` records verified `Done`, collect the ledger and run `scripts/validate-terminal-closeout.ps1` before any final success-style response. If the answer is any non-terminal route such as `Yes`, `Continue Issues`, `Start Planning`, `Review Closeout`, `Run Align`, `Repair Drift`, or `Re-run Cleanup`, the ledger must still be recorded, and the thread must continue into that route instead of terminating.
 
 ## Scripted Gates
 

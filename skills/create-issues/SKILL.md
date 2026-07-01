@@ -317,7 +317,7 @@ Options:
 - Revisit: revise, reslice, review, or repair issue mirrors.
 - Stop: break the continuation loop.
 
-If the user selects `Continue Issue Execution`, ask:
+If the user selects `Yes`, ask:
 
 Question id: `project_issue_execution_route`
 
@@ -350,7 +350,7 @@ Options:
 - `Orchestrate First Ready`: start `$superpowers-project:orchestrate-issues` on the first ready worker-suitable issue.
 - `Orchestrate Selected`: ask for or use a selected ready issue mirror, then start `$superpowers-project:orchestrate-issues`.
 
-If the user selects `Revise / Review Issues`, ask:
+If the user selects `Revisit`, ask:
 
 Question id: `project_issue_reiteration_route`
 
