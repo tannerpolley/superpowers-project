@@ -82,6 +82,63 @@ function Get-MirrorTitle {
     ($slug -replace '[-_]+', ' ').Trim()
 }
 
+function Get-MilestonePageTitle {
+    param([string]$Text)
+    $fieldTitle = Get-FieldValue -Text $Text -Name "Title"
+    if (-not [string]::IsNullOrWhiteSpace($fieldTitle)) { return $fieldTitle }
+    $frontmatterTitle = Get-FrontmatterFieldValue -Text $Text -Name "title"
+    if (-not [string]::IsNullOrWhiteSpace($frontmatterTitle)) { return $frontmatterTitle }
+    $body = Remove-Frontmatter -Text $Text
+    $heading = [regex]::Match($body, "(?m)^#\s+(?<title>.+?)\s*$")
+    if ($heading.Success) { return $heading.Groups["title"].Value.Trim() }
+    ""
+}
+
+function Get-MilestoneMembershipMode {
+    param([string]$Text)
+    $mode = Get-FieldValue -Text $Text -Name "Membership Mode"
+    if ([string]::IsNullOrWhiteSpace($mode)) {
+        $mode = Get-FrontmatterFieldValue -Text $Text -Name "membership_mode"
+    }
+    if ([string]::IsNullOrWhiteSpace($mode)) { return "dashboard" }
+    $normalized = $mode.Trim().ToLowerInvariant()
+    if ($normalized -in @("exact", "exhaustive", "strict")) { return "exact" }
+    if ($normalized -in @("dashboard", "summary", "non-exhaustive", "nonexhaustive")) { return "dashboard" }
+    "invalid:$normalized"
+}
+
+function Get-MilestoneIssueNumbers {
+    param([string]$Text)
+    $numbers = [System.Collections.Generic.List[int]]::new()
+    foreach ($match in [regex]::Matches($Text, 'github\.com/[^/\s\)]+/[^/\s\)]+/issues/(?<n>\d+)')) {
+        $numbers.Add([int]$match.Groups["n"].Value) | Out-Null
+    }
+    foreach ($match in [regex]::Matches($Text, '\[(?<label>[^\]]+)\]\((?<target>[^)]*issues/[^)]*\.md)\)')) {
+        $labelMatch = [regex]::Match($match.Groups["label"].Value, '#(?<n>\d+)')
+        if ($labelMatch.Success) {
+            $numbers.Add([int]$labelMatch.Groups["n"].Value) | Out-Null
+            continue
+        }
+        $name = [IO.Path]::GetFileNameWithoutExtension($match.Groups["target"].Value)
+        $embeddedIssueNumber = [regex]::Match($name, '(?:^|[-_])issue[-_]?0*(?<n>\d+)(?=$|[-_])')
+        if ($embeddedIssueNumber.Success) {
+            $numbers.Add([int]$embeddedIssueNumber.Groups["n"].Value) | Out-Null
+            continue
+        }
+        $leadingNumber = [regex]::Match($name, '^(?<n>\d+)-')
+        if ($leadingNumber.Success) {
+            $numbers.Add([int]$leadingNumber.Groups["n"].Value) | Out-Null
+        }
+    }
+    @($numbers | Sort-Object -Unique)
+}
+
+function Test-MirrorRetentionDeclared {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $false }
+    $Value.Trim().ToLowerInvariant() -in @("keep", "retain")
+}
+
 function Normalize-GitHubRepoSlug {
     param([string]$Value)
     if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
@@ -259,21 +316,22 @@ function Get-MilestonePages {
     param([string]$Root)
     $milestoneRoot = Get-RepoFile -Root $Root -RelativePath "docs/superpowers/milestones"
     if (-not (Test-Path -LiteralPath $milestoneRoot -PathType Container)) { return @() }
-    @(Get-ChildItem -LiteralPath $milestoneRoot -Filter "*.md" -File |
-        Where-Object { $_.Name -ne "README.md" } |
+    $topLevelPages = @(Get-ChildItem -LiteralPath $milestoneRoot -Filter "*.md" -File |
+        Where-Object { $_.Name -ne "README.md" })
+    $childReadmes = @(Get-ChildItem -LiteralPath $milestoneRoot -Directory |
+        ForEach-Object {
+            $readme = Join-Path $_.FullName "README.md"
+            if (Test-Path -LiteralPath $readme -PathType Leaf) { Get-Item -LiteralPath $readme }
+        })
+    $pages = @($topLevelPages + $childReadmes | Sort-Object -Property FullName -Unique)
+    @($pages |
         ForEach-Object {
             $text = Get-Content -LiteralPath $_.FullName -Raw
-            $title = Get-FieldValue -Text $text -Name "Title"
-            if ([string]::IsNullOrWhiteSpace($title)) {
-                $title = (($text -split "`r?`n" | Select-Object -First 1) -replace '^#\s+', '').Trim()
-            }
-            $localIssueNumbers = @([regex]::Matches($text, 'docs/superpowers/issues/(?<n>\d+)-[^`\)\s]+\.md') | ForEach-Object { [int]$_.Groups["n"].Value })
-            $githubIssueNumbers = @([regex]::Matches($text, 'github\.com/[^/\s\)]+/[^/\s\)]+/issues/(?<n>\d+)') | ForEach-Object { [int]$_.Groups["n"].Value })
-            $issueNumbers = @($localIssueNumbers + $githubIssueNumbers | Sort-Object -Unique)
             [pscustomobject]@{
                 path = ConvertTo-RepoPath -Root $Root -Path $_.FullName
-                title = $title
-                issue_numbers = $issueNumbers
+                title = Get-MilestonePageTitle -Text $text
+                membership_mode = Get-MilestoneMembershipMode -Text $text
+                issue_numbers = @(Get-MilestoneIssueNumbers -Text $text)
                 text = $text
             }
         })
@@ -761,7 +819,7 @@ function Invoke-GitHubAwareAudit {
             Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "mirror-github-drift" -Severity "healthy" -Dimension "mirror-versus-github" -Message "Issue mirror matches inspected GitHub issue fields." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url })
         }
 
-        if ([string]$issue.state -eq "CLOSED" -and [string]$mirror.mirror_retention -ne "retain") {
+        if ([string]$issue.state -eq "CLOSED" -and -not (Test-MirrorRetentionDeclared -Value ([string]$mirror.mirror_retention))) {
             Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "closed-mirror-lifecycle" -Severity "repairable" -Dimension "closed-mirror-lifecycle" -Message "stale closed issue mirror still exists without retention evidence." -Artifact $mirror.path -Evidence @{ github_issue = $issue.url })
         }
     }
@@ -782,6 +840,22 @@ function Invoke-GitHubAwareAudit {
             $githubIssueNumbers = @(Get-StringArray $milestone.issues | ForEach-Object { [int]$_ })
             $missingLocal = @($githubIssueNumbers | Where-Object { $localIssues -notcontains $_ })
             $extraLocal = @($localIssues | Where-Object { $githubIssueNumbers -notcontains $_ })
+            $membershipMode = [string]$page[0].membership_mode
+            if ($membershipMode.StartsWith("invalid:", [StringComparison]::OrdinalIgnoreCase)) {
+                Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "milestone-membership-mode" -Severity "repairable" -Dimension "milestone-dashboard" -Message "Milestone page declares an unsupported membership mode." -Artifact $page[0].path -Evidence @{ membership_mode = $membershipMode.Substring("invalid:".Length) })
+                continue
+            }
+
+            if ($membershipMode -ne "exact") {
+                Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "milestone-dashboard-page" -Severity "healthy" -Dimension "milestone-dashboard" -Message "GitHub milestone has a local dashboard page; GitHub remains authoritative for exact issue membership." -Artifact $page[0].path -Evidence @{ github_milestone = $title })
+                if ($missingLocal.Count -gt 0 -or $extraLocal.Count -gt 0) {
+                    Add-Finding -Findings $Findings -Category informational -Finding (New-Finding -Id "milestone-dashboard-coverage" -Severity "informational" -Dimension "milestone-dashboard" -Message "Local milestone dashboard issue links are non-exhaustive relative to inspected GitHub milestone evidence." -Artifact $page[0].path -Evidence @{ missing_local = $missingLocal; extra_local = $extraLocal })
+                } else {
+                    Add-Finding -Findings $Findings -Category healthy -Finding (New-Finding -Id "milestone-dashboard-coverage" -Severity "healthy" -Dimension "milestone-dashboard" -Message "Local milestone dashboard issue links match inspected GitHub milestone evidence." -Artifact $page[0].path)
+                }
+                continue
+            }
+
             if ($missingLocal.Count -gt 0 -or $extraLocal.Count -gt 0) {
                 Add-Finding -Findings $Findings -Category repairable -Finding (New-Finding -Id "milestone-membership-drift" -Severity "repairable" -Dimension "milestone-membership" -Message "Local milestone page membership differs from inspected GitHub milestone evidence." -Artifact $page[0].path -Evidence @{ missing_local = $missingLocal; extra_local = $extraLocal })
             } else {
