@@ -19,7 +19,7 @@ Run `skills/align-project/scripts/align-project.ps1` before proposing or applyin
 Supported modes:
 
 - `-Mode LocalDocs`: inspect local project docs, issue mirrors, native UI contracts, ignored-path traps, closed mirror lifecycle policy, and live sync surfaces without network.
-- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, parent/sub-issue hierarchy drift, clean-title migration candidates, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, `-LabelFixturePath`, and `-ProjectFixturePath` for deterministic smoke tests.
+- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone dashboard presence, optional exact milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, parent/sub-issue hierarchy drift, clean-title migration candidates, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, `-LabelFixturePath`, and `-ProjectFixturePath` for deterministic smoke tests.
 - `-TrackerHygiene`: inspect GitHub issue routing-label drift and canonical Project V2 state drift. Reports closed/open status mismatches, missing `status:*` routing labels on open issues, missing Project items, mirror-to-Project field drift, and remaining Project V2 draft items.
 - `-ApplyTrackerRepairs`: after native approval, emit a repair receipt for conservative tracker repairs: remove `status:*` labels from closed issues, mark closed Project items `Done`, add mirrored open issues back to the canonical Project, and sync valid Project fields from mirror metadata.
 
@@ -51,7 +51,9 @@ Project Align enforces flat canonical roots for the `spec -> plan -> issue` life
 - implementation plans belong in `docs/superpowers/plans`
 - GitHub issue mirrors belong in `docs/superpowers/issues`
 
-Milestone pages are index views. They should link to flat canonical artifacts and may group by milestone, package, or category through frontmatter plus milestone indexes. They must not own canonical nested copies. Report nested canonical milestone artifact folders are drift when `docs/superpowers/milestones/<milestone>/specs`, `docs/superpowers/milestones/<milestone>/plans`, or `docs/superpowers/milestones/<milestone>/issues` exists, unless the folder is explicitly marked as generated index/view output.
+Milestone pages are index views. They may be top-level files such as `docs/superpowers/milestones/<milestone>.md` or direct child dashboard files such as `docs/superpowers/milestones/<milestone>/README.md`; the root `docs/superpowers/milestones/README.md` is an overview, not a milestone page. GitHub milestones remain authoritative for exact issue membership by default, so local dashboard pages may be non-exhaustive and may link only the mirrors, plans, historical items, or notable issues that need local context. Exact membership checking is opt-in with `**Membership Mode:** Exact` or frontmatter `membership_mode: exact`; only then do missing or extra issue references become repairable milestone membership drift. Dashboard-mode coverage differences are informational.
+
+Milestone pages should link to flat canonical artifacts and may group by milestone, package, or category through frontmatter plus milestone indexes. They must not own canonical nested copies. Report nested canonical milestone artifact folders are drift when `docs/superpowers/milestones/<milestone>/specs`, `docs/superpowers/milestones/<milestone>/plans`, or `docs/superpowers/milestones/<milestone>/issues` exists, unless the folder is explicitly marked as generated index/view output.
 
 Migration guidance: move canonical files back to the flat roots, preserve milestone identity in frontmatter and filenames where applicable, then regenerate milestone README/dashboard views as links. Specs stay loose; move implementation-only metadata into the matching plan or issue mirror.
 
@@ -75,7 +77,7 @@ When old Milestones artifacts are present, produce a migration report from retir
 Check for drift across:
 
 - project context intent vs milestone pages
-- milestone pages vs GitHub milestones
+- milestone pages vs GitHub milestones, with page presence checked by default and exact issue membership checked only when a milestone page opts into `Membership Mode: Exact`
 - specs vs plans
 - plans vs issue mirrors
 - issue mirrors vs GitHub issues

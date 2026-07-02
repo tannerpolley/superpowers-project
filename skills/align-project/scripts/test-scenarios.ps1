@@ -306,7 +306,7 @@ $scenarios = @(
             New-Item -ItemType Directory -Path (Join-Path $fixtureRoot "docs/superpowers/issues") -Force | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $fixtureRoot "docs/superpowers/milestones") -Force | Out-Null
             Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/PROJECT_CONTEXT.md") -Value "# Project Context`n" -Encoding utf8NoBOM
-            Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/milestones/M1-source-of-truth.md") -Value "# M1 - Source Of Truth`n`n## Related Issues`n`n- ``docs/superpowers/issues/10-fixture.md```n- ``docs/superpowers/issues/404-closed-fixture.md```n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/milestones/M1-source-of-truth.md") -Value "# M1 - Source Of Truth`n`n**Membership Mode:** Exact`n`n## Related Issues`n`n- ``docs/superpowers/issues/10-fixture.md```n- ``docs/superpowers/issues/404-closed-fixture.md```n" -Encoding utf8NoBOM
             Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/issues/10-fixture.md") -Value "# Local Fixture Title`n`n**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/10`n**GitHub Milestone:** Local Milestone`n**Labels:** status:ready`n`n## Acceptance Criteria`n`n- [ ] Fixture remains intentionally drifted.`n" -Encoding utf8NoBOM
             Set-Content -LiteralPath (Join-Path $fixtureRoot "docs/superpowers/issues/404-closed-fixture.md") -Value "# Closed Mirror Fixture`n`n**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/404`n**GitHub Milestone:** M1 - Source Of Truth`n**Labels:** type:feature, status:ready`n`n## Acceptance Criteria`n`n- [x] Fixture remains closed.`n" -Encoding utf8NoBOM
 
@@ -331,6 +331,50 @@ $scenarios = @(
             if (Test-Path -LiteralPath $fixtureRoot -PathType Container) {
                 Remove-Item -LiteralPath $fixtureRoot -Recurse -Force
             }
+        }
+    }
+    Invoke-Scenario "GitHub-aware audit accepts child milestone README pages" {
+        $repo = New-TestRepo
+        $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ("align-project-folder-milestone-" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
+        try {
+            Remove-Item -LiteralPath (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth.md") -Force
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/milestones/README.md") -Value "# M2 - Root Overview Is Not A Milestone`n`n- https://github.com/example/repo/issues/999`n" -Encoding utf8NoBOM
+            New-Item -ItemType Directory -Path (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth/specs") -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth/README.md") -Value "# M1 - Source Of Truth`n`n## Related Issues`n`n- [sample](../../issues/12-sample.md)`n- [dated mirror](../../issues/2026-05-30-m5-regression-issue-0193-sample.md)`n- [issue 321](https://github.com/example/repo/issues/321)`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/milestones/M1-source-of-truth/specs/README.md") -Value "# M3 - Nested Spec README Is Not A Milestone`n`n- https://github.com/example/repo/issues/888`n" -Encoding utf8NoBOM
+            $issueFixture = Join-Path $fixtureRoot "issues.json"
+            $milestoneFixture = Join-Path $fixtureRoot "milestones.json"
+            New-IssueFixture -Path $issueFixture -Issues @(
+                @{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "OPEN"; title = "Sample"; labels = @(); milestone = @{ title = "M1 - Source Of Truth" } }
+            )
+            @(
+                [ordered]@{
+                    title = "M1 - Source Of Truth"
+                    issues = @(12, 193, 423)
+                }
+            ) | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $milestoneFixture -Encoding utf8NoBOM
+            & git -C $repo add . | Out-Null
+            & git -C $repo commit -m folder-milestone-readme | Out-Null
+
+            $result = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture, "-MilestoneFixturePath", $milestoneFixture)
+            if (-not $result.ok) { throw $result.reason }
+            $artifactText = ConvertTo-JsonText $result.checked_artifacts.milestone_pages
+            Assert-Contains $artifactText "docs/superpowers/milestones/M1-source-of-truth/README.md" "child milestone README was not inspected"
+            if ($artifactText.Contains("docs/superpowers/milestones/README.md")) { throw "root milestone README overview was inspected as a milestone page" }
+            if ($artifactText.Contains("docs/superpowers/milestones/M1-source-of-truth/specs/README.md")) { throw "nested README was inspected as a milestone page" }
+            $repairableText = ConvertTo-JsonText $result.findings.repairable -Depth 20
+            if ($repairableText.Contains("GitHub milestone has no local milestone page")) { throw "child milestone README was not matched by title" }
+            if ($repairableText.Contains("Local milestone page membership differs")) { throw "dashboard milestone README was incorrectly treated as exact membership drift" }
+            $informationalText = ConvertTo-JsonText $result.findings.informational -Depth 20
+            Assert-Contains $informationalText "milestone-dashboard-coverage" "dashboard membership coverage was not reported informational"
+            Assert-Contains $informationalText "423" "dashboard membership coverage did not report missing GitHub issue"
+            Assert-Contains $informationalText "321" "dashboard membership coverage did not report extra local issue"
+            $healthyText = ConvertTo-JsonText $result.findings.healthy -Depth 20
+            Assert-Contains $healthyText "GitHub milestone has a local dashboard page" "child milestone README dashboard page was not reported healthy"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+            if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
         }
     }
     Invoke-Scenario "GitHub-aware audit resolves repository metadata from roadmap repository" {
@@ -401,6 +445,28 @@ $scenarios = @(
             $repairableText = $result.findings.repairable | ConvertTo-Json -Depth 12 -Compress
             Assert-Contains $repairableText "stale closed issue mirror" "closed mirror was not reported as repairable drift"
             Assert-Contains $repairableText "docs/superpowers/issues/12-sample.md" "repairable drift did not name the stale mirror"
+        } finally {
+            if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
+        }
+    }
+    Invoke-Scenario "closed mirror lifecycle accepts documented Keep retention" {
+        if (-not (Test-Path -LiteralPath $auditScript -PathType Leaf)) { throw "missing align-project.ps1" }
+        $repo = New-TestRepo
+        try {
+            $mirrorPath = Join-Path $repo "docs/superpowers/issues/12-sample.md"
+            $mirrorText = Get-Content -LiteralPath $mirrorPath -Raw
+            $mirrorText = $mirrorText -replace '\*\*GitHub Milestone:\*\* M1 - Source Of Truth', "**GitHub Milestone:** M1 - Source Of Truth`n**Mirror Retention:** Keep"
+            Set-Content -LiteralPath $mirrorPath -Value $mirrorText -Encoding utf8NoBOM
+            $issueFixture = Join-Path $repo "issue-fixture.json"
+            @{ issues = @(@{ number = 12; url = "https://github.com/example/repo/issues/12"; state = "CLOSED"; title = "Sample"; labels = @(); milestone = @{ title = "M1 - Source Of Truth" } }) } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $issueFixture -Encoding utf8NoBOM
+            & git -C $repo add . | Out-Null
+            & git -C $repo commit -m retained-closed-mirror | Out-Null
+            $result = Invoke-JsonScript -ScriptPath $auditScript -Arguments @("-RepoRoot", $repo, "-Mode", "GitHubAware", "-IssueFixturePath", $issueFixture)
+            if (-not $result.ok) { throw $result.reason }
+            $repairableText = ConvertTo-JsonText $result.findings.repairable -Depth 20
+            if ($repairableText.Contains("stale closed issue mirror")) { throw "documented Keep retention was still reported as stale closed mirror drift" }
+            $healthyText = ConvertTo-JsonText $result.findings.healthy -Depth 20
+            Assert-Contains $healthyText "No stale closed mirror was found" "closed mirror lifecycle was not reported healthy"
         } finally {
             if (Test-Path -LiteralPath $repo) { Remove-Item -LiteralPath $repo -Recurse -Force }
         }
