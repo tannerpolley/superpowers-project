@@ -27,7 +27,7 @@ def _plan() -> str:
     boundaries = {
         "Files To Create": "fixture files",
         "Files To Modify": "validator fixtures",
-        "Files To Avoid": "legacy PowerShell",
+        "Files To Avoid": "legacy shell wrappers",
         "Source Of Truth": "command registry",
         "Read Path": "plan markdown",
         "Write Path": "JSON result",

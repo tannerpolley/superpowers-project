@@ -14,7 +14,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/install.sh': 'command_install',
     'scripts/prepare-release.sh': 'command_prepare_release',
     'scripts/sync-live.sh': 'command_sync_live',
-    'scripts/test-active-backlog.sh': 'command_unimplemented',
+    'scripts/test-active-backlog.sh': 'command_validate_active_backlog',
     'scripts/test-advanced-user-input-policy.sh': 'command_unimplemented',
     'scripts/test-agent-native-companion-preview.sh': 'command_unimplemented',
     'scripts/test-agent-plugin-version.sh': 'command_unimplemented',
