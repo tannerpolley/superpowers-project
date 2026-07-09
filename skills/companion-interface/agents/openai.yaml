@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, filesystem.write, browser, native.user-input]
   display_name: "Companion Interface"
   short_description: "Create Superpowers Project Agent-Native visual-plan and visual-recap MDX review artifacts."
   default_prompt: >-

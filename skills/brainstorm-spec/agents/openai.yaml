@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, filesystem.write, native.user-input, browser]
   display_name: "Brainstorm Spec"
   short_description: "Brainstorm project specs with Superpowers, codebase context, and native user input."
   default_prompt: >-

@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, shell, git, github, native.user-input]
   display_name: "Align Project"
   short_description: "Audit Superpowers Project workflow drift, tracker alignment, and repair paths."
   default_prompt: >-

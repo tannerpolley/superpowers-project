@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, filesystem.write, shell, github, native.user-input]
   display_name: "Create Issues"
   short_description: "Create GitHub issue mirrors and published issues from approved plans or specs."
   default_prompt: >-

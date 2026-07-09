@@ -5,206 +5,29 @@ description: Use when a Superpowers Project repo needs structure alignment, migr
 
 # Project Align
 
-Project Align audits Superpowers Project structure and reports drift before any repair. It is report-first: no mutation without user approval.
+Audit structure and tracker drift, explain the evidence, and prepare or apply only approved repairs. This route owns alignment findings; it does not own implementation planning or merge approval.
 
-## Native Continuation Loop
+## Capability Preflight
 
-Follow `skills/advanced-user-input/SKILL.md` for global native continuation, Custom Other, Revisit, Stop, verified Done, and artifact review policy. This skill keeps route-specific gates, artifacts, validators, ledgers, and routing rules local.
+Require `filesystem.read`, `shell`, and `git` from `docs/superpowers/capabilities.yml`. Require `github` before GitHub-aware checks and `native.user-input` before an interactive repair gate. Stop with the missing capability name before execution.
 
-After every completed route-specific action, ask the next native continuation or permission question when `request_user_input` is callable. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
-## Scripted Audit Gate
+## Shared Policy
 
-Run `skills/align-project/scripts/align-project.sh` before proposing or applying repairs.
+Read `skills/advanced-user-input/SKILL.md` once for global continuation and artifact-review rules. Keep only route-specific evidence, gates, and stop conditions here. Route facts and question labels come from `docs/superpowers/workflow-contract.yml`.
 
-Supported modes:
+## Procedure
 
-- `-Mode LocalDocs`: inspect local project docs, issue mirrors, native UI contracts, ignored-path traps, closed mirror lifecycle policy, and live sync surfaces without network.
-- `-Mode GitHubAware`: include GitHub tracker comparisons for milestone dashboard presence, optional exact milestone membership drift, mirror versus GitHub issue body/state/labels/milestone drift, parent/sub-issue hierarchy drift, clean-title migration candidates, label drift, and closed mirror lifecycle drift. Use `-IssueFixturePath`, `-MilestoneFixturePath`, `-LabelFixturePath`, and `-ProjectFixturePath` for deterministic smoke tests.
-- `-TrackerHygiene`: inspect GitHub issue routing-label drift and canonical Project V2 state drift. Reports closed/open status mismatches, missing `status:*` routing labels on open issues, missing Project items, mirror-to-Project field drift, and remaining Project V2 draft items.
-- `-ApplyTrackerRepairs`: after native approval, emit a repair receipt for conservative tracker repairs: remove `status:*` labels from closed issues, mark closed Project items `Done`, add mirrored open issues back to the canonical Project, and sync valid Project fields from mirror metadata.
+1. Run `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode LocalDocs` for repository-only checks.
+2. Use `-Mode GitHubAware` only when GitHub or a supplied fixture is in scope. Use `-TrackerHygiene` for tracker drift.
+3. Classify each finding as blocking, repairable, informational, or healthy. Cite the path, observed value, expected contract, and repair owner.
+4. Treat `docs/superpowers/specs`, `plans`, `issues`, and `milestones` as flat canonical roots. Nested retired roots are drift.
+5. Never apply tracker or live mutations without the route's native approval. Record repair receipts.
+6. Re-run the same checks after repair and run `./scripts/validate.sh` for repo-wide proof.
 
-The script reports JSON findings grouped as `blocking`, `repairable`, `informational`, and `healthy`. It is audit-only: repairs require native repair approval through `request_user_input` before mutation.
+## Stop Conditions
 
-Tracker hygiene policy is intentionally narrow. Open issues carry `status:*` routing labels. Closed issues use GitHub closed state plus Project `Done`; closed issues should not keep `status:*` routing labels. Project V2 draft items are reported separately and are not published, converted, or deleted automatically.
+Stop when the project root is ambiguous, evidence sources conflict, GitHub access is required but absent, a repair needs approval, or validation fails. A dirty worktree blocks verified final completion.
 
-## Audit Scope
+## Output
 
-Inspect and report on:
-
-- `docs/superpowers/PROJECT_CONTEXT.md`
-- `docs/superpowers/milestones`
-- `docs/superpowers/specs`
-- `docs/superpowers/plans`
-- `docs/superpowers/issues`
-- GitHub issue mirror fields
-- GitHub milestone linkage
-- label vocabulary
-- retired docs/milestones canonical usage
-- live plugin sync drift
-- active issue goal execution checks
-
-## Flat Artifact Root Audit
-
-Project Align enforces flat canonical roots for the `spec -> plan -> issue` lifecycle:
-
-- loose specs belong in `docs/superpowers/specs`
-- implementation plans belong in `docs/superpowers/plans`
-- GitHub issue mirrors belong in `docs/superpowers/issues`
-
-Milestone pages are index views. They may be top-level files such as `docs/superpowers/milestones/<milestone>.md` or direct child dashboard files such as `docs/superpowers/milestones/<milestone>/README.md`; the root `docs/superpowers/milestones/README.md` is an overview, not a milestone page. GitHub milestones remain authoritative for exact issue membership by default, so local dashboard pages may be non-exhaustive and may link only the mirrors, plans, historical items, or notable issues that need local context. Exact membership checking is opt-in with `**Membership Mode:** Exact` or frontmatter `membership_mode: exact`; only then do missing or extra issue references become repairable milestone membership drift. Dashboard-mode coverage differences are informational.
-
-Milestone pages should link to flat canonical artifacts and may group by milestone, package, or category through frontmatter plus milestone indexes. They must not own canonical nested copies. Report nested canonical milestone artifact folders are drift when `docs/superpowers/milestones/<milestone>/specs`, `docs/superpowers/milestones/<milestone>/plans`, or `docs/superpowers/milestones/<milestone>/issues` exists, unless the folder is explicitly marked as generated index/view output.
-
-Migration guidance: move canonical files back to the flat roots, preserve milestone identity in frontmatter and filenames where applicable, then regenerate milestone README/dashboard views as links. Specs stay loose; move implementation-only metadata into the matching plan or issue mirror.
-
-GitHub checks should compare issue URLs, issue states, milestone titles, labels, and issue mirror bodies when credentials and target repo context allow it. Local-docs-only audits may skip GitHub calls but must say which GitHub checks were skipped.
-
-## Report Categories
-
-Group findings as:
-
-- blocking: breaks execution, publication, validation, or source-of-truth safety
-- repairable: can be fixed with an approved docs or tracker repair
-- informational: worth knowing but does not block the current workflow
-- healthy: explicitly verified as aligned
-
-## Migration Report
-
-When old Milestones artifacts are present, produce a migration report from retired docs/milestones canonical usage to the new Superpowers Project model. Do not move, delete, rewrite, or publish those files until the user approves an exact repair plan.
-
-## Drift Checks
-
-Check for drift across:
-
-- project context intent vs milestone pages
-- milestone pages vs GitHub milestones, with page presence checked by default and exact issue membership checked only when a milestone page opts into `Membership Mode: Exact`
-- specs vs plans
-- plans vs issue mirrors
-- issue mirrors vs GitHub issues
-- issue mirror hierarchy fields vs GitHub parent/sub-issue links
-- GitHub titles vs clean-title policy migration candidates
-- closed mirror lifecycle drift
-- issue labels vs label vocabulary
-- issue execution fields vs native `/goal` requirements
-- live plugin install vs source repo, including retired skill directories and active wrappers
-
-Run `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode LocalDocs` for a local-docs audit, or `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware` when GitHub or fixture evidence is available. The scripted audit reports stale closed issue mirrors as repairable drift unless the mirror is explicitly marked `**Mirror Retention:** Keep`.
-
-Run `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` for tracker hygiene. Use `-ApplyTrackerRepairs` only after native approval and include the `repair_receipt` in the handoff or audit report.
-
-For repositories that support native GitHub issue types, GitHub-aware audits must inspect issue type state through GraphQL issue evidence in addition to compatibility labels such as `type:task`, `type:bug`, and `type:feature`. If GraphQL reports no native issue type on an issue or no enabled repository issue types, report explicit label-only behavior rather than treating missing high-level `gh issue --type` flags as proof that native issue types are unavailable.
-
-## Goal Execution Checks
-
-For active issue work, verify that issue mirrors include source plan linkage, AFK/HITL classification, Goal Command for AFK work, acceptance criteria, proof oracle, and native goal setup expectations consumed by `$superpowers-project:resolve-issue`.
-
-## Repair Policy
-
-Default mode is audit-only. If repairs are needed, ask the user which repair set to apply with `request_user_input` when callable. A repair plan must list exact files and GitHub objects before any change.
-
-## Native Question Debug Mode
-
-Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
-
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
-o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
-
-Debug mode must not approve mutation. Debug mode must not perform repairs or pretend a live user approved alignment mutation.
-## Report Shape
-
-A useful report includes:
-
-- target repo and repo root
-- audit mode: local-docs-only or GitHub-aware
-- checked artifacts
-- findings grouped as blocking, repairable, informational, and healthy
-- migration report
-- proposed repairs, if any
-- validation commands to run after approved repairs
-
-## Native Continuation Gate
-
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking any route continuation or permission question, with this route-specific artifact inventory: audit output, blocking findings, repairable findings, healthy checks, skipped checks, proposed repair artifacts, repair receipts, and any machine-readable artifacts when present.
-
-Done is valid only at `project_align_final_health_gate`. For `align-project`, that means a healthy audit result with no blocking or repairable findings, no remaining repair route, and a clean git worktree. If `git status --short` is non-empty, `Done` is invalid and the workflow must continue through commit, push, repair, or hold routing instead. Stop remains the terminal option when findings remain.
-
-Use `skills/advanced-user-input/SKILL.md` for global native question geometry, Custom Other handling, Revisit behavior, Stop and verified Done terminal rules, and nested-route rules. This skill keeps only route-specific question IDs, route labels, validators, ledgers, artifact lists, and execution routes. Ask the skill-specific native continuation question with `request_user_input` when callable; selected answers are executable routing.
-
-Question id: `project_align_next_step`
-
-Prompt: `Should I continue on with the workflow?`
-
-Options:
-
-- Yes: apply an exact repair or create repair planning work.
-- Revisit: rerun the audit, review findings, revise repair direction, or gather evidence.
-- Stop: break the continuation loop.
-
-If the audit is healthy with no blocking or repairable findings, no remaining repair route, and clean `git status --short`, ask:
-
-Question id: `project_align_final_health_gate`
-
-Prompt: `Alignment is healthy. Should I close this workflow as done?`
-
-Options:
-
-- Done: close only when the audit has no blocking or repairable findings, no remaining repair route, cleanup passed, and `git status --short` is clean.
-- Revisit: review findings, rerun Align, or gather more evidence before deciding.
-- Stop: pause without claiming final completion.
-
-If the user selects `Yes`, ask:
-
-Question id: `project_align_repair_group`
-
-Prompt: `How should this audit turn into repair work?`
-
-Options:
-
-- `Apply Repair`: apply an approved, exact repair plan.
-- `Prepare Repair Work`: create a planning or issue route for larger repair work.
-
-If the user selects `Prepare Repair Work`, ask:
-
-Question id: `project_align_prepare_route`
-
-Prompt: `Which repair artifact should be prepared?`
-
-Options:
-
-- `Create Planning Spec`: start `$superpowers-project:brainstorm-spec` for a larger repair design.
-- `Plan Or Issue Repair`: choose whether to plan repair work or create an issue.
-
-If the user selects `Plan Or Issue Repair`, ask:
-
-Question id: `project_align_plan_issue_route`
-
-Prompt: `Should I plan the repair or create an issue?`
-
-Options:
-
-- `Plan Repair`: start `$superpowers-project:write-plan` from the audit findings.
-- `Create Issue`: start `$superpowers-project:create-issues` only when the repair is already issue-ready.
-
-If the user selects `Revisit`, ask:
-
-Question id: `project_align_reiteration_route`
-
-Prompt: `How should I revisit this audit?`
-
-Options:
-
-- `Run Align Again`: rerun `$superpowers-project:align-project` after changes or new GitHub evidence.
-- `Review Or Gather Evidence`: choose whether to review the audit or inspect more evidence.
-
-If the user selects `Review Or Gather Evidence`, ask:
-
-Question id: `project_align_review_evidence_route`
-
-Prompt: `Should I review the audit or gather more evidence?`
-
-Options:
-
-- `Review First`: show the audit summary and rendered artifacts for user review, then return to `project_align_next_step`.
-- `Gather More Evidence`: inspect the requested source, then return to `project_align_next_step`.
-
-After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
+Report scope, blocking and repairable findings, healthy checks, skipped checks, exact repair plan or receipt, and recommended owner route. Use the graph-owned `project_align_next_step` branches. `Done` is valid only at `project_align_final_health_gate` after no blocking or repairable findings remain and `git status --short` is empty; otherwise use the shared intermediate `Stop` route.

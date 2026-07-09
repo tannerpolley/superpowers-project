@@ -1113,6 +1113,13 @@ def command_test_workflow_graph(ctx: Context, args: dict[str, Any]) -> int:
     return result.returncode
 
 
+def command_test_skill_slimming(ctx: Context, args: dict[str, Any]) -> int:
+    result = run([sys.executable, "-m", "unittest", "tests.test_skill_slimming", "-v"], ctx.repo_root)
+    print(result.stdout, end="")
+    print(result.stderr, file=sys.stderr, end="")
+    return result.returncode
+
+
 def command_test_e2e_project_workflow(ctx: Context, args: dict[str, Any]) -> int:
     """Run the disposable workflow runtime plus active-backlog proof as one path."""
     runtime = run(["bash", str(ctx.plugin_root / "scripts" / "test-workflow-runtime.sh")], ctx.repo_root)

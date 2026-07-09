@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, filesystem.write, shell, native.user-input]
   display_name: "Loop Controller"
   short_description: "Coordinate repeated Superpowers Project workflow runs with run ledgers, budgets, verifier proof, and native gates."
   default_prompt: >-

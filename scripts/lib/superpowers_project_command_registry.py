@@ -45,6 +45,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/test-release-proof.sh': 'command_test_prepare_release',
     'scripts/test-scorecard-proof.sh': 'command_test_scorecard_proof',
     'scripts/test-skill-metadata-contract.sh': 'command_validate_skill_metadata_contract',
+    'scripts/test-skill-slimming.sh': 'command_test_skill_slimming',
     'scripts/test-skill-metadata-readability.sh': 'command_validate_skill_metadata_contract',
     'scripts/test-stale-skill-contract.sh': 'command_validate_skill_script_contract',
     'scripts/test-superpowers-method-contract.sh': 'command_validate_advanced_user_input_policy',

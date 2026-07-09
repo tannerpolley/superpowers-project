@@ -5,150 +5,32 @@ description: Use when Superpowers Project should coordinate repeated workflow ru
 
 # Loop Controller
 
-Loop Controller is the Superpowers Project orchestration layer for repeated workflow runs. It creates or resumes a local run ledger, selects one safe candidate, enforces budgets, routes to existing skills, records verifier proof, writes metrics, and asks native continuation questions.
+Coordinate bounded repeated maintenance. It selects candidates and verifies iteration evidence; owning route skills perform the actual work.
 
-**Announce at start:** "I'm using the loop-controller skill."
+## Capability Preflight
 
-## Startup Version Gate
+Require `filesystem.read`, `filesystem.write`, `shell`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before candidate selection when any capability is absent.
 
-Before selecting candidates, resolve the loaded Superpowers Project plugin root and run:
+## Shared Policy
 
-```bash
-<Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -Banner -RequireCurrent
-```
+Use `skills/advanced-user-input/SKILL.md` for global continuation and artifact review. This skill keeps route-specific loop budget, inventory, verifier, continuation, and final-health rules local. Read route ownership from `docs/superpowers/workflow-contract.yml`.
 
-If the loaded plugin or skill root is known, pass `-ObservedPluginRoot` or `-ObservedSkillRoot`. Print the banner before routing.
+## Loop Contract
 
-Canonical marker: `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`.
+Generated state lives under `.superpowers/runs/<run-id>/`; it is evidence, not canonical backlog. Prefer `docs/superpowers/backlog/ACTIVE.md` as the ready-candidate source. Validate run, budget, verifier, state-machine, and terminal ledgers with the scripts under `skills/loop-controller/scripts/`.
 
-Do not run `./scripts/get-agent-plugin-version.sh` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
+For each iteration:
 
-## Boundary
+1. Recheck elapsed/token/candidate budgets with `validate-budget.sh`.
+2. Select exactly one ready executable candidate with `select-candidate.sh`.
+3. Record selection through `scripts/workflow-run.sh` and route to the graph owner.
+4. Record mutations, acceptance, and independent verifier proof.
+5. Recheck budget and collect explicit continuation evidence before any second candidate.
+6. Replay the event ledger; never edit `run.json` directly.
+7. Write metrics with `write-metrics-report.sh`.
 
-Auto Mode is a route permission ledger. Loop Controller is the run coordinator. Loop Controller may validate and carry an Auto Mode authorization path, but it must not treat Auto Mode as permission to select unrelated work, widen mutation scope, bypass proof, push, merge, mutate GitHub, sync live, or claim final Done.
+Auto Mode is not a backlog drain and cannot reuse Looping continuation authority. Parent and plan-wrapper issues are rollup work, not implementation candidates.
 
-## Looping Mode Input
+## Stop Conditions And Completion
 
-When invoked from `project_workflow_mode`, require a validated workflow mode ledger with `selected_mode: looping` before selecting another candidate. Looping Mode is bounded repeated maintenance autonomy: it may select one ready candidate at a time from issue mirrors, approved plans, approved specs, audit findings, alignment drift, version drift, or live-sync drift, then route the actual work to the owning Superpowers Project skill.
-
-After a candidate is merged, closed, or paused, re-check the budget and continuation gate before choosing another candidate. Auto Mode remains one-route autonomy and must not use Loop Controller to continue to another candidate.
-
-Existing skills own work:
-
-- `$superpowers-project:brainstorm-spec` owns idea shaping and specs.
-- `$superpowers-project:write-plan` owns implementation plans.
-- `$superpowers-project:create-issues` owns issue creation.
-- `$superpowers-project:implement-plan` owns branch-backed plan execution.
-- `$superpowers-project:resolve-issue` owns direct issue resolution.
-- `$superpowers-project:orchestrate-issues` owns worker-thread issue execution.
-- `$superpowers-project:merge-changes` owns merge closeout.
-- `$superpowers-project:audit-project` owns evidence-backed audit findings.
-- `$superpowers-project:align-project` owns source/live/tracker drift repair.
-
-## Loop State Machine
-
-The source-owned loop contract is `<Superpowers Project plugin root>/docs/superpowers/loop-mode-contract.yml`. It is plugin workflow infrastructure, not a required file in the active target repo. Missing `docs/superpowers/loop-mode-contract.yml` in a target repo is not a Looping Mode blocker. The required phase order is:
-
-1. startup version check
-2. workflow mode ledger validation
-3. run ledger validation
-4. budget check before selection
-5. select exactly one candidate
-6. route to the owner skill
-7. record verifier proof
-8. re-check budget
-9. ask `project_loop_next_step` before selecting another candidate
-
-Second candidate selection is invalid until `project_loop_next_step` records `Yes` with `terminal_state: continue` after the prior candidate has owner-route proof and a budget recheck. Auto Mode authorization may be carried as historical route evidence, but it must not be used as the authority to drain a Looping Mode queue.
-
-## Run State
-
-Default generated run state lives under `.superpowers/runs/<run-id>`. Do not commit generated run ledgers unless a later approved plan explicitly requests durable committed run history.
-
-## Current Required Gates
-
-Validate run ledgers with:
-
-```bash
-<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-run-ledger.sh -RepoRoot <active repo> -RunLedgerPath <ledger-path>
-```
-
-Validate budget ledgers with:
-
-```bash
-<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-budget.sh -RepoRoot <active repo> -BudgetLedgerPath <ledger-path>
-```
-
-Select deterministic safe candidates with:
-
-```bash
-<Superpowers Project plugin root>/skills/loop-controller/scripts/select-candidate.sh -RepoRoot <active repo> -InventoryPath <inventory-path>
-```
-
-Validate verifier ledgers with:
-
-```bash
-<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-verifier-ledger.sh -RepoRoot <active repo> -VerifierLedgerPath <ledger-path>
-```
-
-Validate terminal closeout with:
-
-```bash
-<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-terminal-closeout.sh -RepoRoot <active repo> -RunResultPath <run-result-path>
-```
-
-Validate loop state-machine ledgers with:
-
-```bash
-<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-loop-state-machine.sh -RepoRoot <active repo> -StatePath <state-path>
-```
-
-Write metrics reports with:
-
-```bash
-<Superpowers Project plugin root>/skills/loop-controller/scripts/write-metrics-report.sh -RepoRoot <active repo> -MetricsInputPath <input-path> -OutputPath <output-path>
-```
-
-The active repo is the project being operated on. The plugin root is where this skill and its bundled scripts were loaded from. Keep those roots distinct during Looping Mode startup and validation.
-
-When a candidate source is an issue mirror under `docs/superpowers/issues`, implementation routes (`resolve-issue` and `orchestrate-issues`) may select only hierarchy leaves with `Executable: true`. Parent and plan-wrapper mirrors are skipped with reserved route evidence so a later loop can route them to rollup closeout, `align-project`, or tracker repair instead of starting implementation work.
-
-## Native Continuation Loop
-
-Follow `skills/advanced-user-input/SKILL.md` for global native continuation, Custom Other, Revisit, Stop, verified Done, and artifact review policy. This skill keeps route-specific gates, artifacts, validators, ledgers, and routing rules local.
-
-After every completed route-specific action, ask the next native continuation or permission question when `request_user_input` is callable. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
-
-## Native Continuation Gate
-
-Use `skills/advanced-user-input/SKILL.md` for global native question geometry, Custom Other handling, Revisit behavior, Stop and verified Done terminal rules, and nested-route rules. This skill keeps only route-specific question IDs, route labels, validators, ledgers, artifact lists, and execution routes. Ask the skill-specific native continuation question with `request_user_input` when callable; selected answers are executable routing.
-
-Question id: `project_loop_next_step`
-
-Prompt: `Should I continue on with the loop workflow?`
-
-Options:
-
-- Yes: select or run the next candidate route within budget and policy.
-- Revisit: review evidence, repair run state, adjust candidate selection, or rerun validation.
-- Stop: pause the loop with recorded run state.
-
-If Yes has multiple route choices, ask a nested route question before starting the selected skill. Do not merge route children into the top-level question.
-
-## Final Health Gate
-
-Question id: `project_loop_final_health_gate`
-
-Prompt: `Is this loop run fully complete?`
-
-Options:
-
-- Done: valid only after clean run ledger, verifier proof, metrics, and clean repo or explicitly scoped non-repo state.
-- Revisit: review or repair evidence before terminal closeout.
-- Stop: pause with run state recorded, without claiming final completion.
-
-Terminal Done requires the terminal closeout validator from the later closeout slice to pass. Final Done also requires `git status --short` to show the worktree is clean unless the run is explicitly scoped to non-repo state. A saved plan, pushed branch, created issue, synced live plugin, or completed validator run is not terminal by itself.
-
-## Artifact Review Gate
-
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before any loop closeout or permission question, with this route-specific artifact inventory: the created or revised run ledger, validation receipts, selected candidate evidence, route decision, rendered Markdown artifacts when present, metrics artifacts, and machine-readable artifacts with exact paths plus key fields.
+Block on tampering, no ready candidate, budget exhaustion, failed verification, dirty unsafe state, owner mismatch, or missing continuation proof. `iteration` completion requires acceptance, verification, budget, and continuation evidence. `Done` is valid only at `project_loop_final_health_gate` after terminal proof and a clean worktree; otherwise use `project_loop_next_step` with the shared `Stop` route.

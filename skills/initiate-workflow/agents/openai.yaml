@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, shell, native.user-input]
   display_name: "Initiate Workflow"
   short_description: "Route Superpowers Project setup, specs, plans, issues, implementation, merges, and audits."
   default_prompt: >-

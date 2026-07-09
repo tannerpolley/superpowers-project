@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, filesystem.write, shell, git, github, goals, native.user-input]
   display_name: "Resolve Issue"
   short_description: "Resolve one ready issue directly with goal proof, TDD, verification, and a PR-ready handoff."
   default_prompt: >-

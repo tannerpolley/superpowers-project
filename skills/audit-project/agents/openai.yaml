@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, shell, native.user-input]
   display_name: "Audit Project"
   short_description: "Turn evidence-backed code and workflow review findings into a Superpowers Project spec."
   default_prompt: >-

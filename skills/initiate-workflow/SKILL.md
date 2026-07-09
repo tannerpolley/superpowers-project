@@ -5,143 +5,33 @@ description: Route Superpowers Project extension requests to project setup, brai
 
 # Initiate Workflow
 
-This skill is the router for the Superpowers Project extension. It does not replace Superpowers. It routes project-backed work to extension skills and routes method work to Superpowers skills.
+This is the single entrypoint and route owner for `project_workflow_mode` and `project_auto_mode_authorization`. It selects one owning skill; it does not perform that skill's work.
 
-## Native Continuation Loop
+## Capability Preflight
 
-Follow `skills/advanced-user-input/SKILL.md` for global native continuation, Custom Other, Revisit, Stop, verified Done, and artifact review policy. This skill keeps route-specific gates, artifacts, validators, ledgers, and routing rules local.
+Require `filesystem.read`, `shell`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before routing when a required capability is absent.
 
-After every completed route-specific action, ask the next native continuation or permission question when `request_user_input` is callable. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
-## Workflow Mode Gate
+## Shared Policy
 
-Question id: `project_workflow_mode`
+Read `skills/advanced-user-input/SKILL.md` for global question and artifact-review behavior. This route retains route-specific startup authorization, mode, and owner selection only. The authoritative route graph is `docs/superpowers/workflow-contract.yml` and the generated review is `docs/superpowers/WORKFLOW_ROUTE_INDEX.md`.
 
-Before task routing, ask native question `project_workflow_mode`.
+## Startup
 
-Prompt: `How should I run this Superpowers Project workflow?`
+1. Resolve the loaded plugin root and run `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` there.
+2. Inspect the active repository, request, canonical artifacts, and Git state without mutating.
+3. Ask `project_workflow_mode`: Manual Mode, Auto Mode, or Looping Mode.
+4. Write the mode ledger and validate it with `scripts/validate-workflow-mode-ledger.sh` from the plugin root.
+5. For Auto Mode, ask `project_auto_mode_authorization`, write the immutable authorization ledger, and validate it with `scripts/validate-auto-mode-authorization.sh`. Auto authorizes exactly one route and one candidate; it never authorizes unrelated scope or remote publication.
+6. For Looping Mode, route through `$superpowers-project:loop-controller` with explicit budget and candidate sources.
 
-Options:
+## Owner Routing
 
-- `Manual Mode`: ask at each material route, mutation, and closeout decision.
-- `Auto Mode`: one-route autonomy using recorded defaults and validator-backed proof; it must stop at route closeout and must not continue to another candidate.
-- `Looping Mode`: bounded repeated maintenance autonomy; create or validate a workflow mode ledger, then route to `$superpowers-project:loop-controller`.
+Use setup-project for missing project context; brainstorm-spec for unresolved design; audit-project for evidence-backed critique; write-plan for approved design; create-issues for tracker slices; implement-plan for approved non-issue plans; resolve-issue for direct executable leaf issues; orchestrate-issues for delegated leaf issues; merge-changes for integration; align-project for drift; loop-controller for bounded repetition.
 
-Selecting Auto Mode at project_workflow_mode is the Auto Mode invocation. Do not invoke Auto Mode again from `$superpowers-project:brainstorm-spec` after a saved spec. The workflow mode ledger records the startup selection before task routing; downstream routes may consume it only for one selected or derived route and must stop at route closeout.
+## Runtime Receipt
 
-Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json`. Resolve the workflow-mode validator from the loaded Superpowers Project plugin root, then validate the ledger with:
+Start the selected route with `scripts/workflow-run.sh -Action start`, then record selection before the first mutation. Downstream skills reuse the same run root and authorization; they do not create replacement authority.
 
-```bash
-<Superpowers Project plugin root>/scripts/validate-workflow-mode-ledger.sh -RepoRoot <active repo> -ModeLedgerPath <ledger>
-```
+## Stop Conditions
 
-Canonical marker: `scripts/validate-workflow-mode-ledger.sh`.
-
-Do not run `./scripts/validate-workflow-mode-ledger.sh` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
-
-When Auto Mode needs the bounded route authority used by downstream planning, implementation, verification, merge, or live-sync proof, record an Auto Mode authorization ledger tied to the startup mode selection and the source artifact. The valid authority is `Bounded Auto Merge`. Resolve the Auto Mode validator from the loaded Superpowers Project plugin root. This is the plugin-provided Auto Mode validator:
-
-```bash
-<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>
-```
-
-Do not run `./scripts/validate-auto-mode-authorization.sh` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
-
-Recommend `Manual Mode` when the user has not asked for autonomy. Recommend `Auto Mode` only when one route is clear and source evidence is already strong. Recommend `Looping Mode` when the user asks to operate, maintain, drain issues, keep going, resolve a queue, or run broad project maintenance.
-
-## Routing
-
-- Project setup, roadmap context, tracker board setup, or large-scope project map: `$superpowers-project:setup-project`
-- Brainstorming, specs, PRDs, broad product design, architecture design, or any unresolved early project decision for new work: `$superpowers-project:brainstorm-spec`
-- Codebase audit, workflow review, diagnosis findings, maintainability findings, architecture findings, or existing behavior that should become a repair spec: `$superpowers-project:audit-project`
-- Implementation planning from a spec, issue mirror, or approved direct request: `$superpowers-project:write-plan`
-- Branch-backed implementation of an approved plan without a GitHub issue: `$superpowers-project:implement-plan`
-- Issue decomposition, GitHub issue creation, issue mirror creation, or milestone assignment: `$superpowers-project:create-issues`
-- External GitHub issue hydration, `Source Plan: TBD`, or a GitHub issue that exists before a local mirror and source plan: `$superpowers-project:create-issues`
-- One ready issue execution in the current thread with native `/goal` proof: `$superpowers-project:resolve-issue`
-- Worker-thread implementation of one ready issue: `$superpowers-project:orchestrate-issues`
-- PR URL, worker handoff, merge approval, issue close verification, branch/worktree cleanup, or clean repo proof: `$superpowers-project:merge-changes`
-- Structure alignment, migration, label review, milestone review, tracker alignment, issue mirror alignment, or live sync review: `$superpowers-project:align-project`
-- Broad repeated maintenance, issue queue draining, stale-version repair loops, audit/align candidate queues, or "operate this project" requests in `Looping Mode`: `$superpowers-project:loop-controller`
-
-The issue-backed `$superpowers-project:create-issues` plus `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues` execution path remains the default for non-trivial work, risky changes, multi-issue scope, and anything that needs GitHub issue or milestone backbone. Use `$superpowers-project:implement-plan` for approved plan implementation that should use a development branch but should not create issue mirrors.
-
-Question id: `project_auto_mode_authorization`
-
-Prompt: `Authorize bounded Auto Mode for this initiated workflow route?`
-
-Options:
-
-- `Bounded Auto Merge`: record or carry the Auto Mode authorization ledger and continue without more user input through the selected route's planning, implementation, verification, premerge proof, merge, closeout proof, and live-sync proof when applicable.
-- `Manual Mode`: return to normal material decision gates.
-
-Auto Mode is one-route autonomy: if proof is missing, validation fails, GitHub state is unsafe, the route reaches closeout, the route needs a decision outside the ledger policy, or the agent would need to continue to another candidate, stop outside policy instead of inventing a new approval.
-
-External GitHub issues are intake, not ready execution mirrors. If the user asks to resolve or orchestrate a GitHub issue URL whose local mirror or source plan does not exist, route through `$superpowers-project:create-issues` hydration first and block execution until mirror validation passes.
-
-When the user asks to resolve an issue without naming a route, ask native question `project_issue_resolution_route`. Route direct current-thread implementation to `$superpowers-project:resolve-issue`; route delegated worker worktree implementation to `$superpowers-project:orchestrate-issues`.
-
-Question id: `project_issue_resolution_route`
-
-Prompt: `How should this issue be executed?`
-
-Options:
-
-- `Project Resolve`: implement the issue directly in the current thread.
-- `Project Orchestrate`: delegate the issue through `$superpowers-project:orchestrate-issues`.
-- `Review First`: inspect the issue mirror and source plan before choosing execution.
-
-## Artifact Root
-
-Canonical project artifacts live under `docs/superpowers`.
-
-- Project context: `docs/superpowers/PROJECT_CONTEXT.md`
-- Specs: `docs/superpowers/specs/`
-- Plans: `docs/superpowers/plans/`
-- Issue mirrors: `docs/superpowers/issues/`
-- Milestone pages: `docs/superpowers/milestones/`
-
-## Method Routing
-
-Routing is not complete until the project skill and its required Superpowers companion skills are both selected. These pairings are mandatory, not suggestions:
-
-- `$superpowers-project:brainstorm-spec` -> `superpowers:brainstorming`
-- `$superpowers-project:audit-project` -> `diagnose` for bugs, regressions, CI failures, performance work, or unclear failure modes; `thermo-nuclear-code-quality-review` for strict maintainability findings; `improve-codebase-architecture` for architecture and module-boundary findings; and framework doctors such as `react-doctor` when applicable
-- `$superpowers-project:write-plan` -> `superpowers:writing-plans`
-- `$superpowers-project:implement-plan` -> `superpowers:executing-plans` as the base workflow, plus `superpowers:test-driven-development` for feature or bug work unless the approved plan records an explicit opt-out, `superpowers:systematic-debugging` or `diagnose` for bugs, regressions, CI failures, performance work, or unclear failure modes, `superpowers:verification-before-completion` before any success claim, commit, or merge-ready handoff, and `superpowers:subagent-driven-development` when worker topology is selected
-- `$superpowers-project:create-issues` -> emit issue metadata that keeps downstream routing compatible with the mandatory Superpowers companion skills used by `$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues`
-- `$superpowers-project:resolve-issue` -> `superpowers:using-git-worktrees`, `superpowers:executing-plans`, `superpowers:test-driven-development` unless the source plan records an explicit opt-out, `superpowers:systematic-debugging` or `diagnose` when the issue is a bug, regression, CI, performance, or unclear failure case, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`
-- `$superpowers-project:orchestrate-issues` -> `superpowers:subagent-driven-development` for delegated orchestration, with worker handoffs that require `superpowers:using-git-worktrees`, `superpowers:executing-plans` or `superpowers:subagent-driven-development`, `superpowers:test-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`
-- `$superpowers-project:merge-changes` -> `superpowers:finishing-a-development-branch` as the closeout method, with upstream `superpowers:verification-before-completion` proof already satisfied
-- `$superpowers-project:loop-controller` -> existing project skills and their required Superpowers companion methods; Loop Controller coordinates the run but does not replace the work-owning skill or its proof gate
-
-Do not claim a project route is active if the required Superpowers companion method is omitted.
-
-## Continuation Routing
-
-At major handoffs, use native continuation questions and treat the selected answer as executable routing. The agent should start the selected next skill in the same turn when possible instead of ending with a prompt suggestion.
-
-## Native Continuation Gate
-
-Complete the artifact review gate required by `skills/advanced-user-input/SKILL.md` using the helper's Artifact Review Card schema before asking any route continuation or permission question, with this route-specific artifact inventory: saved specs, plans, issue mirrors, route-decision evidence, and any machine-readable artifacts when present.
-
-Use `skills/advanced-user-input/SKILL.md` for global native question geometry, Custom Other handling, Revisit behavior, Stop and verified Done terminal rules, and nested-route rules. This skill keeps only route-specific question IDs, route labels, validators, ledgers, artifact lists, and execution routes. Ask the skill-specific native continuation question with `request_user_input` when callable; selected answers are executable routing.
-
-If routing cannot continue because tools, permissions, GitHub state, or user approval are missing, ask the next native question when one can resolve it, or stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests and never counts as live approval.
-
-## Native User Input
-
-When the task needs user choices and the `request_user_input` tool is callable, use it from Default mode for concise, decision-oriented questions. Batch independent questions together. Use more than three options only for nested branch menus, data-backed selections, or independent bulk gates where the larger menu preserves the real decision. Ask dependent questions one step at a time after the prior answer changes the branch.
-
-For `$superpowers-project:brainstorm-spec`, use native UI more aggressively: if there is any unresolved idea, naming, scope, tradeoff, route, or assumption decision, inspect project context and relevant code first, then ask through `request_user_input` instead of resolving the decision in prose.
-
-## Native Question Debug Mode
-
-Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
-
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
-o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
-
-Debug mode must not approve mutation. Debug mode must not route into mutation or pretend a live user approved workflow scope, publication, execution, or setup.
-## Goal Routing
-
-Issue implementation must use `$superpowers-project:resolve-issue` and native `/goal` activation or goal-tool proof before implementation begins. Goal success criteria come from the issue mirror acceptance checklist and the linked source plan. After `$superpowers-project:resolve-issue` creates PR-ready evidence, final integration must route to `$superpowers-project:merge-changes`.
+Stop when the request maps to multiple materially different owners, authorization is missing/invalid, required capability is absent, or the selected route would exceed mode scope. Manual ambiguity returns to native input. Auto ambiguity fails closed. `Stop` is the intermediate terminal choice; this router never claims final `Done`.

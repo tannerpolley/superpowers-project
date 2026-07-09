@@ -1,4 +1,5 @@
 interface:
+  capabilities: [filesystem.read, filesystem.write, shell, git, goals, native.user-input, subagents]
   display_name: "Implement Plan"
   short_description: "Implement an approved plan on a development branch without issue mirrors."
   default_prompt: >-
