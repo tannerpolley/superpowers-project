@@ -581,6 +581,34 @@ def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
         return complete(False, "auto-mode-authorization", str(exc))
 
 
+def command_test_auto_mode_contract(ctx: Context, args: dict[str, Any]) -> int:
+    """Exercise accepted and rejected bounded-Auto authorization fixtures."""
+    with tempfile.TemporaryDirectory(prefix="auto-mode-contract-") as tmp:
+        root = Path(tmp)
+        (root / "docs/superpowers/specs").mkdir(parents=True)
+        (root / "docs/superpowers/specs/source.md").write_text("# fixture\n", encoding="utf-8")
+        auth = {
+            "question_id": "project_auto_mode_authorization", "source": "request_user_input",
+            "selected_authority": "bounded-auto-merge", "source_spec": "docs/superpowers/specs/source.md",
+            "route_policy": {"selected_mode": "agent-chooses", "issue_route": "direct-inline-resolve-issue"},
+            "decision_policy": {"selected_mode": "recorded-defaults", "stop_outside_policy": True},
+            "merge_permission": {"selected_mode": "preauthorized-after-clean-premerge", "require_clean_premerge": True},
+            "mutation_scope": ["current-repo", "development-branch"],
+            "required_proof": ["plan-proof-oracle", "verification-receipts", "cleanup-hook", "premerge-proof", "closeout-proof"],
+            "stop_conditions": ["missing-proof", "dirty-unsafe-state", "failed-validation", "decision-outside-policy"],
+        }
+        path = root / "auth.json"; path.write_text(json.dumps(auth), encoding="utf-8")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            accepted = command_validate_auto_mode(ctx, {"RepoRoot": str(root), "AuthorizationPath": str(path)})
+        auth["route_policy"]["issue_route"] = "wrong-route"; path.write_text(json.dumps(auth), encoding="utf-8")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            rejected = command_validate_auto_mode(ctx, {"RepoRoot": str(root), "AuthorizationPath": str(path)})
+    ok = accepted == 0 and rejected != 0
+    return emit({"ok": ok, "phase": "auto-mode-contract", "accepted": accepted == 0, "rejected": rejected != 0}, 0 if ok else 1)
+
+
 def command_validate_workflow_mode(ctx: Context, args: dict[str, Any]) -> int:
     runtime = RuntimeContext(ctx.script_path, ctx.plugin_root or ctx.repo_root, ctx.invocation_cwd or Path.cwd(), ctx.script_rel)
     root = resolve_project_root(runtime, args)
@@ -952,6 +980,95 @@ def command_test_agent_native_companion_preview(ctx: Context, args: dict[str, An
         checks.append({"name": "unsupported artifact rejected", "ok": unsupported.name != "plan.mdx", "reason": "only plan.mdx is preview input"})
     ok = all(item["ok"] for item in checks)
     return emit({"ok": ok, "phase": "agent-native-companion-preview", "checks": checks}, 0 if ok else 1)
+
+
+ARTIFACT_REVIEW_CARD_FIELDS = (
+    "Gate", "Created/changed", "Proof", "Decisions", "Risks", "Recommended next route"
+)
+
+
+def validate_artifact_review_card_data(data: Any) -> list[str]:
+    """Return concrete schema findings for the mandatory review card."""
+    findings: list[str] = []
+    if not isinstance(data, dict):
+        return ["card must be a JSON object"]
+    for field in ARTIFACT_REVIEW_CARD_FIELDS:
+        if field not in data:
+            findings.append(f"missing required field: {field}")
+    gate = data.get("Gate")
+    if gate not in {"continuation", "push", "publish", "merge"}:
+        findings.append("Gate must be continuation, push, publish, or merge")
+    changed = data.get("Created/changed")
+    if not isinstance(changed, list) or not changed:
+        findings.append("Created/changed must be a non-empty list")
+    else:
+        for index, item in enumerate(changed):
+            if not isinstance(item, dict) or not str(item.get("path", "")).strip() or not str(item.get("action", "")).strip():
+                findings.append(f"Created/changed[{index}] requires path and action")
+    proof = data.get("Proof")
+    if not isinstance(proof, list) or not proof:
+        findings.append("Proof must be a non-empty list")
+    else:
+        for index, item in enumerate(proof):
+            if not isinstance(item, dict) or not str(item.get("evidence", "")).strip() or "ok" not in item:
+                findings.append(f"Proof[{index}] requires evidence and ok")
+            elif not isinstance(item["ok"], bool):
+                findings.append(f"Proof[{index}].ok must be boolean")
+    decisions = data.get("Decisions")
+    if not isinstance(decisions, list) or not decisions:
+        findings.append("Decisions must be a non-empty list")
+    else:
+        for index, item in enumerate(decisions):
+            if not isinstance(item, dict) or not str(item.get("decision", "")).strip() or not str(item.get("impact", "")).strip():
+                findings.append(f"Decisions[{index}] requires decision and impact")
+    risks = data.get("Risks")
+    if not isinstance(risks, list):
+        findings.append("Risks must be a list")
+    else:
+        for index, item in enumerate(risks):
+            if not isinstance(item, dict) or not str(item.get("risk", "")).strip() or not str(item.get("owner", "")).strip():
+                findings.append(f"Risks[{index}] requires risk and owner")
+    if not isinstance(data.get("Recommended next route"), str) or not data["Recommended next route"].strip():
+        findings.append("Recommended next route must be a non-empty string")
+    return findings
+
+
+def command_validate_artifact_review_card(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    path_arg = arg_value(args, "Path")
+    if not path_arg:
+        raise ScriptError("Path is required")
+    path = project_path_for(root, str(path_arg), "Path")
+    if not path.is_file():
+        raise ScriptError(f"artifact review card does not exist: {path_arg}")
+    try:
+        data = json.loads(read_text(path))
+    except json.JSONDecodeError as exc:
+        raise ScriptError(f"artifact review card is not valid JSON: {exc}") from exc
+    findings = validate_artifact_review_card_data(data)
+    result = {"ok": not findings, "phase": "artifact-review-card", "path": normalize_rel(path, root),
+              "reason": "artifact review card passed" if not findings else "artifact review card failed",
+              "findings": findings}
+    return emit(result, 0 if not findings else 1)
+
+
+def command_test_artifact_review_card(ctx: Context, args: dict[str, Any]) -> int:
+    accepted = {
+        "Gate": "continuation",
+        "Created/changed": [{"path": "docs/superpowers/specs/example.md", "action": "created"}],
+        "Proof": [{"evidence": "python3 -m unittest", "ok": True}],
+        "Decisions": [{"decision": "continue to planning", "impact": "preserves governed route"}],
+        "Risks": [{"risk": "fixture only", "owner": "release maintainer"}],
+        "Recommended next route": "write-plan",
+    }
+    rejected = dict(accepted)
+    rejected["Risks"] = [{"risk": "unowned risk"}]
+    checks = [
+        {"name": "accepted card", "ok": not validate_artifact_review_card_data(accepted)},
+        {"name": "rejected card", "ok": bool(validate_artifact_review_card_data(rejected))},
+    ]
+    ok = all(check["ok"] for check in checks)
+    return emit({"ok": ok, "phase": "artifact-review-card", "checks": checks}, 0 if ok else 1)
 
 
 def command_test_auto_loop_trials(ctx: Context, args: dict[str, Any]) -> int:
