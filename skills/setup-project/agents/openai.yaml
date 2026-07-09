@@ -12,3 +12,4 @@ interface:
     for planning, issue, and alignment child routes before starting the selected next skill. GitHub Project board setup covers board creation. Use request_user_input before
     creating or repairing tracker state. Metadata should identify setup scope without
     replacing the detailed setup contract.
+    Intermediate closeout uses Stop; Done is reserved for verified final states.

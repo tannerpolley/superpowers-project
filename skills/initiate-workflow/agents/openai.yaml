@@ -22,3 +22,4 @@ interface:
     TDD/debug/verification plus finishing-a-development-branch; orchestrate-issues with subagent-driven-development
     plus the worker companion skill set; merge-changes with finishing-a-development-branch plus upstream
     verification-before-completion proof. Do not treat those pairings as optional guidance.
+    Intermediate closeout uses Stop; Done is reserved for verified final states.

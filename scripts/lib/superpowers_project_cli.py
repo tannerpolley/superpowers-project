@@ -882,6 +882,65 @@ def command_validate_skill_script_contract(ctx: Context, args: dict[str, Any]) -
     return emit({"ok": True, "phase": "skill-script-contract", "reason": "skill script references are Linux bash scripts", "findings": []})
 
 
+def command_validate_advanced_user_input_policy(ctx: Context, args: dict[str, Any]) -> int:
+    """Validate the shared native-input policy and its route-facing mirrors."""
+    root = ctx.plugin_root or ctx.repo_root
+    skill_root = root / "skills"
+    findings: list[dict[str, str]] = []
+
+    def require_text(path: Path, needles: list[str], label: str) -> None:
+        if not path.is_file():
+            findings.append({"path": normalize_rel(path, root), "reason": f"{label} is missing"})
+            return
+        text = read_text(path)
+        for needle in needles:
+            if needle not in text:
+                findings.append({"path": normalize_rel(path, root), "reason": f"required policy is missing: {needle}"})
+
+    shared = skill_root / "advanced-user-input" / "SKILL.md"
+    metadata = skill_root / "advanced-user-input" / "agents" / "openai.yaml"
+    require_text(shared, [
+        "request_user_input",
+        "request_agent_input",
+        "Use Stop for mid-loop exits",
+        "Use Done only for verified final states",
+        "Intermediate closeout gates use Yes, Revisit, and Stop",
+        "Final clean closeout gates may use Yes, Revisit, and Done",
+        "custom answers that claim completion before proof exists are treated as Stop",
+    ], "advanced-user-input policy")
+    require_text(metadata, ["request_user_input", "Never use debug mode to approve mutation"], "advanced-user-input metadata")
+
+    forbidden = [
+        "Right is shown to the user as stale terminal option",
+        "Only stale terminal option can end a continuation loop",
+        "Ask exactly three top-level options: Yes, Revisit, and stale terminal option",
+    ]
+    for path in [shared, metadata]:
+        if path.is_file():
+            text = read_text(path)
+            for needle in forbidden:
+                if needle in text:
+                    findings.append({"path": normalize_rel(path, root), "reason": f"retired policy remains: {needle}"})
+
+    intermediate = ["initiate-workflow", "setup-project", "brainstorm-spec", "write-plan", "implement-plan", "create-issues", "resolve-issue", "orchestrate-issues"]
+    for skill in intermediate:
+        for path in [skill_root / skill / "SKILL.md", skill_root / skill / "agents" / "openai.yaml"]:
+            require_text(path, ["Stop"], f"{skill} intermediate route")
+    for skill in ["merge-changes", "audit-project"]:
+        require_text(skill_root / skill / "SKILL.md", ["Done", "verified final"], f"{skill} final route")
+
+    if findings:
+        return emit({"ok": False, "phase": "advanced-user-input-policy", "reason": "advanced user input policy failed", "findings": findings}, 1)
+    return emit({"ok": True, "phase": "advanced-user-input-policy", "reason": "native input and closeout policy passed", "findings": []})
+
+
+def command_test_auto_loop_trials(ctx: Context, args: dict[str, Any]) -> int:
+    result = run([sys.executable, str(ctx.plugin_root / "tests" / "test_auto_loop_trials.py"), "-v"], ctx.repo_root)
+    print(result.stdout, end="")
+    print(result.stderr, file=sys.stderr, end="")
+    return result.returncode
+
+
 def command_validate_skill_metadata_contract(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     findings = []

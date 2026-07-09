@@ -9,7 +9,7 @@ Project Audit is the findings-first sibling to Project Brainstorm. Use it when t
 
 ## Native Continuation Loop
 
-Follow `skills/advanced-user-input/SKILL.md` for global native continuation, Custom Other, Revisit, Stop, verified Done, and artifact review policy. This skill keeps route-specific gates, artifacts, validators, ledgers, and routing rules local.
+Follow `skills/advanced-user-input/SKILL.md` for global native continuation, Custom Other, Revisit, Stop, verified Done, and artifact review policy. A verified final audit is the only audit state that may use Done. This skill keeps route-specific gates, artifacts, validators, ledgers, and routing rules local.
 
 After every completed route-specific action, ask the next native continuation or permission question when `request_user_input` is callable. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 ## Routing Role

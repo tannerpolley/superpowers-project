@@ -17,3 +17,4 @@ interface:
     project_brainstorm_plan_route has Create One Plan and Multi-Spec Planning.
     project_brainstorm_reiteration_route has Revise Spec and Review Or Restart; start the selected next skill.
     Agent-Native visual-plan review is opt-in through companion-interface.
+    Intermediate closeout uses Stop; Done is reserved for verified final states.
