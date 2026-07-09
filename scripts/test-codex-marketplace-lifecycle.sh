@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+if [[ "${1:-}" == "-DispatchProbe" || "${1:-}" == "--dispatch-probe" ]]; then
+  exec "$root/scripts/lib/run-script.sh" "${BASH_SOURCE[0]}" "$@"
+fi
 command -v codex >/dev/null || { echo "codex CLI is required for marketplace lifecycle proof" >&2; exit 127; }
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 home="$tmp/codex-home"; market="$tmp/market"

@@ -6,6 +6,7 @@ from shutil import copytree
 from pathlib import Path
 
 from scripts.lib.superpowers_project_command_registry import ScriptError, _COMMANDS, build_command_registry, resolve_command
+from scripts.lib.command_catalog import CommandSpec, load_command_catalog
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,10 +39,42 @@ class CommandRegistryTests(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "unregistered script path"):
             resolve_command("scripts/test-unknown.sh")
 
-    def test_unimplemented_launcher_from_arbitrary_cwd(self):
-        script = ROOT / "scripts/detect-stale-skill-contract.sh"
-        p = subprocess.run(["bash", str(script)], cwd="/tmp", text=True, capture_output=True)
-        self.assertNotEqual(p.returncode, 0)
-        payload = __import__('json').loads(p.stdout)
-        self.assertFalse(payload["ok"])
-        self.assertIn("command not implemented", payload["reason"])
+    def test_registry_has_no_generic_failure_handlers(self):
+        incomplete = {
+            path: handler
+            for path, handler in _COMMANDS.items()
+            if handler.endswith("_unimplemented")
+        }
+        self.assertEqual({}, incomplete)
+
+    def test_every_registered_handler_is_callable(self):
+        sys.path.insert(0, str(ROOT / "scripts" / "lib"))
+        try:
+            import superpowers_project_cli as cli
+        finally:
+            sys.path.pop(0)
+        missing = sorted(
+            {handler for handler in _COMMANDS.values() if not callable(getattr(cli, handler, None))}
+        )
+        self.assertEqual([], missing)
+
+    def test_typed_catalog_has_known_kinds_and_mutation_classes(self):
+        catalog = load_command_catalog(ROOT)
+        self.assertTrue(catalog)
+        self.assertTrue(all(isinstance(spec, CommandSpec) for spec in catalog.values()))
+        self.assertTrue(all(spec.kind in {"validator", "test", "workflow", "distribution", "project"} for spec in catalog.values()))
+        self.assertTrue(all(spec.mutation in {"none", "project", "git", "deployment", "external"} for spec in catalog.values()))
+        self.assertEqual(set(catalog), {spec.path for spec in catalog.values()})
+
+    def test_public_validator_runs_from_arbitrary_cwd(self):
+        script = ROOT / "scripts/validate-workflow-contract.sh"
+        process = subprocess.run(
+            ["bash", str(script), "-RepoRoot", str(ROOT)],
+            cwd="/tmp",
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(0, process.returncode, process.stdout + process.stderr)
+        payload = __import__("json").loads(process.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertEqual("workflow-contract", payload["phase"])

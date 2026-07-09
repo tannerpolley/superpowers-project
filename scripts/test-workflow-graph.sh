@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+if [[ "${1:-}" == "-DispatchProbe" || "${1:-}" == "--dispatch-probe" ]]; then
+  exec "$root/scripts/lib/run-script.sh" "${BASH_SOURCE[0]}" "$@"
+fi
 python3 "$root/scripts/validate-workflow-graph.py"
 tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
 printf '%s\n' 'workflow_skills: {x: {purpose: x, validators: [x], gates: [{question_id: true, options: [true]}]}}' > "$tmp"

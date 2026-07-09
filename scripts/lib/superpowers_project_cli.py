@@ -18,6 +18,7 @@ from typing import Any
 from superpowers_project_command_registry import build_command_registry, resolve_command
 from superpowers_project_context import RuntimeContext, resolve_project_root, resolve_project_path
 from package_provenance import runtime_contract_hash as package_contract_hash, runtime_manifest, verify_runtime_provenance
+from command_catalog import load_command_catalog
 
 try:
     import yaml
@@ -1616,6 +1617,394 @@ def command_validate_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
     return complete(True, "validate-pr-ready", "PR-ready gate passed")
 
 
+def _as_list(value: Any) -> list[str]:
+    if value in (None, ""):
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    if isinstance(value, str) and "," in value:
+        return [item.strip() for item in value.split(",") if item.strip()]
+    return [str(value)]
+
+
+def _run_standalone_test(ctx: Context, relative_path: str, phase: str) -> int:
+    script = (ctx.plugin_root or ctx.repo_root) / relative_path
+    if not script.is_file():
+        raise ScriptError(f"standalone test is missing: {relative_path}")
+    result = run(["bash", str(script)], project_root_for(ctx, {}))
+    if result.stdout:
+        print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
+    if result.stderr:
+        print(result.stderr, file=sys.stderr, end="" if result.stderr.endswith("\n") else "\n")
+    if result.returncode != 0:
+        raise ScriptError(f"{phase} failed with exit code {result.returncode}")
+    return 0
+
+
+def command_test_codex_marketplace_lifecycle(ctx: Context, args: dict[str, Any]) -> int:
+    return _run_standalone_test(ctx, "scripts/test-codex-marketplace-lifecycle.sh", "codex-marketplace-lifecycle")
+
+
+def command_test_install_transaction(ctx: Context, args: dict[str, Any]) -> int:
+    return _run_standalone_test(ctx, "scripts/test-install-transaction.sh", "install-transaction")
+
+
+def command_test_linux_migration(ctx: Context, args: dict[str, Any]) -> int:
+    return _run_standalone_test(ctx, "scripts/test-linux-migration.sh", "linux-migration")
+
+
+def command_validate_global_policy_deduplication(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    skill_root = root / "skills"
+    owner_path = skill_root / "advanced-user-input" / "SKILL.md"
+    if not owner_path.is_file():
+        raise ScriptError("advanced-user-input policy owner is missing")
+    owner = read_text(owner_path)
+    required = [
+        "## Continuation Gates",
+        "Revisit is non-terminal",
+        "Custom Other never terminates a workflow directly",
+        "A verified final Done gate requires final proof and a clean worktree",
+    ]
+    duplicate_phrases = [
+        "Strict artifact display is mandatory and must happen before the summary or native question.",
+        "The agent must not get out of the loop by itself",
+        "Do not infer terminal intent from a custom answer.",
+    ]
+    checks: list[dict[str, Any]] = []
+    for phrase in required:
+        checks.append({"name": f"policy owner contains {phrase}", "ok": phrase in owner})
+    for path in sorted(skill_root.glob("*/SKILL.md")):
+        if path == owner_path:
+            continue
+        text_value = read_text(path)
+        rel = normalize_rel(path, root)
+        checks.append({"name": f"{rel} references policy owner", "ok": "advanced-user-input/SKILL.md" in text_value})
+        checks.append({"name": f"{rel} keeps route policy local", "ok": "route-specific" in text_value})
+        for phrase in duplicate_phrases:
+            checks.append({"name": f"{rel} omits duplicated global policy", "ok": phrase not in text_value})
+    failed = [item for item in checks if not item["ok"]]
+    return emit({"ok": not failed, "phase": "global-policy-deduplication", "checks": checks, "findings": failed}, 0 if not failed else 1)
+
+
+def command_validate_scorecard_proof(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    receipt = project_path_for(root, str(arg_value(args, "ReceiptPath", default="docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md")), "ReceiptPath")
+    if not receipt.is_file():
+        raise ScriptError(f"scorecard receipt is missing: {normalize_rel(receipt, root)}")
+    text_value = read_text(receipt)
+    section = re.search(r"(?ms)^## Scorecard\s*$\n(?P<body>.*?)(?=^##\s+|\Z)", text_value)
+    if not section:
+        raise ScriptError("scorecard receipt is missing the Scorecard section")
+    rows = [line for line in section.group("body").splitlines() if line.startswith("|")][2:]
+    checks: list[dict[str, Any]] = []
+    for row in rows:
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        target_match = re.search(r"\d+(?:\.\d+)?", cells[1])
+        target = float(target_match.group(0)) if target_match else 0.0
+        checks.append({"name": cells[0], "ok": target >= 9.0 and cells[2] not in {"", "TBD"} and cells[3].lower() == "pass", "target": target})
+    required_commands = ["./scripts/validate.sh", "./scripts/validate-scorecard-proof.sh"]
+    for command in required_commands:
+        matching = [line for line in text_value.splitlines() if command in line]
+        checks.append({"name": f"command receipt {command}", "ok": any("| pass |" in line.lower() for line in matching)})
+    failed = [item for item in checks if not item["ok"]]
+    return emit({"ok": bool(checks) and not failed, "phase": "scorecard-proof", "receipt": normalize_rel(receipt, root), "checks": checks, "findings": failed}, 0 if checks and not failed else 1)
+
+
+def command_validate_tracker_roadmap(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    roadmap_path = project_path_for(root, str(arg_value(args, "RoadmapPath", default="docs/agents/project-roadmap.json")), "RoadmapPath")
+    if not roadmap_path.is_file():
+        raise ScriptError(f"tracker roadmap is missing: {normalize_rel(roadmap_path, root)}")
+    roadmap = json.loads(read_text(roadmap_path))
+    required = ["repository", "milestone_root", "spec_file_template", "plan_file_template", "issue_file_template", "hierarchy_labels", "triage_states"]
+    checks = [{"name": field, "ok": roadmap.get(field) not in (None, "", [])} for field in required]
+    expected_labels = {"type:issue-set", "type:sub-milestone", "type:plan-wrapper"}
+    checks.append({"name": "hierarchy labels", "ok": expected_labels.issubset(set(roadmap.get("hierarchy_labels", [])))})
+    for key, prefix in (("spec_file_template", "docs/superpowers/specs/"), ("plan_file_template", "docs/superpowers/plans/"), ("issue_file_template", "docs/superpowers/issues/")):
+        checks.append({"name": f"canonical {key}", "ok": str(roadmap.get(key, "")).startswith(prefix)})
+    failed = [item for item in checks if not item["ok"]]
+    return emit({"ok": not failed, "phase": "tracker-roadmap-proof", "roadmap": normalize_rel(roadmap_path, root), "checks": checks, "findings": failed}, 0 if not failed else 1)
+
+
+def command_validate_issue_title_policy(ctx: Context, args: dict[str, Any]) -> int:
+    title = str(arg_value(args, "Title", default="")).strip()
+    if not title:
+        raise ScriptError("Title is required")
+    milestone_titles = _as_list(arg_value(args, "KnownMilestoneTitles", default=[]))
+    milestone_numbers = _as_list(arg_value(args, "KnownMilestoneNumbers", default=[]))
+    findings: list[str] = []
+    if re.match(r"^\s*(?:\[[^]]+\]|#?\d+[.)-])\s*", title):
+        findings.append("title starts with a hierarchy or milestone marker")
+    if re.search(r"(?i)\b(?:sub[- ]?milestone|milestone)\s*[#:]?\s*\d+", title):
+        findings.append("title embeds a milestone ordinal")
+    lowered = title.casefold()
+    for value in milestone_titles:
+        if value.strip() and value.strip().casefold() in lowered:
+            findings.append(f"title embeds milestone title: {value}")
+    for value in milestone_numbers:
+        if value.strip() and re.search(rf"(?<!\d){re.escape(value.strip())}(?!\d)", title):
+            findings.append(f"title embeds milestone number: {value}")
+    return emit({"ok": not findings, "phase": "validate-issue-title-policy", "title": title, "findings": findings}, 0 if not findings else 1)
+
+
+def command_build_issue_hierarchy_plan(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    source_plan = str(arg_value(args, "SourcePlanPath", "SourcePlan", default=""))
+    if not source_plan or not project_path_for(root, source_plan, "SourcePlan").is_file():
+        raise ScriptError("SourcePlanPath must identify an existing source plan")
+    mode = str(arg_value(args, "HierarchyMode", default="flat"))
+    if mode not in {"flat", "issue-set", "sub-milestone"}:
+        raise ScriptError("HierarchyMode must be flat, issue-set, or sub-milestone")
+    parent = str(arg_value(args, "ParentTitle", default="")).strip()
+    wrappers = _as_list(arg_value(args, "WrapperTitles", default=[]))
+    leaves = _as_list(arg_value(args, "LeafTitles", default=[]))
+    if not leaves:
+        raise ScriptError("at least one LeafTitles value is required")
+    if mode != "flat" and not parent:
+        raise ScriptError(f"ParentTitle is required for {mode}")
+    titles = ([parent] if parent else []) + wrappers + leaves
+    for title in titles:
+        result = command_validate_issue_title_policy(ctx, {"Title": title, "KnownMilestoneTitles": arg_value(args, "KnownMilestoneTitles", default=[]), "KnownMilestoneNumbers": arg_value(args, "KnownMilestoneNumbers", default=[])})
+        if result != 0:
+            raise ScriptError(f"issue title policy rejected: {title}")
+    operations: list[dict[str, Any]] = []
+    if parent:
+        operations.append({"role": "parent", "title": parent, "command": ["gh", "issue", "create", "--title", parent]})
+    for wrapper in wrappers:
+        operations.append({"role": "plan-wrapper", "title": wrapper, "parent": parent, "command": ["gh", "issue", "create", "--title", wrapper, "--parent", "<parent-url>"]})
+    for leaf in leaves:
+        operations.append({"role": "leaf", "title": leaf, "parent": wrappers[0] if wrappers else parent, "command": ["gh", "issue", "create", "--title", leaf] + (["--parent", "<parent-url>"] if parent else [])})
+    return emit({"ok": True, "phase": "build-issue-hierarchy-plan", "hierarchy_mode": mode, "source_plan": normalize_rel(project_path_for(root, source_plan), root), "publication_order": operations})
+
+
+def command_validate_issue_hierarchy(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    mirror_path = arg_value(args, "IssueMirrorPath")
+    fixture_path = arg_value(args, "GitHubIssueFixturePath", "IssueJsonPath")
+    if not mirror_path or not fixture_path:
+        raise ScriptError("IssueMirrorPath and GitHubIssueFixturePath are required")
+    mirror_file = project_path_for(root, str(mirror_path), "IssueMirrorPath")
+    fixture_file = project_path_for(root, str(fixture_path), "GitHubIssueFixturePath")
+    if not mirror_file.is_file() or not fixture_file.is_file():
+        raise ScriptError("issue hierarchy inputs must exist")
+    text_value = read_text(mirror_file)
+    issue = json.loads(read_text(fixture_file))
+    role_match = re.search(r"(?im)^Sub-Issue Role:\s*(.+)$", text_value)
+    executable_match = re.search(r"(?im)^Executable:\s*(true|false)$", text_value)
+    role = role_match.group(1).strip().lower() if role_match else ""
+    executable = executable_match.group(1).lower() == "true" if executable_match else None
+    findings: list[str] = []
+    if role not in {"parent", "plan-wrapper", "leaf"}:
+        findings.append("Sub-Issue Role must be parent, plan-wrapper, or leaf")
+    if executable is None:
+        findings.append("Executable metadata is required")
+    if role in {"parent", "plan-wrapper"} and executable is not False:
+        findings.append(f"{role} mirrors must set Executable: false")
+    if role == "leaf" and executable is not True:
+        findings.append("leaf mirrors must set Executable: true")
+    if has_switch(args, "MilestoneRequired") and not issue.get("milestone"):
+        findings.append("GitHub issue milestone is required")
+    if role != "parent" and not (issue.get("parent") or re.search(r"(?im)^Parent Issue:\s*https://", text_value)):
+        findings.append("child issue must identify its parent")
+    return emit({"ok": not findings, "phase": "validate-issue-hierarchy", "role": role, "executable": executable, "findings": findings}, 0 if not findings else 1)
+
+
+def command_hydrate_external_issue(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    issue, _ = read_json_arg(root, args, "IssueJson", "IssueJsonPath", required=False)
+    if issue is None:
+        raise ScriptError("IssueJson or IssueJsonPath is required for deterministic hydration")
+    number = issue.get("number")
+    title = str(issue.get("title") or arg_value(args, "IssueTitle", default="")).strip()
+    url = str(issue.get("url") or arg_value(args, "IssueUrl", default="")).strip()
+    body = str(issue.get("body", "")).strip()
+    if not number or not title or not url:
+        raise ScriptError("external issue requires number, title, and url")
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:72]
+    plan_slug = str(arg_value(args, "OutputPlanSlug", default=slug))
+    plan = root / "docs" / "superpowers" / "plans" / f"{plan_slug}-plan.md"
+    mirror = root / "docs" / "superpowers" / "issues" / f"{number}-{slug}.md"
+    if not plan.exists():
+        write_text(plan, f"# {title} Implementation Plan\n\n**Goal:** {title}\n\n## Outcome Proof\n\n**Intent:** {body or title}\n\n**Evidence:** Implement and verify the linked issue acceptance criteria.\n")
+    role = "leaf" if issue.get("parent") else "parent"
+    executable = "true" if role == "leaf" else "false"
+    write_text(mirror, f"# {title}\n\nIssue: {url}\nSource Plan: {normalize_rel(plan, root)}\nSub-Issue Role: {role}\nExecutable: {executable}\n\n## Outcome Summary\n\n{body or title}\n")
+    return emit({"ok": True, "phase": "hydrate-external-issue", "issue_mirror": normalize_rel(mirror, root), "source_plan": normalize_rel(plan, root), "issue_url": url})
+
+
+def command_prepare_github_project_board(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    mode = str(arg_value(args, "Mode", default="Plan"))
+    roadmap_path = root / "docs" / "agents" / "project-roadmap.json"
+    roadmap = json.loads(read_text(roadmap_path))
+    board = roadmap.get("github_project_board", {})
+    required_fields = _as_list(arg_value(args, "RequiredFields", default=["Status", "Milestone", "Issue Type", "Agent State"]))
+    if mode == "Plan":
+        return emit({"ok": True, "phase": "prepare-github-project-board", "mode": mode, "mutation": False, "repository": roadmap.get("repository"), "required_fields": required_fields, "native_approval_required": True})
+    if mode == "ValidateConfig":
+        missing = sorted(set(required_fields) - set(board.get("fields", [])))
+        return emit({"ok": not missing and bool(board.get("project_url")), "phase": "prepare-github-project-board", "mode": mode, "missing_fields": missing, "project_url": board.get("project_url", "")}, 0 if not missing and board.get("project_url") else 1)
+    if mode != "Create":
+        raise ScriptError("Mode must be Plan, Create, or ValidateConfig")
+    approval, _ = read_json_arg(root, args, "NativeApprovalJson", "NativeApprovalPath")
+    if approval.get("question_id") != "project_setup_board_approval" or approval.get("selected_action") != "create":
+        raise ScriptError("board creation requires native project_setup_board_approval evidence")
+    raise ScriptError("board creation must be executed through the authenticated GitHub workflow owner")
+
+
+def command_resolve_preflight(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    mirror_value = arg_value(args, "IssueMirrorPath", "IssueMirror")
+    if not mirror_value:
+        raise ScriptError("IssueMirrorPath is required")
+    mirror = project_path_for(root, str(mirror_value), "IssueMirrorPath")
+    if not mirror.is_file():
+        raise ScriptError("issue mirror is missing")
+    text_value = read_text(mirror)
+    source_match = re.search(r"(?im)^Source Plan:\s*`?([^`\n]+)`?\s*$", text_value)
+    if not source_match:
+        raise ScriptError("issue mirror must link a source plan")
+    source_plan = project_path_for(root, source_match.group(1).strip(), "Source Plan")
+    if not source_plan.is_file():
+        raise ScriptError("linked source plan is missing")
+    executable = re.search(r"(?im)^Executable:\s*true\s*$", text_value) is not None
+    role = re.search(r"(?im)^Sub-Issue Role:\s*leaf\s*$", text_value) is not None
+    if not executable or not role:
+        raise ScriptError("direct resolution requires an executable leaf issue mirror")
+    return emit({"ok": True, "phase": "resolve-preflight", "issue_mirror": normalize_rel(mirror, root), "source_plan": normalize_rel(source_plan, root)})
+
+
+def command_validate_resolve_setup(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    ledger, _ = read_json_arg(root, args, "SetupLedgerJson", "SetupLedgerPath")
+    required = ["issue_url", "issue_mirror", "source_plan", "branch", "goal_activation_proof", "goal_objective", "execution_decision", "outcome_proof", "proof_oracle"]
+    missing = [field for field in required if ledger.get(field) in (None, "", [])]
+    if "goal_id" not in ledger and "thread_goal_proof" not in ledger:
+        missing.append("goal_id or thread_goal_proof")
+    if missing:
+        raise ScriptError("setup ledger missing: " + ", ".join(missing))
+    if (ledger.get("execution_decision") or {}).get("selected_mode") == "orchestrated-worker":
+        raise ScriptError("orchestrated-worker execution belongs to orchestrate-issues")
+    for field, prefix in (("issue_mirror", "docs/superpowers/issues/"), ("source_plan", "docs/superpowers/plans/")):
+        value = str(ledger[field])
+        if not value.replace("\\", "/").startswith(prefix) or not project_path_for(root, value, field).is_file():
+            raise ScriptError(f"{field} must identify an existing canonical artifact")
+    return emit({"ok": True, "phase": "validate-resolve-setup", "issue_mirror": ledger["issue_mirror"], "source_plan": ledger["source_plan"], "branch": ledger["branch"]})
+
+
+def command_collect_merge_continuation(ctx: Context, args: dict[str, Any]) -> int:
+    return command_collect_continuation(ctx, args, "collect-merge-continuation-ledger")
+
+
+def command_collect_resolve_continuation(ctx: Context, args: dict[str, Any]) -> int:
+    return command_collect_continuation(ctx, args, "collect-resolve-continuation-ledger")
+
+
+def command_validate_merge_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
+    return command_validate_terminal_closeout(ctx, args, "validate-merge-terminal-closeout")
+
+
+def command_validate_resolve_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
+    return command_validate_terminal_closeout(ctx, args, "validate-resolve-terminal-closeout")
+
+
+def _load_local_branch_setup(root: Path, args: dict[str, Any]) -> dict[str, Any]:
+    setup, _ = read_json_arg(root, args, "SetupLedgerJson", "SetupLedgerPath", required=False)
+    if setup is None:
+        setup = {"merge_mode": "local-branch", "branch": arg_value(args, "Branch"), "source_plan": arg_value(args, "SourcePlan")}
+    if setup.get("merge_mode") != "local-branch":
+        raise ScriptError("setup ledger merge_mode must be local-branch")
+    branch = str(setup.get("branch", ""))
+    if not branch or branch in {"main", "master", "origin/main", "origin/master"}:
+        raise ScriptError("local branch closeout requires a non-default branch")
+    source_plan = str(setup.get("source_plan", ""))
+    if not source_plan or not project_path_for(root, source_plan, "source_plan").is_file():
+        raise ScriptError("local branch closeout requires an existing source plan")
+    return setup
+
+
+def command_prepare_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    setup = _load_local_branch_setup(root, args)
+    branch = str(setup["branch"])
+    current = run(["git", "branch", "--show-current"], root)
+    exists = run(["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"], root)
+    if current.returncode != 0 or current.stdout.strip() != "main":
+        raise ScriptError("prepare local branch closeout must run from main")
+    if exists.returncode != 0:
+        raise ScriptError(f"local branch is missing: {branch}")
+    readiness, _ = read_json_arg(root, args, "ReadinessReviewJson", "ReadinessReviewPath")
+    required_review = ["plan_alignment", "correctness", "maintainability", "reality_evidence"]
+    if any(readiness.get(field) is not True for field in required_review):
+        raise ScriptError("readiness review must approve alignment, correctness, maintainability, and reality evidence")
+    status = run(["git", "status", "--short"], root)
+    if status.returncode != 0 or status.stdout.strip():
+        raise ScriptError("main must be clean before local branch closeout")
+    changed = run(["git", "diff", "--name-only", f"main...{branch}"], root)
+    evidence = {"branch": branch, "source_plan": setup["source_plan"], "changed_files": [line for line in changed.stdout.splitlines() if line], "readiness_review": readiness, "remote_publication_required": False}
+    return emit({"ok": True, "phase": "prepare-local-branch-closeout", "reason": "local branch premerge proof prepared", "evidence": evidence})
+
+
+def command_apply_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    setup = _load_local_branch_setup(root, args)
+    branch = str(setup["branch"])
+    premerge, _ = read_json_arg(root, args, "PremergeResultJson", "PremergeResultPath")
+    decision, _ = read_json_arg(root, args, "MergeDecisionJson", "MergeDecisionPath")
+    if premerge.get("ok") is not True:
+        raise ScriptError("premerge result must be ok")
+    if decision.get("selected_action") != "merge":
+        raise ScriptError("merge decision must select merge")
+    current = run(["git", "branch", "--show-current"], root)
+    if current.returncode != 0 or current.stdout.strip() != "main":
+        raise ScriptError("apply local branch closeout must run from main")
+    if has_switch(args, "DryRun"):
+        return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch closeout dry run passed", "evidence": {"branch": branch, "would_merge": True, "remote_publication": False}})
+    merge = run(["git", "merge", "--ff-only", branch], root)
+    if merge.returncode != 0:
+        raise ScriptError(f"git merge --ff-only failed: {merge.stderr.strip() or merge.stdout.strip()}")
+    return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch merged without remote publication", "evidence": {"branch": branch, "commit": run(["git", "rev-parse", "HEAD"], root).stdout.strip(), "remote_publication": False}})
+
+
+def command_generate_outcome_workflow_summary(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    output = project_path_for(root, str(arg_value(args, "OutputPath", default="docs/superpowers/OUTCOME_WORKFLOW.md")), "OutputPath")
+    contract_path = root / "docs" / "superpowers" / "workflow-contract.yml"
+    if yaml is None:
+        raise ScriptError("python3 PyYAML is required")
+    contract = yaml.safe_load(read_text(contract_path)) or {}
+    skills = contract.get("workflow_skills", {})
+    lines = [
+        "# Superpowers Project Outcome Workflow",
+        "",
+        "> Generated from repo source by `scripts/generate-outcome-workflow-summary.sh`. Do not edit by hand.",
+        "",
+        "## Canonical Identity",
+        "",
+        "- Plugin manifest name: `superpowers-project`",
+        "- User-facing prompt namespace: `$superpowers-project:*`",
+        "",
+        "## Workflow Skills",
+        "",
+        "| Skill | Purpose | Validators | Final Health Gate |",
+        "|---|---|---|---|",
+    ]
+    for name, config in sorted(skills.items()):
+        validators = "<br>".join(f"`{value}`" for value in config.get("validators", [])) or "None"
+        final_gate = config.get("final_health_gate") or "None"
+        lines.append(f"| `{name}` | {config.get('purpose', '')} | {validators} | `{final_gate}` |")
+    lines.extend(["", "## Validation Commands", "", "- `./scripts/validate.sh`", "- `./scripts/sync-live.sh --validate`", "- `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`", ""])
+    generated = "\n".join(lines)
+    if has_switch(args, "Check"):
+        current = read_text(output) if output.is_file() else ""
+        return emit({"ok": current == generated, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "stale": current != generated}, 0 if current == generated else 1)
+    write_text(output, generated)
+    return emit({"ok": True, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "workflow_skill_count": len(skills)})
+
+
 def command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     manifest_path = root / ".codex-plugin" / "plugin.json"
@@ -2082,10 +2471,6 @@ def command_repo_gate(ctx: Context, args: dict[str, Any]) -> int:
     status = run(["git", "status", "--short"], ctx.repo_root)
     return emit({"ok": status.returncode == 0, "phase": "repo-gate", "dirty_status": status.stdout.strip()})
 
-def command_unimplemented(ctx: Context, args: dict[str, Any]) -> int:
-    return complete(False, Path(ctx.script_name).stem, f"command not implemented: {ctx.script_rel}", script=ctx.script_rel)
-
-
 def command_validate_skill_scenario(ctx: Context, args: dict[str, Any]) -> int:
     """Run the executable/source contract for a skill scenario launcher."""
     parts = Path(ctx.script_rel).parts
@@ -2113,8 +2498,13 @@ def dispatch_command(ctx: Context, command_name: str, args: dict[str, Any]) -> i
 def dispatch(ctx: Context) -> int:
     args = parse_ps_args(ctx.args)
     try:
-        build_command_registry(ctx.repo_root)
-        return dispatch_command(ctx, resolve_command(ctx.script_rel), args)
+        catalog = load_command_catalog(ctx.repo_root)
+        spec = catalog.get(ctx.script_rel)
+        if spec is None:
+            raise ScriptError(f"unregistered script path: {ctx.script_rel}")
+        if has_switch(args, "DispatchProbe"):
+            return emit({"ok": True, "path": spec.path, "handler": spec.handler, "kind": spec.kind, "mutation": spec.mutation})
+        return dispatch_command(ctx, spec.handler, args)
     except Exception as exc:
         return complete(False, Path(ctx.script_name).stem, str(exc), script=ctx.script_rel)
 

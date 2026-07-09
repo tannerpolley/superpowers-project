@@ -2,6 +2,9 @@
 set -euo pipefail
 
 plugin_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+if [[ "${1:-}" == "-DispatchProbe" || "${1:-}" == "--dispatch-probe" ]]; then
+  exec "$plugin_root/scripts/lib/run-script.sh" "${BASH_SOURCE[0]}" "$@"
+fi
 export PYTHONPATH="$plugin_root${PYTHONPATH:+:$PYTHONPATH}"
 python3 - <<'PY' "$plugin_root"
 import sys

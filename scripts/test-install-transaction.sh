@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+if [[ "${1:-}" == "-DispatchProbe" || "${1:-}" == "--dispatch-probe" ]]; then
+  exec "$root/scripts/lib/run-script.sh" "${BASH_SOURCE[0]}" "$@"
+fi
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 live="$tmp/live"; market="$tmp/marketplace.json"
 "$root/scripts/install.sh" -SkipValidation -LivePluginRoot "$live" -MarketplacePath "$market" >/dev/null
 before="$(sha256sum "$live/.codex-plugin/plugin.json")"
