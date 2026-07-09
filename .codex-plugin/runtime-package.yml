@@ -1,0 +1,17 @@
+version: 1
+include:
+  - .codex-plugin/plugin.json
+  - .codex-plugin/runtime-package.yml
+  - assets/**
+  - scripts/**
+  - skills/**
+  - docs/superpowers/workflow-contract.yml
+  - docs/superpowers/loop-mode-contract.yml
+  - docs/superpowers/governance-profiles.yml
+  - docs/superpowers/capabilities.yml
+  - docs/superpowers/PROJECT_CONTEXT.md
+  - docs/superpowers/OUTCOME_WORKFLOW.md
+  - docs/superpowers/WORKFLOW_ROUTE_INDEX.md
+  - docs/superpowers/backlog/ACTIVE.md
+  - docs/superpowers/examples/**
+  - docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md

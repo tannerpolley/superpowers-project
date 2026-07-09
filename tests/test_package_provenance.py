@@ -10,9 +10,14 @@ from package_provenance import runtime_contract_hash, runtime_manifest, verify_r
 
 
 class PackageProvenanceTests(unittest.TestCase):
+    def write_manifest(self, root):
+        (root / ".codex-plugin").mkdir(exist_ok=True)
+        (root / ".codex-plugin" / "runtime-package.yml").write_text("version: 1\ninclude:\n  - .codex-plugin/**\n  - scripts/**\n  - skills/**\n  - docs/superpowers/**\n")
+
     def test_hash_covers_content_and_mode(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            self.write_manifest(root)
             (root / "scripts").mkdir()
             p = root / "scripts" / "run.sh"
             p.write_text("echo one\n")
@@ -25,6 +30,7 @@ class PackageProvenanceTests(unittest.TestCase):
     def test_contract_and_skill_changes_are_hashed(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); (root / "docs/superpowers").mkdir(parents=True); (root / "skills/demo").mkdir(parents=True)
+            self.write_manifest(root)
             contract = root / "docs/superpowers/workflow-contract.yml"; skill = root / "skills/demo/SKILL.md"
             contract.write_text("state: one"); skill.write_text("name: demo\n")
             first = runtime_contract_hash(root)
@@ -35,6 +41,7 @@ class PackageProvenanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / ".codex-plugin").mkdir()
+            self.write_manifest(root)
             (root / ".codex-plugin" / "plugin.json").write_text("{}")
             project = root / "project"
             project.mkdir()
@@ -49,6 +56,7 @@ class PackageProvenanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "one"
             root.mkdir()
+            self.write_manifest(root)
             (root / "scripts").mkdir()
             (root / "scripts" / "x").write_text("x")
             copy = Path(tmp) / "two"

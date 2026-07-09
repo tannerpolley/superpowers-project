@@ -2087,7 +2087,13 @@ def plugin_manifest(root: Path) -> dict[str, Any] | None:
 def version_surface(name: str, root: Path | None, source_hash: str) -> dict[str, Any]:
     exists = root is not None and root.is_dir()
     manifest = plugin_manifest(root) if exists and root is not None else None
-    contract = runtime_contract_hash(root) if exists and root is not None else ""
+    contract = ""
+    error = ""
+    if exists and root is not None:
+        try:
+            contract = runtime_contract_hash(root)
+        except (OSError, ValueError) as exc:
+            error = str(exc)
     return {
         "name": name,
         "path": str(root.resolve()) if root is not None else "",
@@ -2096,10 +2102,13 @@ def version_surface(name: str, root: Path | None, source_hash: str) -> dict[str,
         "manifest_version": manifest.get("version", "") if manifest else "",
         "contract_hash": contract,
         "matches_source": bool(exists and contract == source_hash),
+        "error": error,
     }
 
 
 def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
+    from revision_status import evaluate_revision_status
+
     root = project_root_for(ctx, args)
     home = Path.home()
     live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(home / ".codex" / "plugins" / "superpowers-project")))).expanduser()
@@ -2136,6 +2145,40 @@ def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
         if observed_root is None:
             raise ScriptError(f"could not resolve plugin root from observed skill root: {observed_skill}")
     observed = version_surface("observed", observed_root, source_hash) if observed_root else None
+    if has_switch(args, "RevisionStatus"):
+        supplied = arg_value(args, "RevisionEvidenceJson")
+        evidence_path = arg_value(args, "RevisionEvidencePath")
+        if supplied and evidence_path:
+            raise ScriptError("provide RevisionEvidenceJson or RevisionEvidencePath, not both")
+        if supplied:
+            evidence = json.loads(str(supplied))
+        elif evidence_path:
+            evidence = json.loads(read_text(project_path_for(root, str(evidence_path), "RevisionEvidencePath")))
+        else:
+            validation_path = arg_value(args, "ValidationReceiptPath")
+            install_path = arg_value(args, "InstallationReceiptPath")
+            cleanup_path = arg_value(args, "CleanupReceiptPath")
+
+            def current_receipt(value: Any) -> bool:
+                if not value:
+                    return False
+                path = project_path_for(root, str(value), "receipt")
+                if not path.is_file():
+                    return False
+                receipt = json.loads(read_text(path))
+                return receipt.get("ok") is True and receipt.get("contract_hash") == source_hash and receipt.get("commit") == source["git_commit"]
+
+            evidence = {
+                "source_dirty": source["dirty"],
+                "validation_current": current_receipt(validation_path),
+                "source_committed": not source["dirty"] and bool(source["git_commit"]),
+                "deployment_current": live.get("matches_source") is True,
+                "installation_current": current_receipt(install_path),
+                "cleanup_current": current_receipt(cleanup_path),
+                "fresh_session_acknowledged": has_switch(args, "FreshSessionAcknowledged"),
+            }
+        result = evaluate_revision_status(evidence)
+        return emit({"ok": True, "phase": "plugin-revision-status", **result})
     failures = []
     if not live.get("matches_source"):
         failures.append("live plugin differs from source")
@@ -2230,6 +2273,26 @@ def copy_tree(source: Path, target: Path) -> None:
     shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 
 
+def copy_runtime_package(source: Path, target: Path) -> None:
+    entries = runtime_manifest(source)
+    staged = target.with_name(f".{target.name}.staged-{os.getpid()}")
+    if staged.exists():
+        shutil.rmtree(staged)
+    staged.mkdir(parents=True)
+    try:
+        for entry in entries:
+            source_path = source / entry.path
+            target_path = staged / entry.path
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_path, target_path)
+        if target.exists():
+            shutil.rmtree(target)
+        staged.replace(target)
+    finally:
+        if staged.exists():
+            shutil.rmtree(staged)
+
+
 def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     root = ctx.repo_root.resolve()
     home = Path.home()
@@ -2242,14 +2305,7 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         print(result.stderr, file=sys.stderr, end="")
         if result.returncode != 0:
             raise ScriptError("validation failed before sync")
-    (live_root / ".codex-plugin").mkdir(parents=True, exist_ok=True)
-    shutil.copy2(root / ".codex-plugin" / "plugin.json", live_root / ".codex-plugin" / "plugin.json")
-    for folder in ["skills", "assets", "scripts"]:
-        source = root / folder
-        target = live_root / folder
-        if source.exists():
-            copy_tree(source, target)
-    copy_tree(root / "docs" / "superpowers", live_root / "docs" / "superpowers")
+    copy_runtime_package(root, live_root)
     user_skills.mkdir(parents=True, exist_ok=True)
     for skill in USER_SKILLS:
         source = root / "skills" / skill
@@ -2266,9 +2322,10 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     write_text(marketplace, json.dumps(data, indent=2))
     # Installed package discovery and updates are owned by the supported
     # marketplace/plugin CLI. Never mutate Codex cache candidates directly.
-    drift = compare_trees(root / "skills", live_root / "skills")
-    if drift:
-        raise ScriptError(f"live install drift detected: {json.dumps(drift)}")
+    source_manifest = [entry.to_dict() for entry in runtime_manifest(root)]
+    live_manifest = [entry.to_dict() for entry in runtime_manifest(live_root)]
+    if source_manifest != live_manifest:
+        raise ScriptError("live install differs from the runtime package manifest")
     return emit({
         "ok": True,
         "source": str(root),
@@ -2277,6 +2334,7 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         "marketplace": {"marketplace_path": str(marketplace), "plugin_name": "superpowers-project", "source_path": "./.codex/plugins/superpowers-project"},
         "deployed_plugin_skills": sorted(active_skill_names(root)),
         "deployed_user_skills": sorted(USER_SKILLS),
+        "runtime_package": {"files": len(source_manifest), "bytes": sum(item["length"] for item in source_manifest)},
     })
 
 
@@ -2357,6 +2415,7 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
         step("Skill source contract", lambda: validate_skill_source_contract(root))
         step("Linux active surface scan", lambda: validate_no_windows_active_surface(root))
         step("Superpowers project path contract", lambda: validate_superpowers_paths(root))
+        step("Runtime package manifest", lambda: run_must(["python3", str(root / "scripts" / "validate-runtime-package.py"), "--repo-root", str(root)], root))
         step("Plugin manifest validation", lambda: run_must(["python3", str(root / "scripts" / "validate-plugin.py"), str(root)], root))
         for skill in active_skill_names(root):
             step(f"quick_validate {skill}", lambda skill=skill: run_must(["python3", str(root / "scripts" / "quick-validate-skill.py"), str(root / "skills" / skill)], root))

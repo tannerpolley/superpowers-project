@@ -208,6 +208,10 @@ GitHub Actions runs the same validation command used locally:
 
 Release gates and tag rules are documented in `docs/superpowers/RELEASE_POLICY.md`. The first release after this migration is `v0.2.0`.
 
+The installable surface is declared in `.codex-plugin/runtime-package.yml`; historical specs and plans remain source history but do not churn the installed package hash. Validate inclusion and runtime reads with `./scripts/validate-runtime-package.py`.
+
+Use `./scripts/get-agent-plugin-version.sh -RevisionStatus` for a read-only report of the next required revision-loop gate. Receipt paths can be supplied for validation, installation, and cleanup evidence; the command never commits, syncs, installs, tags, pushes, or publishes.
+
 ## Sync To Live Codex Install
 
 ```bash
