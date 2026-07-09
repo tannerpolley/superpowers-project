@@ -36,6 +36,7 @@ class RunProjection:
     budget_rechecks: list[str] = field(default_factory=list)
     continuation_grants: list[str] = field(default_factory=list)
     mutation_count: int = 0
+    project_health_verified: bool = False
     events: int = 0
     last_hash: str = "0" * 64
 
@@ -49,6 +50,7 @@ class RunProjection:
             "budget_rechecks": list(self.budget_rechecks),
             "continuation_grants": list(self.continuation_grants),
             "mutation_count": self.mutation_count,
+            "project_health_verified": self.project_health_verified,
             "events": self.events,
             "last_hash": self.last_hash,
         }
@@ -91,6 +93,8 @@ def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
         if projection.selected_candidate is None:
             raise WorkflowStateError("mutation requires a selected candidate")
         projection.mutation_count += 1
+    elif kind == "project_health_verified":
+        projection.project_health_verified = True
     elif kind == "run_stopped":
         projection.status = "stopped"
     elif kind == "run_completed":

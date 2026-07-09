@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Mapping, Any
+
+import yaml
 
 
 class PolicyError(ValueError):
@@ -15,18 +18,28 @@ class GovernanceProfile:
     interactive: bool
     max_candidates_per_iteration: int
     requires_continuation: bool
+    completion_claims: tuple[str, ...] = ()
 
 
-PROFILES = {
-    "manual": GovernanceProfile("manual", True, 1, True),
-    "auto": GovernanceProfile("auto", False, 1, False),
-    "looping": GovernanceProfile("looping", False, 1, True),
-    "trial.local": GovernanceProfile("trial.local", False, 1, True),
-}
+def load_governance_profiles(path: Path | None = None) -> dict[str, GovernanceProfile]:
+    source = path or Path(__file__).resolve().parents[2] / "docs" / "superpowers" / "governance-profiles.yml"
+    data = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
+    profiles: dict[str, GovernanceProfile] = {}
+    for name, value in (data.get("profiles") or {}).items():
+        profiles[name] = GovernanceProfile(
+            name=name,
+            interactive=value.get("interactive") is True,
+            max_candidates_per_iteration=int(value.get("max_candidates_per_iteration", 0)),
+            requires_continuation=value.get("requires_continuation") is True,
+            completion_claims=tuple(value.get("completion_claims") or ()),
+        )
+    if not profiles:
+        raise PolicyError("governance profiles are missing")
+    return profiles
 
 
 def validate_governance(mode: str, authorization: Mapping[str, Any], *, noninteractive_trial: bool = False) -> GovernanceProfile:
-    profile = PROFILES.get(mode)
+    profile = load_governance_profiles().get(mode)
     if profile is None:
         raise PolicyError(f"unknown governance profile: {mode}")
     source = authorization.get("source")

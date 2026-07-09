@@ -144,15 +144,19 @@ class WorkflowRuntime:
         return self.receipt("block")
 
     def complete(self, claim: str) -> dict[str, Any]:
+        try:
+            from .workflow_completion import load_profiles, validate_completion_claim
+        except ImportError:
+            from workflow_completion import load_profiles, validate_completion_claim
+
         context = self._context()
         projection = replay_events(self.run_root / "events.jsonl")
+        profiles = load_profiles(self.plugin_root / "docs" / "superpowers" / "governance-profiles.yml")
+        profile = profiles.get(context["mode"])
+        if profile is None:
+            raise WorkflowRuntimeError(f"governance profile is missing: {context['mode']}")
+        validate_completion_claim(profile, claim, projection, self._authorization())
         candidate = projection.selected_candidate
-        if claim not in {"candidate", "route", "iteration"}:
-            raise WorkflowRuntimeError("Claim must be candidate, route, or iteration")
-        if not candidate or candidate not in projection.accepted_candidates or candidate not in projection.verified_candidates:
-            raise WorkflowRuntimeError("completion requires accepted and verified candidate evidence")
-        if context["mode"] == "looping" and claim == "iteration" and candidate not in projection.budget_rechecks:
-            raise WorkflowRuntimeError("Looping iteration completion requires a budget recheck")
         append_event(self.run_root, {"type": "run_completed", "claim": claim, "candidate": candidate})
         return self.receipt("complete", completion_claim=claim)
 
