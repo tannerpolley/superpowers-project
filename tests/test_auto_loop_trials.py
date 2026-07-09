@@ -17,6 +17,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.lib.workflow_policy import validate_governance
+
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = Path(__file__).resolve()
@@ -140,6 +142,7 @@ def _worker(config_path: Path) -> int:
     selected: list[str] = []
     continuation_checks = 0
     if config["mode"] == "auto":
+        validate_governance("auto", auth, noninteractive_trial=True)
         if auth["selected_authority"] != "bounded-auto-merge":
             raise RuntimeError("invalid Auto authority")
         if len(auth["candidate_scope"]) != 1:
@@ -148,6 +151,7 @@ def _worker(config_path: Path) -> int:
         _write_event(events, "candidate_selected", iteration=1, candidate=selected[-1])
         _write_event(events, "candidate_verified", iteration=1, candidate=selected[-1])
     elif config["mode"] == "loop":
+        validate_governance("looping", auth, noninteractive_trial=True)
         if auth["selected_mode"] != "looping":
             raise RuntimeError("invalid Loop mode")
         selected.append(candidates[0])
