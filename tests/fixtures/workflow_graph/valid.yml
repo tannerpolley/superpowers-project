@@ -1,0 +1,34 @@
+version: 2
+helpers:
+  advanced-user-input:
+    owns: native-continuation-policy
+workflow_skills:
+  alpha:
+    owner: alpha
+    entrypoint: true
+    purpose: Start a governed route.
+    artifacts: [docs]
+    validators: [scripts/validate.sh]
+    next_routes: [beta]
+    gates:
+      - question_id: alpha_next
+        gate_type: top_level_continuation
+        prompt: Continue?
+        options:
+          - {label: 'Yes', terminal_state: continue}
+          - {label: Revisit, terminal_state: revisit}
+          - {label: Stop, terminal_state: stop}
+  beta:
+    owner: beta
+    purpose: Finish a governed route.
+    artifacts: [docs]
+    validators: [scripts/validate.sh]
+    next_routes: [alpha]
+    gates:
+      - question_id: beta_done
+        gate_type: final_health
+        prompt: Done?
+        options:
+          - {label: Done, terminal_state: done}
+          - {label: Revisit, terminal_state: revisit}
+          - {label: Stop, terminal_state: stop}

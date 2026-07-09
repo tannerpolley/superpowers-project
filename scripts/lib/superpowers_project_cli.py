@@ -1970,39 +1970,26 @@ def command_apply_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> i
 
 
 def command_generate_outcome_workflow_summary(ctx: Context, args: dict[str, Any]) -> int:
+    from workflow_graph import load_workflow_graph, render_outcome_workflow, render_route_index, validate_workflow_graph
+
     root = project_root_for(ctx, args)
     output = project_path_for(root, str(arg_value(args, "OutputPath", default="docs/superpowers/OUTCOME_WORKFLOW.md")), "OutputPath")
+    index_output = project_path_for(root, str(arg_value(args, "RouteIndexPath", default="docs/superpowers/WORKFLOW_ROUTE_INDEX.md")), "RouteIndexPath")
     contract_path = root / "docs" / "superpowers" / "workflow-contract.yml"
-    if yaml is None:
-        raise ScriptError("python3 PyYAML is required")
-    contract = yaml.safe_load(read_text(contract_path)) or {}
-    skills = contract.get("workflow_skills", {})
-    lines = [
-        "# Superpowers Project Outcome Workflow",
-        "",
-        "> Generated from repo source by `scripts/generate-outcome-workflow-summary.sh`. Do not edit by hand.",
-        "",
-        "## Canonical Identity",
-        "",
-        "- Plugin manifest name: `superpowers-project`",
-        "- User-facing prompt namespace: `$superpowers-project:*`",
-        "",
-        "## Workflow Skills",
-        "",
-        "| Skill | Purpose | Validators | Final Health Gate |",
-        "|---|---|---|---|",
-    ]
-    for name, config in sorted(skills.items()):
-        validators = "<br>".join(f"`{value}`" for value in config.get("validators", [])) or "None"
-        final_gate = config.get("final_health_gate") or "None"
-        lines.append(f"| `{name}` | {config.get('purpose', '')} | {validators} | `{final_gate}` |")
-    lines.extend(["", "## Validation Commands", "", "- `./scripts/validate.sh`", "- `./scripts/sync-live.sh --validate`", "- `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`", ""])
-    generated = "\n".join(lines)
+    graph = load_workflow_graph(contract_path)
+    findings = validate_workflow_graph(graph, root)
+    if findings:
+        raise ScriptError("workflow graph is invalid: " + "; ".join(f"{item.code} at {item.path}" for item in findings))
+    generated = render_outcome_workflow(graph)
+    generated_index = render_route_index(graph)
     if has_switch(args, "Check"):
         current = read_text(output) if output.is_file() else ""
-        return emit({"ok": current == generated, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "stale": current != generated}, 0 if current == generated else 1)
+        current_index = read_text(index_output) if index_output.is_file() else ""
+        fresh = current == generated and current_index == generated_index
+        return emit({"ok": fresh, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "route_index_path": normalize_rel(index_output, root), "stale": not fresh}, 0 if fresh else 1)
     write_text(output, generated)
-    return emit({"ok": True, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "workflow_skill_count": len(skills)})
+    write_text(index_output, generated_index)
+    return emit({"ok": True, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "route_index_path": normalize_rel(index_output, root), "workflow_skill_count": len(graph.routes)})
 
 
 def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:

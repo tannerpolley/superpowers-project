@@ -1,9 +1,10 @@
-version: 1
+version: 2
 helpers:
   advanced-user-input:
     owns: native-continuation-policy
 workflow_skills:
   align-project:
+    owner: align-project
     purpose: Structure alignment, migration review, tracker alignment, live sync verification, and repair planning.
     question_ids:
     - project_align_final_health_gate
@@ -126,12 +127,12 @@ workflow_skills:
       - label: Gather More Evidence
         terminal_state: revisit
   audit-project:
+    owner: audit-project
     purpose: Evidence-backed code, workflow, test, skill, or repo behavior audit findings before repair planning.
     question_ids:
     - project_audit_next_step
     - project_audit_progress_route
     - project_audit_revisit_route
-    - project_auto_mode_authorization
     final_health_gate: null
     top_level_options:
     - 'Yes'
@@ -150,11 +151,6 @@ workflow_skills:
       - Review First
       - Gather More Evidence
       - Rerun Focused Audit
-    - question_id: project_auto_mode_authorization
-      parent_option: true
-      options:
-      - Bounded Auto Merge
-      - Manual Planning
     validators:
     - scripts/validate.sh
     artifacts:
@@ -196,16 +192,8 @@ workflow_skills:
         terminal_state: revisit
       - label: Rerun Focused Audit
         terminal_state: revisit
-    - question_id: project_auto_mode_authorization
-      gate_type: approval
-      prompt: Authorize bounded Auto Mode for this saved audit findings spec?
-      parent_option: true
-      options:
-      - label: Bounded Auto Merge
-        approval_effect: bounded-auto-merge
-      - label: Manual Planning
-        approval_effect: manual-planning
   brainstorm-spec:
+    owner: brainstorm-spec
     purpose: Repo-backed ideas, specs, PRDs, architecture concepts, and broad feature requests.
     question_ids:
     - project_brainstorm_multi_spec_route
@@ -304,6 +292,7 @@ workflow_skills:
       - label: Skip Visual Companion
         terminal_state: continue
   companion-interface:
+    owner: companion-interface
     purpose: Optional Agent-Native visual-plan or visual-recap review surface.
     question_ids: []
     final_health_gate: null
@@ -313,13 +302,14 @@ workflow_skills:
     - scripts/test-companion-interface.sh
     - scripts/test-agent-native-companion-preview.sh
     artifacts:
-    - plans
+    - docs/superpowers/plans
     next_routes:
     - brainstorm-spec
     - write-plan
     - merge-changes
     gates: []
   create-issues:
+    owner: create-issues
     purpose: Vertical-slice GitHub issues and synced local issue mirrors.
     question_ids:
     - project_issue_execution_route
@@ -514,6 +504,7 @@ workflow_skills:
       - label: Repair Issue Mirrors
         terminal_state: revisit
   implement-plan:
+    owner: implement-plan
     purpose: Approved non-issue implementation plan execution with branch-backed proof.
     question_ids:
     - implement_plan_push_permission
@@ -584,6 +575,11 @@ workflow_skills:
       - label: Review Evidence
         terminal_state: revisit
   initiate-workflow:
+    owner: initiate-workflow
+    entrypoint: true
+    external_parents:
+    - startup
+    - issue request
     purpose: Route setup, brainstorming, audits, planning, issue creation, issue resolution, orchestration, merge cleanup,
       and alignment checks.
     question_ids:
@@ -659,6 +655,7 @@ workflow_skills:
       - label: Review First
         terminal_state: revisit
   loop-controller:
+    owner: loop-controller
     purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation
       gates.
     question_ids:
@@ -711,6 +708,7 @@ workflow_skills:
       - label: Stop
         terminal_state: stop
   merge-changes:
+    owner: merge-changes
     purpose: Review, approve, merge, clean up, close linked issues, and record final proof for PR-ready or local branch work.
     question_ids:
     - project_merge_approval
@@ -863,6 +861,7 @@ workflow_skills:
       - label: Repair Or Cleanup
         terminal_state: revisit
   orchestrate-issues:
+    owner: orchestrate-issues
     purpose: Delegate a ready issue to a Codex worktree worker while the current thread reviews and integrates.
     question_ids:
     - project_orchestrate_integration_route
@@ -955,6 +954,7 @@ workflow_skills:
       - label: Reassign Work
         terminal_state: revisit
   resolve-issue:
+    owner: resolve-issue
     purpose: Direct current-thread implementation for one ready GitHub issue mirror.
     question_ids:
     - project_resolve_another_issue_route
@@ -1062,6 +1062,9 @@ workflow_skills:
       - label: Revise Or Fix Branch
         terminal_state: revisit
   setup-project:
+    owner: setup-project
+    external_parents:
+    - board setup
     purpose: Create or maintain setup, milestone map, tracker config, project board configuration, and roadmap artifacts.
     question_ids:
     - project_setup_board_approval
@@ -1102,6 +1105,7 @@ workflow_skills:
     gates:
     - question_id: project_setup_board_approval
       gate_type: approval
+      allow_terminal_options: true
       prompt: Create or verify the GitHub Project board now?
       parent_option: board setup
       options:
@@ -1151,6 +1155,7 @@ workflow_skills:
       - label: Create Issues
         terminal_state: continue
   write-plan:
+    owner: write-plan
     purpose: Turn approved specs or issue mirrors into detailed implementation plans.
     question_ids:
     - project_plan_issue_count
