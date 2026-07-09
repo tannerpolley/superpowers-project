@@ -16,11 +16,11 @@ cat > "$project/auth.json" <<'JSON'
 JSON
 before="$(find "$plugin_root" -type f -not -path '*/__pycache__/*' -printf '%P\n' | sort)"
 set +e
-bash "$plugin_root/scripts/test-workflow-mode-ledger.sh" -RepoRoot "$project" -ModeLedgerPath mode.json >/dev/null
+bash "$plugin_root/scripts/validate-workflow-mode-ledger.sh" -RepoRoot "$project" -ModeLedgerPath mode.json >/dev/null
 valid_status=$?
-(cd "$project" && bash "$plugin_root/scripts/test-workflow-mode-ledger.sh" -RepoRoot . -ModeLedgerPath mode.json >/dev/null)
+(cd "$project" && bash "$plugin_root/scripts/validate-workflow-mode-ledger.sh" -RepoRoot . -ModeLedgerPath mode.json >/dev/null)
 sibling_status=$?
-bash "$plugin_root/scripts/test-workflow-mode-ledger.sh" -RepoRoot "$project" -ModeLedgerPath ../outside >/dev/null 2>&1
+bash "$plugin_root/scripts/validate-workflow-mode-ledger.sh" -RepoRoot "$project" -ModeLedgerPath ../outside >/dev/null 2>&1
 status=$?
 set -e
 [[ $valid_status -eq 0 ]]
@@ -29,7 +29,7 @@ set -e
 bash "$plugin_root/scripts/validate-auto-mode-authorization.sh" -RepoRoot "$project" -AuthorizationPath auth.json >/dev/null
 (cd "$project" && bash "$plugin_root/scripts/validate-auto-mode-authorization.sh" -RepoRoot . -AuthorizationPath auth.json >/dev/null)
 set +e
-reason=$(bash "$plugin_root/scripts/test-workflow-mode-ledger.sh" -RepoRoot "$project" -ModeLedgerPath ../outside 2>&1)
+reason=$(bash "$plugin_root/scripts/validate-workflow-mode-ledger.sh" -RepoRoot "$project" -ModeLedgerPath ../outside 2>&1)
 reason2=$(bash "$plugin_root/scripts/validate-auto-mode-authorization.sh" -RepoRoot "$project" -AuthorizationPath ../outside 2>&1)
 set -e
 [[ "$reason" == *"outside project root"* ]]

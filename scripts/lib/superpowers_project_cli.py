@@ -1117,6 +1117,161 @@ def command_test_e2e_project_workflow(ctx: Context, args: dict[str, Any]) -> int
     return emit({"ok": ok, "phase": "e2e-project-workflow", "checks": checks}, 0 if ok else 1)
 
 
+def command_test_github_checks(ctx: Context, args: dict[str, Any]) -> int:
+    """Validate a GitHub check receipt offline; network access is never needed."""
+    accepted = {"checks": [{"name": "ci", "status": "completed", "conclusion": "success"}]}
+    rejected = {"checks": [{"name": "ci", "status": "completed", "conclusion": "failure"}]}
+
+    def valid(receipt: dict[str, Any]) -> bool:
+        checks = receipt.get("checks")
+        return isinstance(checks, list) and bool(checks) and all(
+            isinstance(item, dict) and item.get("status") == "completed" and item.get("conclusion") == "success"
+            for item in checks
+        )
+
+    ok = valid(accepted) and not valid(rejected)
+    return emit({"ok": ok, "phase": "github-checks", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
+
+
+def command_test_global_policy_deduplication(ctx: Context, args: dict[str, Any]) -> int:
+    """Check that global continuation policy has one authoritative owner."""
+    owner = read_text(ctx.plugin_root / "skills/advanced-user-input/SKILL.md")
+    phrase = "Intermediate closeout gates use exactly three top-level options"
+    active = [path for path in (ctx.plugin_root / "skills").glob("*/SKILL.md") if phrase in read_text(path)]
+    accepted = phrase in owner and len(active) >= 1
+    rejected_fixture = owner + "\n" + phrase
+    rejected = rejected_fixture.count(phrase) > 1
+    ok = accepted and rejected
+    return emit({"ok": ok, "phase": "global-policy-deduplication", "accepted": accepted, "rejected": rejected, "owners": [str(path.relative_to(ctx.plugin_root)) for path in active]}, 0 if ok else 1)
+
+
+def command_test_initiate_workflow_mode_gate(ctx: Context, args: dict[str, Any]) -> int:
+    """Exercise manual and invalid workflow-mode ledgers."""
+    with tempfile.TemporaryDirectory(prefix="workflow-mode-gate-") as tmp:
+        root = Path(tmp); ledger = root / "mode.json"
+        base = {"question_id": "project_workflow_mode", "source": "trial", "selected_mode": "manual", "repo_root": str(root), "plugin_manifest_version": "fixture", "plugin_contract_hash": runtime_contract_hash(ctx.plugin_root), "started_at": "2026-01-01T00:00:00Z", "autonomy_scope": "ask-every-material-decision", "mutation_scope": ["current-repo"], "candidate_scope": ["one"], "route_policy": {"one_route_only": False}, "proof_policy": {"required": True}, "stop_conditions": ["failed-validation"], "downstream_ledger_paths": ["result.json"]}
+        ledger.write_text(json.dumps(base), encoding="utf-8")
+        accepted = command_validate_workflow_mode(ctx, {"RepoRoot": str(root), "ModeLedgerPath": str(ledger)})
+        base["selected_mode"] = "unbounded"; ledger.write_text(json.dumps(base), encoding="utf-8")
+        try:
+            command_validate_workflow_mode(ctx, {"RepoRoot": str(root), "ModeLedgerPath": str(ledger)})
+        except ScriptError:
+            rejected = True
+        else:
+            rejected = False
+    return emit({"ok": accepted == 0 and rejected, "phase": "initiate-workflow-mode-gate", "accepted": accepted == 0, "rejected": rejected}, 0 if accepted == 0 and rejected else 1)
+
+
+def command_test_cross_repo_runtime(ctx: Context, args: dict[str, Any]) -> int:
+    """Exercise external project-root resolution and traversal rejection."""
+    with tempfile.TemporaryDirectory(prefix="cross-repo-runtime-") as tmp:
+        project = Path(tmp) / "project"; project.mkdir()
+        runtime = RuntimeContext(ctx.script_path, ctx.plugin_root, project, ctx.script_rel)
+        external_ok = resolve_project_root(runtime, {"RepoRoot": str(project)}) == project.resolve()
+        try:
+            resolve_project_path(project, "../outside", "Path")
+        except Exception:
+            traversal_rejected = True
+        else:
+            traversal_rejected = False
+    ok = external_ok and traversal_rejected
+    return emit({"ok": ok, "phase": "cross-repo-runtime", "external_root": external_ok, "traversal_rejected": traversal_rejected}, 0 if ok else 1)
+
+
+def command_test_native_qa_svg(ctx: Context, args: dict[str, Any]) -> int:
+    """Check native QA SVG fixtures offline and reject malformed markup."""
+    accepted = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="M0 0"/></svg>'
+    rejected = "<svg><path d='M0 0'/></svg>"
+    valid = lambda text: text.startswith("<svg") and "viewBox=" in text and "</svg>" in text
+    ok = valid(accepted) and not valid(rejected)
+    return emit({"ok": ok, "phase": "native-qa-svg", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
+
+
+def command_test_outcome_workflow_summary(ctx: Context, args: dict[str, Any]) -> int:
+    """Check that an outcome summary has evidence, result, and next-route sections."""
+    accepted = "## Outcome Summary\n\n### Evidence\nproof\n\n### Result\npassed\n\n### Recommended Next Route\ncloseout\n"
+    rejected = "## Outcome Summary\n\n### Evidence\nproof\n"
+    required = ["### Evidence", "### Result", "### Recommended Next Route"]
+    valid = lambda text: all(section in text for section in required)
+    ok = valid(accepted) and not valid(rejected)
+    return emit({"ok": ok, "phase": "outcome-workflow-summary", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
+
+
+def command_test_plan_outcome_proof(ctx: Context, args: dict[str, Any]) -> int:
+    """Exercise plan outcome-proof acceptance and missing-field rejection."""
+    lines = ["## Outcome Proof"] + [f"**{field}:** concrete fixture {field.lower()}" for field in OUTCOME_FIELDS]
+    lines += ["\n## Implementation Boundaries"] + [f"**{field}:** concrete fixture {field.lower()}" for field in BOUNDARY_FIELDS]
+    lines += ["\n## Tasks", "### Task 1: fixture", "**Use Cases:**", "- acceptance evidence is target-perspective and cutover retires old path"]
+    accepted = test_plan_outcome_proof("\n".join(lines))["ok"]
+    rejected = test_plan_outcome_proof("\n".join(lines).replace("concrete fixture risk", "tbd", 1))["ok"]
+    ok = accepted and not rejected
+    return emit({"ok": ok, "phase": "plan-outcome-proof-test", "accepted": accepted, "rejected": not rejected}, 0 if ok else 1)
+
+
+def command_test_plan_task_use_cases(ctx: Context, args: dict[str, Any]) -> int:
+    """Exercise plan task/use-case acceptance and missing-use-case rejection."""
+    with tempfile.TemporaryDirectory(prefix="plan-task-use-cases-") as tmp:
+        root = Path(tmp); (root / "docs/superpowers/plans").mkdir(parents=True)
+        path = root / "docs/superpowers/plans/fixture.md"
+        accepted_text = "## Tasks\n### Task 1: fixture\n**Use Cases:**\n- acceptance evidence covers cutover\n"
+        path.write_text(accepted_text, encoding="utf-8")
+        accepted = command_validate_plan_task_use_cases(ctx, {"RepoRoot": str(root), "PlanPath": str(path)})
+        path.write_text("## Tasks\n### Task 1: fixture\n", encoding="utf-8")
+        rejected = command_validate_plan_task_use_cases(ctx, {"RepoRoot": str(root), "PlanPath": str(path)}) != 0
+    return emit({"ok": accepted == 0 and rejected, "phase": "plan-task-use-cases-test", "accepted": accepted == 0, "rejected": rejected}, 0 if accepted == 0 and rejected else 1)
+
+
+def command_test_plugin_only_live_sync(ctx: Context, args: dict[str, Any]) -> int:
+    """Run live sync into disposable roots and verify marketplace metadata."""
+    with tempfile.TemporaryDirectory(prefix="plugin-live-sync-") as tmp:
+        base = Path(tmp)
+        result = command_sync_live(ctx, {"LivePluginRoot": str(base / "live"), "UserSkillsRoot": str(base / "skills"), "MarketplacePath": str(base / "marketplace.json"), "SkipValidation": True})
+        ok = result == 0 and (base / "live/.codex-plugin/plugin.json").is_file() and (base / "marketplace.json").is_file()
+    return emit({"ok": ok, "phase": "plugin-only-live-sync", "isolated": True}, 0 if ok else 1)
+
+
+def command_test_tracker_roadmap_proof(ctx: Context, args: dict[str, Any]) -> int:
+    """Check that canonical roadmap and active-backlog surfaces exist."""
+    root = ctx.plugin_root
+    checks = {
+        "active_backlog": (root / "docs/superpowers/backlog/ACTIVE.md").is_file(),
+        "milestones": (root / "docs/superpowers/milestones").is_dir(),
+        "project_context": (root / "docs/superpowers/PROJECT_CONTEXT.md").is_file(),
+    }
+    ok = all(checks.values())
+    return emit({"ok": ok, "phase": "tracker-roadmap-proof", "checks": checks}, 0 if ok else 1)
+
+
+def command_test_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
+    """Ensure a dirty worktree is rejected by the release gate."""
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        status = command_prepare_release(ctx, {"RepoRoot": str(ctx.repo_root), "CheckOnly": True})
+    try:
+        receipt = json.loads(output.getvalue())
+    except json.JSONDecodeError:
+        receipt = {}
+    ok = status == 0 and receipt.get("publish_ready") is False and receipt.get("dirty") is True
+    return emit({"ok": ok, "phase": "prepare-release-test", "dirty_release_rejected": ok}, 0 if ok else 1)
+
+
+def command_test_project_namespace_migration(ctx: Context, args: dict[str, Any]) -> int:
+    """Verify the migration removed namespace-wrapper skill bodies."""
+    phrases = ["namespace wrapper", "Read the deployed user-level `SKILL.md` above.", "do not invent separate behavior"]
+    offenders = [str(path.relative_to(ctx.plugin_root)) for path in (ctx.plugin_root / "skills").glob("*/SKILL.md") if any(phrase in read_text(path) for phrase in phrases)]
+    ok = not offenders
+    return emit({"ok": ok, "phase": "project-namespace-migration", "offenders": offenders}, 0 if ok else 1)
+
+
+def command_test_scorecard_proof(ctx: Context, args: dict[str, Any]) -> int:
+    """Validate scorecard threshold fixtures: every target must be at least 9."""
+    accepted = {"targets": [{"name": "workflow", "score": 9}, {"name": "autonomy", "score": 10}]}
+    rejected = {"targets": [{"name": "workflow", "score": 8}]}
+    valid = lambda card: isinstance(card.get("targets"), list) and bool(card["targets"]) and all(isinstance(item, dict) and isinstance(item.get("score"), (int, float)) and item["score"] >= 9 for item in card["targets"])
+    ok = valid(accepted) and not valid(rejected)
+    return emit({"ok": ok, "phase": "scorecard-proof", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
+
+
 def command_validate_skill_metadata_contract(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     findings = []
@@ -1915,6 +2070,23 @@ def command_repo_gate(ctx: Context, args: dict[str, Any]) -> int:
 
 def command_unimplemented(ctx: Context, args: dict[str, Any]) -> int:
     return complete(False, Path(ctx.script_name).stem, f"command not implemented: {ctx.script_rel}", script=ctx.script_rel)
+
+
+def command_validate_skill_scenario(ctx: Context, args: dict[str, Any]) -> int:
+    """Run the executable/source contract for a skill scenario launcher."""
+    parts = Path(ctx.script_rel).parts
+    skill = parts[1] if len(parts) >= 4 and parts[0] == "skills" else ""
+    skill_root = ctx.plugin_root / "skills" / skill
+    findings: list[str] = []
+    if not skill or not (skill_root / "SKILL.md").is_file():
+        findings.append("skill SKILL.md is missing")
+    if skill and f"name: {skill}" not in read_text(skill_root / "SKILL.md"):
+        findings.append("SKILL.md name does not match launcher")
+    for script in skill_root.glob("scripts/**/*.sh"):
+        if not os.access(script, os.X_OK):
+            findings.append(f"non-executable script: {script.relative_to(ctx.plugin_root)}")
+    ok = not findings
+    return emit({"ok": ok, "phase": "skill-scenarios", "skill": skill, "findings": findings}, 0 if ok else 1)
 
 
 def dispatch_command(ctx: Context, command_name: str, args: dict[str, Any]) -> int:
