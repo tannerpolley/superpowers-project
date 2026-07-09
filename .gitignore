@@ -10,4 +10,5 @@ node_modules/
 .idea/
 .chatgpt/
 .superpowers/
+.worktrees/
 plans/**/preview.html
