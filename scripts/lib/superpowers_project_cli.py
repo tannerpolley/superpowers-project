@@ -526,6 +526,22 @@ def command_validate_decision_ledger(ctx: Context, args: dict[str, Any]) -> int:
     return complete(True, "decision-ledger", "decision ledger passed", path=rel, rows=rows)
 
 
+def command_test_decision_ledger(ctx: Context, args: dict[str, Any]) -> int:
+    """Exercise accepted and rejected decision-ledger fixtures."""
+    with tempfile.TemporaryDirectory(prefix="decision-ledger-") as tmp:
+        root = Path(tmp); (root / "docs/superpowers/specs").mkdir(parents=True)
+        path = root / "docs/superpowers/specs/fixture.md"
+        table = "## Decision Ledger\n\n| decision | source | answer | impact | deferred? | risk owner |\n|---|---|---|---|---|---|\n| route | user | continue | bounded | no | maintainer |\n"
+        path.write_text(table, encoding="utf-8")
+        accepted = command_validate_decision_ledger(ctx, {"RepoRoot": str(root), "Path": str(path), "Kind": "spec"})
+        path.write_text("## Decision Ledger\n\n| decision | source | answer | impact | deferred? | risk owner |\n|---|---|---|---|---|---|\n| route | TODO | continue | bounded | no | maintainer |\n", encoding="utf-8")
+        try:
+            rejected = command_validate_decision_ledger(ctx, {"RepoRoot": str(root), "Path": str(path), "Kind": "spec"})
+        except ScriptError:
+            rejected = 1
+    return emit({"ok": accepted == 0 and rejected != 0, "phase": "decision-ledger-test", "accepted": accepted == 0, "rejected": rejected != 0}, 0 if accepted == 0 and rejected != 0 else 1)
+
+
 def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     try:
