@@ -13,6 +13,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from superpowers_project_command_registry import build_command_registry, resolve_command
 
 try:
     import yaml
@@ -1576,14 +1577,6 @@ def stale_scan(root: Path) -> None:
         raise ScriptError("unexpected stale references: " + ", ".join(sorted(set(offenders))))
 
 
-def command_generic_test(ctx: Context, args: dict[str, Any]) -> int:
-    return emit({"ok": True, "phase": Path(ctx.script_name).stem, "script": ctx.script_rel, "reason": "bash migration smoke test passed"})
-
-
-def command_generic_validate(ctx: Context, args: dict[str, Any]) -> int:
-    return emit({"ok": True, "phase": Path(ctx.script_name).stem, "script": ctx.script_rel, "reason": "generic validator passed"})
-
-
 def command_align_project(ctx: Context, args: dict[str, Any]) -> int:
     root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
     mode = str(arg_value(args, "Mode", default="LocalDocs"))
@@ -1651,103 +1644,24 @@ def command_repo_gate(ctx: Context, args: dict[str, Any]) -> int:
     status = run(["git", "status", "--short"], ctx.repo_root)
     return emit({"ok": status.returncode == 0, "phase": "repo-gate", "dirty_status": status.stdout.strip()})
 
+def command_unimplemented(ctx: Context, args: dict[str, Any]) -> int:
+    return complete(False, Path(ctx.script_name).stem, f"command not implemented: {ctx.script_rel}", script=ctx.script_rel)
+
+
+def dispatch_command(ctx: Context, command_name: str, args: dict[str, Any]) -> int:
+    handler = globals().get(command_name)
+    if not callable(handler):
+        raise ScriptError(f"unregistered command handler: {command_name}")
+    return handler(ctx, args)
+
 
 def dispatch(ctx: Context) -> int:
     args = parse_ps_args(ctx.args)
-    name = ctx.script_name
-    rel = ctx.script_rel
     try:
-        if name == "validate.sh":
-            return command_validate(ctx, args)
-        if name == "sync-live.sh":
-            return command_sync_live(ctx, args)
-        if name == "install.sh":
-            return command_install(ctx, args)
-        if name == "prepare-release.sh":
-            return command_prepare_release(ctx, args)
-        if name == "get-agent-plugin-version.sh":
-            return command_get_agent_plugin_version(ctx, args)
-        if name == "validate-plan-task-use-cases.sh":
-            return command_validate_plan_task_use_cases(ctx, args)
-        if name == "validate-plan-outcome-proof.sh":
-            return command_validate_plan_outcome_proof(ctx, args)
-        if name == "validate-decision-ledger.sh":
-            return command_validate_decision_ledger(ctx, args)
-        if name == "validate-auto-mode-authorization.sh":
-            return command_validate_auto_mode(ctx, args)
-        if name == "validate-workflow-mode-ledger.sh":
-            return command_validate_workflow_mode(ctx, args)
-        if name == "validate-active-backlog.sh":
-            return command_validate_active_backlog(ctx, args)
-        if name == "validate-flat-artifact-roots.sh":
-            return command_validate_flat_roots(ctx, args)
-        if name == "validate-generated-state.sh":
-            return command_validate_generated_state(ctx, args)
-        if name == "validate-skill-script-contract.sh":
-            return command_validate_skill_script_contract(ctx, args)
-        if name == "validate-skill-metadata-contract.sh":
-            return command_validate_skill_metadata_contract(ctx, args)
-        if name == "validate-workflow-contract.sh":
-            return command_validate_workflow_contract(ctx, args)
-        if name == "validate-worker-packets.sh":
-            return command_validate_worker_packets(ctx, args)
-        if name == "validate-workflow-examples.sh":
-            return command_validate_workflow_examples(ctx, args)
-        if name == "validate-budget.sh":
-            return command_loop_budget(ctx, args)
-        if name == "validate-run-ledger.sh":
-            return command_loop_run_ledger(ctx, args)
-        if name == "validate-verifier-ledger.sh":
-            return command_loop_verifier(ctx, args)
-        if name == "validate-loop-state-machine.sh":
-            return command_loop_state_machine(ctx, args)
-        if name == "validate-terminal-closeout.sh" and "loop-controller" in rel:
-            return command_loop_terminal_closeout(ctx, args)
-        if name == "write-metrics-report.sh":
-            return command_write_metrics(ctx, args)
-        if name == "derive-worker-identity.sh":
-            return command_derive_worker_identity(ctx, args)
-        if name == "prepare-worker-handoff.sh":
-            return command_prepare_worker_handoff(ctx, args)
-        if name == "validate-worker-handoff.sh":
-            return command_validate_worker_handoff(ctx, args)
-        if name == "validate-issue-mirror.sh":
-            return command_validate_issue_mirror(ctx, args)
-        if name == "collect-continuation-ledger.sh":
-            phase = "merge-continuation-ledger" if "merge-changes" in rel else "resolve-continuation-ledger"
-            return command_collect_continuation(ctx, args, phase)
-        if name == "validate-terminal-closeout.sh":
-            phase = "merge-terminal-closeout" if "merge-changes" in rel else "resolve-terminal-closeout"
-            return command_validate_terminal_closeout(ctx, args, phase)
-        if name == "collect-pr-ready-ledger.sh":
-            return command_collect_pr_ready(ctx, args)
-        if name == "validate-pr-ready.sh":
-            return command_validate_pr_ready(ctx, args)
-        if name == "align-project.sh":
-            return command_align_project(ctx, args)
-        if name == "select-candidate.sh":
-            return command_select_candidate(ctx, args)
-        if name == "collect-premerge-ledger.sh":
-            return command_collect_premerge(ctx, args)
-        if name == "collect-closeout-ledger.sh":
-            return command_collect_closeout(ctx, args)
-        if name == "premerge.sh":
-            return command_premerge(ctx, args)
-        if name == "closeout.sh":
-            return command_closeout(ctx, args)
-        if name == "validate-merge-decision.sh":
-            return command_validate_merge_decision(ctx, args)
-        if name == "prepare-execution.sh":
-            return command_prepare_execution(ctx, args)
-        if name == "repo-gate.sh" or name == "preflight.sh" or name == "validate-setup.sh":
-            return command_repo_gate(ctx, args)
-        if name.startswith("test-") or name == "test-scenarios.sh":
-            return command_generic_test(ctx, args)
-        if name.startswith("validate-") or name.startswith("detect-") or name.startswith("generate-") or name.startswith("build-") or name.startswith("hydrate-") or name.startswith("prepare-") or name.startswith("apply-"):
-            return command_generic_validate(ctx, args)
-        return command_generic_validate(ctx, args)
+        build_command_registry(ctx.repo_root)
+        return dispatch_command(ctx, resolve_command(ctx.script_rel), args)
     except Exception as exc:
-        return complete(False, Path(name).stem, str(exc))
+        return complete(False, Path(ctx.script_name).stem, str(exc), script=ctx.script_rel)
 
 
 def main(argv: list[str]) -> int:
