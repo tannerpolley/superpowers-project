@@ -17,6 +17,8 @@ Before creating a release tag:
 
 `scripts/prepare-release.sh` creates a release receipt. The receipt is evidence only: it does not publish, tag, push, sync live copies, or approve mutation. A release receipt records:
 
+Package installation is validated through the supported Codex marketplace/plugin CLI in an isolated home. Direct mutation of Codex cache directories is not a supported release operation. Release evidence must include the package provenance manifest and contract hash, plus a clean-worktree receipt.
+
 - plugin manifest name and version;
 - release base version after removing local build metadata;
 - source branch and commit;

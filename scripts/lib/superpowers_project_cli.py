@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from superpowers_project_command_registry import build_command_registry, resolve_command
 from superpowers_project_context import RuntimeContext, resolve_project_root, resolve_project_path
+from package_provenance import runtime_contract_hash as package_contract_hash, runtime_manifest, verify_runtime_provenance
 
 try:
     import yaml
@@ -588,6 +589,10 @@ def command_validate_workflow_mode(ctx: Context, args: dict[str, Any]) -> int:
     if not path.is_file():
         raise ScriptError(f"mode ledger not found: {ledger_arg}")
     ledger = json.loads(read_text(path))
+    if ledger.get("manifest") is not None:
+        verify_runtime_provenance(ledger, runtime.plugin_root, root)
+    elif ledger.get("provenance_required") is True and ledger.get("plugin_contract_hash") != runtime_contract_hash(runtime.plugin_root):
+        raise ScriptError("plugin_contract_hash does not match installed plugin")
     required = [
         "question_id",
         "source",
@@ -1257,11 +1262,7 @@ def command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def runtime_contract_hash(root: Path) -> str:
-    entries: list[str] = []
-    for rel in [".codex-plugin/plugin.json", "skills", "assets", "scripts/lib", "scripts/get-agent-plugin-version.sh", "scripts/validate-auto-mode-authorization.sh", "scripts/validate-plan-task-use-cases.sh"]:
-        path = root / rel
-        entries.extend(tree_hash_entries(path))
-    return hashlib.sha256("\n".join(sorted(entries)).encode("utf-8")).hexdigest()
+    return package_contract_hash(root)
 
 
 def plugin_manifest(root: Path) -> dict[str, Any] | None:
@@ -1290,7 +1291,6 @@ def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     home = Path.home()
     live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(home / ".codex" / "plugins" / "superpowers-project")))).expanduser()
-    cache_root = Path(str(arg_value(args, "CacheRoot", default=str(home / ".codex" / "plugins" / "cache")))).expanduser()
     manifest = plugin_manifest(root)
     if manifest is None:
         raise ScriptError("source plugin manifest is missing")
@@ -1324,19 +1324,6 @@ def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
         if observed_root is None:
             raise ScriptError(f"could not resolve plugin root from observed skill root: {observed_skill}")
     observed = version_surface("observed", observed_root, source_hash) if observed_root else None
-    cache_candidates = []
-    if cache_root.is_dir():
-        for manifest_path in cache_root.rglob("plugin.json"):
-            if ".codex-plugin" not in manifest_path.parts:
-                continue
-            try:
-                candidate_root = manifest_path.parent.parent
-                candidate_manifest = json.loads(read_text(manifest_path))
-                rel = normalize_rel(candidate_root, cache_root)
-                if candidate_manifest.get("name") == manifest.get("name") or re.search(r"(^|/)tanner-local/(project|superpowers-project)/", rel):
-                    cache_candidates.append(version_surface("cache", candidate_root, source_hash))
-            except Exception:
-                continue
     failures = []
     if not live.get("matches_source"):
         failures.append("live plugin differs from source")
@@ -1352,10 +1339,8 @@ def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
         "source": source,
         "live": live,
         "observed": observed,
-        "cache_candidates": cache_candidates,
-        "stale_cache_candidate_count": len([c for c in cache_candidates if not c.get("matches_source")]),
         "current_agent_known": observed is not None,
-        "recommended_recovery": "Run scripts/sync-live.sh --validate from source to refresh live install and matching local plugin cache roots. If the observed surface still differs, start a fresh agent session so it reloads the plugin cache.",
+        "recommended_recovery": "Install or update through the supported Codex marketplace/plugin CLI, then start a fresh agent session if the observed surface differs.",
     }
     if has_switch(args, "Banner"):
         print("\n".join([
@@ -1366,7 +1351,6 @@ def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
             f"contract_hash: {source['contract_hash']}",
             f"source/live: {'current' if live.get('matches_source') else 'stale'}",
             f"observed: {'not supplied' if observed is None else ('current' if observed.get('matches_source') else 'stale')}",
-            f"cache_candidates: {len(cache_candidates)} total, {report['stale_cache_candidate_count']} stale",
             f"reason: {report['reason']}",
         ]))
         return 0 if ok else 1
@@ -1385,7 +1369,6 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(home / ".codex" / "plugins" / "superpowers-project")))).expanduser()
     user_skills = Path(str(arg_value(args, "UserSkillsRoot", default=str(home / ".agents" / "skills")))).expanduser()
     marketplace = Path(str(arg_value(args, "MarketplacePath", default=str(home / ".agents" / "plugins" / "marketplace.json")))).expanduser()
-    cache_root = Path(str(arg_value(args, "CacheRoot", default=str(home / ".codex" / "plugins" / "cache")))).expanduser()
     if has_switch(args, "Validate", "validate"):
         result = run(["bash", str(root / "scripts" / "validate.sh")], root)
         print(result.stdout, end="")
@@ -1413,25 +1396,8 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     plugins.append({"name": "superpowers-project", "source": {"source": "local", "path": ".codex/plugins/superpowers-project"}, "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}, "category": "Productivity"})
     data["plugins"] = plugins
     write_text(marketplace, json.dumps(data, indent=2))
-    refreshed = []
-    if not has_switch(args, "SkipCacheRefresh") and cache_root.is_dir():
-        manifest = plugin_manifest(root) or {}
-        for manifest_path in cache_root.rglob("plugin.json"):
-            if ".codex-plugin" not in manifest_path.parts:
-                continue
-            try:
-                candidate = json.loads(read_text(manifest_path))
-                candidate_root = manifest_path.parent.parent
-                rel = normalize_rel(candidate_root, cache_root)
-                if candidate.get("name") == manifest.get("name") or re.search(r"(^|/)tanner-local/(project|superpowers-project)/", rel):
-                    for folder in [".codex-plugin", "skills", "assets", "scripts"]:
-                        source = root / folder
-                        target = candidate_root / folder
-                        if source.exists():
-                            copy_tree(source, target)
-                    refreshed.append({"path": str(candidate_root)})
-            except Exception:
-                continue
+    # Installed package discovery and updates are owned by the supported
+    # marketplace/plugin CLI. Never mutate Codex cache candidates directly.
     drift = compare_trees(root / "skills", live_root / "skills")
     if drift:
         raise ScriptError(f"live install drift detected: {json.dumps(drift)}")
@@ -1441,13 +1407,15 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         "live_plugin_root": str(live_root),
         "user_skills_root": str(user_skills),
         "marketplace": {"marketplace_path": str(marketplace), "plugin_name": "superpowers-project", "source_path": ".codex/plugins/superpowers-project"},
-        "refreshed_cache_plugin_roots": refreshed,
         "deployed_plugin_skills": sorted(active_skill_names(root)),
         "deployed_user_skills": sorted(USER_SKILLS),
     })
 
 
 def command_install(ctx: Context, args: dict[str, Any]) -> int:
+    manifest = plugin_manifest(ctx.repo_root)
+    if not manifest or manifest.get("name") != "superpowers-project":
+        raise ScriptError("plugin manifest name must be superpowers-project")
     sync_args = dict(args)
     if not has_switch(args, "SkipValidation"):
         sync_args["Validate"] = True

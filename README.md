@@ -190,13 +190,13 @@ Use the JSON version tracker when an agent needs machine-readable proof of the e
 <Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -RequireCurrent
 ```
 
-The checker reports the manifest version, source commit, and runtime `contract_hash` for source, live install, local cache candidates, and an optional observed plugin or skill root. If an agent has an observed skill root from its loaded context, pass it explicitly:
+The checker reports the manifest version, source commit, and runtime `contract_hash` for source, live install, and an optional observed plugin or skill root. If an agent has an observed skill root from its loaded context, pass it explicitly:
 
 ```bash
 <Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
 ```
 
-If source and live are current but the observed surface differs, run validated live sync. Live sync refreshes the live user install and matching local plugin cache roots that already exist, so existing threads can see updated files when they re-read plugin skill bodies. It cannot rewrite prompt text already loaded into an agent context; if the observed surface still differs after sync, start a fresh agent session.
+If source and live are current but the observed surface differs, install or update through the supported Codex marketplace/plugin CLI, then start a fresh agent session. Sync does not mutate Codex cache directories or already-loaded prompt text.
 
 ## CI And Releases
 
@@ -222,7 +222,7 @@ It also deploys only the shared helper skill to:
 
 - `/home/tnnrpolley21/.agents/skills/advanced-user-input`
 
-By default, the same command also refreshes matching existing local plugin cache candidates for this plugin. Use `-SkipCacheRefresh` only when intentionally validating the live install without updating already-materialized cache copies.
+The command updates only the explicit live install and marketplace source metadata. Installed package discovery and updates are owned by the supported Codex marketplace/plugin CLI.
 
 ## Install
 
