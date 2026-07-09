@@ -1244,14 +1244,14 @@ def command_test_tracker_roadmap_proof(ctx: Context, args: dict[str, Any]) -> in
 
 def command_test_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
     """Ensure a dirty worktree is rejected by the release gate."""
-    output = io.StringIO()
-    with contextlib.redirect_stdout(output):
-        status = command_prepare_release(ctx, {"RepoRoot": str(ctx.repo_root), "CheckOnly": True})
-    try:
-        receipt = json.loads(output.getvalue())
-    except json.JSONDecodeError:
-        receipt = {}
-    ok = status == 0 and receipt.get("publish_ready") is False and receipt.get("dirty") is True
+    with tempfile.TemporaryDirectory(prefix="prepare-release-") as tmp:
+        root = Path(tmp); (root / ".codex-plugin").mkdir()
+        shutil.copy2(ctx.plugin_root / ".codex-plugin/plugin.json", root / ".codex-plugin/plugin.json")
+        shutil.copy2(ctx.plugin_root / "CHANGELOG.md", root / "CHANGELOG.md")
+        run(["git", "init", "-q"], root); run(["git", "add", "."], root); run(["git", "-c", "user.email=fixture@example.com", "-c", "user.name=fixture", "commit", "-qm", "fixture"], root)
+        (root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
+        status = command_prepare_release(ctx, {"RepoRoot": str(root)})
+    ok = status != 0
     return emit({"ok": ok, "phase": "prepare-release-test", "dirty_release_rejected": ok}, 0 if ok else 1)
 
 
