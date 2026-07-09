@@ -15,6 +15,23 @@ This repository is the canonical source of truth for the local Superpowers Proje
 - Roadmap milestone pages belong under `docs/superpowers/milestones/`.
 - Do not create canonical artifacts under `docs/ideas`, root-level `docs/issues`, root-level `docs/plans`, or retired `docs/milestones/<milestone-folder>/ideas|issues|plans`.
 
+## Required Post-Revision Loop
+
+Changes under `.codex-plugin/`, `skills/`, `assets/`, `scripts/`, or `docs/superpowers/` change the installable plugin surface. Before reporting such a revision complete, future agents must complete this sequence in order:
+
+1. Run `./scripts/validate.sh`.
+2. Commit the intended source changes. If commit authorization is absent, request it and stop before live deployment.
+3. Run `./scripts/sync-live.sh --validate`.
+4. Run `codex plugin add superpowers-project@personal --json` to install or refresh the supported marketplace snapshot.
+5. Run `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`.
+6. Run `bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .`.
+7. Confirm `git status --short --branch` shows the expected clean branch state.
+8. Tell the user to start a fresh Codex session so the updated prompt and skill text load.
+
+Report every skipped or failed gate. Validation-only and sync-only sequences do not complete an installable-surface revision. Never edit deployed copies or plugin cache files to bypass this loop.
+
+Changes outside the listed installable paths require proportionate validation and cleanup, but do not require live sync or plugin refresh unless they alter runtime behavior.
+
 ## Validation
 
 Before reporting repo changes complete, run:

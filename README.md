@@ -224,6 +224,27 @@ It also deploys only the shared helper skill to:
 
 The command updates only the explicit live install and marketplace source metadata. Installed package discovery and updates are owned by the supported Codex marketplace/plugin CLI.
 
+## Revision And Refresh Loop
+
+Use this loop after changing `.codex-plugin/`, `skills/`, `assets/`, `scripts/`, or `docs/superpowers/`. Validation or live sync alone does not finish an installable-surface revision.
+
+```bash
+./scripts/validate.sh
+git status --short
+# Stage only the reviewed revision files, then create a focused commit.
+./scripts/sync-live.sh --validate
+codex plugin add superpowers-project@personal --json
+./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
+git status --short --branch
+```
+
+Commit the reviewed source changes before running live sync. If commit authorization is absent, stop and request it instead of deploying a dirty source state. Push only when the user authorizes it.
+
+`codex plugin add` may be rerun after later revisions to refresh the installed marketplace snapshot. After refresh, start a fresh Codex session so Codex loads the updated prompt and skill text. For a named release, also update `.codex-plugin/plugin.json` and `CHANGELOG.md` according to the release policy.
+
+Changes outside the listed installable paths still require proportionate validation and cleanup. They do not require live sync or plugin refresh unless they alter runtime behavior.
+
 ## Install
 
 From a local clone:
