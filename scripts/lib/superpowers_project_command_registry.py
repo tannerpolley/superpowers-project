@@ -57,6 +57,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/test-workflow-contract.sh': 'command_unimplemented',
     'scripts/test-workflow-examples.sh': 'command_unimplemented',
     'scripts/test-workflow-mode-ledger.sh': 'command_validate_workflow_mode',
+    'scripts/test-workflow-runtime.sh': 'command_test_workflow_runtime',
     'scripts/test-workflow-normalization-proof.sh': 'command_unimplemented',
     'scripts/validate-active-backlog.sh': 'command_unimplemented',
     'scripts/validate-artifact-review-card.sh': 'command_validate_artifact_review_card',

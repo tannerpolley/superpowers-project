@@ -1098,6 +1098,13 @@ def command_test_auto_loop_trials(ctx: Context, args: dict[str, Any]) -> int:
     return result.returncode
 
 
+def command_test_workflow_runtime(ctx: Context, args: dict[str, Any]) -> int:
+    result = run([sys.executable, "-m", "unittest", "tests/test_workflow_state.py", "-v"], ctx.repo_root)
+    print(result.stdout, end="")
+    print(result.stderr, file=sys.stderr, end="")
+    return result.returncode
+
+
 def command_validate_skill_metadata_contract(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     findings = []

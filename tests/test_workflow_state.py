@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from scripts.lib.workflow_state import WorkflowStateError, append_event, replay_events
+
+
+class WorkflowStateTests(unittest.TestCase):
+    def test_hash_chain_replays_projection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            append_event(root, {"type": "run_started", "run_id": "trial-1"})
+            append_event(root, {"type": "candidate_selected", "candidate": "one"})
+            append_event(root, {"type": "candidate_accepted", "candidate": "one"})
+            append_event(root, {"type": "verifier_passed", "candidate": "one"})
+            append_event(root, {"type": "budget_rechecked", "candidate": "one"})
+            append_event(root, {"type": "continuation_granted", "candidate": "one"})
+            append_event(root, {"type": "candidate_selected", "candidate": "two"})
+            projection = replay_events(root / "events.jsonl")
+            self.assertEqual(projection.selected_candidate, "two")
+            self.assertEqual(projection.events, 7)
+            self.assertEqual(projection.as_dict(), json.loads((root / "run.json").read_text()))
+
+    def test_second_candidate_is_fail_closed_until_all_gates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            append_event(root, {"type": "run_started", "run_id": "trial-2"})
+            append_event(root, {"type": "candidate_selected", "candidate": "one"})
+            with self.assertRaisesRegex(WorkflowStateError, "second candidate"):
+                append_event(root, {"type": "candidate_selected", "candidate": "two"})
+
+    def test_tampering_is_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            append_event(root, {"type": "run_started", "run_id": "trial-3"})
+            path = root / "events.jsonl"
+            data = json.loads(path.read_text())
+            data["run_id"] = "forged"
+            path.write_text(json.dumps(data) + "\n")
+            with self.assertRaisesRegex(WorkflowStateError, "hash"):
+                replay_events(path)
+
+    def test_unsupported_and_malformed_events_fail(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with self.assertRaises(WorkflowStateError):
+                append_event(root, {"type": "unknown"})
+            (root / "events.jsonl").write_text("{}\n")
+            with self.assertRaises(WorkflowStateError):
+                replay_events(root / "events.jsonl")
+
+
+if __name__ == "__main__":
+    unittest.main()
