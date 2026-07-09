@@ -1,0 +1,1 @@
+{"type":"object","required":["observed_outcome","friction","claim"],"properties":{"observed_outcome":{"enum":["pass","blocked","fail"]},"friction":{"type":"integer","minimum":1,"maximum":5},"claim":{"type":"object"}}}

@@ -1099,6 +1099,29 @@ def command_test_auto_loop_trials(ctx: Context, args: dict[str, Any]) -> int:
     return result.returncode
 
 
+def command_run_agent_usability_trials(ctx: Context, args: dict[str, Any]) -> int:
+    raise ScriptError("run-agent-usability-trials.sh must be invoked directly with --execute and an explicit output directory")
+
+
+def command_validate_agent_usability_receipt(ctx: Context, args: dict[str, Any]) -> int:
+    from agent_usability import validate_trial_receipt, validate_trial_set
+
+    root = project_root_for(ctx, args)
+    receipt_path = arg_value(args, "ReceiptPath")
+    receipt_dir = arg_value(args, "ReceiptDir")
+    if bool(receipt_path) == bool(receipt_dir):
+        raise ScriptError("provide exactly one of ReceiptPath or ReceiptDir")
+    if receipt_path:
+        path = project_path_for(root, str(receipt_path), "ReceiptPath")
+        receipt = json.loads(read_text(path))
+        validate_trial_receipt(receipt, ctx.plugin_root or ctx.repo_root)
+        return emit({"ok": True, "phase": "agent-usability-receipt", "receipt": normalize_rel(path, root)})
+    directory = project_path_for(root, str(receipt_dir), "ReceiptDir")
+    receipts = [json.loads(read_text(path)) for path in sorted(directory.glob("**/receipt.json"))]
+    metrics = validate_trial_set(receipts, ctx.plugin_root or ctx.repo_root)
+    return emit({"ok": True, "phase": "agent-usability-receipt", "receipt_count": len(receipts), "metrics": metrics})
+
+
 def command_test_workflow_runtime(ctx: Context, args: dict[str, Any]) -> int:
     result = run([sys.executable, "-m", "unittest", "tests/test_workflow_state.py", "-v"], ctx.repo_root)
     print(result.stdout, end="")

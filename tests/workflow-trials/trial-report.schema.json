@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Superpowers Project agent usability trial receipt",
+  "type": "object",
+  "required": ["schema_version", "trial_id", "scenario", "repetition", "worker", "verifier", "package_hash", "trial_root", "project_root", "expected_outcome", "observed_outcome", "friction", "user_input_calls", "external_mutations", "repository_evidence", "event_ledger", "worker_claim", "verifier_decision"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "trial_id": {"type": "string", "minLength": 1},
+    "scenario": {"enum": ["auto-golden", "loop-adversarial"]},
+    "repetition": {"type": "integer", "minimum": 1},
+    "worker": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}},
+    "verifier": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}},
+    "package_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "trial_root": {"type": "string", "minLength": 1},
+    "project_root": {"type": "string", "minLength": 1},
+    "expected_outcome": {"enum": ["pass", "blocked"]},
+    "observed_outcome": {"enum": ["pass", "blocked", "fail"]},
+    "friction": {"type": "integer", "minimum": 1, "maximum": 5},
+    "user_input_calls": {"const": 0},
+    "external_mutations": {"const": 0},
+    "repository_evidence": {"type": "array", "minItems": 1},
+    "event_ledger": {"type": "object", "required": ["path", "last_hash"]},
+    "worker_claim": {"type": "object"},
+    "verifier_decision": {"enum": ["pass", "blocked"]}
+  },
+  "additionalProperties": true
+}
