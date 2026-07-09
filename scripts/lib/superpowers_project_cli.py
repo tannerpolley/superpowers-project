@@ -1229,11 +1229,17 @@ def command_test_plan_task_use_cases(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_test_plugin_only_live_sync(ctx: Context, args: dict[str, Any]) -> int:
-    """Run live sync into disposable roots and verify marketplace metadata."""
+    """Run live sync into disposable roots and verify the installable surface."""
     with tempfile.TemporaryDirectory(prefix="plugin-live-sync-") as tmp:
         base = Path(tmp)
         result = command_sync_live(ctx, {"LivePluginRoot": str(base / "live"), "UserSkillsRoot": str(base / "skills"), "MarketplacePath": str(base / "marketplace.json"), "SkipValidation": True})
-        ok = result == 0 and (base / "live/.codex-plugin/plugin.json").is_file() and (base / "marketplace.json").is_file()
+        ok = (
+            result == 0
+            and (base / "live/.codex-plugin/plugin.json").is_file()
+            and (base / "live/docs/superpowers/loop-mode-contract.yml").is_file()
+            and (base / "marketplace.json").is_file()
+            and runtime_contract_hash(base / "live") == runtime_contract_hash(ctx.repo_root)
+        )
     return emit({"ok": ok, "phase": "plugin-only-live-sync", "isolated": True}, 0 if ok else 1)
 
 
@@ -1834,6 +1840,7 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         target = live_root / folder
         if source.exists():
             copy_tree(source, target)
+    copy_tree(root / "docs" / "superpowers", live_root / "docs" / "superpowers")
     user_skills.mkdir(parents=True, exist_ok=True)
     for skill in USER_SKILLS:
         source = root / "skills" / skill
@@ -1845,7 +1852,7 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     else:
         data = {"name": "personal", "interface": {"displayName": "Personal"}, "plugins": []}
     plugins = [p for p in data.get("plugins", []) if p.get("name") not in {"superpowers-project", "milestones", "project"}]
-    plugins.append({"name": "superpowers-project", "source": {"source": "local", "path": ".codex/plugins/superpowers-project"}, "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}, "category": "Productivity"})
+    plugins.append({"name": "superpowers-project", "source": {"source": "local", "path": "./.codex/plugins/superpowers-project"}, "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}, "category": "Productivity"})
     data["plugins"] = plugins
     write_text(marketplace, json.dumps(data, indent=2))
     # Installed package discovery and updates are owned by the supported
@@ -1858,7 +1865,7 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         "source": str(root),
         "live_plugin_root": str(live_root),
         "user_skills_root": str(user_skills),
-        "marketplace": {"marketplace_path": str(marketplace), "plugin_name": "superpowers-project", "source_path": ".codex/plugins/superpowers-project"},
+        "marketplace": {"marketplace_path": str(marketplace), "plugin_name": "superpowers-project", "source_path": "./.codex/plugins/superpowers-project"},
         "deployed_plugin_skills": sorted(active_skill_names(root)),
         "deployed_user_skills": sorted(USER_SKILLS),
     })
