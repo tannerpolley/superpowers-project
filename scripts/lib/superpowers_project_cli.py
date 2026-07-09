@@ -563,8 +563,12 @@ def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
                 raise ScriptError(f"missing {field}")
         if auth.get("question_id") != "project_auto_mode_authorization":
             raise ScriptError("question_id must be project_auto_mode_authorization")
-        if auth.get("source") != "request_user_input":
-            raise ScriptError("source must be request_user_input")
+        source = auth.get("source")
+        allowed_sources = {"request_user_input"}
+        if os.environ.get("SUPERPOWERS_TRIAL_NONINTERACTIVE") == "1":
+            allowed_sources.add("trial-fixture")
+        if source not in allowed_sources:
+            raise ScriptError("source must be request_user_input, or trial-fixture in an explicit noninteractive trial")
         if auth.get("selected_authority") != "bounded-auto-merge":
             raise ScriptError("selected_authority must be bounded-auto-merge")
         spec = resolve_under(root, str(auth.get("source_spec", "")), "source_spec")
