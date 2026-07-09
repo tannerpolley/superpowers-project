@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from superpowers_project_command_registry import build_command_registry, resolve_command
+from superpowers_project_context import RuntimeContext, resolve_project_root, resolve_project_path
 
 try:
     import yaml
@@ -74,6 +75,8 @@ class Context:
     script_rel: str
     script_name: str
     args: list[str]
+    plugin_root: Path | None = None
+    invocation_cwd: Path | None = None
 
 
 def find_repo_root(path: Path) -> Path:
@@ -104,8 +107,15 @@ def resolve_under(root: Path, value: str, label: str = "path") -> Path:
     try:
         resolved.relative_to(root_resolved)
     except ValueError as exc:
-        raise ScriptError(f"{label} is outside repo root: {resolved}") from exc
+            raise ScriptError(f"{label} is outside repo root: {resolved}") from exc
     return resolved
+
+def project_root_for(ctx: Context, args: dict[str, Any]) -> Path:
+    runtime = RuntimeContext(ctx.script_path, ctx.plugin_root or ctx.repo_root, ctx.invocation_cwd or Path.cwd(), ctx.script_rel)
+    return resolve_project_root(runtime, args)
+
+def project_path_for(root: Path, value: str, label: str = "path") -> Path:
+    return resolve_project_path(root, value, label)
 
 
 def parse_ps_args(argv: list[str]) -> dict[str, Any]:
@@ -171,7 +181,7 @@ def read_json_arg(root: Path, args: dict[str, Any], json_name: str, path_name: s
     if inline:
         return json.loads(str(inline)), ""
     if path_value:
-        path = resolve_under(root, str(path_value), path_name)
+        path = project_path_for(root, str(path_value), path_name)
         if not path.is_file():
             raise ScriptError(f"{path_name} is missing: {path_value}")
         return json.loads(read_text(path)), normalize_rel(path, root)
@@ -414,7 +424,7 @@ def test_issue_outcome_summary(text: str) -> dict[str, Any]:
 
 
 def command_validate_plan_task_use_cases(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     plan_arg = arg_value(args, "PlanPath")
     if not plan_arg:
         raise ScriptError("PlanPath is required")
@@ -453,7 +463,7 @@ def command_validate_plan_task_use_cases(ctx: Context, args: dict[str, Any]) -> 
 
 
 def command_validate_plan_outcome_proof(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     plan_arg = arg_value(args, "PlanPath")
     if not plan_arg:
         raise ScriptError("PlanPath is required")
@@ -469,7 +479,7 @@ def command_validate_plan_outcome_proof(ctx: Context, args: dict[str, Any]) -> i
 
 
 def command_validate_decision_ledger(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     artifact_arg = arg_value(args, "Path")
     kind = str(arg_value(args, "Kind", default="")).lower()
     if kind not in {"spec", "plan"}:
@@ -514,7 +524,7 @@ def command_validate_decision_ledger(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     try:
         auth, auth_path = read_json_arg(root, args, "AuthorizationJson", "AuthorizationPath")
         required = [
@@ -569,11 +579,12 @@ def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_validate_workflow_mode(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    runtime = RuntimeContext(ctx.script_path, ctx.plugin_root or ctx.repo_root, ctx.invocation_cwd or Path.cwd(), ctx.script_rel)
+    root = resolve_project_root(runtime, args)
     ledger_arg = arg_value(args, "ModeLedgerPath")
     if not ledger_arg:
         raise ScriptError("ModeLedgerPath is required")
-    path = resolve_under(root, str(ledger_arg), "ModeLedgerPath")
+    path = project_path_for(root, str(ledger_arg), "ModeLedgerPath")
     if not path.is_file():
         raise ScriptError(f"mode ledger not found: {ledger_arg}")
     ledger = json.loads(read_text(path))
@@ -633,7 +644,7 @@ def validate_json_required(root: Path, phase: str, path_arg: str, required: list
 
 
 def command_loop_budget(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     path_value = arg_value(args, "BudgetLedgerPath")
     if not path_value:
         raise ScriptError("BudgetLedgerPath is required")
@@ -661,7 +672,7 @@ def command_loop_budget(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_loop_run_ledger(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     return validate_json_required(root, "loop-run-ledger", "RunLedgerPath", [
         "run_id", "trigger_source", "repo_root", "plugin_manifest_version", "plugin_contract_hash",
         "started_at", "updated_at", "status", "current_phase", "candidate_source", "candidate_id",
@@ -671,7 +682,7 @@ def command_loop_run_ledger(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_loop_verifier(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     path_value = arg_value(args, "VerifierLedgerPath")
     if not path_value:
         raise ScriptError("VerifierLedgerPath is required")
@@ -692,7 +703,7 @@ def command_loop_verifier(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_loop_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     path_value = arg_value(args, "RunResultPath")
     if not path_value:
         raise ScriptError("RunResultPath is required")
@@ -706,7 +717,7 @@ def command_loop_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_loop_state_machine(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     path_value = arg_value(args, "StatePath")
     if not path_value:
         raise ScriptError("StatePath is required")
@@ -728,7 +739,7 @@ def command_loop_state_machine(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_write_metrics(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     input_value = arg_value(args, "MetricsInputPath")
     output_value = arg_value(args, "OutputPath")
     if not input_value or not output_value:
@@ -756,7 +767,7 @@ def split_table_row(line: str) -> list[str]:
 
 
 def command_validate_active_backlog(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     path = resolve_under(root, str(arg_value(args, "Path", default="docs/superpowers/backlog/ACTIVE.md")), "Path")
     if not path.is_file():
         raise ScriptError(f"active backlog file does not exist: {path}")
@@ -803,7 +814,7 @@ def command_validate_active_backlog(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_validate_flat_roots(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     findings = []
     milestones = root / "docs" / "superpowers" / "milestones"
     if milestones.is_dir():
@@ -816,7 +827,7 @@ def command_validate_flat_roots(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_validate_generated_state(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     findings = []
     gitignore = root / ".gitignore"
     if not gitignore.is_file() or ".superpowers/" not in [line.strip() for line in read_text(gitignore).splitlines()]:
@@ -841,7 +852,7 @@ def referenced_shell_scripts(text: str) -> set[str]:
 
 
 def command_validate_skill_script_contract(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     findings = []
     for skill_dir in sorted((root / "skills").iterdir()):
         if not skill_dir.is_dir():
@@ -867,7 +878,7 @@ def command_validate_skill_script_contract(ctx: Context, args: dict[str, Any]) -
 
 
 def command_validate_skill_metadata_contract(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     findings = []
     for yaml_file in sorted((root / "skills").glob("*/agents/openai.yaml")):
         text = read_text(yaml_file)
@@ -887,7 +898,7 @@ def command_validate_skill_metadata_contract(ctx: Context, args: dict[str, Any])
 
 
 def command_validate_workflow_contract(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     path = root / "docs" / "superpowers" / "workflow-contract.yml"
     if yaml is None:
         raise ScriptError("PyYAML is required")
@@ -916,7 +927,7 @@ def command_validate_workflow_contract(ctx: Context, args: dict[str, Any]) -> in
 
 
 def command_validate_worker_packets(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     packet_arg = arg_value(args, "PacketPath", default="docs/superpowers/examples/worker-handoff-packets.md")
     path = resolve_under(root, str(packet_arg), "PacketPath")
     text = read_text(path)
@@ -938,7 +949,7 @@ def command_validate_worker_packets(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_validate_workflow_examples(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     paths = [arg_value(args, "Path", default="docs/superpowers/examples/workflow-golden-paths.md")]
     sub = arg_value(args, "SubIssuesPath")
     if sub:
@@ -957,7 +968,7 @@ def command_validate_workflow_examples(ctx: Context, args: dict[str, Any]) -> in
 
 
 def command_derive_worker_identity(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     issue_arg = arg_value(args, "IssueFile")
     if not issue_arg:
         raise ScriptError("IssueFile is required")
@@ -1001,7 +1012,7 @@ def command_derive_worker_identity(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_validate_issue_mirror(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     issue_arg = arg_value(args, "IssueFile")
     if not issue_arg:
         raise ScriptError("IssueFile is required")
@@ -1035,7 +1046,7 @@ def section_bullets(text: str, heading: str) -> list[str]:
 
 
 def command_prepare_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     issue_arg = arg_value(args, "IssueFile")
     if not issue_arg:
         raise ScriptError("IssueFile is required")
@@ -1094,7 +1105,7 @@ def capture_command(func) -> str:
 
 
 def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     handoff, _ = read_json_arg(root, args, "HandoffJson", "HandoffPath")
     required = ["issue_mirror", "source_plan", "worker_identity", "branch", "branch_worktree_policy", "reviewer_role", "proof_oracle", "validation", "topology_handoff", "merge_handoff", "required_skills"]
     for field in required:
@@ -1123,7 +1134,7 @@ def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_collect_continuation(ctx: Context, args: dict[str, Any], phase: str) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     option_ids = arg_value(args, "OptionIds", default=[])
     if isinstance(option_ids, str):
         option_ids = [option_ids]
@@ -1151,7 +1162,7 @@ def command_collect_continuation(ctx: Context, args: dict[str, Any], phase: str)
 
 
 def command_validate_terminal_closeout(ctx: Context, args: dict[str, Any], phase: str) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     result_json_name = "PrReadyResultJson" if "resolve-issue" in ctx.script_rel else "CloseoutResultJson"
     result_path_name = "PrReadyResultPath" if "resolve-issue" in ctx.script_rel else "CloseoutResultPath"
     result, _ = read_json_arg(root, args, result_json_name, result_path_name, required=False)
@@ -1171,7 +1182,7 @@ def command_validate_terminal_closeout(ctx: Context, args: dict[str, Any], phase
 
 
 def command_collect_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     setup_path = arg_value(args, "SetupLedgerPath")
     if not setup_path:
         raise ScriptError("SetupLedgerPath is required")
@@ -1198,7 +1209,7 @@ def command_validate_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     manifest_path = root / ".codex-plugin" / "plugin.json"
     changelog_path = root / "CHANGELOG.md"
     manifest = json.loads(read_text(manifest_path))
@@ -1276,7 +1287,7 @@ def version_surface(name: str, root: Path | None, source_hash: str) -> dict[str,
 
 
 def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=str(ctx.repo_root))), "RepoRoot")
+    root = project_root_for(ctx, args)
     home = Path.home()
     live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(home / ".codex" / "plugins" / "superpowers-project")))).expanduser()
     cache_root = Path(str(arg_value(args, "CacheRoot", default=str(home / ".codex" / "plugins" / "cache")))).expanduser()
@@ -1578,7 +1589,7 @@ def stale_scan(root: Path) -> None:
 
 
 def command_align_project(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     mode = str(arg_value(args, "Mode", default="LocalDocs"))
     findings = []
     for forbidden in ["docs/issues", "docs/plans", "docs/ideas"]:
@@ -1588,7 +1599,7 @@ def command_align_project(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_select_candidate(ctx: Context, args: dict[str, Any]) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     inventory_arg = arg_value(args, "InventoryPath")
     candidates = []
     if inventory_arg:
@@ -1607,7 +1618,7 @@ def command_collect_closeout(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def collect_simple_ledger(ctx: Context, args: dict[str, Any], phase: str, filename: str) -> int:
-    root = resolve_under(ctx.repo_root, str(arg_value(args, "RepoRoot", default=os.getcwd())), "RepoRoot")
+    root = project_root_for(ctx, args)
     ledger = {"ok": True, "phase": phase, "arguments": {k: v for k, v in args.items() if k != "_positional"}}
     output_dir = arg_value(args, "OutputDir", default="")
     ledger_path = ""
@@ -1670,7 +1681,8 @@ def main(argv: list[str]) -> int:
     known, rest = parser.parse_known_args(argv)
     script_path = Path(known.script_path).resolve()
     repo_root = find_repo_root(script_path)
-    ctx = Context(script_path=script_path, repo_root=repo_root, script_rel=normalize_rel(script_path, repo_root), script_name=script_path.name, args=rest)
+    ctx = Context(script_path=script_path, repo_root=repo_root, plugin_root=repo_root,
+                  invocation_cwd=Path.cwd().resolve(), script_rel=normalize_rel(script_path, repo_root), script_name=script_path.name, args=rest)
     return dispatch(ctx)
 
 
