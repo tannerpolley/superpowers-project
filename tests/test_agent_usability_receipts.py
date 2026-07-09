@@ -48,8 +48,8 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
             "trial_id": "trial-1",
             "scenario": "auto-golden",
             "repetition": 1,
-            "worker": {"id": "worker-1"},
-            "verifier": {"id": "verifier-1"},
+            "worker": {"id": "00000000-0000-4000-8000-000000000001"},
+            "verifier": {"id": "00000000-0000-4000-8000-000000000002"},
             "package_hash": runtime_contract_hash(ROOT),
             "trial_root": str(root),
             "project_root": str(project),
@@ -70,7 +70,7 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
             validate_trial_receipt(receipt, ROOT)
             variants = []
             missing = copy.deepcopy(receipt); missing.pop("friction"); variants.append(missing)
-            self_verified = copy.deepcopy(receipt); self_verified["verifier"]["id"] = "worker-1"; variants.append(self_verified)
+            self_verified = copy.deepcopy(receipt); self_verified["verifier"]["id"] = receipt["worker"]["id"]; variants.append(self_verified)
             scope = copy.deepcopy(receipt); scope["project_root"] = "/tmp/outside"; variants.append(scope)
             stale = copy.deepcopy(receipt); stale["package_hash"] = "0" * 64; variants.append(stale)
             tampered = copy.deepcopy(receipt); tampered["repository_evidence"][0]["sha256"] = "0" * 64; variants.append(tampered)

@@ -5,6 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any
+import uuid
 
 try:
     from .package_provenance import runtime_contract_hash
@@ -36,7 +37,15 @@ def validate_trial_receipt(receipt: dict[str, Any], plugin_root: Path) -> None:
         raise TrialReceiptError("unknown trial scenario")
     if receipt.get("expected_outcome") != receipt.get("observed_outcome"):
         raise TrialReceiptError("observed outcome does not match untouched oracle")
-    if (receipt.get("worker") or {}).get("id") == (receipt.get("verifier") or {}).get("id"):
+    agent_ids = []
+    for role in ("worker", "verifier"):
+        agent_id = str((receipt.get(role) or {}).get("id", ""))
+        try:
+            uuid.UUID(agent_id)
+        except (ValueError, AttributeError) as exc:
+            raise TrialReceiptError(f"{role} id must be an actual Codex session id") from exc
+        agent_ids.append(agent_id)
+    if agent_ids[0] == agent_ids[1]:
         raise TrialReceiptError("worker and verifier must be independent agents")
     if receipt.get("package_hash") != runtime_contract_hash(plugin_root):
         raise TrialReceiptError("trial receipt package hash is stale")

@@ -217,7 +217,7 @@ Use `./scripts/get-agent-plugin-version.sh -RevisionStatus` for a read-only repo
 Release usability is proved with five fresh Auto workers and three fresh Looping workers. Every worker uses a disposable repository, is checked by a separate Codex verifier, records a hash-chained event ledger, and must report zero user-input calls and zero mutations outside its fixture. Run the trials only when fresh Codex execution is authorized:
 
 ```bash
-./scripts/run-agent-usability-trials.sh --execute --output-dir tests/workflow-trials/receipts/current
+./scripts/run-agent-usability-trials.sh --execute --parallelism 4 --output-dir tests/workflow-trials/receipts/current
 ./scripts/validate-agent-usability-receipt.sh -RepoRoot . -ReceiptDir tests/workflow-trials/receipts/current
 ```
 
