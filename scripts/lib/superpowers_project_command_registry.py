@@ -58,6 +58,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/test-workflow-examples.sh': 'command_validate_workflow_contract',
     'scripts/test-workflow-mode-ledger.sh': 'command_test_initiate_workflow_mode_gate',
     'scripts/test-workflow-runtime.sh': 'command_test_workflow_runtime',
+    'scripts/test-workflow-graph.sh': 'command_test_workflow_graph',
     'scripts/test-workflow-normalization-proof.sh': 'command_validate_workflow_contract',
     'scripts/validate-active-backlog.sh': 'command_validate_active_backlog',
     'scripts/validate-artifact-review-card.sh': 'command_validate_artifact_review_card',

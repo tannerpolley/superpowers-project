@@ -19,7 +19,7 @@ workflow_skills:
     - Revisit
     - Stop
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -134,7 +134,7 @@ workflow_skills:
     - project_auto_mode_authorization
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -216,7 +216,7 @@ workflow_skills:
     - project_brainstorm_visual_companion
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -336,7 +336,7 @@ workflow_skills:
     - project_issue_review_repair_route
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -522,7 +522,7 @@ workflow_skills:
     - project_implement_reiteration_route
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -670,7 +670,7 @@ workflow_skills:
     - Revisit
     - Stop
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes: []
@@ -728,7 +728,7 @@ workflow_skills:
     - Revisit
     - Stop
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -872,7 +872,7 @@ workflow_skills:
     - project_orchestrate_worker_communication_route
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -965,7 +965,7 @@ workflow_skills:
     - project_resolve_reiteration_route
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -1071,7 +1071,7 @@ workflow_skills:
     - project_setup_work_route
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
@@ -1162,7 +1162,7 @@ workflow_skills:
     - project_plan_work_route
     final_health_gate: null
     top_level_options:
-    - true
+    - 'Yes'
     - Revisit
     - Stop
     nested_routes:
