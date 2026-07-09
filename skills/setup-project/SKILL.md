@@ -48,7 +48,8 @@ Use `request_user_input` when callable in Default mode for decisions that affect
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not pretend a live user approved roadmap, milestone, GitHub, board creation, setup mutation, or `/goal` execution decisions.
 ## Project Context Shape
@@ -113,7 +114,7 @@ Options:
 - `Verify Only`: validate existing board configuration without mutation.
 - `Stop`: stop before board mutation.
 
-Use `scripts/prepare-github-project-board.ps1 -Mode Plan` before native approval. After native approval selects `Create Board`, use `-Mode Create` with structured `NativeApprovalJson`; the script creates or reuses the board, ensures required fields, verifies hierarchy tracker labels from `docs/agents/project-roadmap.json`, links approved issue URLs, and records board configuration in `docs/agents/project-roadmap.json`. Use `-Mode ValidateConfig` for existing-board evidence. When useful for humans, mirror the board summary in `docs/agents/project-roadmap.md`.
+Use `scripts/prepare-github-project-board.sh -Mode Plan` before native approval. After native approval selects `Create Board`, use `-Mode Create` with structured `NativeApprovalJson`; the script creates or reuses the board, ensures required fields, verifies hierarchy tracker labels from `docs/agents/project-roadmap.json`, links approved issue URLs, and records board configuration in `docs/agents/project-roadmap.json`. Use `-Mode ValidateConfig` for existing-board evidence. When useful for humans, mirror the board summary in `docs/agents/project-roadmap.md`.
 
 For repositories that support native GitHub issue types, setup must inspect `repository.issueTypes` through GraphQL and use `UpdateIssueInput.issueTypeId` when assigning the local issue mirror's `Issue Type` to a GitHub issue. Keep compatibility labels such as `type:task`, `type:bug`, and `type:feature`. If GraphQL reports no enabled native issue types, say so explicitly and continue with label-only behavior. Do not conclude native issue types are unavailable merely because high-level `gh issue create` or `gh issue edit` lacks a `--type` flag.
 

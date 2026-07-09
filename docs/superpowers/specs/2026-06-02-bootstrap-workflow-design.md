@@ -8,21 +8,21 @@ Historical bootstrap record. The validation repair, live sync cleanup, CI workfl
 
 ## Context
 
-The Milestones plugin repo is the canonical source for the local plugin and its user-level skills. The live plugin at `C:\Users\Tanner\plugins\milestones` and user skills under `C:\Users\Tanner\.agents\skills` are deployed copies.
+The Milestones plugin repo is the canonical source for the local plugin and its user-level skills. The live plugin at `/home/tnnrpolley21/.codex/plugins/milestones` and user skills under `/home/tnnrpolley21/.agents/skills` are deployed copies.
 
 The repo is currently clean on `main`, source and deployed copies are byte-for-byte synced, GitHub Issues and Projects are enabled, required labels exist, and the three GitHub milestones mirror `docs/superpowers/PROJECT_CONTEXT.md`.
 
-Full validation is not green. `scripts/validate.ps1` fails on wrapper wording assertions, and the `resolve-issue` scenario suite does not finish within a two-minute bound during manual review.
+Full validation is not green. `scripts/validate.sh` fails on wrapper wording assertions, and the `resolve-issue` scenario suite does not finish within a two-minute bound during manual review.
 
 ## Solidified Findings
 
 The bootstrap work is driven by these findings:
 
-- `scripts/validate.ps1` fails because scenario tests expect wrapper wording that the current source and deployed wrappers do not contain.
-- `canonical-skills/using-milestones/scripts/test-scenarios.ps1` and `canonical-skills/milestone-writing-issue-plan/scripts/test-scenarios.ps1` validate wrappers through deployed live paths instead of source wrapper paths.
-- `canonical-skills/resolve-issue/scripts/lib/contract.ps1` runs external processes with redirected output, synchronous stream reads, and no timeout. The matching scenario suite inherits that behavior and can hang validation.
-- `canonical-skills/convert-idea-to-issue/scripts/lib/contract.ps1` uses the same unbounded process helper pattern, even though its current scenario suite passes.
-- `scripts/sync-live.ps1` deploys known source skills but does not remove stale deployed Milestones-owned skill directories after a source skill is removed or renamed.
+- `scripts/validate.sh` fails because scenario tests expect wrapper wording that the current source and deployed wrappers do not contain.
+- `canonical-skills/using-milestones/scripts/test-scenarios.sh` and `canonical-skills/milestone-writing-issue-plan/scripts/test-scenarios.sh` validate wrappers through deployed live paths instead of source wrapper paths.
+- `canonical-skills/resolve-issue/scripts/lib/contract.sh` runs external processes with redirected output, synchronous stream reads, and no timeout. The matching scenario suite inherits that behavior and can hang validation.
+- `canonical-skills/convert-idea-to-issue/scripts/lib/contract.sh` uses the same unbounded process helper pattern, even though its current scenario suite passes.
+- `scripts/sync-live.sh` deploys known source skills but does not remove stale deployed Milestones-owned skill directories after a source skill is removed or renamed.
 - There is no `.github/workflows` directory.
 - There are no GitHub issues and no local milestone idea or issue files yet.
 - Source and deployed copies are currently in sync, so the validation failures are source issues rather than stale deployment residue.
@@ -53,11 +53,11 @@ This order keeps the first outcome focused on proof. CI, issues, and release pol
 
 ### Validation Entrypoint
 
-`scripts/validate.ps1` remains the top-level proof command. It should report which check failed and should not allow one scenario suite to hang without a bounded failure result.
+`scripts/validate.sh` remains the top-level proof command. It should report which check failed and should not allow one scenario suite to hang without a bounded failure result.
 
 ### Scenario Suites
 
-`canonical-skills/*/scripts/test-scenarios.ps1` owns skill-level behavior checks. Wrapper assertions should inspect repo source wrappers under `skills/` or receive explicit wrapper paths from the validator. Scenario tests should not treat deployed live copies as source evidence.
+`canonical-skills/*/scripts/test-scenarios.sh` owns skill-level behavior checks. Wrapper assertions should inspect repo source wrappers under `skills/` or receive explicit wrapper paths from the validator. Scenario tests should not treat deployed live copies as source evidence.
 
 ### Process Execution Helper
 
@@ -65,14 +65,14 @@ The shared external process helper in skill script libraries should capture stdo
 
 ### Live Sync
 
-`scripts/sync-live.ps1` owns deployment from source to live paths. It should deploy source skills, remove only stale Milestones-owned deployed skill directories, and verify drift after deployment.
+`scripts/sync-live.sh` owns deployment from source to live paths. It should deploy source skills, remove only stale Milestones-owned deployed skill directories, and verify drift after deployment.
 
 ### GitHub Workflow
 
-CI should run the same PowerShell validation command used locally:
+CI should run the same Bash validation command used locally:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 The first workflow should run on pull requests and pushes to `main`.
@@ -103,7 +103,7 @@ Validation failures should be loud and specific:
 The implementation plan should include regression tests or script scenarios for:
 
 - Wrapper tests read repo source wrappers and pass.
-- Full `scripts/validate.ps1` exits successfully.
+- Full `scripts/validate.sh` exits successfully.
 - A synthetic hung helper returns a timeout failure and does not leave its child process running.
 - Stale deployed Milestones skill cleanup removes an approved stale skill directory and preserves unrelated directories.
 - Post-sync drift checks compare source wrappers to live wrappers and canonical skills to deployed user skills.

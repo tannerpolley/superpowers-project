@@ -6,7 +6,7 @@
 
 **Architecture:** Treat this as a skill-contract migration. First harden policy tests, then update `advanced-user-input`, project skill docs, plugin metadata prompts, and per-skill scenario tests so top-level closeouts keep `Yes / Revisit / No`, while nested Yes and Revisit menus contain only real forward or revisit routes.
 
-**Tech Stack:** Markdown skill contracts, YAML plugin metadata, PowerShell scenario tests, repo validation scripts.
+**Tech Stack:** Markdown skill contracts, YAML plugin metadata, Bash scenario tests, repo validation scripts.
 
 ---
 
@@ -31,8 +31,8 @@
 - Permission gates use action-specific labels such as `Decline`, `Keep Local`, or `Do Not Merge` instead of generic `stale terminal label`.
 - Active `agents/openai.yaml` prompts teach the same policy as the corresponding `SKILL.md` files.
 - Scenario and policy tests reject regressions.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes before claiming the live plugin is updated.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes before claiming the live plugin is updated.
 
 ## Non-Goals
 
@@ -44,14 +44,14 @@
 ## Task 1: Harden Global Native Q&A Policy Tests
 
 **Files:**
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
-- Modify: `scripts/test-native-continuation-loop.ps1`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
+- Modify: `scripts/test-native-continuation-loop.sh`
 
 - [ ] **Step 1: Add failing assertions for nested Yes menus**
 
-In `scripts/test-advanced-user-input-policy.ps1`, add required policy strings for `advanced-user-input`:
+In `scripts/test-advanced-user-input-policy.sh`, add required policy strings for `advanced-user-input`:
 
-```powershell
+```bash
 "Nested Yes-route menus must not include terminal options",
 "Nested Revisit-route menus must not include terminal options",
 "Recommend Yes when at least one safe forward route exists",
@@ -63,9 +63,9 @@ Expected result before contract edits: the test fails because these exact policy
 
 - [ ] **Step 2: Add global continuation-loop assertions**
 
-In `scripts/test-native-continuation-loop.ps1`, add required strings for every workflow skill and metadata prompt:
+In `scripts/test-native-continuation-loop.sh`, add required strings for every workflow skill and metadata prompt:
 
-```powershell
+```bash
 'Nested Yes-route menus must not include terminal options',
 'Nested Revisit-route menus must not include terminal options',
 'Recommend Yes when at least one safe forward route exists',
@@ -74,7 +74,7 @@ In `scripts/test-native-continuation-loop.ps1`, add required strings for every w
 
 Also add a forbidden scan for active skill docs and metadata:
 
-```powershell
+```bash
 'Right: terminal option: break the continuation loop.'
 'Right terminal label'
 ```
@@ -85,9 +85,9 @@ Expected result before skill edits: the test fails on nested route sections.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+```bash
+./scripts/test-advanced-user-input-policy.sh
+./scripts/test-native-continuation-loop.sh
 ```
 
 Expected: both tests fail for missing new policy and existing nested stop wording.
@@ -97,7 +97,7 @@ Expected: both tests fail for missing new policy and existing nested stop wordin
 **Files:**
 - Modify: `skills/advanced-user-input/SKILL.md`
 - Modify: `skills/advanced-user-input/agents/openai.yaml`
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
 
 - [ ] **Step 1: Revise the policy text**
 
@@ -123,8 +123,8 @@ In `skills/advanced-user-input/agents/openai.yaml`, add the same nested-menu and
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
+```bash
+./scripts/test-advanced-user-input-policy.sh
 ```
 
 Expected: policy test passes after the skill and metadata contract align.
@@ -177,8 +177,8 @@ Nested Yes-route menus must not include terminal options and should list only fo
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+```bash
+./scripts/test-native-continuation-loop.sh
 ```
 
 Expected: the test still fails until per-skill nested option lists are cleaned up in Task 4.
@@ -251,7 +251,7 @@ Do not remove legitimate approval labels such as `Decline`, `Keep Local`, `Do No
 
 Run:
 
-```powershell
+```bash
 rg -n "Right: `stale terminal label`: break the continuation loop|Right terminal label" skills -g SKILL.md -g openai.yaml
 ```
 
@@ -260,22 +260,22 @@ Expected: matches remain only for top-level closeout sections or test fixtures t
 ## Task 5: Update Scenario Tests
 
 **Files:**
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
-- Modify: `skills/brainstorm-spec/scripts/test-scenarios.ps1`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
+- Modify: `skills/brainstorm-spec/scripts/test-scenarios.sh`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
+- Modify: `skills/audit-project/scripts/test-scenarios.sh`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add positive assertions for new policy**
 
 Each scenario test should assert that the skill text and metadata include:
 
-```powershell
+```bash
 "Nested Yes-route menus must not include terminal options"
 "Nested Revisit-route menus must not include terminal options"
 "Recommend Yes when at least one safe forward route exists"
@@ -287,16 +287,16 @@ Where a scenario test currently expects nested menu routes to include `Stop` or 
 
 - [ ] **Step 3: Add skill-specific negative checks**
 
-For each active skill, add checks that known nested question blocks do not contain `stale terminal label`. For example in `skills/write-plan/scripts/test-scenarios.ps1`, inspect the text between:
+For each active skill, add checks that known nested question blocks do not contain `stale terminal label`. For example in `skills/write-plan/scripts/test-scenarios.sh`, inspect the text between:
 
-```powershell
+```bash
 "Question id: `project_plan_work_route`"
 "Question id: `project_plan_issue_execution_route`"
 ```
 
 and assert that segment does not contain:
 
-```powershell
+```bash
 "stale terminal label"
 ```
 
@@ -306,9 +306,9 @@ Repeat for the nested Yes and Revisit route IDs owned by that skill.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh -SkipScenarioTests
+./scripts/validate.sh
 ```
 
 Expected: all parser, policy, and scenario tests pass.
@@ -338,9 +338,9 @@ The recommended option should be `Yes` when a safe forward route exists, `Revisi
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
+```bash
+./scripts/test-native-qa-svg.sh
+./scripts/test-superpowers-project-repo-contract.sh
 ```
 
 Expected: both tests pass.
@@ -354,8 +354,8 @@ Expected: both tests pass.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: validation result has `"ok": true`.
@@ -364,18 +364,18 @@ Expected: validation result has `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
-Expected: source path is this repo, live plugin root is `C:\Users\Tanner\plugins\project`, and validation passes.
+Expected: source path is this repo, live plugin root is `/home/tnnrpolley21/.codex/plugins/project`, and validation passes.
 
 - [ ] **Step 3: Run cleanup hook**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: no leftover Codex processes under this repo.
@@ -384,7 +384,7 @@ Expected: no leftover Codex processes under this repo.
 
 Run:
 
-```powershell
+```bash
 git status --short --branch
 git diff --stat
 git diff -- README.md skills scripts docs/superpowers/specs/2026-06-04-native-qa-continuation-recommendation-design.md docs/superpowers/plans/2026-06-04-native-qa-continuation-recommendation-plan.md
@@ -402,7 +402,7 @@ Use `request_user_input` with:
 
 If approved, commit with:
 
-```powershell
+```bash
 git add -- README.md docs/superpowers/specs/2026-06-04-native-qa-continuation-recommendation-design.md docs/superpowers/plans/2026-06-04-native-qa-continuation-recommendation-plan.md scripts skills
 git commit -m "Refine native QA continuation routing"
 git push origin main

@@ -24,19 +24,19 @@
 
 | Proof | Command | Result |
 |---|---|---|
-| workflow contract tests | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1` | pass |
-| workflow contract validator | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-contract.ps1 -RepoRoot .` | pass |
-| metadata tests | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-contract.ps1` | pass |
-| metadata validator | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-skill-metadata-contract.ps1 -RepoRoot .` | pass |
-| loop controller tests | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1` | pass |
-| loop scenarios | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1` | pass |
-| scorecard tests | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-scorecard-proof.ps1` | pass |
-| scorecard validator | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-scorecard-proof.ps1 -RepoRoot .` | pass |
-| repo validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | pass |
-| live sync validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` | pass |
-| version freshness | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent` | pass |
-| tracker align proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` | pass |
-| cleanup | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` | pass |
+| workflow contract tests | `./scripts/test-workflow-contract.sh` | pass |
+| workflow contract validator | `./scripts/validate-workflow-contract.sh -RepoRoot .` | pass |
+| metadata tests | `./scripts/test-skill-metadata-contract.sh` | pass |
+| metadata validator | `./scripts/validate-skill-metadata-contract.sh -RepoRoot .` | pass |
+| loop controller tests | `./scripts/test-loop-controller.sh` | pass |
+| loop scenarios | `./skills/loop-controller/scripts/test-scenarios.sh` | pass |
+| scorecard tests | `./scripts/test-scorecard-proof.sh` | pass |
+| scorecard validator | `./scripts/validate-scorecard-proof.sh -RepoRoot .` | pass |
+| repo validation | `./scripts/validate.sh` | pass |
+| live sync validation | `./scripts/sync-live.sh --validate` | pass |
+| version freshness | `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` | pass |
+| tracker align proof | `./skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` | pass |
+| cleanup | `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .` | pass |
 | clean git state | `git status --short --branch` | pass |
 
 ## Source Artifact Links
@@ -48,7 +48,7 @@
 - `docs/superpowers/backlog/ACTIVE.md`
 - `docs/superpowers/examples/workflow-golden-paths.md`
 - `docs/superpowers/examples/worker-handoff-packets.md`
-- `skills/loop-controller/scripts/validate-loop-state-machine.ps1`
+- `skills/loop-controller/scripts/validate-loop-state-machine.sh`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `docs/superpowers/OUTCOME_WORKFLOW.md`
 - `README.md`
@@ -56,15 +56,15 @@
 ## Looping Mode Proof
 
 - `docs/superpowers/loop-mode-contract.yml` documents phase order, one-candidate iterations, budget rechecks, source precedence, Auto Mode separation, and final Done invariants.
-- `skills/loop-controller/scripts/validate-loop-state-machine.ps1` validates loop state ledgers.
-- `skills/loop-controller/scripts/test-scenarios.ps1` covers one-candidate, no-auto-drain, no-ready, Auto Mode misuse, budget exhaustion, dirty repo, owner mismatch, and historical-checkbox fixtures.
+- `skills/loop-controller/scripts/validate-loop-state-machine.sh` validates loop state ledgers.
+- `skills/loop-controller/scripts/test-scenarios.sh` covers one-candidate, no-auto-drain, no-ready, Auto Mode misuse, budget exhaustion, dirty repo, owner mismatch, and historical-checkbox fixtures.
 - `docs/superpowers/examples/workflow-golden-paths.md` shows the strict Looping Mode flow and state-machine proof stop point.
 
 ## Live Sync And Tracker Proof
 
-- `scripts/sync-live.ps1 -Validate` is the live install proof command.
-- `scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent` is the version freshness proof command.
-- `skills/align-project/scripts/align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` is the tracker hygiene proof command.
+- `scripts/sync-live.sh --validate` is the live install proof command.
+- `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` is the version freshness proof command.
+- `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` is the tracker hygiene proof command.
 - `docs/superpowers/milestones/M0-governance.md` links this receipt.
 - `docs/superpowers/milestones/M1-source-of-truth.md` links this receipt.
 

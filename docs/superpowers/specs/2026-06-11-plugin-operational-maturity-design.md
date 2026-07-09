@@ -10,9 +10,9 @@ Turn the six follow-up improvements from the plugin contract hardening closeout 
 - The roadmap splits this work across `M0 - Governance`, `M1 - Source Of Truth`, and `M2 - Distribution`.
 - `docs/superpowers/specs/2026-06-10-plugin-contract-softness-audit-findings.md` identified soft or stale plugin contracts around terminal options, live sync, issue metadata, debug mode, and metadata readability.
 - `docs/superpowers/plans/2026-06-10-plugin-contract-hardening-plan.md` implemented the first hardening pass and left the plugin with stronger local validators, a clean live sync proof, and a merged `main`.
-- `scripts/validate.ps1` now runs broad source, metadata, script, manifest, and scenario checks, including `scripts/test-skill-metadata-readability.ps1`.
-- `scripts/sync-live.ps1 -Validate` now proves the local live plugin install matches the source repo.
-- `skills/merge-changes/scripts/premerge.ps1`, `closeout.ps1`, `validate-merge-decision.ps1`, and `validate-terminal-closeout.ps1` already define merge-closeout proof contracts, but ordinary local-branch use still requires hand-assembled ledgers and several manual script calls.
+- `scripts/validate.sh` now runs broad source, metadata, script, manifest, and scenario checks, including `scripts/test-skill-metadata-readability.sh`.
+- `scripts/sync-live.sh --validate` now proves the local live plugin install matches the source repo.
+- `skills/merge-changes/scripts/premerge.sh`, `closeout.sh`, `validate-merge-decision.sh`, and `validate-terminal-closeout.sh` already define merge-closeout proof contracts, but ordinary local-branch use still requires hand-assembled ledgers and several manual script calls.
 - `skills/advanced-user-input/SKILL.md` and workflow skills now define native continuation, `Stop`, `Done`, `Revisit`, stale-thread recovery, and debug-mode policy, but there is no generated summary page that condenses those contracts for a new agent.
 
 ## User Decisions
@@ -41,11 +41,11 @@ The work should be planned as staged implementation slices so each slice can lan
 
 ### Problem
 
-The repo can be validated locally, but the current safety story depends on a human or agent remembering to run the right PowerShell commands. That is not enough for a source-of-truth plugin. A future change can weaken a contract, break metadata parsing, or introduce stale namespace wording without being caught before it reaches `main`.
+The repo can be validated locally, but the current safety story depends on a human or agent remembering to run the right Bash commands. That is not enough for a source-of-truth plugin. A future change can weaken a contract, break metadata parsing, or introduce stale namespace wording without being caught before it reaches `main`.
 
 ### Desired Behavior
 
-GitHub Actions should run a deterministic plugin validation workflow on pull requests and pushes to `main`. The CI workflow should prove that source contracts, metadata readability, PowerShell parsing, manifest validation, namespace checks, native continuation gates, and scenario tests still pass.
+GitHub Actions should run a deterministic plugin validation workflow on pull requests and pushes to `main`. The CI workflow should prove that source contracts, metadata readability, Bash parsing, manifest validation, namespace checks, native continuation gates, and scenario tests still pass.
 
 ### Proposed Shape
 
@@ -56,7 +56,7 @@ Add or expand `.github/workflows/validate.yml` so it runs on:
 - manual `workflow_dispatch`;
 - optionally a scheduled full smoke run if fixture cost grows.
 
-Use a Windows runner first because the repo scripts are PowerShell-first and many local paths are Windows-oriented. A later Linux runner can be added only after the scripts are explicitly made cross-platform.
+Use a Windows runner first because the repo scripts are Bash-first and many local paths are Windows-oriented. A later Linux runner can be added only after the scripts are explicitly made cross-platform.
 
 CI should have at least two tiers:
 
@@ -65,15 +65,15 @@ CI should have at least two tiers:
 
 The default CI command should be explicit. Candidate:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 If full validation requires a local install path that GitHub Actions cannot provide, the implementation plan should add CI-safe parameters or fixtures rather than weakening validation.
 
 ### Acceptance Criteria
 
-- CI fails on broken skill metadata, oversized metadata lines, stale namespace references, missing continuation contracts, and PowerShell parse failures.
+- CI fails on broken skill metadata, oversized metadata lines, stale namespace references, missing continuation contracts, and Bash parse failures.
 - CI output names the failing script and failing contract clearly.
 - CI does not require secrets for source-only validation.
 - CI does not mutate live user plugin directories.
@@ -106,7 +106,7 @@ Every intentional live-install or distribution-ready update should have a releas
 Add a release preparation script, for example:
 
 ```text
-scripts/prepare-release.ps1
+scripts/prepare-release.sh
 ```
 
 The script should not publish by itself. It should prepare a release receipt and optionally bump version metadata after an explicit approved route. It should support:
@@ -125,7 +125,7 @@ The plugin manifest can keep semantic versioning plus local build metadata, but 
 - A release receipt can answer: "what source commit is this local live plugin based on?"
 - Version changes are never silent side effects of sync.
 - Release notes mention contract-impacting changes, new validators, and stale-thread implications.
-- `sync-live.ps1 -Validate` can compare release receipt source commit against the source checkout when available.
+- `sync-live.sh --validate` can compare release receipt source commit against the source checkout when available.
 
 ### Risks And Tradeoffs
 
@@ -155,7 +155,7 @@ The detector should not rely on plugin cache paths as durable source of truth. C
 Add a source-owned detector script, for example:
 
 ```text
-scripts/detect-stale-skill-contract.ps1
+scripts/detect-stale-skill-contract.sh
 ```
 
 Inputs:
@@ -209,8 +209,8 @@ The repo should provide one guided local-branch helper that prepares and validat
 Add a helper script or small script family, for example:
 
 ```text
-skills/merge-changes/scripts/prepare-local-branch-closeout.ps1
-skills/merge-changes/scripts/apply-local-branch-closeout.ps1
+skills/merge-changes/scripts/prepare-local-branch-closeout.sh
+skills/merge-changes/scripts/apply-local-branch-closeout.sh
 ```
 
 The prepare script should:
@@ -273,7 +273,7 @@ An end-to-end smoke test should simulate the full workflow with disposable local
 Add a script such as:
 
 ```text
-scripts/test-e2e-project-workflow.ps1
+scripts/test-e2e-project-workflow.sh
 ```
 
 Default mode should run entirely in a temp repo. It can copy the plugin source, create a toy source artifact, create a minimal plan, make a deterministic file edit, run validators, and exercise merge closeout scripts with fixture native-decision ledgers.
@@ -318,7 +318,7 @@ docs/superpowers/OUTCOME_WORKFLOW.md
 Add a generator such as:
 
 ```text
-scripts/generate-contract-summary.ps1
+scripts/generate-contract-summary.sh
 ```
 
 The summary should include:
@@ -339,7 +339,7 @@ The summary should include:
 Validation should fail when the generated summary is stale relative to source. Candidate:
 
 ```text
-scripts/test-contract-summary.ps1
+scripts/test-contract-summary.sh
 ```
 
 ### Acceptance Criteria
@@ -383,13 +383,13 @@ This order makes later work easier because CI and smoke tests can rely on the su
 
 ## Proof Oracle Candidates
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-readability.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\prepare-release.ps1 -CheckOnly`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-e2e-project-workflow.ps1 -LocalOnly`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
+- `./scripts/test-skill-metadata-readability.sh`
+- `./scripts/test-contract-summary.sh`
+- `./scripts/detect-stale-skill-contract.sh -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`
+- `./scripts/prepare-release.sh -CheckOnly`
+- `./scripts/test-e2e-project-workflow.sh -LocalOnly`
 - GitHub Actions run for `Validate Superpowers Project plugin` succeeds on pull request and `main`.
 
 ## Open Questions For Planning

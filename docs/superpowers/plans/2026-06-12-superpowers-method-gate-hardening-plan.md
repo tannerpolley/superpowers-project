@@ -4,9 +4,9 @@
 
 **Goal:** Harden Superpowers Project adapter skills so they enforce upstream Superpowers workflow gates with structured proof instead of only naming companion skills.
 
-**Architecture:** Update each adapter contract at the source skill, startup metadata, and executable PowerShell validation layer. Add focused scenario fixtures for each missing method gate, then include any new aggregate validators in `scripts/validate.ps1` so a weakened contract fails locally before live sync.
+**Architecture:** Update each adapter contract at the source skill, startup metadata, and executable Bash validation layer. Add focused scenario fixtures for each missing method gate, then include any new aggregate validators in `scripts/validate.sh` so a weakened contract fails locally before live sync.
 
-**Tech Stack:** Markdown skill contracts, YAML agent metadata, PowerShell contract validators, JSON ledgers, repo validation scripts.
+**Tech Stack:** Markdown skill contracts, YAML agent metadata, Bash contract validators, JSON ledgers, repo validation scripts.
 
 ---
 
@@ -14,7 +14,7 @@
 
 **Source Spec:** `docs/superpowers/specs/2026-06-12-superpowers-method-gate-specific-audit-findings.md`
 
-**Auto Mode Authorization Ledger:** `C:\Users\Tanner\AppData\Local\Temp\superpowers-project\auto-mode\2026-06-12-superpowers-method-gate-specific-authorization.json`
+**Auto Mode Authorization Ledger:** `/tmp\superpowers-project\auto-mode\2026-06-12-superpowers-method-gate-specific-authorization.json`
 
 **Recorded Planning Defaults:**
 
@@ -24,7 +24,7 @@
 - TDD policy: required for all behavior-changing validator and script work in this plan.
 - Debugging policy: required only when a task encounters a failing validator, scenario test, CI failure, unclear failure, or regression.
 - Branch strategy: continue on the active development branch unless later execution chooses an issue-backed worktree.
-- Live mutation: after implementation, run `scripts\sync-live.ps1 -Validate`; do not manually edit live or cache plugin files.
+- Live mutation: after implementation, run `scripts/sync-live.sh --validate`; do not manually edit live or cache plugin files.
 
 ## Non-Goals
 
@@ -48,24 +48,24 @@
 
 Run these commands from the repo root after implementation:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-method-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plan-exactness.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./scripts/test-superpowers-method-contract.sh
+./scripts/test-plan-exactness.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected results:
 
 - Every command exits `0`.
 - JSON-producing validators return `ok: true`.
-- `scripts\sync-live.ps1 -Validate` reports the source and live install are in sync.
+- `scripts/sync-live.sh --validate` reports the source and live install are in sync.
 - The cleanup hook reports no matching leftover Codex processes for this repo, or only terminates processes clearly owned by this task when run later with `-Kill`.
 
 ## Test Complete
@@ -85,25 +85,25 @@ Testing is complete when all focused scenario tests, the aggregate method contra
 
 - `skills/implement-plan/SKILL.md`: add the isolation, baseline, TDD, and debugging proof gates to the non-issue implementation contract.
 - `skills/implement-plan/agents/openai.yaml`: repeat startup-visible method proof requirements.
-- `skills/implement-plan/scripts/lib/contract.ps1`: validate structured implementation evidence.
-- `skills/implement-plan/scripts/test-scenarios.ps1`: add positive and negative evidence fixtures.
+- `skills/implement-plan/scripts/lib/contract.sh`: validate structured implementation evidence.
+- `skills/implement-plan/scripts/test-scenarios.sh`: add positive and negative evidence fixtures.
 - `skills/resolve-issue/SKILL.md`: add issue-backed TDD and debugging proof requirements.
 - `skills/resolve-issue/agents/openai.yaml`: repeat startup-visible issue-backed proof requirements.
-- `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`: collect method proof into PR-ready ledgers.
-- `skills/resolve-issue/scripts/validate-pr-ready.ps1`: reject PR-ready ledgers missing method proof.
-- `skills/resolve-issue/scripts/test-scenarios.ps1`: add PR-ready method-proof fixtures.
+- `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh`: collect method proof into PR-ready ledgers.
+- `skills/resolve-issue/scripts/validate-pr-ready.sh`: reject PR-ready ledgers missing method proof.
+- `skills/resolve-issue/scripts/test-scenarios.sh`: add PR-ready method-proof fixtures.
 - `skills/orchestrate-issues/SKILL.md`: add two-stage review, TDD, and debugging worker evidence requirements.
 - `skills/orchestrate-issues/agents/openai.yaml`: repeat startup-visible orchestration proof requirements.
-- `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`: emit structured worker review and evidence policy.
-- `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`: reject weak worker handoffs.
-- `skills/orchestrate-issues/scripts/test-scenarios.ps1`: add worker handoff negative fixtures.
+- `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`: emit structured worker review and evidence policy.
+- `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`: reject weak worker handoffs.
+- `skills/orchestrate-issues/scripts/test-scenarios.sh`: add worker handoff negative fixtures.
 - `skills/write-plan/SKILL.md`: add the plan exactness gate.
 - `skills/write-plan/agents/openai.yaml`: repeat startup-visible plan exactness requirements.
-- `skills/write-plan/scripts/test-scenarios.ps1`: require exactness gate text and validator wiring.
-- `scripts/validate-plan-exactness.ps1`: create mechanical validator for ready-plan exactness.
-- `scripts/test-plan-exactness.ps1`: create validator fixtures.
-- `scripts/test-superpowers-method-contract.ps1`: extend aggregate method contract needles for the new gates.
-- `scripts/validate.ps1`: add `test-plan-exactness.ps1` to the full validation path.
+- `skills/write-plan/scripts/test-scenarios.sh`: require exactness gate text and validator wiring.
+- `scripts/validate-plan-exactness.sh`: create mechanical validator for ready-plan exactness.
+- `scripts/test-plan-exactness.sh`: create validator fixtures.
+- `scripts/test-superpowers-method-contract.sh`: extend aggregate method contract needles for the new gates.
+- `scripts/validate.sh`: add `test-plan-exactness.sh` to the full validation path.
 
 ## Task 1: Implement-Plan Isolation And Baseline Gate
 
@@ -117,14 +117,14 @@ Testing is complete when all focused scenario tests, the aggregate method contra
 **Files:**
 - Modify: `skills/implement-plan/SKILL.md`
 - Modify: `skills/implement-plan/agents/openai.yaml`
-- Modify: `skills/implement-plan/scripts/lib/contract.ps1`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
-- Modify: `scripts/test-superpowers-method-contract.ps1`
+- Modify: `skills/implement-plan/scripts/lib/contract.sh`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
+- Modify: `scripts/test-superpowers-method-contract.sh`
 
 - [ ] **Step 1: Add RED fixtures for missing isolation and baseline proof**
-  In `skills/implement-plan/scripts/test-scenarios.ps1`, extend `New-HappyLedger` with this proof shape so positive fixtures represent the new contract:
+  In `skills/implement-plan/scripts/test-scenarios.sh`, extend `New-HappyLedger` with this proof shape so positive fixtures represent the new contract:
 
-```powershell
+```bash
 isolation = [pscustomobject]@{
     skill = "superpowers:using-git-worktrees"
     selected_mode = "native-worktree"
@@ -136,7 +136,7 @@ isolation = [pscustomobject]@{
 baseline = [pscustomobject]@{
     setup_completed = $true
     clean = $true
-    commands = @("pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/plan.md")
+    commands = @("./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/plan.md")
     git_status = ""
 }
 ```
@@ -146,16 +146,16 @@ baseline = [pscustomobject]@{
 - [ ] **Step 2: Validate the RED state**
   Run this command before contract changes:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
 ```
 
   Expected result before implementation: exit code `1`, with `contract rejects missing isolation and baseline proof` failing because `Test-ImplementPlanLedger` still accepts ledgers without those fields.
 
 - [ ] **Step 3: Add contract helper checks**
-  In `skills/implement-plan/scripts/lib/contract.ps1`, add these helper functions above `Test-ImplementPlanLedger`:
+  In `skills/implement-plan/scripts/lib/contract.sh`, add these helper functions above `Test-ImplementPlanLedger`:
 
-```powershell
+```bash
 function Assert-StructuredField {
     param([object]$Object, [string]$Name)
     if (-not (Test-Property $Object $Name) -or $Object.$Name -is [string]) { throw "$Name proof must be structured" }
@@ -185,7 +185,7 @@ function Assert-BaselineProof {
 
   Then call:
 
-```powershell
+```bash
 $isolation = Assert-StructuredField -Object $Ledger -Name "isolation"
 Assert-IsolationProof -Proof $isolation
 $baseline = Assert-StructuredField -Object $Ledger -Name "baseline"
@@ -204,14 +204,14 @@ Before code edits, worker handoff, or implementation claims, require structured 
   Add the same required phrases to `skills/implement-plan/agents/openai.yaml`: `superpowers:using-git-worktrees`, `Isolation And Baseline Gate`, `native-worktree`, `git-worktree`, `current-checkout-approved`, `setup completion`, `clean baseline commands`, and `stop and route to Revisit or systematic debugging`.
 
 - [ ] **Step 5: Extend the aggregate method contract**
-  In `scripts/test-superpowers-method-contract.ps1`, extend the `implement-plan companion method contract` needles to require the new isolation and baseline phrases in both skill and metadata. Use normalized text matching in the existing `Test-Contract` call.
+  In `scripts/test-superpowers-method-contract.sh`, extend the `implement-plan companion method contract` needles to require the new isolation and baseline phrases in both skill and metadata. Use normalized text matching in the existing `Test-Contract` call.
 
 - [ ] **Step 6: Validate the GREEN state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-method-contract.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./scripts/test-superpowers-method-contract.sh
 ```
 
   Expected result after implementation: both commands exit `0`; the missing-isolation and missing-baseline fixtures fail inside the test harness as expected, and the happy ledger passes.
@@ -219,8 +219,8 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-met
 - [ ] **Step 7: Commit this slice**
   Commit after the focused tests pass:
 
-```powershell
-git add skills/implement-plan/SKILL.md skills/implement-plan/agents/openai.yaml skills/implement-plan/scripts/lib/contract.ps1 skills/implement-plan/scripts/test-scenarios.ps1 scripts/test-superpowers-method-contract.ps1
+```bash
+git add skills/implement-plan/SKILL.md skills/implement-plan/agents/openai.yaml skills/implement-plan/scripts/lib/contract.sh skills/implement-plan/scripts/test-scenarios.sh scripts/test-superpowers-method-contract.sh
 git commit -m "Harden implement-plan isolation gate"
 ```
 
@@ -236,27 +236,27 @@ git commit -m "Harden implement-plan isolation gate"
 **Files:**
 - Modify: `skills/orchestrate-issues/SKILL.md`
 - Modify: `skills/orchestrate-issues/agents/openai.yaml`
-- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`
-- Modify: `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
-- Modify: `scripts/test-superpowers-method-contract.ps1`
+- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`
+- Modify: `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
+- Modify: `scripts/test-superpowers-method-contract.sh`
 
 - [ ] **Step 1: Add RED worker handoff review-policy fixture**
-  In `skills/orchestrate-issues/scripts/test-scenarios.ps1`, after the existing `prepare and validate worker handoff` scenario prepares a valid handoff, add a separate scenario named `worker handoff rejects missing subagent review policy`. Prepare a handoff, remove `$handoff.review_policy`, pass it to `validate-worker-handoff.ps1` through `-HandoffJson`, and assert the validator exits non-zero with a reason matching `review_policy`.
+  In `skills/orchestrate-issues/scripts/test-scenarios.sh`, after the existing `prepare and validate worker handoff` scenario prepares a valid handoff, add a separate scenario named `worker handoff rejects missing subagent review policy`. Prepare a handoff, remove `$handoff.review_policy`, pass it to `validate-worker-handoff.sh` through `-HandoffJson`, and assert the validator exits non-zero with a reason matching `review_policy`.
 
 - [ ] **Step 2: Validate the RED state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
+```bash
+./skills/orchestrate-issues/scripts/test-scenarios.sh
 ```
 
   Expected result before implementation: exit code `1`, because the current validator accepts handoffs without `review_policy`.
 
 - [ ] **Step 3: Emit structured review policy in worker handoffs**
-  In `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`, add this sibling object after `topology_handoff` and before `required_skills`:
+  In `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`, add this sibling object after `topology_handoff` and before `required_skills`:
 
-```powershell
+```bash
 review_policy = [ordered]@{
     base_skill = "superpowers:subagent-driven-development"
     fresh_context_per_issue = $true
@@ -272,9 +272,9 @@ review_policy = [ordered]@{
 ```
 
 - [ ] **Step 4: Validate review policy fields**
-  In `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`, add `review_policy` to the required top-level fields. Then assert:
+  In `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`, add `review_policy` to the required top-level fields. Then assert:
 
-```powershell
+```bash
 $reviewPolicy = $handoff.review_policy
 if ($reviewPolicy -is [string]) { throw "review_policy must be structured" }
 if ([string]$reviewPolicy.base_skill -ne "superpowers:subagent-driven-development") { throw "review_policy base_skill must be superpowers:subagent-driven-development" }
@@ -298,14 +298,14 @@ foreach ($field in @("code_quality_after_spec_compliance", "reviewer_found_issue
   In `skills/orchestrate-issues/SKILL.md`, add a `## Subagent Review Gate` section requiring `superpowers:subagent-driven-development` two-stage review, fresh context per issue task, implementer statuses, spec compliance review before code quality review, re-review until approved, and final whole-implementation review. Add matching startup-visible summary text to `skills/orchestrate-issues/agents/openai.yaml`.
 
 - [ ] **Step 6: Extend the aggregate method contract**
-  In `scripts/test-superpowers-method-contract.ps1`, extend `orchestrate-issues companion method contract` needles with `Subagent Review Gate`, `spec compliance review before code quality review`, `re-review until approved`, `final whole-implementation review`, and `block PR-ready intake`.
+  In `scripts/test-superpowers-method-contract.sh`, extend `orchestrate-issues companion method contract` needles with `Subagent Review Gate`, `spec compliance review before code quality review`, `re-review until approved`, `final whole-implementation review`, and `block PR-ready intake`.
 
 - [ ] **Step 7: Validate the GREEN state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-method-contract.ps1
+```bash
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./scripts/test-superpowers-method-contract.sh
 ```
 
   Expected result after implementation: both commands exit `0`; missing `review_policy` is rejected, and the generated happy handoff passes.
@@ -313,8 +313,8 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-met
 - [ ] **Step 8: Commit this slice**
   Commit after the focused tests pass:
 
-```powershell
-git add skills/orchestrate-issues/SKILL.md skills/orchestrate-issues/agents/openai.yaml skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1 skills/orchestrate-issues/scripts/validate-worker-handoff.ps1 skills/orchestrate-issues/scripts/test-scenarios.ps1 scripts/test-superpowers-method-contract.ps1
+```bash
+git add skills/orchestrate-issues/SKILL.md skills/orchestrate-issues/agents/openai.yaml skills/orchestrate-issues/scripts/prepare-worker-handoff.sh skills/orchestrate-issues/scripts/validate-worker-handoff.sh skills/orchestrate-issues/scripts/test-scenarios.sh scripts/test-superpowers-method-contract.sh
 git commit -m "Require orchestrated subagent review proof"
 ```
 
@@ -330,24 +330,24 @@ git commit -m "Require orchestrated subagent review proof"
 **Files:**
 - Modify: `skills/implement-plan/SKILL.md`
 - Modify: `skills/implement-plan/agents/openai.yaml`
-- Modify: `skills/implement-plan/scripts/lib/contract.ps1`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/implement-plan/scripts/lib/contract.sh`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`
-- Modify: `skills/resolve-issue/scripts/validate-pr-ready.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh`
+- Modify: `skills/resolve-issue/scripts/validate-pr-ready.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
 - Modify: `skills/orchestrate-issues/SKILL.md`
 - Modify: `skills/orchestrate-issues/agents/openai.yaml`
-- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`
-- Modify: `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
-- Modify: `scripts/test-superpowers-method-contract.ps1`
+- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`
+- Modify: `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
+- Modify: `scripts/test-superpowers-method-contract.sh`
 
 - [ ] **Step 1: Add RED fixtures for missing TDD proof**
   Add `tdd` to the happy implementation and PR-ready fixtures:
 
-```powershell
+```bash
 tdd = [pscustomobject]@{
     required = $true
     opt_out = $false
@@ -355,34 +355,34 @@ tdd = [pscustomobject]@{
     receipts = @(
         [pscustomobject]@{
             task = "Task 1"
-            red_command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1"
+            red_command = "./skills/implement-plan/scripts/test-scenarios.sh"
             red_expected = "FAIL before production contract accepts missing gate"
-            green_command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1"
+            green_command = "./skills/implement-plan/scripts/test-scenarios.sh"
             green_result = "PASS"
-            final_command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1"
+            final_command = "./scripts/validate.sh"
         }
     )
 }
 ```
 
-  In `skills/implement-plan/scripts/test-scenarios.ps1`, add `contract rejects verification-only TDD proof`: remove `$ledger.tdd` from a happy ledger and assert failure matches `TDD`. Add a second fixture with `tdd = @{ required = $true; opt_out = $false; receipts = @() }` and assert failure matches `RED`.
+  In `skills/implement-plan/scripts/test-scenarios.sh`, add `contract rejects verification-only TDD proof`: remove `$ledger.tdd` from a happy ledger and assert failure matches `TDD`. Add a second fixture with `tdd = @{ required = $true; opt_out = $false; receipts = @() }` and assert failure matches `RED`.
 
-  In `skills/resolve-issue/scripts/test-scenarios.ps1`, add `PR-ready handoff rejects missing TDD proof`: build the existing happy PR-ready ledger without `tdd` and assert `validate-pr-ready.ps1` fails with a reason matching `TDD`.
+  In `skills/resolve-issue/scripts/test-scenarios.sh`, add `PR-ready handoff rejects missing TDD proof`: build the existing happy PR-ready ledger without `tdd` and assert `validate-pr-ready.sh` fails with a reason matching `TDD`.
 
 - [ ] **Step 2: Validate the RED state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
   Expected result before implementation: both commands exit `1` because the current contracts accept verification-only evidence.
 
 - [ ] **Step 3: Add implement-plan TDD validation**
-  In `skills/implement-plan/scripts/lib/contract.ps1`, add:
+  In `skills/implement-plan/scripts/lib/contract.sh`, add:
 
-```powershell
+```bash
 function Assert-TddProof {
     param($Proof)
     if ($Proof -is [string]) { throw "TDD proof must be structured" }
@@ -403,60 +403,60 @@ function Assert-TddProof {
 
   Call it from `Test-ImplementPlanLedger` after baseline validation:
 
-```powershell
+```bash
 $tdd = Assert-StructuredField -Object $Ledger -Name "tdd"
 Assert-TddProof -Proof $tdd
 ```
 
 - [ ] **Step 4: Add resolve-issue TDD collection and validation**
-  In `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`, add parameters:
+  In `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh`, add parameters:
 
-```powershell
+```bash
 [string]$TddProofJson,
 [string]$TddProofPath,
 ```
 
   Read the proof and include it in the emitted ledger:
 
-```powershell
+```bash
 $tddProof = Read-JsonInput -Json $TddProofJson -Path $TddProofPath -Name "TDD proof"
 ...
 tdd = $tddProof
 ```
 
-  In `skills/resolve-issue/scripts/validate-pr-ready.ps1`, add a local `Assert-TddProof` function with the same required fields and call it after the structured field checks:
+  In `skills/resolve-issue/scripts/validate-pr-ready.sh`, add a local `Assert-TddProof` function with the same required fields and call it after the structured field checks:
 
-```powershell
+```bash
 if (-not (Test-Property -Object $ready -Name "tdd") -or $ready.tdd -is [string]) { throw "PR-ready ledger TDD proof must be structured" }
 Assert-TddProof -Proof $ready.tdd
 ```
 
 - [ ] **Step 5: Add worker handoff TDD evidence policy**
-  In `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`, add an `evidence_policy` object if Task 4 has not already added it. It must include:
+  In `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`, add an `evidence_policy` object if Task 4 has not already added it. It must include:
 
-```powershell
+```bash
 evidence_policy = [ordered]@{
     tdd_red_green_required = $true
     tdd_required_fields = @("task", "red_command", "red_expected", "green_command", "green_result", "final_command")
 }
 ```
 
-  In `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`, require `evidence_policy.tdd_red_green_required -eq $true` and every `tdd_required_fields` value listed above.
+  In `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`, require `evidence_policy.tdd_red_green_required -eq $true` and every `tdd_required_fields` value listed above.
 
 - [ ] **Step 6: Harden skill text and metadata**
   In `implement-plan`, `resolve-issue`, and `orchestrate-issues` skill text and metadata, add a `TDD Red/Green Proof Gate` that says final verification alone is insufficient. Require RED command, expected failing assertion or failure reason, GREEN command, passing result, final relevant test command, and explicit opt-out source when the approved plan opts out.
 
 - [ ] **Step 7: Extend aggregate method contract**
-  In `scripts/test-superpowers-method-contract.ps1`, add needles for `TDD Red/Green Proof Gate`, `RED command`, `expected failing assertion`, `GREEN command`, `final relevant test command`, and `final verification alone is insufficient` to the implement, resolve, and orchestrate contract checks.
+  In `scripts/test-superpowers-method-contract.sh`, add needles for `TDD Red/Green Proof Gate`, `RED command`, `expected failing assertion`, `GREEN command`, `final relevant test command`, and `final verification alone is insufficient` to the implement, resolve, and orchestrate contract checks.
 
 - [ ] **Step 8: Validate the GREEN state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-method-contract.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./scripts/test-superpowers-method-contract.sh
 ```
 
   Expected result after implementation: all commands exit `0`; verification-only fixtures fail inside the test harness, and opt-out fixtures pass only with source and scope recorded.
@@ -464,8 +464,8 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-met
 - [ ] **Step 9: Commit this slice**
   Commit after the focused tests pass:
 
-```powershell
-git add skills/implement-plan skills/resolve-issue skills/orchestrate-issues scripts/test-superpowers-method-contract.ps1
+```bash
+git add skills/implement-plan skills/resolve-issue skills/orchestrate-issues scripts/test-superpowers-method-contract.sh
 git commit -m "Require TDD red green proof"
 ```
 
@@ -481,33 +481,33 @@ git commit -m "Require TDD red green proof"
 **Files:**
 - Modify: `skills/implement-plan/SKILL.md`
 - Modify: `skills/implement-plan/agents/openai.yaml`
-- Modify: `skills/implement-plan/scripts/lib/contract.ps1`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/implement-plan/scripts/lib/contract.sh`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`
-- Modify: `skills/resolve-issue/scripts/validate-pr-ready.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh`
+- Modify: `skills/resolve-issue/scripts/validate-pr-ready.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
 - Modify: `skills/orchestrate-issues/SKILL.md`
 - Modify: `skills/orchestrate-issues/agents/openai.yaml`
-- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`
-- Modify: `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`
+- Modify: `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
-- Modify: `scripts/test-superpowers-method-contract.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
+- Modify: `scripts/test-superpowers-method-contract.sh`
 
 - [ ] **Step 1: Add RED fixtures for missing debugging phase proof**
   Add a bug-shaped ledger fixture to implement-plan and resolve-issue tests:
 
-```powershell
+```bash
 work_shape = "bug"
 debugging = [pscustomobject]@{
     required = $true
     phase1_root_cause = [pscustomobject]@{
         error_text = "fixture failure"
-        reproduction = "pwsh.exe -NoProfile -Command 'throw ""fixture failure""'"
+        reproduction = "-NoProfile -Command 'throw ""fixture failure""'"
         recent_change_check = "inspected current diff"
         component_boundary = "contract validator"
         data_flow_trace = "ledger -> validator -> failure reason"
@@ -533,17 +533,17 @@ debugging = [pscustomobject]@{
 - [ ] **Step 2: Validate the RED state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
   Expected result before implementation: both commands exit `1`, because bug-shaped ledgers can currently pass without debugging phase proof.
 
 - [ ] **Step 3: Add debugging validators**
-  In `skills/implement-plan/scripts/lib/contract.ps1` and `skills/resolve-issue/scripts/validate-pr-ready.ps1`, add an `Assert-DebuggingProof` function:
+  In `skills/implement-plan/scripts/lib/contract.sh` and `skills/resolve-issue/scripts/validate-pr-ready.sh`, add an `Assert-DebuggingProof` function:
 
-```powershell
+```bash
 function Assert-DebuggingProof {
     param($WorkShape, $Proof)
     $bugShapes = @("bug", "regression", "ci-failure", "performance", "unclear-failure")
@@ -564,7 +564,7 @@ function Assert-DebuggingProof {
 
   In implement-plan, call:
 
-```powershell
+```bash
 $workShape = if (Test-Property $Ledger "work_shape") { [string]$Ledger.work_shape } else { "feature" }
 Assert-DebuggingProof -WorkShape $workShape -Proof $Ledger.debugging
 ```
@@ -572,9 +572,9 @@ Assert-DebuggingProof -WorkShape $workShape -Proof $Ledger.debugging
   In resolve-issue PR-ready validation, call the same function with `$ready.work_shape` and `$ready.debugging`.
 
 - [ ] **Step 4: Collect debugging proof for issue-backed PR-ready ledgers**
-  In `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`, add parameters:
+  In `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh`, add parameters:
 
-```powershell
+```bash
 [string]$WorkShape = "feature",
 [string]$DebuggingProofJson,
 [string]$DebuggingProofPath,
@@ -583,34 +583,34 @@ Assert-DebuggingProof -WorkShape $workShape -Proof $Ledger.debugging
   Read the proof only when `$WorkShape` is one of the bug-shaped values, then include `work_shape` and `debugging` in the emitted ledger.
 
 - [ ] **Step 5: Add worker handoff debugging evidence policy**
-  Extend the `evidence_policy` object in `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1` with:
+  Extend the `evidence_policy` object in `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh` with:
 
-```powershell
+```bash
 debugging_phase_proof_required_for = @("bug", "regression", "ci-failure", "performance", "unclear-failure")
 debugging_required_phases = @("phase1_root_cause", "phase2_pattern_analysis", "phase3_hypothesis", "phase4_fix")
 max_fix_attempts_before_escalation = 3
 ```
 
-  In `validate-worker-handoff.ps1`, require these values and reject missing or altered policy fields.
+  In `validate-worker-handoff.sh`, require these values and reject missing or altered policy fields.
 
 - [ ] **Step 6: Harden skill text and metadata**
   In implement-plan, resolve-issue, orchestrate-issues, and write-plan skill text and metadata, add a `Debugging Phase Proof Gate` that requires Phase 1 root-cause evidence, Phase 2 pattern analysis, Phase 3 hypothesis, Phase 4 implementation with reproduction test when feasible, and escalation after three failed fix attempts.
 
 - [ ] **Step 7: Extend write-plan scenario coverage**
-  In `skills/write-plan/scripts/test-scenarios.ps1`, add required text needles for `Debugging Phase Proof Gate`, `Phase 1 root-cause evidence`, `Phase 2 pattern analysis`, `Phase 3 hypothesis`, `Phase 4`, and `three failed fix attempts`.
+  In `skills/write-plan/scripts/test-scenarios.sh`, add required text needles for `Debugging Phase Proof Gate`, `Phase 1 root-cause evidence`, `Phase 2 pattern analysis`, `Phase 3 hypothesis`, `Phase 4`, and `three failed fix attempts`.
 
 - [ ] **Step 8: Extend aggregate method contract**
-  In `scripts/test-superpowers-method-contract.ps1`, add the same debugging phase needles to implement-plan, resolve-issue, orchestrate-issues, and write-plan contract checks.
+  In `scripts/test-superpowers-method-contract.sh`, add the same debugging phase needles to implement-plan, resolve-issue, orchestrate-issues, and write-plan contract checks.
 
 - [ ] **Step 9: Validate the GREEN state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-method-contract.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./scripts/test-superpowers-method-contract.sh
 ```
 
   Expected result after implementation: all commands exit `0`; bug-shaped ledgers without debugging proof fail inside the harness, and non-bug work shapes are not forced through debugging phase proof.
@@ -618,8 +618,8 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-met
 - [ ] **Step 10: Commit this slice**
   Commit after the focused tests pass:
 
-```powershell
-git add skills/implement-plan skills/resolve-issue skills/orchestrate-issues skills/write-plan scripts/test-superpowers-method-contract.ps1
+```bash
+git add skills/implement-plan skills/resolve-issue skills/orchestrate-issues skills/write-plan scripts/test-superpowers-method-contract.sh
 git commit -m "Require debugging phase proof"
 ```
 
@@ -635,16 +635,16 @@ git commit -m "Require debugging phase proof"
 **Files:**
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
-- Create: `scripts/validate-plan-exactness.ps1`
-- Create: `scripts/test-plan-exactness.ps1`
-- Modify: `scripts/validate.ps1`
-- Modify: `scripts/test-superpowers-method-contract.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
+- Create: `scripts/validate-plan-exactness.sh`
+- Create: `scripts/test-plan-exactness.sh`
+- Modify: `scripts/validate.sh`
+- Modify: `scripts/test-superpowers-method-contract.sh`
 
 - [ ] **Step 1: Add the plan exactness validator**
-  Create `scripts/validate-plan-exactness.ps1` with parameters:
+  Create `scripts/validate-plan-exactness.sh` with parameters:
 
-```powershell
+```bash
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path,
     [Parameter(Mandatory = $true)][string]$PlanPath
@@ -653,7 +653,7 @@ param(
 
   The validator must resolve `PlanPath` under the repo, require `docs/superpowers/plans/`, read the plan, strip fenced code blocks before prose-pattern matching, and reject these case-insensitive patterns in the remaining prose:
 
-```powershell
+```bash
 $forbiddenPatterns = @(
     '\bTBD\b',
     '\bTODO\b',
@@ -667,7 +667,7 @@ $forbiddenPatterns = @(
 
   It must also parse numbered `Task N` sections and reject any checkbox line containing `Run`, `Validate`, `Test`, or `Verify` unless the current line or following two lines contain `Expected:`. Return JSON:
 
-```powershell
+```bash
 [pscustomobject]@{
     ok = $true
     phase = "plan-exactness"
@@ -680,7 +680,7 @@ $forbiddenPatterns = @(
   On failure, return `ok: false`, `phase: "plan-exactness"`, `plan_path`, and a `reason` naming the first matched issue, then exit `1`.
 
 - [ ] **Step 2: Add validator scenario tests**
-  Create `scripts/test-plan-exactness.ps1` with a temp fixture repo. Include these fixture files:
+  Create `scripts/test-plan-exactness.sh` with a temp fixture repo. Include these fixture files:
 
 ```text
 docs/superpowers/plans/valid-exact-plan.md
@@ -697,11 +697,11 @@ docs/superpowers/plans/shortcut-plan.md
 - `shortcut-plan.md` containing the shortcut phrase from the validator pattern list fails.
 
 - [ ] **Step 3: Wire exactness into full validation**
-  In `scripts/validate.ps1`, after the existing `Plan task use cases` step, add:
+  In `scripts/validate.sh`, after the existing `Plan task use cases` step, add:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Plan exactness" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-plan-exactness.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-plan-exactness.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Plan exactness failed" }
 }))
 ```
@@ -709,8 +709,8 @@ $results.Add((Invoke-Step "Plan exactness" {
 - [ ] **Step 4: Harden write-plan text and metadata**
   In `skills/write-plan/SKILL.md`, add `## Plan Exactness Gate` before `## Native Question Debug Mode`. It must say ready plans are blocked by placeholder words, shortcut references, generic code instructions, missing expected output, missing exact files, missing exact commands, and missing type/name consistency review. It must require:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-exactness.ps1 -PlanPath <saved-plan-path>
+```bash
+./scripts/validate-plan-exactness.sh -PlanPath <saved-plan-path>
 ```
 
   before artifact review or any route into `create-issues`, `implement-plan`, `resolve-issue`, or `orchestrate-issues`.
@@ -719,7 +719,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-exactn
 
 ```yaml
 Plan Exactness Gate
-validate-plan-exactness.ps1
+validate-plan-exactness.sh
 TBD
 TODO
 fill in
@@ -732,28 +732,28 @@ type/name consistency review
 ```
 
 - [ ] **Step 5: Extend write-plan scenario coverage**
-  In `skills/write-plan/scripts/test-scenarios.ps1`, add a scenario named `plan exactness gate is mandatory`. It must assert the skill and metadata contain `Plan Exactness Gate`, `validate-plan-exactness.ps1`, and every forbidden phrase listed in Step 4.
+  In `skills/write-plan/scripts/test-scenarios.sh`, add a scenario named `plan exactness gate is mandatory`. It must assert the skill and metadata contain `Plan Exactness Gate`, `validate-plan-exactness.sh`, and every forbidden phrase listed in Step 4.
 
 - [ ] **Step 6: Extend aggregate method contract**
-  In `scripts/test-superpowers-method-contract.ps1`, add a `write-plan exactness contract` check requiring the same exactness gate phrases in the skill and metadata.
+  In `scripts/test-superpowers-method-contract.sh`, add a `write-plan exactness contract` check requiring the same exactness gate phrases in the skill and metadata.
 
 - [ ] **Step 7: Validate the GREEN state**
   Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plan-exactness.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-exactness.ps1 -PlanPath docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-method-contract.ps1
+```bash
+./scripts/test-plan-exactness.sh
+./scripts/validate-plan-exactness.sh -PlanPath docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
+./skills/write-plan/scripts/test-scenarios.sh
+./scripts/test-superpowers-method-contract.sh
 ```
 
-  Expected result after implementation: all commands exit `0`; placeholder, shortcut, and missing-expected-output fixtures fail inside `test-plan-exactness.ps1`, and this saved plan passes exactness validation.
+  Expected result after implementation: all commands exit `0`; placeholder, shortcut, and missing-expected-output fixtures fail inside `test-plan-exactness.sh`, and this saved plan passes exactness validation.
 
 - [ ] **Step 8: Commit this slice**
   Commit after the focused tests pass:
 
-```powershell
-git add skills/write-plan scripts/validate-plan-exactness.ps1 scripts/test-plan-exactness.ps1 scripts/validate.ps1 scripts/test-superpowers-method-contract.ps1 docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
+```bash
+git add skills/write-plan scripts/validate-plan-exactness.sh scripts/test-plan-exactness.sh scripts/validate.sh scripts/test-superpowers-method-contract.sh docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
 git commit -m "Enforce write-plan exactness"
 ```
 
@@ -761,11 +761,11 @@ git commit -m "Enforce write-plan exactness"
 
 After Tasks 1 through 5 are complete, run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-12-superpowers-method-gate-hardening-plan.md
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected result: every command exits `0`; the full validator returns `ok: true`; live sync validation reports current source and deployed surfaces; cleanup reports no matching leftover processes for this repo.
@@ -776,7 +776,7 @@ Expected result: every command exits `0`; the full validator returns `ok: true`;
 - Task 2 should land before expanding worker evidence policy because worker handoffs need the review-policy shape first.
 - Tasks 3 and 4 both touch implementation evidence ledgers; keep commits separate so TDD proof and debugging proof failures are easy to isolate.
 - Task 5 should run last because its validator will check this plan and future plans more strictly.
-- `scripts\sync-live.ps1 -Validate` must happen after source validation, not before.
+- `scripts/sync-live.sh --validate` must happen after source validation, not before.
 
 ## Self-Review
 

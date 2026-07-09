@@ -98,11 +98,11 @@ The target failure from the ePC-SAFT run was: docs named `-IssueFile`, while the
 
 Design requirements:
 
-- Every PowerShell script exposed in a skill's `SKILL.md` must have documented parameter names that match the script's `param(...)` block.
+- Every Bash script exposed in a skill's `SKILL.md` must have documented parameter names that match the script's `param(...)` block.
 - The check should detect removed, renamed, and undocumented required parameters.
 - The check should allow optional implementation-only parameters when the script is not user-facing.
 - Scenario tests should include at least one fixture that would catch `-IssueFile` vs `-IssueMirror` drift.
-- `scripts/validate.ps1` should run this contract check.
+- `scripts/validate.sh` should run this contract check.
 
 This should be a loud validation failure, not a runtime warning.
 
@@ -213,7 +213,7 @@ Guardrails:
 - No native `/goal` is required by default.
 - No GitHub issue is required by default.
 - No merge approval is needed because no PR is created.
-- After edits, run focused verification, `scripts/validate.ps1` when project skills or contracts changed, `scripts/sync-live.ps1 -Validate` when live skills are affected, and the cleanup hook.
+- After edits, run focused verification, `scripts/validate.sh` when project skills or contracts changed, `scripts/sync-live.sh --validate` when live skills are affected, and the cleanup hook.
 - Ask before pushing `main` unless the user already requested push behavior.
 
 Examples that fit:
@@ -313,8 +313,8 @@ Secondary milestone:
 
 Implementation planning should include proof for:
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
 - focused scenario tests for `$project:write-plan`, `$project:resolve-issue`, `$project:merge-changes`, `$project:audit-project`, and `$project:initiate-workflow`
 - a script-doc parameter drift fixture that fails on renamed parameters
 - a ledger-generation fixture that creates setup, PR-ready, premerge, and closeout ledgers without hand-authored JSON

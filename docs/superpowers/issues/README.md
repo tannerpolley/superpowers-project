@@ -16,9 +16,9 @@ Issue mirrors are flat canonical artifacts. Do not create canonical mirrors unde
 
 GitHub issues created outside the local Superpowers Project workflow are intake records until a local mirror and source plan exist. A GitHub issue URL, raw issue body, or `Source Plan: TBD` field is not a ready execution mirror.
 
-Hydrate external intake through `$superpowers-project:create-issues` with `skills/create-issues/scripts/hydrate-external-issue.ps1`. Hydration preserves the GitHub issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command, then creates or links a source plan under `docs/superpowers/plans`.
+Hydrate external intake through `$superpowers-project:create-issues` with `skills/create-issues/scripts/hydrate-external-issue.sh`. Hydration preserves the GitHub issue URL, title, milestone, labels, branch/worktree policy, acceptance criteria, proof oracle, and goal command, then creates or links a source plan under `docs/superpowers/plans`.
 
-`$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues` must wait until the hydrated mirror passes `skills/create-issues/scripts/validate-issue-mirror.ps1`.
+`$superpowers-project:resolve-issue` and `$superpowers-project:orchestrate-issues` must wait until the hydrated mirror passes `skills/create-issues/scripts/validate-issue-mirror.sh`.
 
 ## Workflow Metadata
 

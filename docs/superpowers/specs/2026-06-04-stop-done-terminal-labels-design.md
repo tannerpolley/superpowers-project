@@ -105,7 +105,7 @@ Likely files:
 - `skills/audit-project/SKILL.md`
 - `README.md`
 - native workflow SVG/Mermaid assets if the visible diagram still shows combined Stop/Done semantics
-- scenario scripts under `skills/*/scripts/test-scenarios.ps1`
+- scenario scripts under `skills/*/scripts/test-scenarios.sh`
 - repo-level validation scripts that enforce native continuation contracts
 
 ## Validation Expectations
@@ -163,8 +163,8 @@ Keeping the existing combined label and only tightening prose would be easier, b
 - Scenario tests for intermediate skills require `Stop` and reject `stale terminal label`.
 - `merge-changes` scenario tests require `Done` only in clean closeout wording.
 - `audit-project` scenario tests require `Done` only in healthy final wording.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes before updating the live install.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes before updating the live install.
 - The user-level repo cleanup hook passes before closeout.
 
 ## Open Questions For Planning

@@ -16,7 +16,7 @@ This is not a replacement for native Codex chat or `request_user_input`. Chat re
 - `README.md` requires artifacts to be shown before closeout, push, publish, or merge questions. This companion should become the natural display surface for that artifact review gate.
 - `docs/superpowers/specs/2026-06-04-closeout-artifact-review-and-plan-metrics-design.md` already requires an artifact inventory, findings summary, result interpretation, active-goal impact, broader project impact, and recommended next route.
 - `docs/assets/native-qa-main-flow-preview.html` proves the repo already accepts lightweight HTML assets that can be opened in a browser for visual review.
-- `scripts/generate-contract-summary.ps1` already generates deterministic Markdown from repo source. The companion should use the same source-driven philosophy: structured inputs first, rendered output second.
+- `scripts/generate-contract-summary.sh` already generates deterministic Markdown from repo source. The companion should use the same source-driven philosophy: structured inputs first, rendered output second.
 - `docs/superpowers/milestones/M0-governance.md` owns workflow contracts, validation policy, and guardrails. The companion touches M0 because it changes the closeout evidence surface.
 - `docs/superpowers/milestones/M1-source-of-truth.md` owns source/live skill alignment and artifact layout. The companion touches M1 because it must preserve canonical Markdown and JSON artifacts while adding rendered HTML views.
 
@@ -350,12 +350,12 @@ Candidate checked-in source:
 
 - `skills/companion-interface/SKILL.md`
 - `skills/companion-interface/agents/openai.yaml`
-- `skills/companion-interface/scripts/render-companion.ps1`
-- `skills/companion-interface/scripts/append-event.ps1`
+- `skills/companion-interface/scripts/render-companion.sh`
+- `skills/companion-interface/scripts/append-event.sh`
 - `skills/companion-interface/templates/index.html`
 - `skills/companion-interface/templates/report.css`
 - `skills/companion-interface/templates/report.js`
-- `scripts/test-companion-interface.ps1`
+- `scripts/test-companion-interface.sh`
 
 Candidate generated output:
 
@@ -510,8 +510,8 @@ Validation should prove:
 - A fixture validation failure appears as a failed receipt with command and excerpt.
 - A fixture changed-file inventory appears with action, summary, and validation coverage.
 - A fixture pending decision appears in the Decision Dock but does not create an approval ledger.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` passes after implementation.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` passes before live deployment is reported complete.
+- `./scripts/validate.sh` passes after implementation.
+- `./scripts/sync-live.sh --validate` passes before live deployment is reported complete.
 - The repo cleanup hook reports no leftover processes owned by the companion server or renderer.
 
 ## Milestone Linkage

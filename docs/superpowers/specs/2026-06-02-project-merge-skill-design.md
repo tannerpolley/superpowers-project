@@ -10,9 +10,9 @@ Add a new `$project:merge-changes` skill that owns the integration half of issue
 
 - `docs/superpowers/PROJECT_CONTEXT.md` defines Superpowers Project as the durable project context, roadmap, GitHub issue linkage, native user-input grilling, and native `/goal` issue execution layer.
 - `skills/resolve-issue/SKILL.md` currently owns the full lifecycle from issue mirror through merge, issue close, goal completion, branch cleanup, and cleanup hook proof.
-- `skills/resolve-issue/scripts/premerge.ps1` already models merge-readiness checks: PR closes the linked issue, required checks pass, issue acceptance state is covered, changed files have verification receipts, and proof commands exist.
-- `skills/resolve-issue/scripts/closeout.ps1` already models final integration closeout: PR merged, linked issue closed, branch cleanup structured, cleanup hook passed, and goal completion proof present.
-- `skills/resolve-issue/scripts/test-scenarios.ps1` currently tests happy closeout inside the resolver. That test belongs under `$project:merge-changes` after the split.
+- `skills/resolve-issue/scripts/premerge.sh` already models merge-readiness checks: PR closes the linked issue, required checks pass, issue acceptance state is covered, changed files have verification receipts, and proof commands exist.
+- `skills/resolve-issue/scripts/closeout.sh` already models final integration closeout: PR merged, linked issue closed, branch cleanup structured, cleanup hook passed, and goal completion proof present.
+- `skills/resolve-issue/scripts/test-scenarios.sh` currently tests happy closeout inside the resolver. That test belongs under `$project:merge-changes` after the split.
 - `codex-dynamic-workflows` supports explicit orchestration, work packets, goal mode for sustained execution, bounded subagent/thread delegation, integration, and verification. `$project:resolve-issue` should borrow the parts that strengthen issue execution, but it should not run the whole dynamic-workflow lifecycle by default because `$project:resolve-issue` already owns native goals, GitHub issue linkage, branch/worktree setup, PR handoff, and script gates.
 - Codex app thread tools can create and message background threads, and automation tools can create heartbeat wakeups. The spec should use these to avoid long-running busy waits.
 
@@ -49,7 +49,7 @@ That creates two problems:
   - PR is opened and references/closes the linked issue;
   - worker notifies or hands off to the orchestrator.
 - Make `$project:merge-changes` run from the main orchestrator thread by default.
-- Move `premerge.ps1` and `closeout.ps1` responsibilities from `$project:resolve-issue` into `$project:merge-changes`.
+- Move `premerge.sh` and `closeout.sh` responsibilities from `$project:resolve-issue` into `$project:merge-changes`.
 - Add automation guidance so the orchestrator does not busy-wait for a worker thread.
 - Add native continuation gates across Superpowers Project handoffs so the agent asks how to continue and then immediately starts the selected next skill instead of only telling the user what to prompt next.
 
@@ -215,7 +215,7 @@ It should:
 1. Verify it is running from the main orchestrator context or explicitly approved equivalent.
 2. Read the PR, issue mirror, source plan, setup ledger, and verification ledger.
 3. Run `superpowers:verification-before-completion` before merge-ready claims.
-4. Run `premerge.ps1` checks:
+4. Run `premerge.sh` checks:
    - PR closes the exact linked issue;
    - required checks pass or policy allows local proof;
    - changed files are covered by verification receipts or explicit exemptions;
@@ -267,10 +267,10 @@ Create:
 ```text
 skills/merge-changes/SKILL.md
 skills/merge-changes/agents/openai.yaml
-skills/merge-changes/scripts/test-scenarios.ps1
-skills/merge-changes/scripts/premerge.ps1
-skills/merge-changes/scripts/closeout.ps1
-skills/merge-changes/scripts/lib/contract.ps1
+skills/merge-changes/scripts/test-scenarios.sh
+skills/merge-changes/scripts/premerge.sh
+skills/merge-changes/scripts/closeout.sh
+skills/merge-changes/scripts/lib/contract.sh
 ```
 
 The new skill should include:
@@ -291,7 +291,7 @@ The new skill should include:
 Update `$project:resolve-issue` so it:
 
 - no longer says it merges PRs or closes issues;
-- no longer owns `premerge.ps1` or `closeout.ps1`;
+- no longer owns `premerge.sh` or `closeout.sh`;
 - always asks whether to resolve in the current thread or open a worktree agent;
 - creates a Project Resolve-native Dynamic Work Packet Map when a worktree agent is selected;
 - invokes the full `codex-dynamic-workflows` skill only when the issue meets the full orchestration decision rule or the user explicitly requests it;
@@ -361,17 +361,17 @@ Implementation should add or update tests that prove:
 - closeout rejects deletion of non-goal branches;
 - router text includes `merge-changes`;
 - sync deploys the new skill to plugin and user skill roots;
-- full `scripts/validate.ps1` passes;
-- `scripts/sync-live.ps1 -Validate` passes.
+- full `scripts/validate.sh` passes;
+- `scripts/sync-live.sh --validate` passes.
 
 Proof oracle candidates:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 ## Tradeoffs

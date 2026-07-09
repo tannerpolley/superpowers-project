@@ -78,7 +78,8 @@ After saving the spec, the default forward route is `$superpowers-project:write-
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not perform repairs or pretend a live user approved mutation.
 ## Native Continuation Gate
@@ -138,8 +139,8 @@ Auto Mode starts only after the findings spec is saved, self-reviewed, and shown
 
 Validate the ledger with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```bash
+<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>
 ```
 
 If the ledger passes, continue into `$superpowers-project:write-plan` with the audit findings spec as the source spec. If validation fails or a needed decision falls outside the ledger policy, stop outside policy and return to manual planning instead of inventing approval.

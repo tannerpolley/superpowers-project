@@ -248,12 +248,12 @@ Secondary milestone:
 
 ## Proof Oracle Candidates For Later Planning
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+- `./skills/setup-project/scripts/test-scenarios.sh`
+- `./skills/orchestrate-issues/scripts/test-scenarios.sh`
+- `./skills/resolve-issue/scripts/test-scenarios.sh`
+- `./skills/superpowers-project/scripts/test-scenarios.sh`
+- `./scripts/test-superpowers-project-repo-contract.sh`
+- `./scripts/validate.sh`
 - A fixture proving `project-context` has been replaced by `setup` in source, manifest validation, README, router metadata, and live sync output.
 - A fixture proving `orchestrate-issues` derives thread title, branch, worker identity, and evidence folder from one canonical issue identity.
 - A fixture proving externally created GitHub issue bodies with `Source Plan: TBD` are hydrated into local mirrors plus source plans before execution.

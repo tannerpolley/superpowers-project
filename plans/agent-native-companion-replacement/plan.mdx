@@ -51,7 +51,7 @@ The companion route should change in place. `$superpowers-project:companion-inte
 - `skills/companion-interface/SKILL.md`: modify. Make `visual-plan` and `visual-recap` explicit artifact types with separate workflow phases.
 - `skills/companion-interface/scripts`: remove. Delete static HTML report session helpers and renderer scripts.
 - `skills/companion-interface/templates`: remove. Delete HTML, CSS, and JavaScript templates owned by the retired renderer.
-- `scripts/test-companion-interface.ps1`: modify. Assert visual-plan wording and stale HTML vocabulary rejection.
+- `scripts/test-companion-interface.sh`: modify. Assert visual-plan wording and stale HTML vocabulary rejection.
 - `skills/brainstorm-spec/SKILL.md`: modify. Route large brainstorm artifacts to Agent-Native MDX plans, not HTML reports.
 - `skills/write-plan/SKILL.md`: modify. Route large implementation plans to Agent-Native MDX review artifacts.
 - `README.md`: modify. Describe the companion as visual-plan MDX artifact review.
@@ -65,19 +65,19 @@ The companion route should change in place. `$superpowers-project:companion-inte
 - Remove HTML renderer assets. Delete scripts and templates that exist only for index.html report sessions.
 - Add a local visual-plan fixture scenario. Create `plans/fixture-agent-native-companion/plan.mdx` and run local check, preview, and verify.
 - Update integrated skill guidance. `brainstorm-spec` and `write-plan` should point large review artifacts to visual-plan MDX.
-- Validate and sync. Run focused tests, `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, and cleanup.
+- Validate and sync. Run focused tests, `scripts/validate.sh`, `scripts/sync-live.sh --validate`, and cleanup.
 
 ## Validation
 
 The first implementation plan should prove the replacement with focused tests before broad validation:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-companion-interface.sh
 npx @agent-native/core@latest plan local check --dir plans/fixture-agent-native-companion
 npx @agent-native/core@latest plan local verify --dir plans/fixture-agent-native-companion --kind plan --port 0
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 ## Risks

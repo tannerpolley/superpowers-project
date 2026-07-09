@@ -16,11 +16,11 @@ Audit the Superpowers Project plugin as a brand-new agent would encounter it, wi
 - `.codex-plugin/plugin.json`
 - `skills/*/SKILL.md`
 - `skills/*/agents/openai.yaml`
-- `skills/*/scripts/*.ps1`
-- `scripts/validate.ps1`
-- `scripts/sync-live.ps1`
-- `scripts/test-advanced-user-input-policy.ps1`
-- `scripts/test-native-continuation-loop.ps1`
+- `skills/*/scripts/*.sh`
+- `scripts/validate.sh`
+- `scripts/sync-live.sh`
+- `scripts/test-advanced-user-input-policy.sh`
+- `scripts/test-native-continuation-loop.sh`
 - `docs/superpowers/closeout-startup-decision-tree-dev.md`
 - `docs/superpowers/issues/README.md`
 
@@ -31,8 +31,8 @@ Audit the Superpowers Project plugin as a brand-new agent would encounter it, wi
 Evidence:
 
 - `skills/align-project/SKILL.md:76` through `skills/align-project/SKILL.md:86` says Align checks live plugin install versus source, including retired skill directories and active wrappers.
-- `skills/align-project/scripts/align-project.ps1:521` through `skills/align-project/scripts/align-project.ps1:535` compares only `skills/align-project/SKILL.md` against live targets.
-- `skills/align-project/scripts/align-project.ps1:523` through `skills/align-project/scripts/align-project.ps1:525` includes `~/.agents/skills/align-project/SKILL.md`, but `scripts/sync-live.ps1:44` deploys only `advanced-user-input` into the user skill root.
+- `skills/align-project/scripts/align-project.sh:521` through `skills/align-project/scripts/align-project.sh:535` compares only `skills/align-project/SKILL.md` against live targets.
+- `skills/align-project/scripts/align-project.sh:523` through `skills/align-project/scripts/align-project.sh:525` includes `~/.agents/skills/align-project/SKILL.md`, but `scripts/sync-live.sh:44` deploys only `advanced-user-input` into the user skill root.
 
 Impact:
 
@@ -40,11 +40,11 @@ A brand-new agent can run Align, see a healthy `live-sync` finding, and still mi
 
 Repair requirement:
 
-Make Align's live-sync audit call a shared dry-run compare that covers the same surfaces as `sync-live.ps1`: manifest, assets, all active plugin skills, the user-level `advanced-user-input` copy, marketplace entry, retired plugin roots, and stale owned skill directories.
+Make Align's live-sync audit call a shared dry-run compare that covers the same surfaces as `sync-live.sh`: manifest, assets, all active plugin skills, the user-level `advanced-user-input` copy, marketplace entry, retired plugin roots, and stale owned skill directories.
 
 Proof oracle:
 
-Create a fixture where only `skills/merge-changes/agents/openai.yaml` or `~/.agents/skills/advanced-user-input/SKILL.md` drifts. `align-project.ps1 -Mode LocalDocs` must report repairable live-sync drift.
+Create a fixture where only `skills/merge-changes/agents/openai.yaml` or `~/.agents/skills/advanced-user-input/SKILL.md` drifts. `align-project.sh -Mode LocalDocs` must report repairable live-sync drift.
 
 ### P1: Final gate vocabulary contradicts itself across shared and merge-specific contracts
 
@@ -73,7 +73,7 @@ Evidence:
 - `skills/advanced-user-input/SKILL.md:50` says a custom answer that appears to ask for "Stop or Done" should trigger confirmation.
 - `skills/advanced-user-input/SKILL.md:154` repeats "Stop or Done."
 - `skills/merge-changes/SKILL.md:127` repeats the same phrase inside the generic closeout paragraph.
-- `scripts/test-advanced-user-input-policy.ps1:85` requires the phrase.
+- `scripts/test-advanced-user-input-policy.sh:85` requires the phrase.
 
 Impact:
 
@@ -128,13 +128,13 @@ Proof oracle:
 
 Add a namespace scan that fails on `$project:` in active docs and fails on mixed `$superpowers-project:` versus `superpowers-project:` unless the file is explicitly documenting aliases.
 
-### P2: `sync-live.ps1` labels current active skills as retired
+### P2: `sync-live.sh` labels current active skills as retired
 
 Evidence:
 
-- `scripts/sync-live.ps1:45` starts `$retiredSkillNames`.
-- `scripts/sync-live.ps1:67` through `scripts/sync-live.ps1:77` includes current active skills such as `initiate-workflow`, `setup-project`, `align-project`, and `audit-project`.
-- `scripts/validate.ps1:120` through `scripts/validate.ps1:132` separately lists those same names as active.
+- `scripts/sync-live.sh:45` starts `$retiredSkillNames`.
+- `scripts/sync-live.sh:67` through `scripts/sync-live.sh:77` includes current active skills such as `initiate-workflow`, `setup-project`, `align-project`, and `audit-project`.
+- `scripts/validate.sh:120` through `scripts/validate.sh:132` separately lists those same names as active.
 
 Impact:
 
@@ -152,10 +152,10 @@ Add a test that intersects `Get-ActiveSkillNames` with `retiredSkillNames` and f
 
 Evidence:
 
-- `scripts/validate.ps1:120` through `scripts/validate.ps1:132` hard-codes active skill names.
-- `scripts/test-native-continuation-loop.ps1:70` through `scripts/test-native-continuation-loop.ps1:94` hard-codes workflow, intermediate, and final-capable skills.
-- `scripts/test-project-namespace-migration.ps1:19` through `scripts/test-project-namespace-migration.ps1:24` hard-codes target skills.
-- `scripts/sync-live.ps1:43` discovers active skill names from the `skills` directory.
+- `scripts/validate.sh:120` through `scripts/validate.sh:132` hard-codes active skill names.
+- `scripts/test-native-continuation-loop.sh:70` through `scripts/test-native-continuation-loop.sh:94` hard-codes workflow, intermediate, and final-capable skills.
+- `scripts/test-project-namespace-migration.sh:19` through `scripts/test-project-namespace-migration.sh:24` hard-codes target skills.
+- `scripts/sync-live.sh:43` discovers active skill names from the `skills` directory.
 
 Impact:
 
@@ -214,7 +214,7 @@ Validation must fail if any skill defines a local debug mode paragraph that omit
 Evidence:
 
 - `skills/create-issues/SKILL.md:106` says missing workflow metadata is advisory during migration.
-- `skills/create-issues/scripts/validate-issue-mirror.ps1:114` through `skills/create-issues/scripts/validate-issue-mirror.ps1:119` records missing workflow metadata as `"advisory: missing"` and continues.
+- `skills/create-issues/scripts/validate-issue-mirror.sh:114` through `skills/create-issues/scripts/validate-issue-mirror.sh:119` records missing workflow metadata as `"advisory: missing"` and continues.
 - `docs/superpowers/issues/README.md:37` says those fields tell the runtime how to ask the execution question and who owns integration.
 
 Impact:
@@ -227,7 +227,7 @@ Make missing workflow metadata blocking for newly created or hydrated issue mirr
 
 Proof oracle:
 
-`validate-issue-mirror.ps1` must fail a non-migration mirror missing any workflow metadata field. Scenario tests should cover both strict new mirrors and explicit migration fixtures.
+`validate-issue-mirror.sh` must fail a non-migration mirror missing any workflow metadata field. Scenario tests should cover both strict new mirrors and explicit migration fixtures.
 
 ## Healthy Checks
 

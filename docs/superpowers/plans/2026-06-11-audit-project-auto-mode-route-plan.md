@@ -6,7 +6,7 @@
 
 **Architecture:** Extend the audit continuation route, metadata, README, generated outcome workflow, and scenario tests so audit findings specs can authorize `project_auto_mode_authorization`. Reuse the existing plugin-provided Auto Mode validator and downstream ledger contract instead of creating a separate audit-specific execution engine.
 
-**Tech Stack:** Markdown skill contracts, YAML agent metadata, PowerShell validation scripts, generated Markdown outcome workflow.
+**Tech Stack:** Markdown skill contracts, YAML agent metadata, Bash validation scripts, generated Markdown outcome workflow.
 
 ---
 
@@ -27,7 +27,7 @@
 
 - `$superpowers-project:audit-project` exposes Auto Mode after a findings spec is ready.
 - The route asks `project_auto_mode_authorization` and accepts only `Bounded Auto Merge` or `Manual Planning`.
-- The ledger must validate with `scripts/validate-auto-mode-authorization.ps1`.
+- The ledger must validate with `scripts/validate-auto-mode-authorization.sh`.
 - The saved audit findings spec is carried as `source_spec`.
 - The route continues into `$superpowers-project:write-plan` after a valid ledger.
 - README and generated outcome workflow show that audit-project has `project_auto_mode_authorization`.
@@ -35,17 +35,17 @@
 
 ## Proof Oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-11-audit-project-auto-mode-route-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-11-audit-project-auto-mode-route-plan.md
+./skills/audit-project/scripts/test-scenarios.sh
+./scripts/test-contract-summary.sh
+./scripts/test-auto-mode-contract.sh
+./scripts/validate.sh
 ```
 
 ## Test Complete
 
-Testing is complete when the proof oracle passes and `scripts\sync-live.ps1 -Validate` refreshes the live plugin without drift.
+Testing is complete when the proof oracle passes and `scripts/sync-live.sh --validate` refreshes the live plugin without drift.
 
 ## Metrics And Tolerances
 
@@ -63,7 +63,7 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - Modify: `skills/audit-project/SKILL.md`
 - Modify: `skills/audit-project/agents/openai.yaml`
 - Modify: `README.md`
-- Modify: `scripts/generate-contract-summary.ps1`
+- Modify: `scripts/generate-contract-summary.sh`
 - Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
 
 - [ ] **Step 1: Extend audit continuation docs**
@@ -72,8 +72,8 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - [ ] **Step 2: Reuse the existing authorization ledger**
   Require `project_auto_mode_authorization`, `Bounded Auto Merge`, and the plugin-provided validator command:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+  ```bash
+  ./scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>
   ```
 
 - [ ] **Step 3: Keep downstream execution unchanged**
@@ -91,11 +91,11 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - The implementation plan itself fails validation if any task loses its `**Use Cases:**` block.
 
 **Files:**
-- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
-- Modify: `scripts/test-contract-summary.ps1`
+- Modify: `skills/audit-project/scripts/test-scenarios.sh`
+- Modify: `scripts/test-contract-summary.sh`
 
 - [ ] **Step 1: Extend audit-project scenario tests**
-  Add required strings for `Auto Mode`, `project_auto_mode_authorization`, `Bounded Auto Merge`, `validate-auto-mode-authorization.ps1`, and `source spec`.
+  Add required strings for `Auto Mode`, `project_auto_mode_authorization`, `Bounded Auto Merge`, `validate-auto-mode-authorization.sh`, and `source spec`.
 
 - [ ] **Step 2: Extend outcome workflow tests**
   Require `project_auto_mode_authorization` in the audit-project generated summary row.
@@ -112,21 +112,21 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - If live sync or version freshness fails, the workflow stops before claiming Auto Mode is enabled.
 
 **Files:**
-- Modify: live deployed plugin copy through `scripts\sync-live.ps1 -Validate`
+- Modify: live deployed plugin copy through `scripts/sync-live.sh --validate`
 - No direct edits to plugin cache paths
 
 - [ ] **Step 1: Run full validation**
-  Run `scripts\validate.ps1`, or rely on `scripts\sync-live.ps1 -Validate` because it invokes the full validator.
+  Run `scripts/validate.sh`, or rely on `scripts/sync-live.sh --validate` because it invokes the full validator.
 
 - [ ] **Step 2: Sync live**
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+  ```bash
+  ./scripts/sync-live.sh --validate
   ```
 
 - [ ] **Step 3: Confirm version freshness**
-  Run `scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent` with the observed plugin root when available.
+  Run `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` with the observed plugin root when available.
 
 - [ ] **Step 4: Ask Auto Mode authorization**
   After validation and sync pass, ask `project_auto_mode_authorization` for `docs/superpowers/specs/2026-06-11-plugin-stale-code-cleanup-audit-findings.md`.

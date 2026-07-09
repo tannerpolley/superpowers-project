@@ -49,8 +49,8 @@ workflow_skills:
       - Review First
       - Gather More Evidence
     validators:
-    - scripts/validate.ps1
-    - scripts/sync-live.ps1 -Validate
+    - scripts/validate.sh
+    - scripts/sync-live.sh --validate
     artifacts:
     - docs/superpowers/milestones
     - docs/superpowers/issues
@@ -156,7 +156,7 @@ workflow_skills:
       - Bounded Auto Merge
       - Manual Planning
     validators:
-    - scripts/validate.ps1
+    - scripts/validate.sh
     artifacts:
     - docs/superpowers/specs
     - docs/superpowers/plans
@@ -241,7 +241,7 @@ workflow_skills:
       - Review First
       - Re-run Brainstorm
     validators:
-    - scripts/validate.ps1
+    - scripts/validate.sh
     artifacts:
     - docs/superpowers/specs
     next_routes:
@@ -310,8 +310,8 @@ workflow_skills:
     top_level_options: []
     nested_routes: []
     validators:
-    - scripts/test-companion-interface.ps1
-    - scripts/test-agent-native-companion-preview.ps1
+    - scripts/test-companion-interface.sh
+    - scripts/test-agent-native-companion-preview.sh
     artifacts:
     - plans
     next_routes:
@@ -393,7 +393,7 @@ workflow_skills:
       - Review First
       - Repair Issue Mirrors
     validators:
-    - skills/create-issues/scripts/validate-issue-mirror.ps1
+    - skills/create-issues/scripts/validate-issue-mirror.sh
     artifacts:
     - docs/superpowers/issues
     next_routes:
@@ -537,7 +537,7 @@ workflow_skills:
       - Revise Branch
       - Review Evidence
     validators:
-    - skills/implement-plan/scripts/test-scenarios.ps1
+    - skills/implement-plan/scripts/test-scenarios.sh
     artifacts:
     - docs/superpowers/plans
     next_routes:
@@ -611,8 +611,8 @@ workflow_skills:
       - Project Orchestrate
       - Review First
     validators:
-    - scripts/validate-workflow-mode-ledger.ps1
-    - scripts/validate-auto-mode-authorization.ps1
+    - scripts/validate-workflow-mode-ledger.sh
+    - scripts/validate-auto-mode-authorization.sh
     artifacts:
     - .superpowers/runs
     next_routes:
@@ -675,9 +675,9 @@ workflow_skills:
     - Stop
     nested_routes: []
     validators:
-    - skills/loop-controller/scripts/validate-run-ledger.ps1
-    - skills/loop-controller/scripts/validate-budget.ps1
-    - skills/loop-controller/scripts/validate-terminal-closeout.ps1
+    - skills/loop-controller/scripts/validate-run-ledger.sh
+    - skills/loop-controller/scripts/validate-budget.sh
+    - skills/loop-controller/scripts/validate-terminal-closeout.sh
     artifacts:
     - .superpowers/runs
     next_routes:
@@ -768,8 +768,8 @@ workflow_skills:
       - Run Align
       - Repair Or Cleanup
     validators:
-    - skills/merge-changes/scripts/validate-terminal-closeout.ps1
-    - skills/merge-changes/scripts/validate-merge-decision.ps1
+    - skills/merge-changes/scripts/validate-terminal-closeout.sh
+    - skills/merge-changes/scripts/validate-merge-decision.sh
     artifacts:
     - docs/superpowers/issues
     - docs/superpowers/plans
@@ -897,10 +897,10 @@ workflow_skills:
       - Ask Worker
       - Reassign Work
     validators:
-    - skills/orchestrate-issues/scripts/validate-worker-handoff.ps1
-    - skills/orchestrate-issues/scripts/test-scenarios.ps1
-    - scripts/validate-worker-packets.ps1
-    - scripts/test-worker-packets.ps1
+    - skills/orchestrate-issues/scripts/validate-worker-handoff.sh
+    - skills/orchestrate-issues/scripts/test-scenarios.sh
+    - scripts/validate-worker-packets.sh
+    - scripts/test-worker-packets.sh
     artifacts:
     - docs/superpowers/issues
     - docs/superpowers/examples/worker-handoff-packets.md
@@ -995,9 +995,9 @@ workflow_skills:
       - Revise Branch
       - Address CI / Checks
     validators:
-    - skills/resolve-issue/scripts/validate-setup.ps1
-    - skills/resolve-issue/scripts/validate-pr-ready.ps1
-    - skills/resolve-issue/scripts/validate-terminal-closeout.ps1
+    - skills/resolve-issue/scripts/validate-setup.sh
+    - skills/resolve-issue/scripts/validate-pr-ready.sh
+    - skills/resolve-issue/scripts/validate-terminal-closeout.sh
     artifacts:
     - docs/superpowers/issues
     - docs/superpowers/plans
@@ -1092,7 +1092,7 @@ workflow_skills:
       - Review / Revise Setup
       - Run Align
     validators:
-    - scripts/validate.ps1
+    - scripts/validate.sh
     artifacts:
     - docs/superpowers/PROJECT_CONTEXT.md
     - docs/superpowers/milestones
@@ -1198,8 +1198,8 @@ workflow_skills:
       - Review First
       - Re-run Planning Grill
     validators:
-    - scripts/validate-plan-outcome-proof.ps1
-    - scripts/validate-plan-task-use-cases.ps1
+    - scripts/validate-plan-outcome-proof.sh
+    - scripts/validate-plan-task-use-cases.sh
     artifacts:
     - docs/superpowers/plans
     next_routes:

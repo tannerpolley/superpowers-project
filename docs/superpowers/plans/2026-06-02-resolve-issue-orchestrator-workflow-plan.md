@@ -4,9 +4,9 @@
 
 **Goal:** Add an explicit inline-versus-worker execution decision to `resolve-issue`, with native UI questioning, worktree-thread orchestration, TDD, PR finishing, and safety-focused script gates.
 
-**Architecture:** Keep `resolve-issue` as the lifecycle owner for one GitHub issue mirror. The skill asks for execution topology before branch setup, records the answer in the setup ledger, and then either executes inline or orchestrates a worker worktree thread while the main thread owns review and closeout. Existing PowerShell scripts continue to validate path, goal, branch, PR, issue, and cleanup proof, while workflow preferences become readable metadata and advisory checks.
+**Architecture:** Keep `resolve-issue` as the lifecycle owner for one GitHub issue mirror. The skill asks for execution topology before branch setup, records the answer in the setup ledger, and then either executes inline or orchestrates a worker worktree thread while the main thread owns review and closeout. Existing Bash scripts continue to validate path, goal, branch, PR, issue, and cleanup proof, while workflow preferences become readable metadata and advisory checks.
 
-**Tech Stack:** Codex skills, native `request_user_input`, native goal tools, Codex thread/worktree tools when callable, PowerShell 7 validation scripts, Markdown issue mirrors, GitHub issue and PR evidence, Superpowers execution/TDD/verification/branch-finish skills.
+**Tech Stack:** Codex skills, native `request_user_input`, native goal tools, Codex thread/worktree tools when callable, Bash 7 validation scripts, Markdown issue mirrors, GitHub issue and PR evidence, Superpowers execution/TDD/verification/branch-finish skills.
 
 ---
 
@@ -25,23 +25,23 @@
 - Issue mirrors include workflow metadata fields for execution mode, worktree policy, integration policy, TDD policy, parallelization plan, reviewer role, and script gate mode.
 - Scripts block safety/proof failures and report missing workflow metadata as advisory during migration.
 - Dummy repo validation covers inline and worker setup shapes.
-- `scripts\validate.ps1`, `scripts\sync-live.ps1 -Validate`, and the repo cleanup hook pass.
+- `scripts/validate.sh`, `scripts/sync-live.sh --validate`, and the repo cleanup hook pass.
 
 ## File Map
 
 - Modify: `canonical-skills/resolve-issue/SKILL.md`
 - Modify: `canonical-skills/resolve-issue/agents/openai.yaml`
-- Modify: `canonical-skills/resolve-issue/scripts/prepare-execution.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/validate-setup.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/prepare-execution.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/validate-setup.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/test-scenarios.sh`
 - Modify: `canonical-skills/create-issues/SKILL.md`
-- Modify: `canonical-skills/create-issues/scripts/validate-issue-mirror.ps1`
-- Modify: `canonical-skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/create-issues/scripts/validate-issue-mirror.sh`
+- Modify: `canonical-skills/create-issues/scripts/test-scenarios.sh`
 - Modify: `canonical-skills/create-issues/agents/openai.yaml`
 - Modify: `docs/superpowers/issues/README.md`
 - Modify: `docs/superpowers/issues/smoke-test-workflow.md`
-- Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Modify: `scripts/test-superpowers-project-dummy-repo.ps1`
+- Modify: `scripts/test-superpowers-project-repo-contract.sh`
+- Modify: `scripts/test-superpowers-project-dummy-repo.sh`
 
 ## Required Superpowers Skills During Execution
 
@@ -59,14 +59,14 @@
 **Files:**
 - Modify: `canonical-skills/create-issues/SKILL.md`
 - Modify: `canonical-skills/create-issues/agents/openai.yaml`
-- Modify: `canonical-skills/create-issues/scripts/validate-issue-mirror.ps1`
-- Modify: `canonical-skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/create-issues/scripts/validate-issue-mirror.sh`
+- Modify: `canonical-skills/create-issues/scripts/test-scenarios.sh`
 - Modify: `docs/superpowers/issues/README.md`
 - Modify: `docs/superpowers/issues/smoke-test-workflow.md`
 
 - [ ] **Step 1: Write the failing create-issues scenario**
 
-In `canonical-skills/create-issues/scripts/test-scenarios.ps1`, extend the happy AFK issue fixture with:
+In `canonical-skills/create-issues/scripts/test-scenarios.sh`, extend the happy AFK issue fixture with:
 
 ```markdown
 **Execution Mode:** Ask at runtime
@@ -80,7 +80,7 @@ In `canonical-skills/create-issues/scripts/test-scenarios.ps1`, extend the happy
 
 Add these required needles to the `issue slicing contract is present` scenario:
 
-```powershell
+```bash
 foreach ($needle in @(
     "Execution Mode",
     "Worktree Policy",
@@ -98,8 +98,8 @@ foreach ($needle in @(
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\create-issues\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/create-issues/scripts/test-scenarios.sh
 ```
 
 Expected: fails because the skill text and validator do not yet define the new workflow metadata contract.
@@ -128,9 +128,9 @@ In `canonical-skills/create-issues/agents/openai.yaml`, include the same field n
 
 - [ ] **Step 4: Add advisory workflow checks to the mirror validator**
 
-In `canonical-skills/create-issues/scripts/validate-issue-mirror.ps1`, after the goal command check, insert:
+In `canonical-skills/create-issues/scripts/validate-issue-mirror.sh`, after the goal command check, insert:
 
-```powershell
+```bash
 $workflowFields = [ordered]@{
     "Execution Mode" = @("Ask at runtime", "Inline", "Orchestrated worker")
     "Worktree Policy" = @("Native Codex worktree thread first")
@@ -164,15 +164,15 @@ In `docs/superpowers/issues/smoke-test-workflow.md`, add the seven workflow fiel
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\create-issues\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/create-issues/scripts/test-scenarios.sh
 ```
 
 Expected: exits zero.
 
 Commit:
 
-```powershell
+```bash
 git add canonical-skills/create-issues docs/superpowers/issues
 git commit -m "feat: add issue workflow metadata"
 ```
@@ -182,13 +182,13 @@ git commit -m "feat: add issue workflow metadata"
 **Files:**
 - Modify: `canonical-skills/resolve-issue/SKILL.md`
 - Modify: `canonical-skills/resolve-issue/agents/openai.yaml`
-- Modify: `canonical-skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Write failing resolver text scenarios**
 
-In `canonical-skills/resolve-issue/scripts/test-scenarios.ps1`, extend the `skill text declares native goal state machine` scenario needles:
+In `canonical-skills/resolve-issue/scripts/test-scenarios.sh`, extend the `skill text declares native goal state machine` scenario needles:
 
-```powershell
+```bash
 foreach ($needle in @(
     "execution topology question",
     "Open worker thread",
@@ -211,8 +211,8 @@ foreach ($needle in @(
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
 Expected: fails because the skill text does not yet require the topology question and orchestration behavior.
@@ -289,15 +289,15 @@ Ask the native execution topology question before branch setup: open a worker wo
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
 Expected: exits zero.
 
 Commit:
 
-```powershell
+```bash
 git add canonical-skills/resolve-issue
 git commit -m "feat: add resolver execution topology decision"
 ```
@@ -305,15 +305,15 @@ git commit -m "feat: add resolver execution topology decision"
 ## Task 3: Carry Execution Decisions Through Setup Ledgers
 
 **Files:**
-- Modify: `canonical-skills/resolve-issue/scripts/prepare-execution.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/validate-setup.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/prepare-execution.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/validate-setup.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing setup ledger scenarios**
 
-In `canonical-skills/resolve-issue/scripts/test-scenarios.ps1`, add helpers:
+In `canonical-skills/resolve-issue/scripts/test-scenarios.sh`, add helpers:
 
-```powershell
+```bash
 function New-ExecutionDecision {
     param([string]$SelectedMode = "inline", [string]$Source = "request_user_input")
     @{
@@ -328,20 +328,20 @@ function New-ExecutionDecision {
 
 Add scenarios:
 
-```powershell
+```bash
 Invoke-Scenario "missing execution decision blocks setup finalization" {
-    $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof))
+    $result = Invoke-JsonScript -ScriptName "prepare-execution.sh" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof))
     Assert-True (-not $result.ok -and $result.reason -match "execution decision") "expected missing execution decision failure"
 }
 
 Invoke-Scenario "inline execution decision is recorded" {
-    $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "inline"))
+    $result = Invoke-JsonScript -ScriptName "prepare-execution.sh" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "inline"))
     Assert-True ($result.ok) $result.reason
     Assert-True ($result.setup_ledger.execution_decision.selected_mode -eq "inline") "inline mode was not recorded"
 }
 
 Invoke-Scenario "orchestrated worker execution decision is recorded with worker handoff" {
-    $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "orchestrated-worker"))
+    $result = Invoke-JsonScript -ScriptName "prepare-execution.sh" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "orchestrated-worker"))
     Assert-True ($result.ok) $result.reason
     Assert-True ($result.setup_ledger.execution_decision.selected_mode -eq "orchestrated-worker") "worker mode was not recorded"
     Assert-True ($result.setup_ledger.worker_handoff.issue_mirror -eq "docs/superpowers/issues/12-sample.md") "worker handoff missing issue mirror"
@@ -352,17 +352,17 @@ Invoke-Scenario "orchestrated worker execution decision is recorded with worker 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
-Expected: fails because `prepare-execution.ps1` does not accept or validate `ExecutionDecisionJson`.
+Expected: fails because `prepare-execution.sh` does not accept or validate `ExecutionDecisionJson`.
 
 - [ ] **Step 3: Add the execution decision parameter**
 
-In `canonical-skills/resolve-issue/scripts/prepare-execution.ps1`, add the parameter:
+In `canonical-skills/resolve-issue/scripts/prepare-execution.sh`, add the parameter:
 
-```powershell
+```bash
 [string]$ExecutionDecisionJson,
 [string]$ExecutionDecisionPath,
 ```
@@ -371,9 +371,9 @@ Place it after `GoalProofPath`.
 
 - [ ] **Step 4: Add execution decision validation helpers**
 
-In `canonical-skills/resolve-issue/scripts/lib/contract.ps1`, add:
+In `canonical-skills/resolve-issue/scripts/lib/contract.sh`, add:
 
-```powershell
+```bash
 function Assert-ExecutionDecision {
     param($Decision)
     if ($null -eq $Decision) { throw "execution decision is required" }
@@ -411,16 +411,16 @@ function New-WorkerHandoff {
 
 - [ ] **Step 5: Read and record the execution decision in setup finalization**
 
-In `prepare-execution.ps1`, before `$goalProof = Read-JsonInput ...`, add:
+In `prepare-execution.sh`, before `$goalProof = Read-JsonInput ...`, add:
 
-```powershell
+```bash
 $executionDecision = Read-JsonInput -Json $ExecutionDecisionJson -Path $ExecutionDecisionPath -Name "execution decision"
 Assert-ExecutionDecision -Decision $executionDecision
 ```
 
 In `$setupLedger`, add:
 
-```powershell
+```bash
 execution_decision = $executionDecision
 workflow_policy = [ordered]@{
     worktree_policy = "Native Codex worktree thread first"
@@ -434,15 +434,15 @@ worker_handoff = if ([string]$executionDecision.selected_mode -eq "orchestrated-
 
 - [ ] **Step 6: Require the setup ledger decision**
 
-In `validate-setup.ps1`, add `execution_decision` to the required field list and call:
+In `validate-setup.sh`, add `execution_decision` to the required field list and call:
 
-```powershell
+```bash
 Assert-ExecutionDecision -Decision $ledger.execution_decision
 ```
 
 If `selected_mode` is `orchestrated-worker`, require `worker_handoff`:
 
-```powershell
+```bash
 if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker" -and -not (Test-Property -Object $ledger -Name "worker_handoff")) {
     throw "worker_handoff is required for orchestrated-worker execution"
 }
@@ -450,9 +450,9 @@ if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker" -
 
 - [ ] **Step 7: Update existing happy setup tests**
 
-Every existing `FinalizeSetup` call in `canonical-skills/resolve-issue/scripts/test-scenarios.ps1` must pass:
+Every existing `FinalizeSetup` call in `canonical-skills/resolve-issue/scripts/test-scenarios.sh` must pass:
 
-```powershell
+```bash
 "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "inline")
 ```
 
@@ -460,15 +460,15 @@ Every existing `FinalizeSetup` call in `canonical-skills/resolve-issue/scripts/t
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
 Expected: exits zero.
 
 Commit:
 
-```powershell
+```bash
 git add canonical-skills/resolve-issue/scripts
 git commit -m "feat: record resolver execution decisions"
 ```
@@ -476,15 +476,15 @@ git commit -m "feat: record resolver execution decisions"
 ## Task 4: Expand Repo And Dummy Smoke Validation
 
 **Files:**
-- Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Modify: `scripts/test-superpowers-project-dummy-repo.ps1`
+- Modify: `scripts/test-superpowers-project-repo-contract.sh`
+- Modify: `scripts/test-superpowers-project-dummy-repo.sh`
 - Modify: `docs/superpowers/issues/smoke-test-workflow.md`
 
 - [ ] **Step 1: Add repo contract checks for workflow metadata**
 
-In `scripts/test-superpowers-project-repo-contract.ps1`, after the issue mirror validator loop, add:
+In `scripts/test-superpowers-project-repo-contract.sh`, after the issue mirror validator loop, add:
 
-```powershell
+```bash
 foreach ($issueFile in $issueFiles) {
     $text = Get-Content -LiteralPath $issueFile.FullName -Raw
     foreach ($needle in @(
@@ -506,7 +506,7 @@ Add-Check -Name "issue workflow metadata" -Ok $true -Reason "passed"
 
 - [ ] **Step 2: Add workflow metadata to the dummy issue fixture**
 
-In `scripts/test-superpowers-project-dummy-repo.ps1`, add these fields below `Branch` in the generated dummy issue:
+In `scripts/test-superpowers-project-dummy-repo.sh`, add these fields below `Branch` in the generated dummy issue:
 
 ```markdown
 **Execution Mode:** Ask at runtime
@@ -520,9 +520,9 @@ In `scripts/test-superpowers-project-dummy-repo.ps1`, add these fields below `Br
 
 - [ ] **Step 3: Add inline and worker setup decisions to dummy validation**
 
-In `scripts/test-superpowers-project-dummy-repo.ps1`, add:
+In `scripts/test-superpowers-project-dummy-repo.sh`, add:
 
-```powershell
+```bash
 $inlineDecision = @{
     question_id = "resolve_execution_topology"
     source = "debug_question_mode"
@@ -542,7 +542,7 @@ $workerDecision = @{
 
 Use `$inlineDecision` in the existing `FinalizeSetup` call. Add a second `FinalizeSetup` call with `$workerDecision` and assert:
 
-```powershell
+```bash
 if ($workerFinalize.setup_ledger.execution_decision.selected_mode -ne "orchestrated-worker") { throw "worker execution decision was not recorded" }
 if (-not $workerFinalize.setup_ledger.worker_handoff) { throw "worker handoff was not recorded" }
 ```
@@ -551,17 +551,17 @@ if (-not $workerFinalize.setup_ledger.worker_handoff) { throw "worker handoff wa
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1
+```bash
+./scripts/test-superpowers-project-repo-contract.sh
+./scripts/test-superpowers-project-dummy-repo.sh
 ```
 
 Expected: both commands exit zero.
 
 Commit:
 
-```powershell
-git add scripts/test-superpowers-project-repo-contract.ps1 scripts/test-superpowers-project-dummy-repo.ps1 docs/superpowers/issues/smoke-test-workflow.md
+```bash
+git add scripts/test-superpowers-project-repo-contract.sh scripts/test-superpowers-project-dummy-repo.sh docs/superpowers/issues/smoke-test-workflow.md
 git commit -m "test: cover resolver orchestration workflow"
 ```
 
@@ -574,8 +574,8 @@ git commit -m "test: cover resolver orchestration workflow"
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: exits zero.
@@ -584,8 +584,8 @@ Expected: exits zero.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: exits zero and deploys the seven active skills.
@@ -594,8 +594,8 @@ Expected: exits zero and deploys the seven active skills.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: exits zero.
@@ -604,7 +604,7 @@ Expected: exits zero.
 
 Run:
 
-```powershell
+```bash
 git status --short
 ```
 

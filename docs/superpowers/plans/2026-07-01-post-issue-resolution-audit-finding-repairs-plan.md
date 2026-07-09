@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the workflow contract as the native gate source of truth, and make validators enforce the route language agents actually read. Strengthen `align-project` so GitHub-aware mode inspects live issue, milestone, and label evidence when fixtures are absent. Close the loop by cleaning stale closed mirrors and tracker labels, then verify source, live sync, and loop evidence.
 
-**Tech Stack:** PowerShell 7, GitHub CLI, GitHub GraphQL/REST through `gh`, YAML via the existing workflow-contract loader, Markdown project artifacts.
+**Tech Stack:** Bash 7, GitHub CLI, GitHub GraphQL/REST through `gh`, YAML via the existing workflow-contract loader, Markdown project artifacts.
 
 ---
 
@@ -28,7 +28,7 @@
 **Cutover:** Replace stale route wording and fixture-only inspection paths in source; delete closed mirrors only after M1 closed summaries are written.
 **Replaced Path:** Stale synthetic route labels, fixture-only milestone/label checks in GitHub-aware mode, closed mirror files 97-103 as active execution inputs, and oversized unsplit test helper blocks.
 **Evidence:** Targeted scenario tests, workflow-contract tests, alignment JSON output, GitHub label count query, full repo validation, cleanup hook, and sync-live validation.
-**Acceptance Proof:** All P1/P2 findings from the source spec have passing proof commands; P3 file pressure is reduced without weakening route validation; `scripts/validate.ps1` passes.
+**Acceptance Proof:** All P1/P2 findings from the source spec have passing proof commands; P3 file pressure is reduced without weakening route validation; `scripts/validate.sh` passes.
 **Stop Criteria:** Stop before merge-ready proof if any targeted validator fails, if GitHub label mutation fails, if live evidence contradicts the planned cleanup, or if full validation fails twice for the same reason.
 **Avoid:** Do not edit deployed plugin copies directly, do not create compatibility wrappers for stale route labels, do not keep closed mirrors without retention evidence, and do not weaken native question contracts.
 **Risk:** Medium: the work touches workflow infrastructure and live GitHub tracker state. Risk owner: current Codex thread.
@@ -36,12 +36,12 @@
 ## Implementation Boundaries
 
 **Files To Create:** `docs/superpowers/plans/2026-07-01-post-issue-resolution-audit-finding-repairs-plan.md`; optional focused helper/test files only if they reduce large-file pressure cleanly.
-**Files To Modify:** `skills/align-project/scripts/align-project.ps1`; `skills/align-project/scripts/test-scenarios.ps1`; `skills/align-project/SKILL.md`; `skills/audit-project/SKILL.md`; `skills/audit-project/agents/openai.yaml`; `skills/audit-project/scripts/test-scenarios.ps1`; `scripts/lib/workflow-contract.ps1`; `scripts/validate-workflow-contract.ps1`; `scripts/test-workflow-contract.ps1`; `docs/superpowers/workflow-contract.yml`; `docs/superpowers/milestones/M1-source-of-truth.md`; `docs/superpowers/specs/2026-07-01-post-issue-resolution-project-audit-findings.md`; `docs/superpowers/issues/97-github-sub-issues-workflow.md` through `docs/superpowers/issues/103-workflow-examples-generated-docs-and-validation-wiring.md`.
+**Files To Modify:** `skills/align-project/scripts/align-project.sh`; `skills/align-project/scripts/test-scenarios.sh`; `skills/align-project/SKILL.md`; `skills/audit-project/SKILL.md`; `skills/audit-project/agents/openai.yaml`; `skills/audit-project/scripts/test-scenarios.sh`; `scripts/lib/workflow-contract.sh`; `scripts/validate-workflow-contract.sh`; `scripts/test-workflow-contract.sh`; `docs/superpowers/workflow-contract.yml`; `docs/superpowers/milestones/M1-source-of-truth.md`; `docs/superpowers/specs/2026-07-01-post-issue-resolution-project-audit-findings.md`; `docs/superpowers/issues/97-github-sub-issues-workflow.md` through `docs/superpowers/issues/103-workflow-examples-generated-docs-and-validation-wiring.md`.
 **Files To Avoid:** Deployed plugin copies, plugin cache source, unrelated workspace roots, unrelated historical plans/specs, and closed issue mirrors outside 97-103.
 **Source Of Truth:** `docs/superpowers/specs/2026-07-01-post-issue-resolution-project-audit-findings.md` plus live GitHub issue/milestone/label evidence.
 **Read Path:** Inspect source repo files, run existing validators, read live GitHub with `gh`, and parse fixtures through existing scripts.
 **Write Path:** Edit source repo files with scoped patches; mutate GitHub only to remove `status:*` labels from closed issues after proof.
-**Integration Points:** `align-project` JSON findings, workflow-contract validator, native skill metadata, M1 milestone page, `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`.
+**Integration Points:** `align-project` JSON findings, workflow-contract validator, native skill metadata, M1 milestone page, `scripts/validate.sh`, `scripts/sync-live.sh --validate`.
 **Migration Or Cutover:** New validator checks must fail stale route prose before repair and pass after repair. Closed mirror files must be deleted after M1 closed summaries exist.
 **Replaced Path Handling:** Removed route phrases stay out of skills, metadata, and tests; removed mirrors are represented by M1 closed summaries; old fixture-only paths remain as test overrides.
 **Acceptance Proof Gate:** Targeted tests pass before full validation; full validation and cleanup pass before final handoff; live sync validation passes before reporting plugin source complete.
@@ -69,11 +69,11 @@
 
 - `align-project -Mode GitHubAware -TrackerHygiene` reports closed status-label drift before live label cleanup and no such drift after cleanup.
 - `align-project -Mode GitHubAware` reports live milestone and label evidence as healthy or repairable instead of informational skipped checks when `gh` is authenticated.
-- `scripts/test-workflow-contract.ps1` fails stale route-trigger fixtures and passes the repaired repo contract.
+- `scripts/test-workflow-contract.sh` fails stale route-trigger fixtures and passes the repaired repo contract.
 - `rg` finds no active stale route phrases outside historical specs/plans and the audit spec evidence itself.
 - `align-project -Mode GitHubAware` reports no `closed-mirror-lifecycle` repairables for mirrors 97-103 after cleanup.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes.
 
 ### Task 1: Workflow Route Contract Repair
 
@@ -87,22 +87,22 @@
 **Files:**
 - Modify: `skills/audit-project/SKILL.md`
 - Modify: `skills/audit-project/agents/openai.yaml`
-- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
+- Modify: `skills/audit-project/scripts/test-scenarios.sh`
 - Modify: `skills/align-project/SKILL.md`
 - Modify: `docs/superpowers/workflow-contract.yml`
-- Modify: `scripts/lib/workflow-contract.ps1`
-- Modify: `scripts/validate-workflow-contract.ps1`
-- Modify: `scripts/test-workflow-contract.ps1`
-- Test: `scripts/test-workflow-contract.ps1`
-- Test: `skills/audit-project/scripts/test-scenarios.ps1`
+- Modify: `scripts/lib/workflow-contract.sh`
+- Modify: `scripts/validate-workflow-contract.sh`
+- Modify: `scripts/test-workflow-contract.sh`
+- Test: `scripts/test-workflow-contract.sh`
+- Test: `skills/audit-project/scripts/test-scenarios.sh`
 
 - [x] **Step 1: Add failing workflow-contract fixtures**
   - Add a fixture skill containing `If the user selects \`Not A Real Option\``.
   - Add a fixture metadata file containing `Yes Do Work`.
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`.
+  - Run `./scripts/test-workflow-contract.sh`.
   - Expected before implementation: the new checks fail.
 - [x] **Step 2: Add route-trigger validation**
-  - Extract `If the user selects \`...\`` labels from skill prose.
+  - Extract `If the user selects \`.../`` labels from skill prose.
   - Check each extracted label against declared contract option labels for that skill.
   - Extract top-level plus nested composite labels from `agents/openai.yaml`.
   - Fail when metadata contains a composite phrase such as `Yes Do Work`.
@@ -115,8 +115,8 @@
   - Change stale prose triggers to `Yes` and `Revisit`.
   - Keep `Prepare Repair Work` only as a child option when the contract presents it.
 - [x] **Step 5: Verify route contract**
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`.
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1`.
+  - Run `./scripts/test-workflow-contract.sh`.
+  - Run `./skills/audit-project/scripts/test-scenarios.sh`.
   - Run the stale phrase `rg` proof from the source spec and confirm no active hits remain.
 
 ### Task 2: Align Live GitHub Evidence And Tracker Hygiene
@@ -128,13 +128,13 @@
 - Closed issue status labels create repairable findings before cleanup and disappear after cleanup.
 
 **Files:**
-- Modify: `skills/align-project/scripts/align-project.ps1`
-- Modify: `skills/align-project/scripts/test-scenarios.ps1`
-- Test: `skills/align-project/scripts/test-scenarios.ps1`
+- Modify: `skills/align-project/scripts/align-project.sh`
+- Modify: `skills/align-project/scripts/test-scenarios.sh`
+- Test: `skills/align-project/scripts/test-scenarios.sh`
 
 - [x] **Step 1: Add failing no-Project tracker fixture**
   - Extend align scenario tests so a closed issue with `status:ready` and no `-ProjectFixturePath` reports `closed-status-label-drift`.
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1`.
+  - Run `./skills/align-project/scripts/test-scenarios.sh`.
   - Expected before implementation: the no-Project tracker check fails.
 - [x] **Step 2: Decouple issue-label hygiene from Project V2 hygiene**
   - Let closed/open issue status-label checks run whenever GitHub issue evidence exists.
@@ -145,8 +145,8 @@
   - Otherwise call live GitHub through `gh api repos/:owner/:repo/milestones` and `gh label list --json name`.
   - Convert live milestone evidence into the same shape used by existing membership checks.
 - [x] **Step 4: Verify align scenarios**
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1`.
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene`.
+  - Run `./skills/align-project/scripts/test-scenarios.sh`.
+  - Run `./skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene`.
 
 ### Task 3: Closed Mirror And Tracker State Cleanup
 
@@ -167,7 +167,7 @@
 - Delete: `docs/superpowers/issues/102-merge-rollup-align-migration-audit-and-loop-selection.md`
 - Delete: `docs/superpowers/issues/103-workflow-examples-generated-docs-and-validation-wiring.md`
 - External: closed GitHub issues with `status:*` labels
-- Test: `skills/align-project/scripts/align-project.ps1`
+- Test: `skills/align-project/scripts/align-project.sh`
 
 - [x] **Step 1: Add M1 closed summaries**
   - Add issue 97 closed directly on `2026-06-30T16:13:35Z`.
@@ -180,7 +180,7 @@
   - Run `gh issue edit <number> --remove-label <status-label>` for each closed status label.
   - Re-query and confirm the count is `0`.
 - [x] **Step 4: Verify cleanup**
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene`.
+  - Run `./skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene`.
   - Confirm no `closed-mirror-lifecycle` or `closed-status-label-drift` repairables remain.
 
 ### Task 4: Large-File Pressure Reduction
@@ -191,23 +191,23 @@
 - Split helpers do not hide route behavior or weaken scenario coverage.
 
 **Files:**
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
 - Create or modify: focused helper file under `skills/merge-changes/scripts/lib/`
-- Modify: `docs/superpowers/workflow-contract.yml` and `scripts/lib/workflow-contract.ps1` only if a contract fragment split stays low-risk.
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `scripts/test-workflow-contract.ps1`
+- Modify: `docs/superpowers/workflow-contract.yml` and `scripts/lib/workflow-contract.sh` only if a contract fragment split stays low-risk.
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `scripts/test-workflow-contract.sh`
 
 - [x] **Step 1: Extract merge test fixture helpers**
   - Move reusable `New-*` fixture builders and sample repo helpers into a sourced helper file.
-  - Keep scenario names and assertions in `test-scenarios.ps1`.
+  - Keep scenario names and assertions in `test-scenarios.sh`.
 - [x] **Step 2: Verify merge scenarios**
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1`.
+  - Run `./skills/merge-changes/scripts/test-scenarios.sh`.
 - [x] **Step 3: Reassess workflow contract split**
   - If the workflow contract can be split into fragments while `Read-WorkflowContract` preserves the same combined object, implement the split.
   - If the split would create extra risk, leave the contract intact and record the reason in the audit spec as a bounded P3 follow-up rather than a correctness defect.
 - [x] **Step 4: Verify file pressure**
   - Re-run the line-count command from the source spec.
-  - Confirm `skills/merge-changes/scripts/test-scenarios.ps1` is below 1000 lines.
+  - Confirm `skills/merge-changes/scripts/test-scenarios.sh` is below 1000 lines.
 
 ### Task 5: Final Validation And Live Sync
 
@@ -220,18 +220,18 @@
 **Files:**
 - Modify: `docs/superpowers/specs/2026-07-01-post-issue-resolution-project-audit-findings.md`
 - Runtime: `.superpowers/runs/2026-07-01-resolve-audit-findings/`
-- Test: `scripts/validate.ps1`
-- Test: `scripts/sync-live.ps1`
+- Test: `scripts/validate.sh`
+- Test: `scripts/sync-live.sh`
 
 - [x] **Step 1: Update the audit spec with resolution proof**
   - Mark each finding with the implemented resolution and proof command.
 - [x] **Step 2: Run targeted validators**
   - Run workflow-contract, audit-project, align-project, merge-changes, and plan validators.
 - [x] **Step 3: Run full validation**
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`.
+  - Run `./scripts/validate.sh`.
 - [x] **Step 4: Run live sync validation**
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`.
+  - Run `./scripts/sync-live.sh --validate`.
 - [x] **Step 5: Run cleanup**
-  - Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`.
+  - Run `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .`.
 - [x] **Step 6: Prepare merge-ready evidence**
   - Record branch, changed files, validation receipts, tracker proof, cleanup proof, and sync-live proof.

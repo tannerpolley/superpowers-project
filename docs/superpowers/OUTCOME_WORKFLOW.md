@@ -1,6 +1,6 @@
 # Superpowers Project Outcome Workflow
 
-> Generated from repo source by `scripts/generate-outcome-workflow-summary.ps1`. Do not edit by hand.
+> Generated from repo source by `scripts/generate-outcome-workflow-summary.sh`. Do not edit by hand.
 
 ## Canonical Identity
 
@@ -39,12 +39,12 @@
 
 - `Task # Use Cases` is a strict requirement for plan making, plan implementation, and issue resolution.
 - Every numbered `Task N` in an implementation plan must include a non-empty `**Use Cases:**` block before files and steps.
-- `scripts/validate-plan-task-use-cases.ps1 -PlanPath <plan>` is mandatory before a plan is ready, before `$superpowers-project:implement-plan` edits code, and before `$superpowers-project:resolve-issue` executes a linked source plan.
+- `scripts/validate-plan-task-use-cases.sh -PlanPath <plan>` is mandatory before a plan is ready, before `$superpowers-project:implement-plan` edits code, and before `$superpowers-project:resolve-issue` executes a linked source plan.
 
 ## Outcome Proof And Readiness Review
 
 - Plans require an `Outcome Proof` and `Implementation Boundaries` before implementation.
-- `scripts/validate-plan-outcome-proof.ps1 -PlanPath <plan>` validates intent, owner, interface, cutover, replaced path, evidence, acceptance proof, stop criteria, avoid, risk, and implementation boundary fields.
+- `scripts/validate-plan-outcome-proof.sh -PlanPath <plan>` validates intent, owner, interface, cutover, replaced path, evidence, acceptance proof, stop criteria, avoid, risk, and implementation boundary fields.
 - Issue mirrors must include an `Outcome Summary` derived from the approved source plan.
 - `$superpowers-project:implement-plan` and `$superpowers-project:resolve-issue` carry structured `outcome_proof` proof through execution ledgers.
 - `$superpowers-project:merge-changes` requires structured `readiness_review` proof before merge approval.
@@ -65,7 +65,7 @@
 - `Auto Mode` is one-route autonomy only; it must stop at route closeout and must not continue to another candidate.
 - `Looping Mode` is bounded repeated maintenance autonomy; it routes through `$superpowers-project:loop-controller` to select one ready candidate at a time, route the actual work to the owning skill, and re-check budget before another candidate.
 - Workflow mode ledgers record `selected_mode`, repo identity, plugin manifest version, `contract_hash`, autonomy scope, mutation scope, route policy, proof policy, stop conditions, and downstream ledger paths.
-- Validate workflow mode ledgers with `<Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>` from the loaded Superpowers Project plugin root.
+- Validate workflow mode ledgers with `<Superpowers Project plugin root>/scripts/validate-workflow-mode-ledger.sh -RepoRoot <active repo> -ModeLedgerPath <ledger>` from the loaded Superpowers Project plugin root.
 
 ## Workflow Skills
 
@@ -90,40 +90,41 @@
 - Push, publish, merge, board creation, GitHub mutation, and final `Done` require explicit proof and the owning native gate.
 - `project_merge_approval` is the merge approval gate.
 - `project_auto_mode_authorization` can authorize bounded Auto Mode only when the plugin-provided Auto Mode validator passes.
-- Validate Auto Mode ledgers with `<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>` from the loaded Superpowers Project plugin root.
+- Validate Auto Mode ledgers with `<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>` from the loaded Superpowers Project plugin root.
 - Helper scripts may prepare evidence, but they must not convert missing approval into approval.
 
 ## Debug Mode
 
 - `debug_question_mode` is only for explicit non-interactive smoke tests or proven stuck background prompts.
-- Required ledger fields include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source`, `no_answer_tool_available: true`, and `mutation_allowed: false`.
+- Required ledger fields include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`.
 - Debug mode must not approve mutation.
 
 ## Live Sync
 
 - Source repo is authoritative.
-- Live deployed plugin copy is checked by `scripts/sync-live.ps1 -Validate`.
+- Live deployed plugin copy is checked by `scripts/sync-live.sh --validate`.
 - Plugin cache paths are not durable contracts.
 - Validated live sync refreshes matching local plugin cache roots when they already exist, so existing threads can see updated files when they re-read plugin skill bodies.
 - Already-loaded prompt text cannot be rewritten inside an existing agent context; a stale observed root after sync still requires a fresh agent session.
 
 ## Startup Version Check
 
-- At Superpowers Project startup, agents must run `<Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent` from the loaded Superpowers Project plugin root and print the banner before selecting a project workflow route.
+- At Superpowers Project startup, agents must run `<Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` from the loaded Superpowers Project plugin root and print the banner before selecting a project workflow route.
 - If the active agent knows its loaded plugin or skill root, it must also pass `-ObservedPluginRoot` or `-ObservedSkillRoot`.
 - The banner reports the manifest version, source commit, source dirty state, `contract_hash`, source/live freshness, observed-root freshness, and stale cache candidate count.
 
 ## Agent Version Tracking
 
 - Exact runtime identity is the plugin manifest version plus the runtime `contract_hash`.
-- `scripts/get-agent-plugin-version.ps1 -RequireCurrent` compares source, live install, optional observed plugin or skill root, and local cache candidates.
+- `scripts/get-agent-plugin-version.sh -RequireCurrent` compares source, live install, optional observed plugin or skill root, and local cache candidates.
 - Use `-ObservedPluginRoot` or `-ObservedSkillRoot` when an agent needs to prove the exact loaded copy it is using.
 - If source and live are current but the observed surface differs, run validated live sync to refresh live install and matching local plugin cache roots, then start a fresh agent session if the observed surface still differs.
 
 ## Validation Commands
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-outcome-workflow-summary.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -RequireCurrent`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_plan_route`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
+- `./scripts/test-outcome-workflow-summary.sh`
+- `./scripts/get-agent-plugin-version.sh -RequireCurrent`
+- `./scripts/detect-stale-skill-contract.sh -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_plan_route`

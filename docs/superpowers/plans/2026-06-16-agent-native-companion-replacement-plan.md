@@ -6,7 +6,7 @@
 
 **Architecture:** Migrate the companion route in place: tests first assert Agent-Native MDX wording and stale HTML-report wording removal, then source skills/docs are rewritten, HTML renderer files are deleted, and a local Agent-Native preview fixture proves the new review surface. Canonical Superpowers implementation plans remain under `docs/superpowers/plans`; Agent-Native review artifacts live under `plans/<slug>/plan.mdx`.
 
-**Tech Stack:** PowerShell 7, Markdown, MDX, Agent-Native CLI, existing Superpowers Project validators.
+**Tech Stack:** Bash 7, Markdown, MDX, Agent-Native CLI, existing Superpowers Project validators.
 
 ---
 
@@ -21,18 +21,18 @@
 - Use BuilderIO/Agent-Native visual-plan MDX artifacts instead of the just-created HTML companion direction.
 - Keep native Codex chat and `request_user_input` as approval and continuation authority.
 - Use local-files privacy mode when hosted Plan MCP tools are not visible in the active session.
-- Do not edit deployed plugin copies directly; edit source, validate, then run `scripts/sync-live.ps1 -Validate`.
+- Do not edit deployed plugin copies directly; edit source, validate, then run `scripts/sync-live.sh --validate`.
 - Bounded Auto Mode is authorized for this saved spec after the `project_auto_mode_authorization` gate.
 
 ## Test-Complete Definition
 
 This plan is test complete when:
 
-- `scripts/test-companion-interface.ps1` passes and rejects active HTML companion wording.
-- `scripts/test-agent-native-companion-preview.ps1` passes and creates a local Agent-Native preview from a fixture `plans/<slug>/plan.mdx`.
-- `scripts/validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-16-agent-native-companion-replacement-plan.md` passes.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes.
+- `scripts/test-companion-interface.sh` passes and rejects active HTML companion wording.
+- `scripts/test-agent-native-companion-preview.sh` passes and creates a local Agent-Native preview from a fixture `plans/<slug>/plan.mdx`.
+- `scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-16-agent-native-companion-replacement-plan.md` passes.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes.
 - The cleanup hook reports no matching leftover Codex processes for this repo.
 
 No numerical engineering metrics are required. This is workflow-contract and artifact-routing work; pass/fail is defined by exact source text, file removal, local preview creation, validator results, and cleanup proof.
@@ -57,20 +57,20 @@ No numerical engineering metrics are required. This is workflow-contract and art
 
 ## File Map
 
-- Modify: `scripts/test-companion-interface.ps1`
-- Create: `scripts/test-agent-native-companion-preview.ps1`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/test-companion-interface.sh`
+- Create: `scripts/test-agent-native-companion-preview.sh`
+- Modify: `scripts/validate.sh`
 - Modify: `skills/companion-interface/SKILL.md`
 - Modify: `skills/companion-interface/agents/openai.yaml`
-- Delete: `skills/companion-interface/scripts/append-event.ps1`
-- Delete: `skills/companion-interface/scripts/new-report-session.ps1`
-- Delete: `skills/companion-interface/scripts/render-report.ps1`
-- Delete: `skills/companion-interface/scripts/test-scenarios.ps1`
-- Delete: `skills/companion-interface/scripts/lib/companion-report.ps1`
+- Delete: `skills/companion-interface/scripts/append-event.sh`
+- Delete: `skills/companion-interface/scripts/new-report-session.sh`
+- Delete: `skills/companion-interface/scripts/render-report.sh`
+- Delete: `skills/companion-interface/scripts/test-scenarios.sh`
+- Delete: `skills/companion-interface/scripts/lib/companion-report.sh`
 - Delete: `skills/companion-interface/templates/report-template.html`
 - Delete: `skills/companion-interface/templates/report.css`
 - Delete: `skills/companion-interface/templates/report.js`
-- Delete: `scripts/serve-companion-report.ps1`
+- Delete: `scripts/serve-companion-report.sh`
 - Modify: `.github/workflows/validate.yml`
 - Modify: `skills/brainstorm-spec/SKILL.md`
 - Modify: `skills/brainstorm-spec/agents/openai.yaml`
@@ -80,10 +80,10 @@ No numerical engineering metrics are required. This is workflow-contract and art
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `.gitignore`
-- Test: `scripts/test-companion-interface.ps1`
-- Test: `scripts/test-agent-native-companion-preview.ps1`
-- Test: `scripts/validate.ps1`
-- Test: `scripts/sync-live.ps1 -Validate`
+- Test: `scripts/test-companion-interface.sh`
+- Test: `scripts/test-agent-native-companion-preview.sh`
+- Test: `scripts/validate.sh`
+- Test: `scripts/sync-live.sh --validate`
 
 ## Task 1: Rewrite The Companion Contract Test
 
@@ -94,13 +94,13 @@ No numerical engineering metrics are required. This is workflow-contract and art
 - Stale report-session vocabulary fails focused validation before full repo validation.
 
 **Files:**
-- Modify: `scripts/test-companion-interface.ps1`
+- Modify: `scripts/test-companion-interface.sh`
 
 - [ ] **Step 1: Extend the test helpers**
 
 Add a negative assertion helper beside `Assert-Contains`:
 
-```powershell
+```bash
 function Assert-NotContains {
     param([string]$Path, [string]$Needle, [string]$Name)
     $text = Get-Content -LiteralPath (Join-Path $RepoRoot $Path) -Raw
@@ -112,30 +112,30 @@ function Assert-NotContains {
 
 Replace assertions for "local HTML companion report" with checks equivalent to:
 
-```powershell
-Assert-Contains -Path "skills\companion-interface\SKILL.md" -Needle "Agent-Native visual-plan MDX" -Name "skill defines Agent-Native MDX surface"
-Assert-Contains -Path "skills\companion-interface\SKILL.md" -Needle "plans/<slug>/plan.mdx" -Name "skill defines local plan source"
-Assert-Contains -Path "skills\companion-interface\SKILL.md" -Needle "request_user_input" -Name "skill preserves native approval"
-Assert-Contains -Path "skills\companion-interface\agents\openai.yaml" -Needle "Agent-Native" -Name "metadata names Agent-Native"
+```bash
+Assert-Contains -Path "skills/companion-interface\SKILL.md" -Needle "Agent-Native visual-plan MDX" -Name "skill defines Agent-Native MDX surface"
+Assert-Contains -Path "skills/companion-interface\SKILL.md" -Needle "plans/<slug>/plan.mdx" -Name "skill defines local plan source"
+Assert-Contains -Path "skills/companion-interface\SKILL.md" -Needle "request_user_input" -Name "skill preserves native approval"
+Assert-Contains -Path "skills/companion-interface\agents\openai.yaml" -Needle "Agent-Native" -Name "metadata names Agent-Native"
 Assert-Contains -Path ".codex-plugin\plugin.json" -Needle "Agent-Native visual-plan MDX" -Name "plugin prompt names MDX companion"
 Assert-Contains -Path "README.md" -Needle "Agent-Native visual-plan MDX" -Name "README names MDX companion"
-Assert-Contains -Path "docs\superpowers\PROJECT_CONTEXT.md" -Needle "companion-interface" -Name "project context lists companion"
-Assert-Contains -Path "skills\brainstorm-spec\SKILL.md" -Needle "Agent-Native visual-plan" -Name "brainstorm uses visual-plan wording"
-Assert-Contains -Path "skills\write-plan\SKILL.md" -Needle "Agent-Native visual-plan" -Name "write-plan uses visual-plan wording"
+Assert-Contains -Path "docs/superpowers\PROJECT_CONTEXT.md" -Needle "companion-interface" -Name "project context lists companion"
+Assert-Contains -Path "skills/brainstorm-spec\SKILL.md" -Needle "Agent-Native visual-plan" -Name "brainstorm uses visual-plan wording"
+Assert-Contains -Path "skills/write-plan\SKILL.md" -Needle "Agent-Native visual-plan" -Name "write-plan uses visual-plan wording"
 ```
 
 - [ ] **Step 3: Add stale wording rejection**
 
 Add negative checks against active route files:
 
-```powershell
+```bash
 $activeFiles = @(
-    "skills\companion-interface\SKILL.md",
-    "skills\companion-interface\agents\openai.yaml",
+    "skills/companion-interface\SKILL.md",
+    "skills/companion-interface\agents\openai.yaml",
     ".codex-plugin\plugin.json",
     "README.md",
-    "skills\brainstorm-spec\SKILL.md",
-    "skills\write-plan\SKILL.md"
+    "skills/brainstorm-spec\SKILL.md",
+    "skills/write-plan\SKILL.md"
 )
 foreach ($file in $activeFiles) {
     Assert-NotContains -Path $file -Needle "local HTML companion report" -Name "$file omits HTML companion report"
@@ -150,8 +150,8 @@ foreach ($file in $activeFiles) {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-companion-interface.sh
 ```
 
 Expected: the command exits nonzero because the source still contains HTML companion wording.
@@ -213,13 +213,13 @@ Canonical Superpowers specs, implementation plans, issue mirrors, and milestone 
 
 Before authoring MDX, fetch the Agent-Native block catalog with an available schema-only tool or:
 
-```powershell
+```bash
 npx @agent-native/core@latest plan blocks --out <temporary-catalog-path>
 ```
 
 After writing or revising the folder, run:
 
-```powershell
+```bash
 npx @agent-native/core@latest plan local preview --dir plans/<slug> --kind plan --open
 ```
 
@@ -271,8 +271,8 @@ Keep `companion-interface` in the Extension Skills list and add one sentence und
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-companion-interface.sh
 ```
 
 Expected: companion skill, metadata, README, plugin prompt, and project context checks pass. Brainstorm/write-plan checks may still fail until Task 3.
@@ -333,8 +333,8 @@ Use $superpowers-project:companion-interface on opt-in runs or when long impleme
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-companion-interface.sh
 ```
 
 Expected: JSON output has `"ok": true`.
@@ -348,11 +348,11 @@ Expected: JSON output has `"ok": true`.
 - Future implementation work has one review artifact model: Agent-Native MDX.
 
 **Files:**
-- Delete: `skills/companion-interface/scripts/append-event.ps1`
-- Delete: `skills/companion-interface/scripts/new-report-session.ps1`
-- Delete: `skills/companion-interface/scripts/render-report.ps1`
-- Delete: `skills/companion-interface/scripts/test-scenarios.ps1`
-- Delete: `skills/companion-interface/scripts/lib/companion-report.ps1`
+- Delete: `skills/companion-interface/scripts/append-event.sh`
+- Delete: `skills/companion-interface/scripts/new-report-session.sh`
+- Delete: `skills/companion-interface/scripts/render-report.sh`
+- Delete: `skills/companion-interface/scripts/test-scenarios.sh`
+- Delete: `skills/companion-interface/scripts/lib/companion-report.sh`
 - Delete: `skills/companion-interface/templates/report-template.html`
 - Delete: `skills/companion-interface/templates/report.css`
 - Delete: `skills/companion-interface/templates/report.js`
@@ -365,7 +365,7 @@ Use `Remove-Item` or `apply_patch` deletion for the exact files listed above. Ve
 
 Run:
 
-```powershell
+```bash
 rg -n "new-report-session|append-event|render-report|manifest.json|events.jsonl|report-template|\\.superpowers/reports" skills/companion-interface README.md .codex-plugin/plugin.json skills/brainstorm-spec skills/write-plan
 ```
 
@@ -375,8 +375,8 @@ Expected: no matches in active guidance. Matches in historical specs or plans ar
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
 Expected: this command should no longer be run because the script is deleted. Full validation should skip absent skill scenario scripts.
@@ -385,8 +385,8 @@ Expected: this command should no longer be run because the script is deleted. Fu
 
 Commit message:
 
-```powershell
-git add skills\companion-interface scripts\test-companion-interface.ps1 README.md .codex-plugin\plugin.json docs\superpowers\PROJECT_CONTEXT.md skills\brainstorm-spec skills\write-plan
+```bash
+git add skills/companion-interface scripts/test-companion-interface.sh README.md .codex-plugin\plugin.json docs/superpowers\PROJECT_CONTEXT.md skills/brainstorm-spec skills/write-plan
 git commit -m "Replace HTML companion contract with Agent-Native MDX"
 ```
 
@@ -402,16 +402,16 @@ In bounded Auto Mode, continue to Task 5 before committing if validation wiring 
 - CI no longer installs Pandoc solely for the retired HTML Markdown renderer.
 
 **Files:**
-- Create: `scripts/test-agent-native-companion-preview.ps1`
-- Modify: `scripts/validate.ps1`
+- Create: `scripts/test-agent-native-companion-preview.sh`
+- Modify: `scripts/validate.sh`
 - Modify: `.gitignore`
 - Modify: `.github/workflows/validate.yml`
 
 - [ ] **Step 1: Create the preview test script**
 
-Create `scripts/test-agent-native-companion-preview.ps1`:
+Create `scripts/test-agent-native-companion-preview.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -469,11 +469,11 @@ This fixture proves local Agent-Native visual-plan preview works from repo-owned
 
 - [ ] **Step 2: Wire the preview test into full validation**
 
-In `scripts/validate.ps1`, add an `Invoke-Step` after the companion interface contract:
+In `scripts/validate.sh`, add an `Invoke-Step` after the companion interface contract:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Agent-Native companion preview" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-agent-native-companion-preview.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-agent-native-companion-preview.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Agent-Native companion preview failed" }
 }))
 ```
@@ -491,7 +491,8 @@ plans/**/preview.html
 Remove these lines from `.github/workflows/validate.yml`:
 
 ```yaml
-choco install pandoc -y --no-progress
+sudo apt-get update
+sudo apt-get install -y pandoc
 pandoc --version
 ```
 
@@ -499,9 +500,9 @@ pandoc --version
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-agent-native-companion-preview.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-agent-native-companion-preview.sh
+./scripts/test-companion-interface.sh
 ```
 
 Expected: both commands emit JSON with `"ok": true`.
@@ -521,8 +522,8 @@ Expected: both commands emit JSON with `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-16-agent-native-companion-replacement-plan.md
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-16-agent-native-companion-replacement-plan.md
 ```
 
 Expected: JSON output has `"ok": true` and `task_count` is `6`.
@@ -531,8 +532,8 @@ Expected: JSON output has `"ok": true` and `task_count` is `6`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: final JSON output has `"ok": true`; checks include `Companion interface contract` and `Agent-Native companion preview`.
@@ -541,8 +542,8 @@ Expected: final JSON output has `"ok": true`; checks include `Companion interfac
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: command exits `0`, deploys source skills to the live plugin root, and refreshes matching local plugin cache candidates.
@@ -551,8 +552,8 @@ Expected: command exits `0`, deploys source skills to the live plugin root, and 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: output reports no matching leftover Codex processes under this repo.
@@ -561,8 +562,8 @@ Expected: output reports no matching leftover Codex processes under this repo.
 
 Run:
 
-```powershell
-git add .gitignore .codex-plugin\plugin.json README.md docs\superpowers\PROJECT_CONTEXT.md scripts skills docs\superpowers\specs\2026-06-16-agent-native-visual-plan-companion-design.md docs\superpowers\plans\2026-06-16-agent-native-companion-replacement-plan.md plans\agent-native-companion-replacement\plan.mdx
+```bash
+git add .gitignore .codex-plugin\plugin.json README.md docs/superpowers\PROJECT_CONTEXT.md scripts skills docs/superpowers\specs\2026-06-16-agent-native-visual-plan-companion-design.md docs/superpowers\plans\2026-06-16-agent-native-companion-replacement-plan.md plans\agent-native-companion-replacement\plan.mdx
 git commit -m "Replace companion interface with Agent-Native MDX"
 ```
 

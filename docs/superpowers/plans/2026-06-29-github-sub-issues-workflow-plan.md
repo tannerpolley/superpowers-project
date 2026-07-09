@@ -6,7 +6,7 @@
 
 **Architecture:** Extend the existing `spec -> plan -> issue` workflow with an optional hierarchy layer owned by `create-issues`, validated by mirror and tracker scripts, and consumed as read-only context by execution routes. Parent and wrapper issues become rollup records; only leaf issue mirrors can run through `resolve-issue` or `orchestrate-issues`.
 
-**Tech Stack:** PowerShell 7 validators and fixtures, GitHub CLI `gh` 2.94 or newer, Markdown issue mirrors, JSON tracker metadata, GitHub Issues sub-issues, GitHub Milestones, existing Superpowers Project skill scripts, and repo validation scripts.
+**Tech Stack:** Bash 7 validators and fixtures, GitHub CLI `gh` 2.94 or newer, Markdown issue mirrors, JSON tracker metadata, GitHub Issues sub-issues, GitHub Milestones, existing Superpowers Project skill scripts, and repo validation scripts.
 
 ---
 
@@ -16,7 +16,7 @@
 
 ## Test-Complete Definition
 
-Test complete means the repo proves all three hierarchy modes with deterministic fixtures: flat issues stay executable, grouped plans create clean-title parent plus leaf payloads, and pseudo sub-milestone plans create parent, wrapper, and leaf payloads in GitHub publication order. New validators must reject manual milestone names or numbers in new issue titles, block non-leaf execution, prove GitHub parent/sub-issue mirror parity from fixture data, and keep real GitHub mutation behind native approval or dry command output. Final proof is targeted skill scenario tests, root workflow example tests, `scripts\validate.ps1`, `scripts\sync-live.ps1 -Validate`, version freshness, cleanup hook, and clean Git state.
+Test complete means the repo proves all three hierarchy modes with deterministic fixtures: flat issues stay executable, grouped plans create clean-title parent plus leaf payloads, and pseudo sub-milestone plans create parent, wrapper, and leaf payloads in GitHub publication order. New validators must reject manual milestone names or numbers in new issue titles, block non-leaf execution, prove GitHub parent/sub-issue mirror parity from fixture data, and keep real GitHub mutation behind native approval or dry command output. Final proof is targeted skill scenario tests, root workflow example tests, `scripts/validate.sh`, `scripts/sync-live.sh --validate`, version freshness, cleanup hook, and clean Git state.
 
 Pass/fail metrics are command exit codes, validator JSON receipts, exact fixture assertions, and dry GitHub command receipts. Numeric tolerances do not apply because this is workflow contract work; the measurable threshold is zero failing required validators and zero new issue title examples that encode milestone identity in the title.
 
@@ -27,24 +27,24 @@ Pass/fail metrics are command exit codes, validator JSON receipts, exact fixture
 **Expected Outcome:** `create-issues` can publish or dry-run flat, issue-set, and pseudo sub-milestone hierarchies; mirrors record hierarchy role and executability; execution routes reject parent and wrapper issues; merge closeout records rollup evidence; align-project audits drift and selective migration candidates; docs and examples teach GitHub-native milestone tracking instead of title prefixes.
 **Target Output:** A merged source change with new hierarchy scripts, updated skill instructions, updated tracker vocabulary, updated tests, generated docs, passing validation, and live-sync proof.
 **Owner:** `skills/create-issues` owns hierarchy construction and publication; `skills/resolve-issue` and `skills/orchestrate-issues` own leaf-only execution gates; `skills/merge-changes` owns rollup evidence; `skills/align-project` owns drift and selective migration reporting; `docs/agents` owns tracker vocabulary.
-**Interface:** Agents interact through skill Markdown, native questions, local issue mirrors, dry GitHub command receipts, GitHub issue JSON fields, and validator receipts consumed by `scripts\validate.ps1`.
+**Interface:** Agents interact through skill Markdown, native questions, local issue mirrors, dry GitHub command receipts, GitHub issue JSON fields, and validator receipts consumed by `scripts/validate.sh`.
 **Cutover:** Add validators and fixtures first, update skill docs and scripts to require hierarchy fields when present, then wire the new checks into full validation and live sync.
 **Replaced Path:** Manual milestone names, milestone numbers, pseudo sub-milestone ordinals, and hierarchy ordering in new issue titles stop being accepted as tracker structure.
 **Evidence:** Clean-title validator receipts, hierarchy mirror validator receipts, dry GitHub command payloads, fixture-based GitHub JSON parity checks, leaf-only execution rejection tests, rollup closeout receipts, updated tracker docs, generated workflow examples, full validation output, live-sync validation output, cleanup output, and Git status.
-**Acceptance Proof:** The proof oracle commands in this plan pass, including targeted scenario scripts, root workflow tests, `scripts\validate.ps1`, `scripts\sync-live.ps1 -Validate`, version freshness, cleanup, and clean Git state.
+**Acceptance Proof:** The proof oracle commands in this plan pass, including targeted scenario scripts, root workflow tests, `scripts/validate.sh`, `scripts/sync-live.sh --validate`, version freshness, cleanup, and clean Git state.
 **Stop Criteria:** Stop before publish, push, merge, or live update if hierarchy metadata cannot be represented in GitHub, if parent or wrapper issues can enter an execution route, if clean-title validation misses title-encoded milestone metadata, if dry commands differ from approved hierarchy, or if full validation fails.
 **Avoid:** Do not edit deployed plugin copies directly, do not require hierarchy for single-issue plans, do not replace GitHub Milestones with parent issues, do not bulk-rename historical issues without native approval, and do not make GitHub Projects the execution source of truth.
 **Risk:** The highest risk is creating two tracker truths, with titles or local mirrors disagreeing with GitHub Milestones and sub-issue state. The plan mitigates that by validating clean titles, reading GitHub hierarchy JSON, and blocking execution unless mirror role and GitHub evidence agree.
 
 ## Implementation Boundaries
 
-**Files To Create:** `skills/create-issues/scripts/lib/issue-hierarchy.ps1`, `skills/create-issues/scripts/validate-issue-title-policy.ps1`, `skills/create-issues/scripts/validate-issue-hierarchy.ps1`, `skills/create-issues/scripts/build-issue-hierarchy-plan.ps1`, and `docs/superpowers/examples/sub-issues-workflow-examples.md`.
-**Files To Modify:** `docs/agents/triage-labels.md`, `docs/agents/project-roadmap.json`, `docs/agents/project-roadmap.md`, `docs/agents/issue-tracker.md`, `docs/superpowers/PROJECT_CONTEXT.md`, `skills/setup-project/SKILL.md`, `skills/setup-project/agents/openai.yaml`, `skills/setup-project/scripts/prepare-github-project-board.ps1`, `skills/setup-project/scripts/test-scenarios.ps1`, `skills/create-issues/SKILL.md`, `skills/create-issues/agents/openai.yaml`, `skills/create-issues/scripts/validate-issue-mirror.ps1`, `skills/create-issues/scripts/hydrate-external-issue.ps1`, `skills/create-issues/scripts/test-scenarios.ps1`, `skills/resolve-issue/SKILL.md`, `skills/resolve-issue/scripts/preflight.ps1`, `skills/resolve-issue/scripts/prepare-execution.ps1`, `skills/resolve-issue/scripts/test-scenarios.ps1`, `skills/orchestrate-issues/SKILL.md`, `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`, `skills/orchestrate-issues/scripts/test-scenarios.ps1`, `skills/merge-changes/SKILL.md`, `skills/merge-changes/scripts/collect-closeout-ledger.ps1`, `skills/merge-changes/scripts/closeout.ps1`, `skills/merge-changes/scripts/test-scenarios.ps1`, `skills/align-project/SKILL.md`, `skills/align-project/scripts/align-project.ps1`, `skills/align-project/scripts/test-scenarios.ps1`, `skills/loop-controller/SKILL.md`, `skills/loop-controller/scripts/select-candidate.ps1`, `skills/loop-controller/scripts/test-scenarios.ps1`, `docs/superpowers/examples/workflow-golden-paths.md`, `scripts/validate-workflow-examples.ps1`, `scripts/test-workflow-examples.ps1`, `scripts/generate-outcome-workflow-summary.ps1`, `scripts/test-outcome-workflow-summary.ps1`, `scripts/test-tracker-roadmap-proof.ps1`, `scripts/validate-tracker-roadmap-proof.ps1`, `scripts/validate.ps1`, and `README.md`.
-**Files To Avoid:** `C:\Users\Tanner\plugins\superpowers-project`, `C:\Users\Tanner\.agents\skills\advanced-user-input`, plugin cache directories, unrelated `.chatgpt` audit inputs, old milestone-local canonical artifact roots, and unrelated generated run ledgers.
+**Files To Create:** `skills/create-issues/scripts/lib/issue-hierarchy.sh`, `skills/create-issues/scripts/validate-issue-title-policy.sh`, `skills/create-issues/scripts/validate-issue-hierarchy.sh`, `skills/create-issues/scripts/build-issue-hierarchy-plan.sh`, and `docs/superpowers/examples/sub-issues-workflow-examples.md`.
+**Files To Modify:** `docs/agents/triage-labels.md`, `docs/agents/project-roadmap.json`, `docs/agents/project-roadmap.md`, `docs/agents/issue-tracker.md`, `docs/superpowers/PROJECT_CONTEXT.md`, `skills/setup-project/SKILL.md`, `skills/setup-project/agents/openai.yaml`, `skills/setup-project/scripts/prepare-github-project-board.sh`, `skills/setup-project/scripts/test-scenarios.sh`, `skills/create-issues/SKILL.md`, `skills/create-issues/agents/openai.yaml`, `skills/create-issues/scripts/validate-issue-mirror.sh`, `skills/create-issues/scripts/hydrate-external-issue.sh`, `skills/create-issues/scripts/test-scenarios.sh`, `skills/resolve-issue/SKILL.md`, `skills/resolve-issue/scripts/preflight.sh`, `skills/resolve-issue/scripts/prepare-execution.sh`, `skills/resolve-issue/scripts/test-scenarios.sh`, `skills/orchestrate-issues/SKILL.md`, `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`, `skills/orchestrate-issues/scripts/test-scenarios.sh`, `skills/merge-changes/SKILL.md`, `skills/merge-changes/scripts/collect-closeout-ledger.sh`, `skills/merge-changes/scripts/closeout.sh`, `skills/merge-changes/scripts/test-scenarios.sh`, `skills/align-project/SKILL.md`, `skills/align-project/scripts/align-project.sh`, `skills/align-project/scripts/test-scenarios.sh`, `skills/loop-controller/SKILL.md`, `skills/loop-controller/scripts/select-candidate.sh`, `skills/loop-controller/scripts/test-scenarios.sh`, `docs/superpowers/examples/workflow-golden-paths.md`, `scripts/validate-workflow-examples.sh`, `scripts/test-workflow-examples.sh`, `scripts/generate-outcome-workflow-summary.sh`, `scripts/test-outcome-workflow-summary.sh`, `scripts/test-tracker-roadmap-proof.sh`, `scripts/validate-tracker-roadmap-proof.sh`, `scripts/validate.sh`, and `README.md`.
+**Files To Avoid:** `/home/tnnrpolley21/.codex/plugins/superpowers-project`, `/home/tnnrpolley21/.agents/skills/advanced-user-input`, plugin cache directories, unrelated `.chatgpt` audit inputs, old milestone-local canonical artifact roots, and unrelated generated run ledgers.
 **Source Of Truth:** This plan plus `docs/superpowers/specs/2026-06-29-github-sub-issues-workflow-design.md` drive implementation; after cutover, GitHub Milestone fields and GitHub parent/sub-issue links own tracker structure, while local mirrors own execution readiness.
 **Read Path:** Scripts read source plans, issue mirrors, tracker docs, roadmap JSON, GitHub issue JSON fixtures, `gh issue` command help, GitHub issue bodies, parent/sub-issue fields, labels, milestones, and project fields.
-**Write Path:** Source edits happen only in this repo; local mirrors are written under `docs/superpowers/issues`; live install updates happen only through `scripts\sync-live.ps1 -Validate`.
-**Integration Points:** `gh issue create --parent`, `gh issue edit --add-sub-issue`, `gh issue view --json parent,subIssues,subIssuesSummary,milestone,labels,issueType`, `scripts\validate.ps1`, `scripts\sync-live.ps1`, create-issues mirror validation, resolve/orchestrate preflight, merge closeout, align tracker hygiene, loop candidate selection, workflow examples, and generated outcome docs.
+**Write Path:** Source edits happen only in this repo; local mirrors are written under `docs/superpowers/issues`; live install updates happen only through `scripts/sync-live.sh --validate`.
+**Integration Points:** `gh issue create --parent`, `gh issue edit --add-sub-issue`, `gh issue view --json parent,subIssues,subIssuesSummary,milestone,labels,issueType`, `scripts/validate.sh`, `scripts/sync-live.sh`, create-issues mirror validation, resolve/orchestrate preflight, merge closeout, align tracker hygiene, loop candidate selection, workflow examples, and generated outcome docs.
 **Migration Or Cutover:** Introduce hierarchy fields as optional for existing flat mirrors, require them for newly generated hierarchy mirrors, report historical title and hierarchy drift through `align-project`, and require native approval before any GitHub issue attachment, detachment, rename, or closeout action.
 **Replaced Path Handling:** Displace title-encoded milestone tracking with GitHub Milestones and parent/sub-issue links; retain historical titles until an approved align-project migration explicitly changes them.
 **Acceptance Proof Gate:** A worker cannot claim completion until targeted scripts pass, full repo validation passes, live-sync validation passes, version freshness passes, cleanup passes, and `git status --short --branch` shows only intentional committed state.
@@ -79,7 +79,7 @@ Pass/fail metrics are command exit codes, validator JSON receipts, exact fixture
 - [ ] `align-project` reports hierarchy drift, title drift, missing hierarchy labels/types, and selective migration candidates.
 - [ ] `loop-controller` selects executable leaf issues for implementation and reserves parent or wrapper issues for align, closeout, or tracker repair routes.
 - [ ] Workflow examples and generated docs show GitHub Milestones plus sub-issues as the tracking model, with clean issue titles.
-- [ ] `scripts\validate.ps1`, `scripts\sync-live.ps1 -Validate`, version freshness, cleanup, and clean Git proof pass.
+- [ ] `scripts/validate.sh`, `scripts/sync-live.sh --validate`, version freshness, cleanup, and clean Git proof pass.
 
 ## Non-Goals
 
@@ -94,21 +94,21 @@ Pass/fail metrics are command exit codes, validator JSON receipts, exact fixture
 
 Run these commands from the repo root after implementation:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-examples.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-outcome-workflow-summary.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-tracker-roadmap-proof.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./skills/align-project/scripts/test-scenarios.sh
+./skills/loop-controller/scripts/test-scenarios.sh
+./scripts/test-workflow-examples.sh
+./scripts/test-outcome-workflow-summary.sh
+./scripts/test-tracker-roadmap-proof.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+./scripts/get-agent-plugin-version.sh
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 git status --short --branch
 ```
 
@@ -134,7 +134,7 @@ Create six issue-backed slices from this plan:
 - Cutover evidence shows milestone identity moved from title text into GitHub Milestone fields.
 
 **Files:**
-- Create: `skills/create-issues/scripts/validate-issue-title-policy.ps1`
+- Create: `skills/create-issues/scripts/validate-issue-title-policy.sh`
 - Modify: `docs/agents/triage-labels.md`
 - Modify: `docs/agents/project-roadmap.json`
 - Modify: `docs/agents/project-roadmap.md`
@@ -142,41 +142,41 @@ Create six issue-backed slices from this plan:
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/setup-project/agents/openai.yaml`
-- Modify: `skills/setup-project/scripts/prepare-github-project-board.ps1`
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Modify: `scripts/test-tracker-roadmap-proof.ps1`
-- Modify: `scripts/validate-tracker-roadmap-proof.ps1`
-- Test: `skills/setup-project/scripts/test-scenarios.ps1`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `scripts/test-tracker-roadmap-proof.ps1`
+- Modify: `skills/setup-project/scripts/prepare-github-project-board.sh`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
+- Modify: `scripts/test-tracker-roadmap-proof.sh`
+- Modify: `scripts/validate-tracker-roadmap-proof.sh`
+- Test: `skills/setup-project/scripts/test-scenarios.sh`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `scripts/test-tracker-roadmap-proof.sh`
 
 - [ ] **Step 1: Add failing tracker vocabulary fixtures**
-  - Add `skills/setup-project/scripts/test-scenarios.ps1` assertions that require hierarchy identity to be represented by labels or native issue types such as `type:issue-set`, `type:sub-milestone`, and `type:plan-wrapper`.
-  - Add `scripts/test-tracker-roadmap-proof.ps1` assertions that roadmap JSON and Markdown list the hierarchy labels or their native issue-type equivalents.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1`
+  - Add `skills/setup-project/scripts/test-scenarios.sh` assertions that require hierarchy identity to be represented by labels or native issue types such as `type:issue-set`, `type:sub-milestone`, and `type:plan-wrapper`.
+  - Add `scripts/test-tracker-roadmap-proof.sh` assertions that roadmap JSON and Markdown list the hierarchy labels or their native issue-type equivalents.
+  - Run: `./skills/setup-project/scripts/test-scenarios.sh`
   - Expected: failure naming missing hierarchy tracker vocabulary.
 
 - [ ] **Step 2: Add clean-title failing fixtures**
-  - Add `skills/create-issues/scripts/test-scenarios.ps1` cases that call `validate-issue-title-policy.ps1` with clean titles and with titles containing milestone numbers, milestone names from fixture data, pseudo sub-milestone ordinals, bracketed milestone tags, and leading hierarchy numbers.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
-  - Expected: failure because `validate-issue-title-policy.ps1` does not exist yet.
+  - Add `skills/create-issues/scripts/test-scenarios.sh` cases that call `validate-issue-title-policy.sh` with clean titles and with titles containing milestone numbers, milestone names from fixture data, pseudo sub-milestone ordinals, bracketed milestone tags, and leading hierarchy numbers.
+  - Run: `./skills/create-issues/scripts/test-scenarios.sh`
+  - Expected: failure because `validate-issue-title-policy.sh` does not exist yet.
 
 - [ ] **Step 3: Implement the title policy validator**
-  - Create `skills/create-issues/scripts/validate-issue-title-policy.ps1` with parameters `-Title`, `-KnownMilestoneTitles`, `-KnownMilestoneNumbers`, and `-Json`.
+  - Create `skills/create-issues/scripts/validate-issue-title-policy.sh` with parameters `-Title`, `-KnownMilestoneTitles`, `-KnownMilestoneNumbers`, and `-Json`.
   - Reject titles matching approved fixture patterns for manual milestone numbers, exact milestone names, bracketed milestone tags, pseudo sub-milestone ordinals, and leading hierarchy numbering.
   - Return a JSON receipt with `ok`, `phase`, `title`, and `reason` when `-Json` is passed.
 
 - [ ] **Step 4: Update tracker docs and setup metadata**
   - Update `docs/agents/triage-labels.md`, `docs/agents/project-roadmap.json`, `docs/agents/project-roadmap.md`, and `docs/agents/issue-tracker.md` to describe optional hierarchy identity.
   - Update `skills/setup-project/SKILL.md` and `skills/setup-project/agents/openai.yaml` so setup verifies hierarchy capability only when hierarchy is enabled for the target repo.
-  - Update `skills/setup-project/scripts/prepare-github-project-board.ps1` to include hierarchy tracker proof in its dry board preparation receipt.
+  - Update `skills/setup-project/scripts/prepare-github-project-board.sh` to include hierarchy tracker proof in its dry board preparation receipt.
 
 - [ ] **Step 5: Validate and commit**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-tracker-roadmap-proof.ps1`
-  - Commit: `git add docs/agents docs/superpowers/PROJECT_CONTEXT.md skills/setup-project skills/create-issues/scripts/test-scenarios.ps1 skills/create-issues/scripts/validate-issue-title-policy.ps1 scripts/test-tracker-roadmap-proof.ps1 scripts/validate-tracker-roadmap-proof.ps1 && git commit -m "feat: add clean title hierarchy tracker policy"`
+  - Run: `./skills/setup-project/scripts/test-scenarios.sh`
+  - Run: `./skills/create-issues/scripts/test-scenarios.sh`
+  - Run: `./scripts/test-tracker-roadmap-proof.sh`
+  - Commit: `git add docs/agents docs/superpowers/PROJECT_CONTEXT.md skills/setup-project skills/create-issues/scripts/test-scenarios.sh skills/create-issues/scripts/validate-issue-title-policy.sh scripts/test-tracker-roadmap-proof.sh scripts/validate-tracker-roadmap-proof.sh && git commit -m "feat: add clean title hierarchy tracker policy"`
 
 ## Task 2: Create-Issues Hierarchy Schema And Validators
 
@@ -187,45 +187,45 @@ Create six issue-backed slices from this plan:
 - Validator evidence catches mirror/GitHub parent-child drift before cutover to execution.
 
 **Files:**
-- Create: `skills/create-issues/scripts/lib/issue-hierarchy.ps1`
-- Create: `skills/create-issues/scripts/validate-issue-hierarchy.ps1`
-- Create: `skills/create-issues/scripts/build-issue-hierarchy-plan.ps1`
-- Modify: `skills/create-issues/scripts/validate-issue-mirror.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
+- Create: `skills/create-issues/scripts/lib/issue-hierarchy.sh`
+- Create: `skills/create-issues/scripts/validate-issue-hierarchy.sh`
+- Create: `skills/create-issues/scripts/build-issue-hierarchy-plan.sh`
+- Modify: `skills/create-issues/scripts/validate-issue-mirror.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing mirror schema tests**
   - Add fixtures for valid flat mirror, valid parent mirror, valid plan-wrapper mirror, valid leaf mirror under a parent, invalid parent with `Executable: true`, invalid leaf with missing parent, invalid leaf with `Rollup Policy: all-required-children-closed`, and invalid hierarchy mode values.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
+  - Run: `./skills/create-issues/scripts/test-scenarios.sh`
   - Expected: failure naming missing hierarchy field validation.
 
 - [ ] **Step 2: Add failing dry command builder tests**
   - Add fixtures for a grouped multi-issue plan that should produce parent first and leaves second.
   - Add fixtures for a pseudo sub-milestone plan that should produce parent, wrapper, then leaves.
   - Assert dry command output includes `gh issue create --parent` for new child issues and `gh issue edit --add-sub-issue` for existing child attachment.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
+  - Run: `./skills/create-issues/scripts/test-scenarios.sh`
   - Expected: failure because the hierarchy planner does not exist yet.
 
 - [ ] **Step 3: Implement shared hierarchy helpers**
-  - Create `skills/create-issues/scripts/lib/issue-hierarchy.ps1` with functions for reading field values, normalizing hierarchy mode, normalizing role, checking executable role consistency, checking rollup policy, and parsing GitHub hierarchy fixture JSON.
-  - Keep helper output as typed PowerShell objects so callers do not parse text receipts.
+  - Create `skills/create-issues/scripts/lib/issue-hierarchy.sh` with functions for reading field values, normalizing hierarchy mode, normalizing role, checking executable role consistency, checking rollup policy, and parsing GitHub hierarchy fixture JSON.
+  - Keep helper output as typed Bash objects so callers do not parse text receipts.
 
 - [ ] **Step 4: Implement hierarchy validation**
-  - Create `skills/create-issues/scripts/validate-issue-hierarchy.ps1` with parameters `-IssueMirrorPath`, `-GitHubIssueFixturePath`, `-MilestoneRequired`, and `-Json`.
+  - Create `skills/create-issues/scripts/validate-issue-hierarchy.sh` with parameters `-IssueMirrorPath`, `-GitHubIssueFixturePath`, `-MilestoneRequired`, and `-Json`.
   - Validate `Hierarchy Mode`, `Sub-Issue Role`, `Executable`, `Parent Issue`, `Parent Mirror`, `Child Issues`, `Rollup Policy`, and `Title Policy`.
   - When GitHub fixture data is present, compare mirror parent and child fields to `parent`, `subIssues`, and `subIssuesSummary`.
 
 - [ ] **Step 5: Extend mirror validation**
-  - Update `skills/create-issues/scripts/validate-issue-mirror.ps1` to call the hierarchy validator when hierarchy fields are present.
+  - Update `skills/create-issues/scripts/validate-issue-mirror.sh` to call the hierarchy validator when hierarchy fields are present.
   - Preserve existing validation for outcome proof, classification, goal command, workflow metadata, merge metadata, and bug repro fields.
 
 - [ ] **Step 6: Implement dry hierarchy planner**
-  - Create `skills/create-issues/scripts/build-issue-hierarchy-plan.ps1` with parameters for source plan path, hierarchy mode, GitHub milestone title, parent title, wrapper titles, leaf titles, existing child issue URLs, labels, issue types, and `-Json`.
-  - Validate every title with `validate-issue-title-policy.ps1`.
+  - Create `skills/create-issues/scripts/build-issue-hierarchy-plan.sh` with parameters for source plan path, hierarchy mode, GitHub milestone title, parent title, wrapper titles, leaf titles, existing child issue URLs, labels, issue types, and `-Json`.
+  - Validate every title with `validate-issue-title-policy.sh`.
   - Emit publication order, mirror field payloads, and dry `gh` commands without modifying GitHub.
 
 - [ ] **Step 7: Validate and commit**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
+  - Run: `./skills/create-issues/scripts/test-scenarios.sh`
   - Commit: `git add skills/create-issues/scripts && git commit -m "feat: validate issue hierarchy mirrors"`
 
 ## Task 3: Create-Issues Publication, Hydration, And Routing
@@ -239,15 +239,15 @@ Create six issue-backed slices from this plan:
 **Files:**
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
-- Modify: `skills/create-issues/scripts/hydrate-external-issue.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/scripts/hydrate-external-issue.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
 - Create: `docs/superpowers/examples/sub-issues-workflow-examples.md`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing route and hydration fixtures**
   - Add native-question fixture expectations for hierarchy mode, parent title, wrapper use, child list, labels/types, milestone, publication order, and mutation approval.
   - Add hydration fixture JSON with `parent`, `subIssues`, `subIssuesSummary`, `milestone`, `labels`, and `issueType`.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
+  - Run: `./skills/create-issues/scripts/test-scenarios.sh`
   - Expected: failure naming missing hierarchy routing and hydration support.
 
 - [ ] **Step 2: Update create-issues instructions**
@@ -260,16 +260,16 @@ Create six issue-backed slices from this plan:
   - Keep metadata concise and avoid embedding a second route tree.
 
 - [ ] **Step 4: Extend external issue hydration**
-  - Update `skills/create-issues/scripts/hydrate-external-issue.ps1` so `gh issue view` requests `body,parent,subIssues,subIssuesSummary,milestone,labels,issueType,title,url,number`.
+  - Update `skills/create-issues/scripts/hydrate-external-issue.sh` so `gh issue view` requests `body,parent,subIssues,subIssuesSummary,milestone,labels,issueType,title,url,number`.
   - Write hierarchy fields into the local mirror.
-  - Validate hydrated mirrors through `validate-issue-mirror.ps1` before downstream routing.
+  - Validate hydrated mirrors through `validate-issue-mirror.sh` before downstream routing.
 
 - [ ] **Step 5: Add examples**
   - Create or update `docs/superpowers/examples/sub-issues-workflow-examples.md` with flat, issue-set, pseudo sub-milestone, hydration, and selective migration examples.
   - Ensure example issue titles are clean and GitHub Milestone fields carry milestone identity.
 
 - [ ] **Step 6: Validate and commit**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
+  - Run: `./skills/create-issues/scripts/test-scenarios.sh`
   - Commit: `git add skills/create-issues docs/superpowers/examples/sub-issues-workflow-examples.md && git commit -m "feat: route create issues through github hierarchy"`
 
 ## Task 4: Leaf-Only Execution Guards
@@ -282,39 +282,39 @@ Create six issue-backed slices from this plan:
 
 **Files:**
 - Modify: `skills/resolve-issue/SKILL.md`
-- Modify: `skills/resolve-issue/scripts/preflight.ps1`
-- Modify: `skills/resolve-issue/scripts/prepare-execution.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/preflight.sh`
+- Modify: `skills/resolve-issue/scripts/prepare-execution.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
 - Modify: `skills/orchestrate-issues/SKILL.md`
-- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
-- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
-- Test: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
+- Test: `skills/resolve-issue/scripts/test-scenarios.sh`
+- Test: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing direct execution guard tests**
-  - Add parent, wrapper, leaf-with-parent, and old flat mirror fixtures to `skills/resolve-issue/scripts/test-scenarios.ps1`.
+  - Add parent, wrapper, leaf-with-parent, and old flat mirror fixtures to `skills/resolve-issue/scripts/test-scenarios.sh`.
   - Assert parent and wrapper mirrors fail with reasons naming role and `Executable: false`.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
+  - Run: `./skills/resolve-issue/scripts/test-scenarios.sh`
   - Expected: failure because non-leaf mirrors are not blocked yet.
 
 - [ ] **Step 2: Add failing worker execution guard tests**
-  - Add equivalent fixtures to `skills/orchestrate-issues/scripts/test-scenarios.ps1`.
+  - Add equivalent fixtures to `skills/orchestrate-issues/scripts/test-scenarios.sh`.
   - Assert worker identity is derived only for leaf mirrors.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1`
+  - Run: `./skills/orchestrate-issues/scripts/test-scenarios.sh`
   - Expected: failure because non-leaf mirrors are not blocked yet.
 
 - [ ] **Step 3: Implement direct route guard**
-  - Update `skills/resolve-issue/scripts/preflight.ps1` and `skills/resolve-issue/scripts/prepare-execution.ps1` to reject mirrors where `Sub-Issue Role` is `parent` or `plan-wrapper`, or where `Executable` is `false`.
+  - Update `skills/resolve-issue/scripts/preflight.sh` and `skills/resolve-issue/scripts/prepare-execution.sh` to reject mirrors where `Sub-Issue Role` is `parent` or `plan-wrapper`, or where `Executable` is `false`.
   - Allow old flat mirrors with no hierarchy fields to use the current validation path.
   - Update `skills/resolve-issue/SKILL.md` with the leaf-only contract.
 
 - [ ] **Step 4: Implement worker route guard**
-  - Update `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1` to reject non-leaf hierarchy records before worker packet creation.
+  - Update `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh` to reject non-leaf hierarchy records before worker packet creation.
   - Update `skills/orchestrate-issues/SKILL.md` with the same leaf-only contract.
 
 - [ ] **Step 5: Validate and commit**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1`
+  - Run: `./skills/resolve-issue/scripts/test-scenarios.sh`
+  - Run: `./skills/orchestrate-issues/scripts/test-scenarios.sh`
   - Commit: `git add skills/resolve-issue skills/orchestrate-issues && git commit -m "feat: enforce leaf only issue execution"`
 
 ## Task 5: Merge Rollup, Align Migration Audit, And Loop Selection
@@ -327,49 +327,49 @@ Create six issue-backed slices from this plan:
 
 **Files:**
 - Modify: `skills/merge-changes/SKILL.md`
-- Modify: `skills/merge-changes/scripts/collect-closeout-ledger.ps1`
-- Modify: `skills/merge-changes/scripts/closeout.ps1`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/scripts/collect-closeout-ledger.sh`
+- Modify: `skills/merge-changes/scripts/closeout.sh`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
 - Modify: `skills/align-project/SKILL.md`
-- Modify: `skills/align-project/scripts/align-project.ps1`
-- Modify: `skills/align-project/scripts/test-scenarios.ps1`
+- Modify: `skills/align-project/scripts/align-project.sh`
+- Modify: `skills/align-project/scripts/test-scenarios.sh`
 - Modify: `skills/loop-controller/SKILL.md`
-- Modify: `skills/loop-controller/scripts/select-candidate.ps1`
-- Modify: `skills/loop-controller/scripts/test-scenarios.ps1`
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `skills/align-project/scripts/test-scenarios.ps1`
-- Test: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Modify: `skills/loop-controller/scripts/select-candidate.sh`
+- Modify: `skills/loop-controller/scripts/test-scenarios.sh`
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `skills/align-project/scripts/test-scenarios.sh`
+- Test: `skills/loop-controller/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing merge rollup tests**
   - Add fixtures where a closed leaf has open siblings, all siblings closed, and one child intentionally skipped with evidence.
   - Assert closeout receipts include parent URL, wrapper URL when present, child counts, open child list, skipped child list, and native approval requirement for rollup closeout.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1`
+  - Run: `./skills/merge-changes/scripts/test-scenarios.sh`
   - Expected: failure naming missing hierarchy rollup evidence.
 
 - [ ] **Step 2: Add failing align and loop tests**
   - Add `align-project` fixtures for missing hierarchy labels/types, GitHub parent-child drift, local mirror drift, and historical title drift.
   - Add `loop-controller` fixtures proving non-leaf hierarchy records are excluded from implementation candidate selection.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1`
+  - Run: `./skills/align-project/scripts/test-scenarios.sh`
+  - Run: `./skills/loop-controller/scripts/test-scenarios.sh`
   - Expected: failures naming missing hierarchy audit and selection behavior.
 
 - [ ] **Step 3: Implement merge rollup receipts**
-  - Update `skills/merge-changes/scripts/collect-closeout-ledger.ps1` to collect `parent`, `subIssues`, and `subIssuesSummary` from GitHub JSON or fixtures.
-  - Update `skills/merge-changes/scripts/closeout.ps1` to record rollup state and require approval before parent or wrapper closeout.
+  - Update `skills/merge-changes/scripts/collect-closeout-ledger.sh` to collect `parent`, `subIssues`, and `subIssuesSummary` from GitHub JSON or fixtures.
+  - Update `skills/merge-changes/scripts/closeout.sh` to record rollup state and require approval before parent or wrapper closeout.
   - Update `skills/merge-changes/SKILL.md` with explicit rollup closeout rules.
 
 - [ ] **Step 4: Implement align-project hierarchy audit**
-  - Update `skills/align-project/scripts/align-project.ps1` to report hierarchy label/type gaps, GitHub/local parent-child drift, title drift, and selective migration candidates.
+  - Update `skills/align-project/scripts/align-project.sh` to report hierarchy label/type gaps, GitHub/local parent-child drift, title drift, and selective migration candidates.
   - Update `skills/align-project/SKILL.md` to require proposed parent, children, labels/types, milestone, title changes, and approval gate before GitHub mutation.
 
 - [ ] **Step 5: Implement loop leaf selection**
-  - Update `skills/loop-controller/scripts/select-candidate.ps1` to prefer executable leaf issues for implementation candidates and report parent or wrapper records as rollup or tracker-maintenance candidates.
+  - Update `skills/loop-controller/scripts/select-candidate.sh` to prefer executable leaf issues for implementation candidates and report parent or wrapper records as rollup or tracker-maintenance candidates.
   - Update `skills/loop-controller/SKILL.md` to define the selection boundary.
 
 - [ ] **Step 6: Validate and commit**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1`
+  - Run: `./skills/merge-changes/scripts/test-scenarios.sh`
+  - Run: `./skills/align-project/scripts/test-scenarios.sh`
+  - Run: `./skills/loop-controller/scripts/test-scenarios.sh`
   - Commit: `git add skills/merge-changes skills/align-project skills/loop-controller && git commit -m "feat: add hierarchy rollup and audit routes"`
 
 ## Task 6: Workflow Examples, Generated Docs, And Validation Wiring
@@ -383,29 +383,29 @@ Create six issue-backed slices from this plan:
 **Files:**
 - Modify: `docs/superpowers/examples/workflow-golden-paths.md`
 - Modify: `docs/superpowers/examples/sub-issues-workflow-examples.md`
-- Modify: `scripts/validate-workflow-examples.ps1`
-- Modify: `scripts/test-workflow-examples.ps1`
-- Modify: `scripts/generate-outcome-workflow-summary.ps1`
-- Modify: `scripts/test-outcome-workflow-summary.ps1`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/validate-workflow-examples.sh`
+- Modify: `scripts/test-workflow-examples.sh`
+- Modify: `scripts/generate-outcome-workflow-summary.sh`
+- Modify: `scripts/test-outcome-workflow-summary.sh`
+- Modify: `scripts/validate.sh`
 - Modify: `README.md`
-- Test: `scripts/test-workflow-examples.ps1`
-- Test: `scripts/test-outcome-workflow-summary.ps1`
-- Test: `scripts/validate.ps1`
+- Test: `scripts/test-workflow-examples.sh`
+- Test: `scripts/test-outcome-workflow-summary.sh`
+- Test: `scripts/validate.sh`
 
 - [ ] **Step 1: Add failing example tests**
   - Add workflow example assertions for flat mode, issue-set mode, pseudo sub-milestone mode, hydration, rollup closeout, and selective migration.
   - Assert examples use clean titles and put milestone identity in GitHub Milestone fields.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-examples.ps1`
+  - Run: `./scripts/test-workflow-examples.sh`
   - Expected: failure naming missing sub-issue examples.
 
 - [ ] **Step 2: Update examples and generated docs**
   - Update `docs/superpowers/examples/workflow-golden-paths.md` and `docs/superpowers/examples/sub-issues-workflow-examples.md`.
-  - Update `scripts/generate-outcome-workflow-summary.ps1` and `README.md` with the GitHub-native hierarchy model.
+  - Update `scripts/generate-outcome-workflow-summary.sh` and `README.md` with the GitHub-native hierarchy model.
   - Regenerate `docs/superpowers/OUTCOME_WORKFLOW.md` through the existing generator.
 
 - [ ] **Step 3: Wire validation**
-  - Update `scripts/validate.ps1` so the relevant hierarchy scenario tests and workflow example tests are part of full repo validation.
+  - Update `scripts/validate.sh` so the relevant hierarchy scenario tests and workflow example tests are part of full repo validation.
   - Keep each targeted test runnable on its own for issue-slice proof.
 
 - [ ] **Step 4: Run final source validation**
@@ -413,9 +413,9 @@ Create six issue-backed slices from this plan:
   - Fix any failure in the owning slice before proceeding.
 
 - [ ] **Step 5: Validate live sync and cleanup**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`
+  - Run: `./scripts/sync-live.sh --validate`
+  - Run: `./scripts/get-agent-plugin-version.sh`
+  - Run: `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .`
   - Run: `git status --short --branch`
   - Expected: live-sync validation passes, version freshness reports the source version, cleanup reports no repo-owned process cleanup needed, and Git status is clean after committed work.
 

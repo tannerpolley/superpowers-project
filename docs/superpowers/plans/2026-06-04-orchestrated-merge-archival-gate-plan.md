@@ -16,6 +16,6 @@ Add a hard closeout gate for PRs produced by orchestrated worker threads so `$pr
 
 ## Proof Oracle
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+- `./skills/merge-changes/scripts/test-scenarios.sh`
+- `./scripts/validate.sh`
 

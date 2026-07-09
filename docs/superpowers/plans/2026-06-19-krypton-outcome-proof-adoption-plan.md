@@ -4,9 +4,9 @@
 
 **Goal:** Embed Krypton-style ownership, contract, cutover, and evidence gates into Superpowers Project plans, issue mirrors, execution ledgers, and merge proof.
 
-**Architecture:** Add a shared PowerShell outcome-proof helper and validator wrapper, then thread its contract shape through existing project skills instead of creating a new workflow route. Planning writes the full contract, issue mirrors carry a compact summary, execution ledgers carry structured contract proof, and merge gates reject missing readiness reviews.
+**Architecture:** Add a shared Bash outcome-proof helper and validator wrapper, then thread its contract shape through existing project skills instead of creating a new workflow route. Planning writes the full contract, issue mirrors carry a compact summary, execution ledgers carry structured contract proof, and merge gates reject missing readiness reviews.
 
-**Tech Stack:** Markdown skill contracts, YAML agent metadata, PowerShell validators and scenario tests, existing Superpowers Project validation and sync scripts.
+**Tech Stack:** Markdown skill contracts, YAML agent metadata, Bash validators and scenario tests, existing Superpowers Project validation and sync scripts.
 
 ---
 
@@ -32,8 +32,8 @@ This is workflow-contract work, not scientific or numerical modeling. Numerical 
 Test complete means:
 
 - focused scenario tests pass for plan, issue, implement, resolve, and merge contracts;
-- full `scripts/validate.ps1` passes;
-- `scripts/sync-live.ps1 -Validate` passes before any live install update;
+- full `scripts/validate.sh` passes;
+- `scripts/sync-live.sh --validate` passes before any live install update;
 - cleanup hook reports no repo-owned leftover processes.
 
 ## Acceptance Criteria
@@ -50,16 +50,16 @@ Test complete means:
 
 ## Proof Oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plan-outcome-proof.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./scripts/test-plan-outcome-proof.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 ## Risk And Dependency Notes
@@ -78,16 +78,16 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 - A cutover-debt fixture fails when two current-looking paths remain without kill criteria.
 
 **Files:**
-- Create: `scripts/lib/outcome-proof.ps1`
-- Create: `scripts/validate-plan-outcome-proof.ps1`
-- Create: `scripts/test-plan-outcome-proof.ps1`
-- Modify: `scripts/validate.ps1`
+- Create: `scripts/lib/outcome-proof.sh`
+- Create: `scripts/validate-plan-outcome-proof.sh`
+- Create: `scripts/test-plan-outcome-proof.sh`
+- Modify: `scripts/validate.sh`
 
 - [ ] **Step 1: Write the failing plan-contract scenario test**
 
-Create `scripts/test-plan-outcome-proof.ps1` with fixture plans under a temp repo. Include one valid plan and at least three invalid plans:
+Create `scripts/test-plan-outcome-proof.sh` with fixture plans under a temp repo. Include one valid plan and at least three invalid plans:
 
-```powershell
+```bash
 $validPlan = @'
 # Valid Contract Plan
 
@@ -97,20 +97,20 @@ $validPlan = @'
 **Current Behavior:** Plans require use cases but do not require contract ownership.
 **Expected Outcome:** Plans carry ownership, cutover, and evidence gates.
 **Target Output:** Maintainer sees a validator pass only when contract fields are present.
-**Owner:** `scripts/lib/outcome-proof.ps1`
+**Owner:** `scripts/lib/outcome-proof.sh`
 **Interface:** Markdown fields consumed by validator scripts.
 **Cutover:** Extend the existing plan readiness path.
 **Replaced Path:** Plan readiness based only on Task # Use Cases.
 **Evidence:** CLI validator output.
-**Acceptance Proof:** `validate-plan-outcome-proof.ps1` returns `ok: true`.
+**Acceptance Proof:** `validate-plan-outcome-proof.sh` returns `ok: true`.
 **Stop Criteria:** Reject plans that omit required ownership or proof fields.
 **Avoid:** Do not create a separate `docs/goals` route.
 **Risk:** Agents can ship plausible work with weak ownership proof.
 
 ## Implementation Boundaries
 
-**Files To Create:** `scripts/lib/outcome-proof.ps1`
-**Files To Modify:** `scripts/validate.ps1`
+**Files To Create:** `scripts/lib/outcome-proof.sh`
+**Files To Modify:** `scripts/validate.sh`
 **Files To Avoid:** `skills/krypton-*`
 **Source Of Truth:** plan outcome proof section
 **Read Path:** plan markdown -> validator helper
@@ -126,7 +126,7 @@ $validPlan = @'
 - Contract fixture passes with full ownership and evidence fields.
 
 **Files:**
-- Create: `scripts/lib/outcome-proof.ps1`
+- Create: `scripts/lib/outcome-proof.sh`
 
 - [ ] **Step 1: Add helper**
 '@
@@ -134,17 +134,17 @@ $validPlan = @'
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plan-outcome-proof.ps1
+```bash
+./scripts/test-plan-outcome-proof.sh
 ```
 
-Expected before implementation: fails because `scripts/validate-plan-outcome-proof.ps1` does not exist.
+Expected before implementation: fails because `scripts/validate-plan-outcome-proof.sh` does not exist.
 
 - [ ] **Step 2: Implement the shared helper**
 
-Create `scripts/lib/outcome-proof.ps1` with functions that parse Markdown sections and required fields:
+Create `scripts/lib/outcome-proof.sh` with functions that parse Markdown sections and required fields:
 
-```powershell
+```bash
 $script:OutcomeProofFields = @(
     "Intent",
     "Current Behavior",
@@ -179,9 +179,9 @@ The helper should expose `Test-PlanOutcomeProof` and `Test-IssueOutcomeProofSumm
 
 - [ ] **Step 3: Implement the plan validator wrapper**
 
-Create `scripts/validate-plan-outcome-proof.ps1` with parameters:
+Create `scripts/validate-plan-outcome-proof.sh` with parameters:
 
-```powershell
+```bash
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path,
     [Parameter(Mandatory = $true)][string]$PlanPath
@@ -192,11 +192,11 @@ The wrapper must resolve repo-relative paths safely, require `docs/superpowers/p
 
 - [ ] **Step 4: Wire the focused test into full validation**
 
-Modify `scripts/validate.ps1` after the existing `Plan task use cases` step:
+Modify `scripts/validate.sh` after the existing `Plan task use cases` step:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Plan outcome proof" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-plan-outcome-proof.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-plan-outcome-proof.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Plan outcome proof failed" }
 }))
 ```
@@ -205,16 +205,16 @@ $results.Add((Invoke-Step "Plan outcome proof" {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plan-outcome-proof.ps1
+```bash
+./scripts/test-plan-outcome-proof.sh
 ```
 
 Expected after implementation: JSON output has `"ok": true` and includes valid, missing-section, missing-field, weak-evidence, and cutover-debt checks.
 
 - [ ] **Step 6: Commit**
 
-```powershell
-git add scripts/lib/outcome-proof.ps1 scripts/validate-plan-outcome-proof.ps1 scripts/test-plan-outcome-proof.ps1 scripts/validate.ps1
+```bash
+git add scripts/lib/outcome-proof.sh scripts/validate-plan-outcome-proof.sh scripts/test-plan-outcome-proof.sh scripts/validate.sh
 git commit -m "Add outcome proof plan validator"
 ```
 
@@ -229,16 +229,16 @@ git commit -m "Add outcome proof plan validator"
 **Files:**
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing scenario checks**
 
-Modify `skills/write-plan/scripts/test-scenarios.ps1` so the `superpowers writing contract is present`, `planning grill gate is mandatory`, and metadata scenarios require these strings:
+Modify `skills/write-plan/scripts/test-scenarios.sh` so the `superpowers writing contract is present`, `planning grill gate is mandatory`, and metadata scenarios require these strings:
 
-```powershell
+```bash
 "## Outcome Proof",
 "## Implementation Boundaries",
-"validate-plan-outcome-proof.ps1",
+"validate-plan-outcome-proof.sh",
 "Owner",
 "Interface",
 "Cutover",
@@ -250,8 +250,8 @@ Modify `skills/write-plan/scripts/test-scenarios.ps1` so the `superpowers writin
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
 ```
 
 Expected before skill edits: fails on missing contract strings.
@@ -260,8 +260,8 @@ Expected before skill edits: fails on missing contract strings.
 
 Add a section before `## Task # Use Cases Gate` in `skills/write-plan/SKILL.md` named `## Outcome Proof Gate`. Require every implementation plan to include `## Outcome Proof` and `## Implementation Boundaries`, list the exact fields from the source spec, and require:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath <saved-plan-path>
+```bash
+./scripts/validate-plan-outcome-proof.sh -PlanPath <saved-plan-path>
 ```
 
 The skill text must say that task use cases cover acceptance evidence and cutover or displaced path handling.
@@ -274,16 +274,16 @@ Update `skills/write-plan/agents/openai.yaml` to include the same outcome-proof 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
 ```
 
 Expected: all write-plan scenario checks pass.
 
 - [ ] **Step 5: Commit**
 
-```powershell
-git add skills/write-plan/SKILL.md skills/write-plan/agents/openai.yaml skills/write-plan/scripts/test-scenarios.ps1
+```bash
+git add skills/write-plan/SKILL.md skills/write-plan/agents/openai.yaml skills/write-plan/scripts/test-scenarios.sh
 git commit -m "Require outcome proofs in project plans"
 ```
 
@@ -298,14 +298,14 @@ git commit -m "Require outcome proofs in project plans"
 **Files:**
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
-- Modify: `skills/create-issues/scripts/validate-issue-mirror.ps1`
-- Modify: `skills/create-issues/scripts/hydrate-external-issue.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Modify: `scripts/lib/outcome-proof.ps1`
+- Modify: `skills/create-issues/scripts/validate-issue-mirror.sh`
+- Modify: `skills/create-issues/scripts/hydrate-external-issue.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
+- Modify: `scripts/lib/outcome-proof.sh`
 
 - [ ] **Step 1: Add failing issue-mirror scenario checks**
 
-Extend `skills/create-issues/scripts/test-scenarios.ps1` with one valid issue mirror that includes:
+Extend `skills/create-issues/scripts/test-scenarios.sh` with one valid issue mirror that includes:
 
 ```markdown
 ## Outcome Summary
@@ -313,7 +313,7 @@ Extend `skills/create-issues/scripts/test-scenarios.ps1` with one valid issue mi
 **Outcome Source:** docs/superpowers/plans/valid-plan.md#outcome-proof
 **Intent:** Enforce contract continuity.
 **Target Output:** Maintainer sees issue execution blocked without contract proof.
-**Owner:** `scripts/lib/outcome-proof.ps1`
+**Owner:** `scripts/lib/outcome-proof.sh`
 **Interface:** Markdown issue summary fields consumed by validators.
 **Cutover:** Extend issue readiness validation.
 **Replaced Path:** Issue readiness without outcome workflow.
@@ -326,9 +326,9 @@ Add one invalid issue mirror missing `## Outcome Summary`. Expected before valid
 
 - [ ] **Step 2: Extend shared helper for issue summaries**
 
-In `scripts/lib/outcome-proof.ps1`, implement `Test-IssueOutcomeProofSummary` with fields:
+In `scripts/lib/outcome-proof.sh`, implement `Test-IssueOutcomeProofSummary` with fields:
 
-```powershell
+```bash
 $script:IssueOutcomeProofFields = @(
     "Outcome Source",
     "Intent",
@@ -347,11 +347,11 @@ Reject summaries with empty generic values and reject `docs/goals` in the contra
 
 - [ ] **Step 3: Wire issue mirror validation**
 
-Modify `skills/create-issues/scripts/validate-issue-mirror.ps1` to import `scripts/lib/outcome-proof.ps1` from the repo root and call `Test-IssueOutcomeProofSummary` after source artifact validation.
+Modify `skills/create-issues/scripts/validate-issue-mirror.sh` to import `scripts/lib/outcome-proof.sh` from the repo root and call `Test-IssueOutcomeProofSummary` after source artifact validation.
 
 Add returned check entries named:
 
-```powershell
+```bash
 Add-Check -Name "outcome summary" -Ok $contractResult.ok -Reason $contractResult.reason
 ```
 
@@ -359,7 +359,7 @@ When the contract result fails, complete with that reason.
 
 - [ ] **Step 4: Update hydration output**
 
-Modify `skills/create-issues/scripts/hydrate-external-issue.ps1` so generated mirrors include `## Outcome Summary`. For externally hydrated issues with sparse source data, derive the summary from the external issue body and the generated source plan. Use concrete values such as the source plan path, issue intent, expected target output, validator-owned truth, and proof oracle.
+Modify `skills/create-issues/scripts/hydrate-external-issue.sh` so generated mirrors include `## Outcome Summary`. For externally hydrated issues with sparse source data, derive the summary from the external issue body and the generated source plan. Use concrete values such as the source plan path, issue intent, expected target output, validator-owned truth, and proof oracle.
 
 - [ ] **Step 5: Update skill text and metadata**
 
@@ -369,16 +369,16 @@ Update `skills/create-issues/SKILL.md` and `skills/create-issues/agents/openai.y
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+```bash
+./skills/create-issues/scripts/test-scenarios.sh
 ```
 
 Expected: valid issue mirrors pass; missing outcome workflow fails; hydration tests pass with outcome workflow present.
 
 - [ ] **Step 7: Commit**
 
-```powershell
-git add scripts/lib/outcome-proof.ps1 skills/create-issues/SKILL.md skills/create-issues/agents/openai.yaml skills/create-issues/scripts/validate-issue-mirror.ps1 skills/create-issues/scripts/hydrate-external-issue.ps1 skills/create-issues/scripts/test-scenarios.ps1
+```bash
+git add scripts/lib/outcome-proof.sh skills/create-issues/SKILL.md skills/create-issues/agents/openai.yaml skills/create-issues/scripts/validate-issue-mirror.sh skills/create-issues/scripts/hydrate-external-issue.sh skills/create-issues/scripts/test-scenarios.sh
 git commit -m "Carry outcome proofs into issue mirrors"
 ```
 
@@ -393,24 +393,24 @@ git commit -m "Carry outcome proofs into issue mirrors"
 **Files:**
 - Modify: `skills/implement-plan/SKILL.md`
 - Modify: `skills/implement-plan/agents/openai.yaml`
-- Modify: `skills/implement-plan/scripts/lib/contract.ps1`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/implement-plan/scripts/lib/contract.sh`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/prepare-execution.ps1`
-- Modify: `skills/resolve-issue/scripts/validate-setup.ps1`
-- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`
-- Modify: `skills/resolve-issue/scripts/validate-pr-ready.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/prepare-execution.sh`
+- Modify: `skills/resolve-issue/scripts/validate-setup.sh`
+- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh`
+- Modify: `skills/resolve-issue/scripts/validate-pr-ready.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing implement-plan ledger tests**
 
-Modify `skills/implement-plan/scripts/test-scenarios.ps1` so `New-HappyLedger` includes:
+Modify `skills/implement-plan/scripts/test-scenarios.sh` so `New-HappyLedger` includes:
 
-```powershell
+```bash
 outcome_proof = [pscustomobject]@{
     intent = "Adopt outcome proofs"
-    owner = "scripts/lib/outcome-proof.ps1"
+    owner = "scripts/lib/outcome-proof.sh"
     interface = "structured outcome_proof ledger object"
     cutover = "extend existing execution proof"
     replaced_path = "merge-ready proof without readiness review"
@@ -430,15 +430,15 @@ Add a negative fixture where `outcome_proof` is removed. Expected before impleme
 
 - [ ] **Step 2: Tighten implement-plan contract helper**
 
-Modify `skills/implement-plan/scripts/lib/contract.ps1` so `Test-ImplementPlanLedger` requires structured `outcome_proof` and structured `readiness_review`. Reject string values and require review booleans for `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence`.
+Modify `skills/implement-plan/scripts/lib/contract.sh` so `Test-ImplementPlanLedger` requires structured `outcome_proof` and structured `readiness_review`. Reject string values and require review booleans for `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence`.
 
 - [ ] **Step 3: Update resolve setup and PR-ready tests**
 
-Modify `skills/resolve-issue/scripts/test-scenarios.ps1` happy setup and PR-ready fixtures to include `outcome_proof` and `readiness_review`. Add negative fixtures for missing setup contract and missing PR-ready readiness review.
+Modify `skills/resolve-issue/scripts/test-scenarios.sh` happy setup and PR-ready fixtures to include `outcome_proof` and `readiness_review`. Add negative fixtures for missing setup contract and missing PR-ready readiness review.
 
 - [ ] **Step 4: Carry issue contract from mirror to handoff and setup**
 
-Modify `skills/resolve-issue/scripts/prepare-execution.ps1`:
+Modify `skills/resolve-issue/scripts/prepare-execution.sh`:
 
 - `Read-IssueMirrorContract` extracts `## Outcome Summary`.
 - the inspect handoff includes structured `outcome_proof`.
@@ -446,11 +446,11 @@ Modify `skills/resolve-issue/scripts/prepare-execution.ps1`:
 
 - [ ] **Step 5: Validate resolve setup and PR-ready ledgers**
 
-Modify `skills/resolve-issue/scripts/validate-setup.ps1` to require `outcome_proof`.
+Modify `skills/resolve-issue/scripts/validate-setup.sh` to require `outcome_proof`.
 
-Modify `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1` to accept a `-ReadinessReviewJson` input and write `readiness_review` into the PR-ready ledger.
+Modify `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh` to accept a `-ReadinessReviewJson` input and write `readiness_review` into the PR-ready ledger.
 
-Modify `skills/resolve-issue/scripts/validate-pr-ready.ps1` to require `readiness_review` with the four review lanes.
+Modify `skills/resolve-issue/scripts/validate-pr-ready.sh` to require `readiness_review` with the four review lanes.
 
 - [ ] **Step 6: Update skill text and metadata**
 
@@ -460,17 +460,17 @@ Update implement and resolve `SKILL.md` plus `agents/openai.yaml` files so start
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
 Expected: both scripts return passing JSON and reject fixtures missing contract fields or review lanes.
 
 - [ ] **Step 8: Commit**
 
-```powershell
-git add skills/implement-plan/SKILL.md skills/implement-plan/agents/openai.yaml skills/implement-plan/scripts/lib/contract.ps1 skills/implement-plan/scripts/test-scenarios.ps1 skills/resolve-issue/SKILL.md skills/resolve-issue/agents/openai.yaml skills/resolve-issue/scripts/prepare-execution.ps1 skills/resolve-issue/scripts/validate-setup.ps1 skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1 skills/resolve-issue/scripts/validate-pr-ready.ps1 skills/resolve-issue/scripts/test-scenarios.ps1
+```bash
+git add skills/implement-plan/SKILL.md skills/implement-plan/agents/openai.yaml skills/implement-plan/scripts/lib/contract.sh skills/implement-plan/scripts/test-scenarios.sh skills/resolve-issue/SKILL.md skills/resolve-issue/agents/openai.yaml skills/resolve-issue/scripts/prepare-execution.sh skills/resolve-issue/scripts/validate-setup.sh skills/resolve-issue/scripts/collect-pr-ready-ledger.sh skills/resolve-issue/scripts/validate-pr-ready.sh skills/resolve-issue/scripts/test-scenarios.sh
 git commit -m "Carry outcome proofs through execution proof"
 ```
 
@@ -485,16 +485,16 @@ git commit -m "Carry outcome proofs through execution proof"
 **Files:**
 - Modify: `skills/merge-changes/SKILL.md`
 - Modify: `skills/merge-changes/agents/openai.yaml`
-- Modify: `skills/merge-changes/scripts/lib/contract.ps1`
-- Modify: `skills/merge-changes/scripts/collect-premerge-ledger.ps1`
-- Modify: `skills/merge-changes/scripts/premerge.ps1`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/scripts/lib/contract.sh`
+- Modify: `skills/merge-changes/scripts/collect-premerge-ledger.sh`
+- Modify: `skills/merge-changes/scripts/premerge.sh`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing merge scenario tests**
 
-Modify `skills/merge-changes/scripts/test-scenarios.ps1` so happy premerge fixtures include:
+Modify `skills/merge-changes/scripts/test-scenarios.sh` so happy premerge fixtures include:
 
-```powershell
+```bash
 readiness_review = [pscustomobject]@{
     plan_alignment = $true
     correctness = $true
@@ -508,15 +508,15 @@ Add a negative premerge fixture where `verification.proof_commands` exists but `
 
 - [ ] **Step 2: Add merge readiness review assertion**
 
-In `skills/merge-changes/scripts/lib/contract.ps1`, add `Assert-ReadinessReviewProof` that rejects missing or string values and requires `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` to be `$true`.
+In `skills/merge-changes/scripts/lib/contract.sh`, add `Assert-ReadinessReviewProof` that rejects missing or string values and requires `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` to be `$true`.
 
 - [ ] **Step 3: Wire premerge validation**
 
-Modify `skills/merge-changes/scripts/premerge.ps1` to call `Assert-ReadinessReviewProof -Proof $verification.readiness_review` for both `local-branch` and `pr-issue` modes before `Complete-Contract`.
+Modify `skills/merge-changes/scripts/premerge.sh` to call `Assert-ReadinessReviewProof -Proof $verification.readiness_review` for both `local-branch` and `pr-issue` modes before `Complete-Contract`.
 
 - [ ] **Step 4: Update premerge collector**
 
-Modify `skills/merge-changes/scripts/collect-premerge-ledger.ps1` to accept `-ReadinessReviewJson` and include the parsed object as `readiness_review` in the generated verification ledger.
+Modify `skills/merge-changes/scripts/collect-premerge-ledger.sh` to accept `-ReadinessReviewJson` and include the parsed object as `readiness_review` in the generated verification ledger.
 
 - [ ] **Step 5: Update skill text and metadata**
 
@@ -526,16 +526,16 @@ Update merge `SKILL.md` and `agents/openai.yaml` so premerge proof lists the fou
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+```bash
+./skills/merge-changes/scripts/test-scenarios.sh
 ```
 
 Expected: merge scenario tests pass and reject verification ledgers without readiness review proof.
 
 - [ ] **Step 7: Commit**
 
-```powershell
-git add skills/merge-changes/SKILL.md skills/merge-changes/agents/openai.yaml skills/merge-changes/scripts/lib/contract.ps1 skills/merge-changes/scripts/collect-premerge-ledger.ps1 skills/merge-changes/scripts/premerge.ps1 skills/merge-changes/scripts/test-scenarios.ps1
+```bash
+git add skills/merge-changes/SKILL.md skills/merge-changes/agents/openai.yaml skills/merge-changes/scripts/lib/contract.sh skills/merge-changes/scripts/collect-premerge-ledger.sh skills/merge-changes/scripts/premerge.sh skills/merge-changes/scripts/test-scenarios.sh
 git commit -m "Require readiness review in merge proof"
 ```
 
@@ -548,18 +548,18 @@ git commit -m "Require readiness review in merge proof"
 
 **Files:**
 - Modify: `README.md`
-- Modify: `scripts/generate-contract-summary.ps1`
-- Modify: `scripts/test-contract-summary.ps1`
+- Modify: `scripts/generate-contract-summary.sh`
+- Modify: `scripts/test-contract-summary.sh`
 - Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
 
 - [ ] **Step 1: Add failing outcome workflow checks**
 
-Modify `scripts/test-contract-summary.ps1` to require `Outcome Proof`, `Implementation Boundaries`, `validate-plan-outcome-proof.ps1`, and `readiness review` in the generated summary.
+Modify `scripts/test-contract-summary.sh` to require `Outcome Proof`, `Implementation Boundaries`, `validate-plan-outcome-proof.sh`, and `readiness review` in the generated summary.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
+```bash
+./scripts/test-contract-summary.sh
 ```
 
 Expected before summary updates: fails on missing outcome-proof summary text.
@@ -570,10 +570,10 @@ Add a short section after `Task # Use Cases` in `README.md` explaining that ever
 
 - [ ] **Step 3: Update generated summary source and regenerate**
 
-Modify `scripts/generate-contract-summary.ps1` to include the same outcome workflow. Then run:
+Modify `scripts/generate-contract-summary.sh` to include the same outcome workflow. Then run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\generate-contract-summary.ps1
+```bash
+./scripts/generate-contract-summary.sh
 ```
 
 Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` is updated from the generator.
@@ -582,16 +582,16 @@ Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` is updated from the generator.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
+```bash
+./scripts/test-contract-summary.sh
 ```
 
 Expected: outcome workflow checks pass.
 
 - [ ] **Step 5: Commit**
 
-```powershell
-git add README.md scripts/generate-contract-summary.ps1 scripts/test-contract-summary.ps1 docs/superpowers/OUTCOME_WORKFLOW.md
+```bash
+git add README.md scripts/generate-contract-summary.sh scripts/test-contract-summary.sh docs/superpowers/OUTCOME_WORKFLOW.md
 git commit -m "Document outcome proof workflow"
 ```
 
@@ -610,8 +610,8 @@ git commit -m "Document outcome proof workflow"
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-19-krypton-outcome-proof-adoption-plan.md
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-19-krypton-outcome-proof-adoption-plan.md
 ```
 
 Expected: JSON output has `"ok": true` and `task_count` is `7`.
@@ -620,14 +620,14 @@ Expected: JSON output has `"ok": true` and `task_count` is `7`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plan-outcome-proof.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
+```bash
+./scripts/test-plan-outcome-proof.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./scripts/test-contract-summary.sh
 ```
 
 Expected: every command exits `0`.
@@ -636,8 +636,8 @@ Expected: every command exits `0`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: final JSON has `"ok": true`.
@@ -646,8 +646,8 @@ Expected: final JSON has `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: command exits `0` and reports successful validation.
@@ -656,8 +656,8 @@ Expected: command exits `0` and reports successful validation.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: no matching leftover Codex processes under the repo.
@@ -666,7 +666,7 @@ Expected: no matching leftover Codex processes under the repo.
 
 If validation generated tracked updates, commit them:
 
-```powershell
+```bash
 git add README.md docs/superpowers/OUTCOME_WORKFLOW.md scripts skills docs/superpowers/specs docs/superpowers/plans
 git commit -m "Adopt Krypton-style outcome proofs"
 ```

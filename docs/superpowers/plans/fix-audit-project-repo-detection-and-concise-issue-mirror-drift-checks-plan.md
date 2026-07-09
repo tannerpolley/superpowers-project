@@ -8,8 +8,8 @@ Make `audit-project` GitHub-aware mode inspect the intended repository reliably 
 
 ## Scope
 
-- `skills/audit-project/scripts/audit-project.ps1`
-- `skills/audit-project/scripts/test-scenarios.ps1`
+- `skills/audit-project/scripts/audit-project.sh`
+- `skills/audit-project/scripts/test-scenarios.sh`
 - Generated issue mirror for issue 39
 
 ## Implementation Steps
@@ -23,7 +23,7 @@ Make `audit-project` GitHub-aware mode inspect the intended repository reliably 
    - concise mirrors matching GitHub metadata without containing the complete body.
    - mirror drift being informational/manual rather than repairable when no repair receipt is generated.
 
-2. Update repository slug resolution in `audit-project.ps1`:
+2. Update repository slug resolution in `audit-project.sh`:
    - prefer `repository`;
    - accept `target_repo`;
    - fall back to parsing `git remote get-url origin`;
@@ -51,8 +51,8 @@ Make `audit-project` GitHub-aware mode inspect the intended repository reliably 
 
 ## Verification
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./skills/audit-project/scripts/test-scenarios.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
 ```

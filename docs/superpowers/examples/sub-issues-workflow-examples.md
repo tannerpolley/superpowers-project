@@ -21,7 +21,7 @@ Use `flat` mode for one executable issue or unrelated executable issues.
 
 Publication receipt:
 
-```powershell
+```bash
 gh issue create --title "Hydrate External Issue Mirrors" --milestone "M1 - Source Of Truth" --label "type:task" --label "status:ready"
 ```
 
@@ -58,7 +58,7 @@ Parent mirror:
 
 Leaf publication receipt:
 
-```powershell
+```bash
 gh issue create --title "Hydrate External Issues" --milestone "M1 - Source Of Truth" --label "type:task" --label "status:ready" --parent "https://github.com/example/repo/issues/21"
 ```
 
@@ -75,7 +75,7 @@ Leaves: Hierarchy Schema And Validators, Publication Hydration And Routing
 
 Dry publication order:
 
-```powershell
+```bash
 gh issue create --title "GitHub Sub-Issues Workflow" --milestone "M1 - Source Of Truth" --label "type:sub-milestone"
 gh issue create --title "Create Issues" --milestone "M1 - Source Of Truth" --label "type:plan-wrapper" --parent "https://github.com/example/repo/issues/30"
 gh issue create --title "Hierarchy Schema And Validators" --milestone "M1 - Source Of Truth" --label "type:task" --label "status:ready" --parent "https://github.com/example/repo/issues/31"
@@ -88,7 +88,7 @@ The real GitHub Milestone remains `M1 - Source Of Truth`. The parent issue group
 
 Hydration reads GitHub JSON fields and writes local mirror metadata before execution routing.
 
-```powershell
+```bash
 gh issue view 42 --json body,parent,subIssues,subIssuesSummary,milestone,labels,issueType,title,url,number
 ```
 

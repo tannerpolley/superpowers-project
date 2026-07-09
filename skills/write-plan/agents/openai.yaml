@@ -6,12 +6,12 @@ interface:
     implementation plan under docs/superpowers/plans; opt-in long plan review can route to Agent-Native visual-plan.
     Read SKILL.md for exact planning gates and
     docs/superpowers/workflow-contract.yml for route question ids and options. Task # Use Cases are a strict requirement;
-    run scripts/validate-plan-task-use-cases.ps1 before marking any plan ready. Use superpowers:writing-plans,
+    run scripts/validate-plan-task-use-cases.sh before marking any plan ready. Use superpowers:writing-plans,
     request_user_input, flat canonical roots, plans include creation date and milestone identity where applicable,
     link source specs/issues, and preserve docs/superpowers/plans filenames. Plans record what counts as test
     complete, what metrics define pass versus fail, scientific or engineering-oriented numerical metrics,
     thresholds, tolerances, units, Outcome Proof, Implementation Boundaries, Owner, Interface, Cutover, Replaced Path,
-    Evidence, Stop Criteria, Avoid, validate-plan-outcome-proof.ps1, validate-plan-task-use-cases.ps1,
+    Evidence, Stop Criteria, Avoid, validate-plan-outcome-proof.sh, validate-plan-task-use-cases.sh,
     artifact review gate, and broader project context. project_plan_next_step summarizes output and can continue;
     start the selected next skill. project_plan_work_route has Project Issue First, Project Implement, and Use Ready
     Issue. Project Implement routes to `$superpowers-project:implement-plan` using the saved plan path; Project

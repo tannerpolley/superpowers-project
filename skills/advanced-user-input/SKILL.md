@@ -38,7 +38,8 @@ Record a Native Question Debug Ledger before executing the selected answer. Each
 - `recommended_option`
 - `selected_answer`
 - `answer_source: recommended-default | user-provided-debug-answer`
-- `no_answer_tool_available: true`
+- 
+o_answer_tool_available: true`
 - `mutation_allowed: false`
 
 `debug_question_mode` must not approve mutation, substitute for a live user decision in normal work, publish, push, merge, create worker threads, grant scope approval, or grant route approval. If the route would mutate external state or rely on live user permission, stop with the exact pending state or ask the next native question instead.
@@ -71,7 +72,8 @@ Do not add an explicit `Other` option. The client provides free-form Other. When
 
 ## Sequential Branching
 
-Native prompts do not expose dynamic fields such as `showIf`, `dependsOn`, or `nextQuestion`. Use agent-controlled sequential branching:
+Native prompts do not expose dynamic fields such as `showIf`, `dependsOn`, or 
+extQuestion`. Use agent-controlled sequential branching:
 
 1. Ask the top-level route.
 2. Read the selected route.

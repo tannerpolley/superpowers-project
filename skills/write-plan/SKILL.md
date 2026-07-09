@@ -26,7 +26,7 @@ Require one of these inputs before planning:
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before planning. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization` before planning. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy and `stop_outside_policy: true`.
 
 Auto Mode may choose the recommended planning route and record defaults for scope, sequencing, proof oracle, TDD policy, branch strategy, routing, publish behavior, and live mutation choices only when the source spec and repo evidence make the choice inside the ledger policy. Carry the Auto Mode authorization ledger into the plan intake/source evidence. If a required planning decision is outside the recorded defaults policy, proof is missing, validation fails, or the source spec is not under `docs/superpowers/specs`, stop outside policy and do not save a ready plan.
 
@@ -96,8 +96,8 @@ Required `## Implementation Boundaries` fields:
 
 Before saving or presenting a plan as ready, run the repo-root validator:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath <saved-plan-path>
+```bash
+./scripts/validate-plan-outcome-proof.sh -PlanPath <saved-plan-path>
 ```
 
 If the validator fails, revise the plan before artifact review. Do not route to `$superpowers-project:create-issues`, `$superpowers-project:implement-plan`, `$superpowers-project:resolve-issue`, or `$superpowers-project:orchestrate-issues` until the saved plan passes.
@@ -116,8 +116,8 @@ Use `docs/superpowers/examples/decision-ledger-examples.md#plan-style-decision-l
 
 Before saving or presenting a plan as ready, run the repo-root validator:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path <saved-plan-path> -Kind plan
+```bash
+./scripts/validate-decision-ledger.sh -Path <saved-plan-path> -Kind plan
 ```
 
 If the validator fails, revise the plan before artifact review. Do not route to `$superpowers-project:create-issues`, `$superpowers-project:implement-plan`, `$superpowers-project:resolve-issue`, or `$superpowers-project:orchestrate-issues` until the saved plan passes.
@@ -130,8 +130,8 @@ The use-case block is not optional context. It is the bridge from plan making to
 
 Before saving or presenting a plan as ready, run the repo-root validator:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <saved-plan-path>
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath <saved-plan-path>
 ```
 
 If the validator fails, revise the plan before artifact review. Do not route to `$superpowers-project:create-issues`, `$superpowers-project:implement-plan`, `$superpowers-project:resolve-issue`, or `$superpowers-project:orchestrate-issues` until the saved plan passes.
@@ -140,7 +140,8 @@ If the validator fails, revise the plan before artifact review. Do not route to 
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not pretend a live user approved scope, acceptance criteria, sequencing, proof oracle, TDD policy, or planning mutation.
 ## Destination Contract
@@ -333,8 +334,8 @@ Before reporting the plan ready:
 2. Confirm the source spec, source issue mirror, or direct-plan approval is named.
 3. Confirm every acceptance criterion maps to at least one task.
 4. Confirm each task names exact files and exact verification.
-5. Confirm the plan has `## Outcome Proof`, `## Implementation Boundaries`, and `scripts/validate-plan-outcome-proof.ps1 -PlanPath <saved-plan-path>` passes.
-6. Confirm every numbered task has a non-empty `**Use Cases:**` block and `scripts/validate-plan-task-use-cases.ps1 -PlanPath <saved-plan-path>` passes.
+5. Confirm the plan has `## Outcome Proof`, `## Implementation Boundaries`, and `scripts/validate-plan-outcome-proof.sh -PlanPath <saved-plan-path>` passes.
+6. Confirm every numbered task has a non-empty `**Use Cases:**` block and `scripts/validate-plan-task-use-cases.sh -PlanPath <saved-plan-path>` passes.
 7. Confirm feature and bug work uses `superpowers:test-driven-development` or records the user's explicit opt-out.
 8. Confirm bug work uses `superpowers:systematic-debugging` or diagnose discipline.
 9. Confirm completion requires `superpowers:verification-before-completion`.

@@ -10,7 +10,7 @@ interface:
     broader project context, recommended next route, and machine-readable artifacts.
     project_merge_next_step is the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml
     for child routes before starting the selected next skill.
-    Terminal closeout uses collect-continuation-ledger.ps1 and validate-terminal-closeout.ps1 with explicit Stop or
+    Terminal closeout uses collect-continuation-ledger.sh and validate-terminal-closeout.sh with explicit Stop or
     verified final Done. Reassessment routing can Reassess Plan or Reassess Spec through request_agent_input.
     Auto Mode authorization ledger uses project_auto_mode_authorization with Bounded Auto Merge and Manual Mode,
     bounded-auto-merge, and preauthorized-after-clean-premerge. This route is the closeout adapter for superpowers:finishing-a-development-branch. Require upstream

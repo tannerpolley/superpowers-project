@@ -6,7 +6,7 @@
 
 **Architecture:** Add mode selection at initiation, store it in a root-validated workflow mode ledger, and keep the existing skill-to-skill closeout flow underneath. Auto Mode remains one-route only; Looping Mode hands broad repeated maintenance to Loop Controller with budgets, proof, metrics, and per-candidate continuation.
 
-**Tech Stack:** PowerShell validators and tests, Markdown skill contracts, YAML skill metadata, generated outcome workflow, Mermaid and SVG workflow docs.
+**Tech Stack:** Bash validators and tests, Markdown skill contracts, YAML skill metadata, generated outcome workflow, Mermaid and SVG workflow docs.
 
 ---
 
@@ -20,9 +20,9 @@
 
 **Planning Decisions:**
 
-- Validator location: root script `scripts/validate-workflow-mode-ledger.ps1`.
+- Validator location: root script `scripts/validate-workflow-mode-ledger.sh`.
 - Scope: one implementation plan covering router, validator, Looping handoff, docs, diagrams, and tests.
-- Test complete: focused new tests plus existing Auto/Loop tests, SVG/contract tests, full `scripts/validate.ps1`, and `scripts/sync-live.ps1 -Validate`.
+- Test complete: focused new tests plus existing Auto/Loop tests, SVG/contract tests, full `scripts/validate.sh`, and `scripts/sync-live.sh --validate`.
 
 ## Acceptance Criteria
 
@@ -53,18 +53,18 @@ Metrics are workflow-validation metrics, not scientific or numerical performance
 
 Proof oracle:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-initiate-workflow-mode-gate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-mode-ledger.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-16-m0-workflow-mode-entry-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./scripts/test-initiate-workflow-mode-gate.sh
+./scripts/test-workflow-mode-ledger.sh
+./scripts/test-auto-mode-contract.sh
+./scripts/test-loop-controller.sh
+./skills/loop-controller/scripts/test-scenarios.sh
+./scripts/test-native-qa-svg.sh
+./scripts/test-contract-summary.sh
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-16-m0-workflow-mode-entry-plan.md
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 ## Task 1: Add Failing Mode-Gate Contract Tests
@@ -75,15 +75,15 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 - README, metadata, and outcome workflow drift are caught before the plugin ships.
 
 **Files:**
-- Create: `scripts/test-initiate-workflow-mode-gate.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-initiate-workflow-mode-gate.ps1`
+- Create: `scripts/test-initiate-workflow-mode-gate.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-initiate-workflow-mode-gate.sh`
 
 - [ ] **Step 1: Create the failing mode-gate test.**
 
-Create `scripts/test-initiate-workflow-mode-gate.ps1` with checks that initially fail until the router and docs are updated:
+Create `scripts/test-initiate-workflow-mode-gate.sh` with checks that initially fail until the router and docs are updated:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -122,7 +122,7 @@ try {
     }
 
     Add-Check "router names mode ledger" $skill.Contains("workflow mode ledger") "router must require a workflow mode ledger"
-    Add-Check "router names root validator" $skill.Contains("scripts/validate-workflow-mode-ledger.ps1") "router must name the root mode-ledger validator"
+    Add-Check "router names root validator" $skill.Contains("scripts/validate-workflow-mode-ledger.sh") "router must name the root mode-ledger validator"
     Add-Check "auto mode is one-route only" $skill.Contains("one-route autonomy") "Auto Mode must be one-route only"
     Add-Check "looping mode delegates to loop controller" $skill.Contains('$superpowers-project:loop-controller') "Looping Mode must delegate to Loop Controller"
 
@@ -140,19 +140,19 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-initiate-workflow-mode-gate.ps1
+```bash
+./scripts/test-initiate-workflow-mode-gate.sh
 ```
 
 Expected: nonzero exit because `project_workflow_mode` is not yet present in the router, metadata, README, summary, or Mermaid companion.
 
 - [ ] **Step 3: Add the test to validation.**
 
-Modify `scripts/validate.ps1` after the Auto Mode and Loop Controller checks:
+Modify `scripts/validate.sh` after the Auto Mode and Loop Controller checks:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Workflow mode entry contract" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-initiate-workflow-mode-gate.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-initiate-workflow-mode-gate.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Workflow mode entry contract failed" }
 }))
 ```
@@ -161,8 +161,8 @@ $results.Add((Invoke-Step "Workflow mode entry contract" {
 
 Run:
 
-```powershell
-git add scripts/test-initiate-workflow-mode-gate.ps1 scripts/validate.ps1
+```bash
+git add scripts/test-initiate-workflow-mode-gate.sh scripts/validate.sh
 git commit -m "Add workflow mode gate contract test"
 ```
 
@@ -175,16 +175,16 @@ git commit -m "Add workflow mode gate contract test"
 - Existing agents can validate mode state without relying on conversation memory.
 
 **Files:**
-- Create: `scripts/validate-workflow-mode-ledger.ps1`
-- Create: `scripts/test-workflow-mode-ledger.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-workflow-mode-ledger.ps1`
+- Create: `scripts/validate-workflow-mode-ledger.sh`
+- Create: `scripts/test-workflow-mode-ledger.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-workflow-mode-ledger.sh`
 
 - [ ] **Step 1: Create validator tests first.**
 
-Create `scripts/test-workflow-mode-ledger.ps1` with valid Manual, Auto, and Looping fixtures plus invalid fixtures:
+Create `scripts/test-workflow-mode-ledger.sh` with valid Manual, Auto, and Looping fixtures plus invalid fixtures:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -196,7 +196,7 @@ $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("workflow-mode-ledger-" + [gui
 
 function Add-Check { param([string]$Name, [bool]$Ok, [string]$Reason) $checks.Add([pscustomobject]@{ name = $Name; ok = $Ok; reason = if ($Ok) { "passed" } else { $Reason } }) | Out-Null }
 function Write-Ledger { param([string]$Name, [hashtable]$Ledger) $path = Join-Path $tempRoot $Name; $Ledger | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $path -Encoding utf8NoBOM; $path }
-function Invoke-Validator { param([string]$Path) $raw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "scripts/validate-workflow-mode-ledger.ps1") -RepoRoot $RepoRoot -ModeLedgerPath $Path 2>&1; [pscustomobject]@{ exit_code = $LASTEXITCODE; raw = ($raw | Out-String).Trim(); json = (($raw | Out-String).Trim() | ConvertFrom-Json) } }
+function Invoke-Validator { param([string]$Path) $raw = & (Join-Path $RepoRoot "scripts/validate-workflow-mode-ledger.sh") -RepoRoot $RepoRoot -ModeLedgerPath $Path 2>&1; [pscustomobject]@{ exit_code = $LASTEXITCODE; raw = ($raw | Out-String).Trim(); json = (($raw | Out-String).Trim() | ConvertFrom-Json) } }
 
 try {
     New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
@@ -251,17 +251,17 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-mode-ledger.ps1
+```bash
+./scripts/test-workflow-mode-ledger.sh
 ```
 
-Expected: nonzero exit because `scripts/validate-workflow-mode-ledger.ps1` does not exist.
+Expected: nonzero exit because `scripts/validate-workflow-mode-ledger.sh` does not exist.
 
 - [ ] **Step 3: Implement the validator.**
 
-Create `scripts/validate-workflow-mode-ledger.ps1`:
+Create `scripts/validate-workflow-mode-ledger.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path,
@@ -317,11 +317,11 @@ try {
 
 - [ ] **Step 4: Wire the validator tests into full validation.**
 
-Modify `scripts/validate.ps1` after the Workflow mode entry contract:
+Modify `scripts/validate.sh` after the Workflow mode entry contract:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Workflow mode ledger validator" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-workflow-mode-ledger.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-workflow-mode-ledger.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Workflow mode ledger validator failed" }
 }))
 ```
@@ -330,9 +330,9 @@ $results.Add((Invoke-Step "Workflow mode ledger validator" {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-mode-ledger.ps1
-git add scripts/validate-workflow-mode-ledger.ps1 scripts/test-workflow-mode-ledger.ps1 scripts/validate.ps1
+```bash
+./scripts/test-workflow-mode-ledger.sh
+git add scripts/validate-workflow-mode-ledger.sh scripts/test-workflow-mode-ledger.sh scripts/validate.sh
 git commit -m "Validate workflow mode ledgers"
 ```
 
@@ -349,21 +349,21 @@ Expected: test exits `0`, then commit succeeds.
 **Files:**
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `scripts/test-initiate-workflow-mode-gate.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `scripts/test-initiate-workflow-mode-gate.sh`
 
 - [ ] **Step 1: Add scenario expectations before changing the skill text.**
 
-Modify `skills/initiate-workflow/scripts/test-scenarios.ps1` so the router contract list includes:
+Modify `skills/initiate-workflow/scripts/test-scenarios.sh` so the router contract list includes:
 
-```powershell
+```bash
 "project_workflow_mode",
 "Manual Mode",
 "Auto Mode",
 "Looping Mode",
 "workflow mode ledger",
-"scripts/validate-workflow-mode-ledger.ps1",
+"scripts/validate-workflow-mode-ledger.sh",
 "one-route autonomy",
 "bounded repeated maintenance autonomy",
 "$superpowers-project:loop-controller"
@@ -373,8 +373,8 @@ Modify `skills/initiate-workflow/scripts/test-scenarios.ps1` so the router contr
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
+```bash
+./skills/initiate-workflow/scripts/test-scenarios.sh
 ```
 
 Expected: nonzero exit with missing router contract text.
@@ -396,7 +396,7 @@ Options:
 - `Auto Mode`: one-route autonomy using recorded defaults and validator-backed proof; it must stop at route closeout and must not continue to another candidate.
 - `Looping Mode`: bounded repeated maintenance autonomy; create or validate a workflow mode ledger, then route to `$superpowers-project:loop-controller`.
 
-Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json` and validate it with `scripts/validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>`.
+Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json` and validate it with `scripts/validate-workflow-mode-ledger.sh -RepoRoot <active repo> -ModeLedgerPath <ledger>`.
 ```
 
 Also update `## Routing` so Looping Mode routes to `$superpowers-project:loop-controller` and Auto Mode remains one-route only.
@@ -413,10 +413,10 @@ Before task routing, ask project_workflow_mode with Manual Mode, Auto Mode, and 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-initiate-workflow-mode-gate.ps1
-git add skills/initiate-workflow/SKILL.md skills/initiate-workflow/agents/openai.yaml skills/initiate-workflow/scripts/test-scenarios.ps1
+```bash
+./skills/initiate-workflow/scripts/test-scenarios.sh
+./scripts/test-initiate-workflow-mode-gate.sh
+git add skills/initiate-workflow/SKILL.md skills/initiate-workflow/agents/openai.yaml skills/initiate-workflow/scripts/test-scenarios.sh
 git commit -m "Add initiate workflow mode gate"
 ```
 
@@ -433,19 +433,19 @@ Expected: both focused tests exit `0`, then commit succeeds.
 **Files:**
 - Modify: `skills/loop-controller/SKILL.md`
 - Modify: `skills/loop-controller/agents/openai.yaml`
-- Modify: `skills/loop-controller/scripts/test-scenarios.ps1`
-- Modify: `skills/loop-controller/scripts/select-candidate.ps1`
-- Test: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Modify: `skills/loop-controller/scripts/test-scenarios.sh`
+- Modify: `skills/loop-controller/scripts/select-candidate.sh`
+- Test: `skills/loop-controller/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing Looping Mode scenario coverage.**
 
-Modify `skills/loop-controller/scripts/test-scenarios.ps1` to add fixtures that prove:
+Modify `skills/loop-controller/scripts/test-scenarios.sh` to add fixtures that prove:
 
-```powershell
+```bash
 @{
     candidates = @(
         @{ id = "ready-issue-62"; source = "ready-issue"; route = "resolve-issue"; ready = $true; risk = "low"; source_path = "docs/superpowers/issues/62-example.md"; reason = "ready issue mirror" },
-        @{ id = "stale-version"; source = "stale-version"; route = "align-project"; ready = $true; risk = "low"; source_path = "scripts/get-agent-plugin-version.ps1"; reason = "version drift repair" },
+        @{ id = "stale-version"; source = "stale-version"; route = "align-project"; ready = $true; risk = "low"; source_path = "scripts/get-agent-plugin-version.sh"; reason = "version drift repair" },
         @{ id = "broad-audit"; source = "audit"; route = "audit-project"; ready = $true; risk = "medium"; source_path = "docs/superpowers/specs/2026-06-16-workflow-mode-entry-design.md"; reason = "broad maintenance audit" }
     )
 }
@@ -461,8 +461,8 @@ Expected selector behavior:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: nonzero exit until candidate source handling and skill text are updated.
@@ -483,16 +483,16 @@ Update `skills/loop-controller/agents/openai.yaml` with the same boundary.
 
 - [ ] **Step 4: Update candidate selection source handling.**
 
-Modify `skills/loop-controller/scripts/select-candidate.ps1` only as needed so fixture candidates with sources `ready-issue`, `stale-version`, `audit`, `align`, `plan`, and `spec` are accepted when `ready = true`, source paths exist or are explicitly fixture-safe, and risk sorting still prefers lower-risk candidates.
+Modify `skills/loop-controller/scripts/select-candidate.sh` only as needed so fixture candidates with sources `ready-issue`, `stale-version`, `audit`, `align`, `plan`, and `spec` are accepted when `ready = true`, source paths exist or are explicitly fixture-safe, and risk sorting still prefers lower-risk candidates.
 
 - [ ] **Step 5: Verify and commit.**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
-git add skills/loop-controller/SKILL.md skills/loop-controller/agents/openai.yaml skills/loop-controller/scripts/test-scenarios.ps1 skills/loop-controller/scripts/select-candidate.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
+./scripts/test-loop-controller.sh
+git add skills/loop-controller/SKILL.md skills/loop-controller/agents/openai.yaml skills/loop-controller/scripts/test-scenarios.sh skills/loop-controller/scripts/select-candidate.sh
 git commit -m "Connect looping mode to loop controller"
 ```
 
@@ -511,10 +511,10 @@ Expected: both focused Loop Controller tests exit `0`, then commit succeeds.
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `docs/assets/native-qa-main-flow-mermaid.md`
 - Modify: `docs/assets/native-qa-main-flow.svg`
-- Modify: `scripts/test-native-qa-svg.ps1`
+- Modify: `scripts/test-native-qa-svg.sh`
 - Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
-- Test: `scripts/test-native-qa-svg.ps1`
-- Test: `scripts/test-contract-summary.ps1`
+- Test: `scripts/test-native-qa-svg.sh`
+- Test: `scripts/test-contract-summary.sh`
 
 - [ ] **Step 1: Update README and plugin prompt text.**
 
@@ -544,9 +544,9 @@ Keep the existing skill-to-skill nodes and edges after `d_initiate`.
 
 - [ ] **Step 3: Update SVG and SVG contract test.**
 
-Modify `docs/assets/native-qa-main-flow.svg` to add the mode decision before the current router depth. Update `scripts/test-native-qa-svg.ps1` to assert the SVG contains:
+Modify `docs/assets/native-qa-main-flow.svg` to add the mode decision before the current router depth. Update `scripts/test-native-qa-svg.sh` to assert the SVG contains:
 
-```powershell
+```bash
 "project_workflow_mode",
 "Manual Mode",
 "Auto Mode",
@@ -557,7 +557,7 @@ Modify `docs/assets/native-qa-main-flow.svg` to add the mode decision before the
 
 Also assert existing labels still exist:
 
-```powershell
+```bash
 "Initiate Workflow",
 "Setup Project",
 "Brainstorm Spec",
@@ -575,8 +575,8 @@ Also assert existing labels still exist:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\generate-contract-summary.ps1
+```bash
+./scripts/generate-contract-summary.sh
 ```
 
 Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` includes `project_workflow_mode` in the `initiate-workflow` row.
@@ -585,11 +585,11 @@ Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` includes `project_workflow_mode
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-initiate-workflow-mode-gate.ps1
-git add README.md .codex-plugin/plugin.json docs/assets/native-qa-main-flow-mermaid.md docs/assets/native-qa-main-flow.svg scripts/test-native-qa-svg.ps1 docs/superpowers/OUTCOME_WORKFLOW.md
+```bash
+./scripts/test-native-qa-svg.sh
+./scripts/test-contract-summary.sh
+./scripts/test-initiate-workflow-mode-gate.sh
+git add README.md .codex-plugin/plugin.json docs/assets/native-qa-main-flow-mermaid.md docs/assets/native-qa-main-flow.svg scripts/test-native-qa-svg.sh docs/superpowers/OUTCOME_WORKFLOW.md
 git commit -m "Document workflow mode entry"
 ```
 
@@ -605,16 +605,16 @@ Expected: all three tests exit `0`, then commit succeeds.
 
 **Files:**
 - Modify: `docs/superpowers/plans/2026-06-16-m0-workflow-mode-entry-plan.md` only if validation reveals a plan issue.
-- Test: `scripts/validate-plan-task-use-cases.ps1`
-- Test: `scripts/validate.ps1`
-- Test: `scripts/sync-live.ps1`
+- Test: `scripts/validate-plan-task-use-cases.sh`
+- Test: `scripts/validate.sh`
+- Test: `scripts/sync-live.sh`
 
 - [ ] **Step 1: Validate the plan use-case gate.**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-16-m0-workflow-mode-entry-plan.md
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-16-m0-workflow-mode-entry-plan.md
 ```
 
 Expected: exit `0`.
@@ -623,14 +623,14 @@ Expected: exit `0`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-initiate-workflow-mode-gate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-mode-ledger.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
+```bash
+./scripts/test-initiate-workflow-mode-gate.sh
+./scripts/test-workflow-mode-ledger.sh
+./scripts/test-auto-mode-contract.sh
+./scripts/test-loop-controller.sh
+./skills/loop-controller/scripts/test-scenarios.sh
+./scripts/test-native-qa-svg.sh
+./scripts/test-contract-summary.sh
 ```
 
 Expected: every command exits `0`.
@@ -639,8 +639,8 @@ Expected: every command exits `0`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: exit `0`.
@@ -649,8 +649,8 @@ Expected: exit `0`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: exit `0`.
@@ -659,8 +659,8 @@ Expected: exit `0`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: no matching leftover Codex processes under the repo.
@@ -669,7 +669,7 @@ Expected: no matching leftover Codex processes under the repo.
 
 If validation required edits, run:
 
-```powershell
+```bash
 git add <changed-files>
 git commit -m "Validate workflow mode entry"
 ```

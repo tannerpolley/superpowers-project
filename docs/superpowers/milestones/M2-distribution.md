@@ -30,5 +30,5 @@ Package, validate, sync, and release the Superpowers Project extension after dum
 
 ## Closed Issues
 
-- [#42 Ship or install validate-plan-task-use-cases.ps1 for planning workflows](https://github.com/tannerpolley/superpowers-project/issues/42) closed by [PR #43](https://github.com/tannerpolley/superpowers-project/pull/43) on 2026-06-12.
+- [#42 Ship or install validate-plan-task-use-cases.sh for planning workflows](https://github.com/tannerpolley/superpowers-project/issues/42) closed by [PR #43](https://github.com/tannerpolley/superpowers-project/pull/43) on 2026-06-12.
 - [#32 Public Repo Release Readiness](https://github.com/tannerpolley/superpowers-project/issues/32) closed by [PR #37](https://github.com/tannerpolley/superpowers-project/pull/37).

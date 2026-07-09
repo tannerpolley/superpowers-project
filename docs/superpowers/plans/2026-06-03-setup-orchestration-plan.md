@@ -6,7 +6,7 @@
 
 **Architecture:** Keep `skills/` as the only source root and make routing explicit: `setup` owns project infrastructure, `orchestrate-issues` owns worker-thread lifecycle, and `resolve-issue` owns direct current-thread issue execution. Scripts should validate contracts and generate ledgers, while native UI approval remains the gate for remote GitHub Project mutation and ambiguous route selection.
 
-**Tech Stack:** Codex skill Markdown, `agents/openai.yaml` metadata, PowerShell 7 validation scripts, GitHub CLI evidence where approved, Codex native thread tools, native goal tools, and existing `scripts/validate.ps1` plus `scripts/sync-live.ps1 -Validate`.
+**Tech Stack:** Codex skill Markdown, `agents/openai.yaml` metadata, Bash 7 validation scripts, GitHub CLI evidence where approved, Codex native thread tools, native goal tools, and existing `scripts/validate.sh` plus `scripts/sync-live.sh --validate`.
 
 ---
 
@@ -28,12 +28,12 @@ Create:
 
 - `skills/orchestrate-issues/SKILL.md`: worker-thread orchestration skill.
 - `skills/orchestrate-issues/agents/openai.yaml`: metadata prompt for orchestration routing.
-- `skills/orchestrate-issues/scripts/test-scenarios.ps1`: contract and fixture tests for worker identity, handoff, and routing.
-- `skills/orchestrate-issues/scripts/derive-worker-identity.ps1`: derives canonical issue identity, thread title, branch name, evidence folder, and PR title hints from one issue mirror.
-- `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`: validates a ready issue mirror/source plan and emits the worker handoff ledger.
-- `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`: verifies worker identity, branch, issue URL, source plan, proof oracle, and topology handoff evidence.
-- `skills/setup-project/scripts/prepare-github-project-board.ps1`: creates an approval-ready GitHub Project board plan and validates post-creation board config evidence.
-- `skills/setup-project/scripts/test-scenarios.ps1`: renamed and extended copy of the current project-context scenario script.
+- `skills/orchestrate-issues/scripts/test-scenarios.sh`: contract and fixture tests for worker identity, handoff, and routing.
+- `skills/orchestrate-issues/scripts/derive-worker-identity.sh`: derives canonical issue identity, thread title, branch name, evidence folder, and PR title hints from one issue mirror.
+- `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`: validates a ready issue mirror/source plan and emits the worker handoff ledger.
+- `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`: verifies worker identity, branch, issue URL, source plan, proof oracle, and topology handoff evidence.
+- `skills/setup-project/scripts/prepare-github-project-board.sh`: creates an approval-ready GitHub Project board plan and validates post-creation board config evidence.
+- `skills/setup-project/scripts/test-scenarios.sh`: renamed and extended copy of the current project-context scenario script.
 
 Rename:
 
@@ -44,24 +44,24 @@ Modify:
 - `.codex-plugin/plugin.json`
 - `README.md`
 - `CHANGELOG.md`
-- `scripts/validate.ps1`
-- `scripts/sync-live.ps1`
-- `scripts/test-superpowers-project-repo-contract.ps1`
-- `scripts/test-superpowers-project-dummy-repo.ps1`
+- `scripts/validate.sh`
+- `scripts/sync-live.sh`
+- `scripts/test-superpowers-project-repo-contract.sh`
+- `scripts/test-superpowers-project-dummy-repo.sh`
 - `skills/initiate-workflow/SKILL.md`
 - `skills/initiate-workflow/agents/openai.yaml`
-- `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- `skills/initiate-workflow/scripts/test-scenarios.sh`
 - `skills/setup-project/SKILL.md`
 - `skills/setup-project/agents/openai.yaml`
 - `skills/create-issues/SKILL.md`
 - `skills/create-issues/agents/openai.yaml`
-- `skills/create-issues/scripts/validate-issue-mirror.ps1`
-- `skills/create-issues/scripts/test-scenarios.ps1`
+- `skills/create-issues/scripts/validate-issue-mirror.sh`
+- `skills/create-issues/scripts/test-scenarios.sh`
 - `skills/resolve-issue/SKILL.md`
 - `skills/resolve-issue/agents/openai.yaml`
-- `skills/resolve-issue/scripts/prepare-execution.ps1`
-- `skills/resolve-issue/scripts/validate-setup.ps1`
-- `skills/resolve-issue/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/scripts/prepare-execution.sh`
+- `skills/resolve-issue/scripts/validate-setup.sh`
+- `skills/resolve-issue/scripts/test-scenarios.sh`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `docs/superpowers/milestones/README.md`
 - `docs/superpowers/milestones/M0-governance.md`
@@ -72,7 +72,7 @@ Modify:
 Delete:
 
 - `skills/project-context/` after the git rename is complete and `skills/setup-project/` passes validation.
-- Live deployed `project-context` copies during `scripts/sync-live.ps1 -Validate` by adding `project-context` to the retired skill list.
+- Live deployed `project-context` copies during `scripts/sync-live.sh --validate` by adding `project-context` to the retired skill list.
 
 ## Acceptance Criteria Mapping
 
@@ -99,37 +99,37 @@ Delete:
 
 Run these commands before claiming the implementation complete:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/superpowers-project/scripts/test-scenarios.sh
+./scripts/test-superpowers-project-repo-contract.sh
+./scripts/test-superpowers-project-dummy-repo.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
-Expected result: every command exits `0`; `scripts/validate.ps1` emits top-level `"ok": true`; `sync-live.ps1 -Validate` removes stale deployed `project-context` copies and deploys `setup` plus `orchestrate-issues`; cleanup reports no repo-owned leftover processes.
+Expected result: every command exits `0`; `scripts/validate.sh` emits top-level `"ok": true`; `sync-live.sh --validate` removes stale deployed `project-context` copies and deploys `setup` plus `orchestrate-issues`; cleanup reports no repo-owned leftover processes.
 
 ## Tasks
 
 ### Task 1: Add Red Tests For Skill Inventory And Rename Contracts
 
 **Files:**
-- Modify: `scripts/validate.ps1`
-- Modify: `scripts/sync-live.ps1`
-- Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `scripts/validate.ps1`
+- Modify: `scripts/validate.sh`
+- Modify: `scripts/sync-live.sh`
+- Modify: `scripts/test-superpowers-project-repo-contract.sh`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `scripts/validate.sh`
 
 - [ ] **Step 1: Write failing active-skill inventory expectations**
 
-In `scripts/validate.ps1`, update `Get-ActiveSkillNames` so the expected skill set contains `setup` and `orchestrate-issues`, and no longer contains `project-context`.
+In `scripts/validate.sh`, update `Get-ActiveSkillNames` so the expected skill set contains `setup` and `orchestrate-issues`, and no longer contains `project-context`.
 
-```powershell
+```bash
 function Get-ActiveSkillNames {
     @(
         "superpowers-project",
@@ -145,13 +145,13 @@ function Get-ActiveSkillNames {
 }
 ```
 
-Expected red state before implementation: `scripts/validate.ps1` fails with missing active skills and unexpected `project-context`.
+Expected red state before implementation: `scripts/validate.sh` fails with missing active skills and unexpected `project-context`.
 
 - [ ] **Step 2: Write failing sync-live retirement expectations**
 
-In `scripts/sync-live.ps1`, add `"project-context"` to `$retiredSkillNames`. Keep all older retired milestone-era names in that array.
+In `scripts/sync-live.sh`, add `"project-context"` to `$retiredSkillNames`. Keep all older retired milestone-era names in that array.
 
-```powershell
+```bash
 $retiredSkillNames = @(
     "using-milestones",
     "setup-project-milestones",
@@ -170,9 +170,9 @@ Expected red state before implementation: sync-live validation cannot pass until
 
 - [ ] **Step 3: Write failing repo contract checks**
 
-In `scripts/test-superpowers-project-repo-contract.ps1`, update the skill loop to expect `setup` and `orchestrate-issues`.
+In `scripts/test-superpowers-project-repo-contract.sh`, update the skill loop to expect `setup` and `orchestrate-issues`.
 
-```powershell
+```bash
 foreach ($skillName in @(
     "superpowers-project",
     "setup",
@@ -204,7 +204,7 @@ foreach ($skillName in @(
 
 Add a focused assertion that active routing docs contain `setup` and `orchestrate-issues`, and do not contain `project-context` as an active skill route.
 
-```powershell
+```bash
 Assert-TextContains -RelativePath "README.md" -Needles @(
     '$project:setup-project',
     '$project:orchestrate-issues'
@@ -217,9 +217,9 @@ if ($readmeText.Contains('$project-context')) {
 
 - [ ] **Step 4: Write failing router scenario checks**
 
-In `skills/initiate-workflow/scripts/test-scenarios.ps1`, change the routing contract needles to require `setup` and `orchestrate-issues`.
+In `skills/initiate-workflow/scripts/test-scenarios.sh`, change the routing contract needles to require `setup` and `orchestrate-issues`.
 
-```powershell
+```bash
 foreach ($needle in @(
     'setup',
     'brainstorm-spec',
@@ -241,18 +241,18 @@ foreach ($needle in @(
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/superpowers-project/scripts/test-scenarios.sh
+./scripts/test-superpowers-project-repo-contract.sh
+./scripts/validate.sh
 ```
 
 Expected: failures name missing `setup`, missing `orchestrate-issues`, or stale `project-context` active routing. If failures are syntax errors, fix the tests before continuing.
 
 - [ ] **Step 6: Commit**
 
-```powershell
-git add scripts/validate.ps1 scripts/sync-live.ps1 scripts/test-superpowers-project-repo-contract.ps1 skills/initiate-workflow/scripts/test-scenarios.ps1
+```bash
+git add scripts/validate.sh scripts/sync-live.sh scripts/test-superpowers-project-repo-contract.sh skills/initiate-workflow/scripts/test-scenarios.sh
 git commit -m "test: define setup and orchestration skill contracts"
 ```
 
@@ -262,18 +262,18 @@ git commit -m "test: define setup and orchestration skill contracts"
 - Move: `skills/project-context/` to `skills/setup-project/`
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/setup-project/agents/openai.yaml`
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
 - Modify: `README.md`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/superpowers/milestones/README.md`
-- Test: `skills/setup-project/scripts/test-scenarios.ps1`
+- Test: `skills/setup-project/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Move the skill directory**
 
 Run:
 
-```powershell
+```bash
 git mv skills/project-context skills/setup
 ```
 
@@ -318,9 +318,9 @@ agents:
 
 - [ ] **Step 5: Update setup scenario script**
 
-In `skills/setup-project/scripts/test-scenarios.ps1`, change the metadata checks:
+In `skills/setup-project/scripts/test-scenarios.sh`, change the metadata checks:
 
-```powershell
+```bash
 Assert-Contains -Text $metadata -Needle 'setup' -Reason "metadata missing skill name"
 foreach ($needle in @(
     'GitHub Project board setup',
@@ -368,18 +368,18 @@ In `docs/superpowers/PROJECT_CONTEXT.md` and `docs/superpowers/milestones/README
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
+./skills/superpowers-project/scripts/test-scenarios.sh
+./scripts/test-superpowers-project-repo-contract.sh
 ```
 
 Expected: all three commands pass, except any failures from the missing `orchestrate-issues` implementation that Task 3 will address.
 
 - [ ] **Step 9: Commit**
 
-```powershell
-git add .codex-plugin/plugin.json README.md docs/superpowers/PROJECT_CONTEXT.md docs/superpowers/milestones/README.md skills/setup scripts/validate.ps1 scripts/sync-live.ps1 scripts/test-superpowers-project-repo-contract.ps1 skills/initiate-workflow/scripts/test-scenarios.ps1
+```bash
+git add .codex-plugin/plugin.json README.md docs/superpowers/PROJECT_CONTEXT.md docs/superpowers/milestones/README.md skills/setup scripts/validate.sh scripts/sync-live.sh scripts/test-superpowers-project-repo-contract.sh skills/initiate-workflow/scripts/test-scenarios.sh
 git commit -m "feat: rename project context to project setup"
 ```
 
@@ -388,17 +388,17 @@ git commit -m "feat: rename project context to project setup"
 **Files:**
 - Create: `skills/orchestrate-issues/SKILL.md`
 - Create: `skills/orchestrate-issues/agents/openai.yaml`
-- Create: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
-- Create: `skills/orchestrate-issues/scripts/derive-worker-identity.ps1`
-- Test: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Create: `skills/orchestrate-issues/scripts/test-scenarios.sh`
+- Create: `skills/orchestrate-issues/scripts/derive-worker-identity.sh`
+- Test: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Create red scenario tests for identity derivation**
 
-Create `skills/orchestrate-issues/scripts/test-scenarios.ps1` with scenarios that require frontmatter, native question debug mode text, worker identity derivation, and worker handoff validation.
+Create `skills/orchestrate-issues/scripts/test-scenarios.sh` with scenarios that require frontmatter, native question debug mode text, worker identity derivation, and worker handoff validation.
 
 Key identity assertion:
 
-```powershell
+```bash
 Invoke-Scenario "derive-worker-identity creates canonical names" {
     $repo = New-TestRepo
     $issue = Join-Path $repo "docs/superpowers/issues/10-audit-project-audit-gate.md"
@@ -417,12 +417,12 @@ Invoke-Scenario "derive-worker-identity creates canonical names" {
 
 ## Proof Oracle
 
-- pwsh.exe -NoProfile -Command 'exit 0'
+- -NoProfile -Command 'exit 0'
 "@ | Set-Content -LiteralPath $issue -Encoding utf8NoBOM
     New-Item -ItemType Directory -Path (Join-Path $repo "docs/superpowers/plans") -Force | Out-Null
     Set-Content -LiteralPath (Join-Path $repo "docs/superpowers/plans/2026-06-03-doctor-plan.md") -Value "# Plan" -Encoding utf8NoBOM
 
-    $result = Invoke-JsonScript -ScriptName "derive-worker-identity.ps1" -Arguments @("-RepoRoot", $repo, "-IssueMirror", "docs/superpowers/issues/10-audit-project-audit-gate.md")
+    $result = Invoke-JsonScript -ScriptName "derive-worker-identity.sh" -Arguments @("-RepoRoot", $repo, "-IssueMirror", "docs/superpowers/issues/10-audit-project-audit-gate.md")
     Assert-True $result.ok $result.reason
     Assert-True ($result.identity.canonical_id -eq "issue-10-audit-project-audit-gate") "canonical id mismatch"
     Assert-True ($result.identity.thread_title -eq "Resolve #10: Project Doctor audit gate") "thread title mismatch"
@@ -431,7 +431,7 @@ Invoke-Scenario "derive-worker-identity creates canonical names" {
 }
 ```
 
-Expected red state: `derive-worker-identity.ps1` does not exist.
+Expected red state: `derive-worker-identity.sh` does not exist.
 
 - [ ] **Step 2: Create the skill document**
 
@@ -465,12 +465,12 @@ Create `skills/orchestrate-issues/agents/openai.yaml`:
 ```yaml
 agents:
   orchestrate-issues:
-    default_prompt: "Use $project:orchestrate-issues when a ready Superpowers Project issue should be delegated to a Codex worktree worker thread. Validate the issue mirror and source plan, create or reuse the orchestrator-owned native goal, derive one canonical worker identity with derive-worker-identity.ps1, create the worker thread from main with matching thread title and branch naming, send a topology handoff, monitor progress, collect PR-ready evidence, and route the finished PR to $project:merge-changes. Do not implement code yourself except for explicitly approved recovery edits. Use request_user_input when callable for publish, recovery, merge, or route decisions. Ask project_orchestrate_next_step after PR-ready handoff."
+    default_prompt: "Use $project:orchestrate-issues when a ready Superpowers Project issue should be delegated to a Codex worktree worker thread. Validate the issue mirror and source plan, create or reuse the orchestrator-owned native goal, derive one canonical worker identity with derive-worker-identity.sh, create the worker thread from main with matching thread title and branch naming, send a topology handoff, monitor progress, collect PR-ready evidence, and route the finished PR to $project:merge-changes. Do not implement code yourself except for explicitly approved recovery edits. Use request_user_input when callable for publish, recovery, merge, or route decisions. Ask project_orchestrate_next_step after PR-ready handoff."
 ```
 
 - [ ] **Step 4: Implement identity derivation script**
 
-Create `skills/orchestrate-issues/scripts/derive-worker-identity.ps1`. It must read the issue mirror, parse issue number from the GitHub issue URL or filename, derive a slug from the filename, and output JSON.
+Create `skills/orchestrate-issues/scripts/derive-worker-identity.sh`. It must read the issue mirror, parse issue number from the GitHub issue URL or filename, derive a slug from the filename, and output JSON.
 
 Core output shape:
 
@@ -491,21 +491,21 @@ Core output shape:
 }
 ```
 
-Use the existing helper style from `skills/resolve-issue/scripts/lib/contract.ps1` rather than adding broad dependencies.
+Use the existing helper style from `skills/resolve-issue/scripts/lib/contract.sh` rather than adding broad dependencies.
 
 - [ ] **Step 5: Run identity tests**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
+```bash
+./skills/orchestrate-issues/scripts/test-scenarios.sh
 ```
 
 Expected: `derive-worker-identity creates canonical names` passes.
 
 - [ ] **Step 6: Commit**
 
-```powershell
+```bash
 git add skills/orchestrate-issues
 git commit -m "feat: add project orchestrate identity contract"
 ```
@@ -514,18 +514,18 @@ git commit -m "feat: add project orchestrate identity contract"
 
 **Files:**
 - Modify: `skills/orchestrate-issues/SKILL.md`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
-- Create: `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`
-- Create: `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`
-- Test: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
+- Create: `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`
+- Create: `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`
+- Test: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add red worker handoff scenarios**
 
-Extend `skills/orchestrate-issues/scripts/test-scenarios.ps1` with a scenario that calls `prepare-worker-handoff.ps1` and then `validate-worker-handoff.ps1`.
+Extend `skills/orchestrate-issues/scripts/test-scenarios.sh` with a scenario that calls `prepare-worker-handoff.sh` and then `validate-worker-handoff.sh`.
 
 Required handoff fields:
 
-```powershell
+```bash
 foreach ($field in @(
     "issue_url",
     "issue_mirror",
@@ -543,11 +543,11 @@ foreach ($field in @(
 
 Expected red state: handoff scripts do not exist.
 
-- [ ] **Step 2: Implement prepare-worker-handoff.ps1**
+- [ ] **Step 2: Implement prepare-worker-handoff.sh**
 
-Create `prepare-worker-handoff.ps1` with parameters:
+Create `prepare-worker-handoff.sh` with parameters:
 
-```powershell
+```bash
 param(
     [string]$RepoRoot = ".",
     [string]$IssueMirror,
@@ -561,7 +561,7 @@ Behavior:
 
 - Validate issue mirror path under `docs/superpowers/issues`.
 - Validate linked source plan exists under `docs/superpowers/plans`.
-- Run `derive-worker-identity.ps1`.
+- Run `derive-worker-identity.sh`.
 - Require structured native goal proof from `get_goal`.
 - Emit a handoff ledger with branch `codex/issue-<number>-<slug>`.
 - Include the exact worker prompt body and the immediate topology follow-up body.
@@ -575,7 +575,7 @@ Core handoff shape:
   "issue_mirror": "docs/superpowers/issues/10-audit-project-audit-gate.md",
   "source_plan": "docs/superpowers/plans/2026-06-03-doctor-plan.md",
   "goal_objective": "Resolve issue #10...",
-  "proof_oracle": ["pwsh.exe -NoProfile -Command 'exit 0'"],
+  "proof_oracle": ["-NoProfile -Command 'exit 0'"],
   "worker_identity": {
     "canonical_id": "issue-10-audit-project-audit-gate",
     "branch": "codex/issue-10-audit-project-audit-gate"
@@ -592,9 +592,9 @@ Core handoff shape:
 }
 ```
 
-- [ ] **Step 3: Implement validate-worker-handoff.ps1**
+- [ ] **Step 3: Implement validate-worker-handoff.sh**
 
-Create `validate-worker-handoff.ps1` with `-WorkerHandoffJson` and `-WorkerHandoffPath` inputs. It must reject:
+Create `validate-worker-handoff.sh` with `-WorkerHandoffJson` and `-WorkerHandoffPath` inputs. It must reject:
 
 - missing worker identity;
 - branch not equal to `codex/<canonical_id>`;
@@ -611,8 +611,8 @@ In `skills/orchestrate-issues/SKILL.md`, require this runtime order:
 1. Inspect issue mirror and source plan.
 2. Check native goal state with `get_goal`.
 3. Create or reuse orchestrator-owned native goal.
-4. Run `derive-worker-identity.ps1`.
-5. Run `prepare-worker-handoff.ps1`.
+4. Run `derive-worker-identity.sh`.
+5. Run `prepare-worker-handoff.sh`.
 6. Create native Codex worktree thread from `main`.
 7. Rename the app thread to `Resolve #<n>: <Title Case Slug>` when thread title tools are callable.
 8. Send topology follow-up immediately.
@@ -623,15 +623,15 @@ In `skills/orchestrate-issues/SKILL.md`, require this runtime order:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
+```bash
+./skills/orchestrate-issues/scripts/test-scenarios.sh
 ```
 
 Expected: all `orchestrate-issues` scenarios pass.
 
 - [ ] **Step 6: Commit**
 
-```powershell
+```bash
 git add skills/orchestrate-issues
 git commit -m "feat: validate project orchestrator handoffs"
 ```
@@ -641,18 +641,18 @@ git commit -m "feat: validate project orchestrator handoffs"
 **Files:**
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/prepare-execution.ps1`
-- Modify: `skills/resolve-issue/scripts/validate-setup.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
-- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/prepare-execution.sh`
+- Modify: `skills/resolve-issue/scripts/validate-setup.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
+- Test: `skills/resolve-issue/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add red resolver scenarios for direct-only route**
 
-In `skills/resolve-issue/scripts/test-scenarios.ps1`, replace the orchestrated-worker happy-path scenario with a direct-only rejection scenario:
+In `skills/resolve-issue/scripts/test-scenarios.sh`, replace the orchestrated-worker happy-path scenario with a direct-only rejection scenario:
 
-```powershell
+```bash
 Invoke-Scenario "orchestrated worker mode is owned by orchestrate-issues" {
-    $result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @(
+    $result = Invoke-JsonScript -ScriptName "prepare-execution.sh" -Arguments @(
         "-Mode", "FinalizeSetup",
         "-RepoRoot", $repo,
         "-HandoffJson", (New-Handoff),
@@ -698,11 +698,11 @@ default_prompt: "Use $project:resolve-issue for direct current-thread implementa
 
 Keep the existing PR-ready continuation gate wording.
 
-- [ ] **Step 4: Update prepare-execution.ps1**
+- [ ] **Step 4: Update prepare-execution.sh**
 
-In `prepare-execution.ps1`, after `Assert-ExecutionDecision -Decision $executionDecision`, add:
+In `prepare-execution.sh`, after `Assert-ExecutionDecision -Decision $executionDecision`, add:
 
-```powershell
+```bash
 if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") {
     throw "orchestrated worker execution is owned by orchestrate-issues; use resolve-issue only for direct current-thread execution"
 }
@@ -710,11 +710,11 @@ if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") {
 
 Set `worker_handoff` and `dynamic_work_packet_map` to `$null` for all direct resolver ledgers.
 
-- [ ] **Step 5: Update validate-setup.ps1**
+- [ ] **Step 5: Update validate-setup.sh**
 
-In `validate-setup.ps1`, reject orchestrated-worker setup ledgers with the same route message:
+In `validate-setup.sh`, reject orchestrated-worker setup ledgers with the same route message:
 
-```powershell
+```bash
 if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") {
     throw "orchestrated worker execution is owned by orchestrate-issues; use resolve-issue only for direct current-thread execution"
 }
@@ -724,15 +724,15 @@ if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
 Expected: direct resolver scenarios pass and orchestrated-worker setup is blocked with a route-to-orchestrate-issues reason.
 
 - [ ] **Step 7: Commit**
 
-```powershell
+```bash
 git add skills/resolve-issue
 git commit -m "refactor: make project resolve direct-only"
 ```
@@ -742,19 +742,19 @@ git commit -m "refactor: make project resolve direct-only"
 **Files:**
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
-- Modify: `skills/create-issues/scripts/validate-issue-mirror.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/scripts/validate-issue-mirror.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add router red tests for ambiguous resolve routing**
 
-In `skills/initiate-workflow/scripts/test-scenarios.ps1`, add checks for:
+In `skills/initiate-workflow/scripts/test-scenarios.sh`, add checks for:
 
-```powershell
+```bash
 foreach ($needle in @(
     "Project Orchestrate",
     "Project Resolve",
@@ -816,7 +816,7 @@ Update `GitHub Issue Body` template:
 
 - [ ] **Step 5: Add issue validator branch warning**
 
-In `skills/create-issues/scripts/validate-issue-mirror.ps1`, parse the `Branch` field. If the mirror has a numeric GitHub issue URL and the branch is present but does not equal `codex/issue-<number>-<slug>`, return `ok: true` with advisory evidence for migration rather than blocking existing mirrors.
+In `skills/create-issues/scripts/validate-issue-mirror.sh`, parse the `Branch` field. If the mirror has a numeric GitHub issue URL and the branch is present but does not equal `codex/issue-<number>-<slug>`, return `ok: true` with advisory evidence for migration rather than blocking existing mirrors.
 
 Expected evidence field:
 
@@ -832,7 +832,7 @@ Expected evidence field:
 
 - [ ] **Step 6: Add create-issues scenario coverage**
 
-In `skills/create-issues/scripts/test-scenarios.ps1`, add a happy fixture with:
+In `skills/create-issues/scripts/test-scenarios.sh`, add a happy fixture with:
 
 ```markdown
 **GitHub Issue:** https://github.com/example/repo/issues/10
@@ -854,16 +854,16 @@ Assert the validator returns `ok: true` and evidence includes `advisory-existing
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+```bash
+./skills/superpowers-project/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
 ```
 
 Expected: router and issue mirror branch policy tests pass.
 
 - [ ] **Step 8: Commit**
 
-```powershell
+```bash
 git add skills/workflow skills/create-issues
 git commit -m "feat: split issue routing between resolve and orchestrate"
 ```
@@ -873,17 +873,17 @@ git commit -m "feat: split issue routing between resolve and orchestrate"
 **Files:**
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/setup-project/agents/openai.yaml`
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
-- Create: `skills/setup-project/scripts/prepare-github-project-board.ps1`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
+- Create: `skills/setup-project/scripts/prepare-github-project-board.sh`
 - Modify: `docs/agents/project-roadmap.md`
 - Modify: `docs/agents/project-roadmap.json`
-- Test: `skills/setup-project/scripts/test-scenarios.ps1`
+- Test: `skills/setup-project/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add red project board setup scenarios**
 
-In `skills/setup-project/scripts/test-scenarios.ps1`, add a scenario requiring:
+In `skills/setup-project/scripts/test-scenarios.sh`, add a scenario requiring:
 
-- `prepare-github-project-board.ps1`;
+- `prepare-github-project-board.sh`;
 - native question id `project_setup_github_project_board`;
 - approval-required language;
 - board views `Roadmap by milestone`, `Board by status`, `Ready issues`, `In progress worker threads`, `PR-ready waiting for merge`, and `Closed issues by milestone`;
@@ -891,7 +891,7 @@ In `skills/setup-project/scripts/test-scenarios.ps1`, add a scenario requiring:
 
 Scenario snippet:
 
-```powershell
+```bash
 foreach ($needle in @(
     "project_setup_github_project_board",
     "GitHub Project board setup",
@@ -907,11 +907,11 @@ foreach ($needle in @(
 }
 ```
 
-- [ ] **Step 2: Implement prepare-github-project-board.ps1**
+- [ ] **Step 2: Implement prepare-github-project-board.sh**
 
-Create `skills/setup-project/scripts/prepare-github-project-board.ps1` with modes:
+Create `skills/setup-project/scripts/prepare-github-project-board.sh` with modes:
 
-```powershell
+```bash
 param(
     [ValidateSet("Plan", "ValidateConfig")][string]$Mode = "Plan",
     [string]$RepoRoot = ".",
@@ -990,15 +990,15 @@ In `docs/agents/project-roadmap.json`, add a null-safe config shape that does no
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
 ```
 
 Expected: setup scenarios pass and no GitHub mutation is attempted.
 
 - [ ] **Step 6: Commit**
 
-```powershell
+```bash
 git add skills/setup docs/agents/project-roadmap.md docs/agents/project-roadmap.json
 git commit -m "feat: add approved github project board setup"
 ```
@@ -1007,16 +1007,16 @@ git commit -m "feat: add approved github project board setup"
 
 **Files:**
 - Modify: `skills/orchestrate-issues/SKILL.md`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 - Modify: `skills/create-issues/SKILL.md`
-- Create: `skills/create-issues/scripts/hydrate-external-issue.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Create: `skills/create-issues/scripts/hydrate-external-issue.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add red hydration scenario**
 
-In `skills/create-issues/scripts/test-scenarios.ps1`, create a fixture issue body with a GitHub issue URL, milestone, labels, branch, acceptance criteria, proof oracle, and unresolved source plan field. Call `hydrate-external-issue.ps1` and assert it writes:
+In `skills/create-issues/scripts/test-scenarios.sh`, create a fixture issue body with a GitHub issue URL, milestone, labels, branch, acceptance criteria, proof oracle, and unresolved source plan field. Call `hydrate-external-issue.sh` and assert it writes:
 
 - `docs/superpowers/issues/15-flat-artifact-roots-milestone-indexes.md`;
 - a source plan under `docs/superpowers/plans`;
@@ -1024,11 +1024,11 @@ In `skills/create-issues/scripts/test-scenarios.ps1`, create a fixture issue bod
 
 Expected red state: hydration script does not exist.
 
-- [ ] **Step 2: Implement hydrate-external-issue.ps1**
+- [ ] **Step 2: Implement hydrate-external-issue.sh**
 
-Create `skills/create-issues/scripts/hydrate-external-issue.ps1` with:
+Create `skills/create-issues/scripts/hydrate-external-issue.sh` with:
 
-```powershell
+```bash
 param(
     [string]$RepoRoot = ".",
     [string]$IssueJson,
@@ -1058,16 +1058,16 @@ If a GitHub issue exists but no local mirror or source plan exists, route throug
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
+```bash
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
 ```
 
 Expected: hydration scenarios pass, and orchestrate docs require hydration before worker creation.
 
 - [ ] **Step 5: Commit**
 
-```powershell
+```bash
 git add skills/create-issues skills/orchestrate-issues
 git commit -m "feat: hydrate external github issues before orchestration"
 ```
@@ -1081,10 +1081,10 @@ git commit -m "feat: hydrate external github issues before orchestration"
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/superpowers/milestones/M0-governance.md`
 - Modify: `docs/superpowers/milestones/M1-source-of-truth.md`
-- Modify: `scripts/test-superpowers-project-dummy-repo.ps1`
-- Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Test: `scripts/test-superpowers-project-dummy-repo.ps1`
-- Test: `scripts/test-superpowers-project-repo-contract.ps1`
+- Modify: `scripts/test-superpowers-project-dummy-repo.sh`
+- Modify: `scripts/test-superpowers-project-repo-contract.sh`
+- Test: `scripts/test-superpowers-project-dummy-repo.sh`
+- Test: `scripts/test-superpowers-project-repo-contract.sh`
 
 - [ ] **Step 1: Update public skill list**
 
@@ -1128,43 +1128,43 @@ In `docs/superpowers/milestones/M1-source-of-truth.md`, add success criteria for
 
 - [ ] **Step 4: Update dummy repo test**
 
-In `scripts/test-superpowers-project-dummy-repo.ps1`, update any expected skill names or docs assertions from `project-context` to `setup`, and add a check for `orchestrate-issues` if the dummy repo asserts active skill discovery text.
+In `scripts/test-superpowers-project-dummy-repo.sh`, update any expected skill names or docs assertions from `project-context` to `setup`, and add a check for `orchestrate-issues` if the dummy repo asserts active skill discovery text.
 
 - [ ] **Step 5: Run repo contract tests**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
+```bash
+./scripts/test-superpowers-project-dummy-repo.sh
+./scripts/test-superpowers-project-repo-contract.sh
 ```
 
 Expected: both commands pass.
 
 - [ ] **Step 6: Commit**
 
-```powershell
-git add README.md CHANGELOG.md .codex-plugin/plugin.json docs/superpowers/PROJECT_CONTEXT.md docs/superpowers/milestones/M0-governance.md docs/superpowers/milestones/M1-source-of-truth.md scripts/test-superpowers-project-dummy-repo.ps1 scripts/test-superpowers-project-repo-contract.ps1
+```bash
+git add README.md CHANGELOG.md .codex-plugin/plugin.json docs/superpowers/PROJECT_CONTEXT.md docs/superpowers/milestones/M0-governance.md docs/superpowers/milestones/M1-source-of-truth.md scripts/test-superpowers-project-dummy-repo.sh scripts/test-superpowers-project-repo-contract.sh
 git commit -m "docs: document setup and orchestration workflow"
 ```
 
 ### Task 10: Full Verification, Live Sync, And Closeout
 
 **Files:**
-- Test: `scripts/validate.ps1`
-- Test: `scripts/sync-live.ps1`
+- Test: `scripts/validate.sh`
+- Test: `scripts/sync-live.sh`
 - Test: user cleanup hook
 
 - [ ] **Step 1: Run all focused proof commands**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/superpowers-project/scripts/test-scenarios.sh
 ```
 
 Expected: every command exits `0`.
@@ -1173,8 +1173,8 @@ Expected: every command exits `0`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: top-level JSON includes `"ok": true`.
@@ -1183,8 +1183,8 @@ Expected: top-level JSON includes `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected:
@@ -1197,8 +1197,8 @@ Expected:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: no matching leftover Codex processes under this repo.
@@ -1207,7 +1207,7 @@ Expected: no matching leftover Codex processes under this repo.
 
 Run:
 
-```powershell
+```bash
 git status --short --branch
 git log --oneline -10
 ```
@@ -1218,7 +1218,7 @@ Expected: implementation branch is clean after the final commit; recent commits 
 
 If verification required a docs-only adjustment, commit it:
 
-```powershell
+```bash
 git add README.md CHANGELOG.md docs/superpowers docs/agents
 git commit -m "docs: finalize setup orchestration verification"
 ```
@@ -1228,7 +1228,7 @@ If no files changed after verification, do not create an empty commit.
 ## Risk And Dependency Notes
 
 - PRs #16 and #17 may modify `audit-project`, `write-plan`, `superpowers-project`, README, and validation contracts. Before executing this plan, rebase or start from current `main` after those PRs are merged.
-- Issue #10 may add `skills/audit-project/scripts/audit-project.ps1`. This plan should not duplicate Doctor audit behavior; it should only add setup/orchestrate/resolve routing and board-config audit hooks that Doctor can later inspect.
+- Issue #10 may add `skills/audit-project/scripts/audit-project.sh`. This plan should not duplicate Doctor audit behavior; it should only add setup/orchestrate/resolve routing and board-config audit hooks that Doctor can later inspect.
 - Issue #15 may add flat artifact root validators. Keep all new specs, plans, issue mirrors, and skill files in flat canonical roots and `skills/`.
 - Remote GitHub Project mutation requires native approval. Script tests should use fixture JSON and must not require network writes.
 - `orchestrate-issues` depends on Codex app thread tools at runtime. Scripts should validate ledgers and handoff content; they should not attempt to fake app thread creation.

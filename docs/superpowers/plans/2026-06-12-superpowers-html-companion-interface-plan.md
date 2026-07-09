@@ -4,9 +4,9 @@
 
 **Goal:** Build the first opt-in Superpowers Project HTML companion interface so specs, plans, issue evidence, validation receipts, plots, tables, and summaries can be rendered in the Codex in-app browser while chat remains concise.
 
-**Architecture:** Add a source-owned `companion-interface` skill plus PowerShell helper scripts and static templates. The v1 companion creates repo-scoped report sessions under `.superpowers/reports`, writes structured JSON and JSONL evidence, and regenerates a self-contained HTML report from the manifest instead of running a long-lived local server.
+**Architecture:** Add a source-owned `companion-interface` skill plus Bash helper scripts and static templates. The v1 companion creates repo-scoped report sessions under `.superpowers/reports`, writes structured JSON and JSONL evidence, and regenerates a self-contained HTML report from the manifest instead of running a long-lived local server.
 
-**Tech Stack:** PowerShell 7, Pandoc, JSON/JSONL, static HTML/CSS/JavaScript, Markdown, existing Superpowers Project validators.
+**Tech Stack:** Bash 7, Pandoc, JSON/JSONL, static HTML/CSS/JavaScript, Markdown, existing Superpowers Project validators.
 
 ---
 
@@ -25,11 +25,11 @@
 
 This plan is test complete when:
 
-- `scripts/test-companion-interface.ps1` passes.
-- `skills/companion-interface/scripts/test-scenarios.ps1` passes.
-- `scripts/validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-12-superpowers-html-companion-interface-plan.md` passes.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes before reporting live install readiness.
+- `scripts/test-companion-interface.sh` passes.
+- `skills/companion-interface/scripts/test-scenarios.sh` passes.
+- `scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-12-superpowers-html-companion-interface-plan.md` passes.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes before reporting live install readiness.
 - The cleanup hook reports no leftover repo-owned companion processes.
 
 No scientific or engineering numerical metrics are required. This is a workflow and rendering feature; pass/fail is contract-based: generated files exist where expected, JSON schemas are valid, rendered HTML contains required sections, command results carry exact statuses, and native approval boundaries remain intact.
@@ -64,16 +64,16 @@ No scientific or engineering numerical metrics are required. This is a workflow 
 
 - Create: `skills/companion-interface/SKILL.md`
 - Create: `skills/companion-interface/agents/openai.yaml`
-- Create: `skills/companion-interface/scripts/lib/companion-report.ps1`
-- Create: `skills/companion-interface/scripts/new-report-session.ps1`
-- Create: `skills/companion-interface/scripts/append-event.ps1`
-- Create: `skills/companion-interface/scripts/render-report.ps1`
-- Create: `skills/companion-interface/scripts/test-scenarios.ps1`
+- Create: `skills/companion-interface/scripts/lib/companion-report.sh`
+- Create: `skills/companion-interface/scripts/new-report-session.sh`
+- Create: `skills/companion-interface/scripts/append-event.sh`
+- Create: `skills/companion-interface/scripts/render-report.sh`
+- Create: `skills/companion-interface/scripts/test-scenarios.sh`
 - Create: `skills/companion-interface/templates/report-template.html`
 - Create: `skills/companion-interface/templates/report.css`
 - Create: `skills/companion-interface/templates/report.js`
-- Create: `scripts/test-companion-interface.ps1`
-- Modify: `scripts/validate.ps1`
+- Create: `scripts/test-companion-interface.sh`
+- Modify: `scripts/validate.sh`
 - Modify: `README.md`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `.codex-plugin/plugin.json`
@@ -91,19 +91,19 @@ No scientific or engineering numerical metrics are required. This is a workflow 
 - Documentation readers see that the companion is an evidence surface, not a Goal Buddy Board or approval channel.
 
 **Files:**
-- Create: `scripts/test-companion-interface.ps1`
+- Create: `scripts/test-companion-interface.sh`
 - Create: `skills/companion-interface/SKILL.md`
 - Create: `skills/companion-interface/agents/openai.yaml`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/validate.sh`
 - Modify: `README.md`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `.codex-plugin/plugin.json`
 
 - [ ] **Step 1: Write the failing companion contract test**
 
-Create `scripts/test-companion-interface.ps1` with checks equivalent to:
+Create `scripts/test-companion-interface.sh` with checks equivalent to:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -128,13 +128,13 @@ function Assert-Contains {
 }
 
 try {
-    Assert-Contains -Path "skills\companion-interface\SKILL.md" -Needle "name: companion-interface" -Name "skill frontmatter exists"
-    Assert-Contains -Path "skills\companion-interface\SKILL.md" -Needle "evidence and interpretation channel" -Name "skill defines evidence channel"
-    Assert-Contains -Path "skills\companion-interface\SKILL.md" -Needle "must not record approval" -Name "skill preserves native approvals"
-    Assert-Contains -Path "skills\companion-interface\agents\openai.yaml" -Needle "companion-interface" -Name "metadata exists"
+    Assert-Contains -Path "skills/companion-interface\SKILL.md" -Needle "name: companion-interface" -Name "skill frontmatter exists"
+    Assert-Contains -Path "skills/companion-interface\SKILL.md" -Needle "evidence and interpretation channel" -Name "skill defines evidence channel"
+    Assert-Contains -Path "skills/companion-interface\SKILL.md" -Needle "must not record approval" -Name "skill preserves native approvals"
+    Assert-Contains -Path "skills/companion-interface\agents\openai.yaml" -Needle "companion-interface" -Name "metadata exists"
     Assert-Contains -Path ".codex-plugin\plugin.json" -Needle '$superpowers-project:companion-interface' -Name "plugin prompt lists companion"
     Assert-Contains -Path "README.md" -Needle '$superpowers-project:companion-interface' -Name "README lists companion"
-    Assert-Contains -Path "docs\superpowers\PROJECT_CONTEXT.md" -Needle "companion-interface" -Name "project context lists companion"
+    Assert-Contains -Path "docs/superpowers\PROJECT_CONTEXT.md" -Needle "companion-interface" -Name "project context lists companion"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "companion-interface-contract"; checks = $checks } | ConvertTo-Json -Depth 8
@@ -150,8 +150,8 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-companion-interface.sh
 ```
 
 Expected: command exits nonzero because `skills/companion-interface/SKILL.md` does not exist yet.
@@ -178,7 +178,7 @@ The companion must not record approval, push, publish, merge, live sync, GitHub 
 
 ## Report Model
 
-Use `scripts/new-report-session.ps1` to create a session, `scripts/append-event.ps1` to add structured evidence, and `scripts/render-report.ps1` to regenerate `index.html`.
+Use `scripts/new-report-session.sh` to create a session, `scripts/append-event.sh` to add structured evidence, and `scripts/render-report.sh` to regenerate `index.html`.
 
 Generated reports live under `.superpowers/reports/<yyyy-mm-dd>/<run-id>`.
 
@@ -220,11 +220,11 @@ Update `docs/superpowers/PROJECT_CONTEXT.md` `Extension Skills` with:
 
 - [ ] **Step 6: Wire the companion contract test into full validation**
 
-Modify `scripts/validate.ps1` after the `Advanced user input policy contract` check:
+Modify `scripts/validate.sh` after the `Advanced user input policy contract` check:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Companion interface contract" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-companion-interface.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-companion-interface.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Companion interface contract failed" }
 }))
 ```
@@ -233,8 +233,8 @@ $results.Add((Invoke-Step "Companion interface contract" {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-companion-interface.sh
 ```
 
 Expected: JSON output has `"ok": true`.
@@ -243,8 +243,8 @@ Expected: JSON output has `"ok": true`.
 
 Run:
 
-```powershell
-git add .codex-plugin\plugin.json README.md docs\superpowers\PROJECT_CONTEXT.md scripts\test-companion-interface.ps1 scripts\validate.ps1 skills\companion-interface\SKILL.md skills\companion-interface\agents\openai.yaml
+```bash
+git add .codex-plugin\plugin.json README.md docs/superpowers\PROJECT_CONTEXT.md scripts/test-companion-interface.sh scripts/validate.sh skills/companion-interface\SKILL.md skills/companion-interface\agents\openai.yaml
 git commit -m "Add companion interface skill contract"
 ```
 
@@ -259,19 +259,19 @@ Expected: commit succeeds.
 - A failed command can be recorded as evidence without pretending it passed.
 
 **Files:**
-- Create: `skills/companion-interface/scripts/lib/companion-report.ps1`
-- Create: `skills/companion-interface/scripts/new-report-session.ps1`
-- Create: `skills/companion-interface/scripts/append-event.ps1`
-- Create: `skills/companion-interface/scripts/test-scenarios.ps1`
+- Create: `skills/companion-interface/scripts/lib/companion-report.sh`
+- Create: `skills/companion-interface/scripts/new-report-session.sh`
+- Create: `skills/companion-interface/scripts/append-event.sh`
+- Create: `skills/companion-interface/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Write failing scenario tests for report sessions**
 
-Create `skills/companion-interface/scripts/test-scenarios.ps1` with scenarios that call the scripts and assert:
+Create `skills/companion-interface/scripts/test-scenarios.sh` with scenarios that call the scripts and assert:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path
 )
 
 $ErrorActionPreference = "Stop"
@@ -282,18 +282,18 @@ function Add-Check {
     $checks.Add([pscustomobject]@{ name = $Name; ok = $Ok; reason = if ($Ok) { "passed" } else { $Reason } }) | Out-Null
 }
 
-$sessionScript = Join-Path $RepoRoot "skills\companion-interface\scripts\new-report-session.ps1"
-$appendScript = Join-Path $RepoRoot "skills\companion-interface\scripts\append-event.ps1"
-$session = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $sessionScript -RepoRoot $RepoRoot -WorkflowName "brainstorm-spec" -Title "Fixture Report" | ConvertFrom-Json
+$sessionScript = Join-Path $RepoRoot "skills/companion-interface/scripts/new-report-session.sh"
+$appendScript = Join-Path $RepoRoot "skills/companion-interface/scripts/append-event.sh"
+$session = & $sessionScript -RepoRoot $RepoRoot -WorkflowName "brainstorm-spec" -Title "Fixture Report" | ConvertFrom-Json
 Add-Check -Name "session creates manifest" -Ok (Test-Path -LiteralPath $session.manifest_path) -Reason "manifest missing"
 Add-Check -Name "session creates events file" -Ok (Test-Path -LiteralPath $session.events_path) -Reason "events file missing"
 Add-Check -Name "session stays under .superpowers reports" -Ok ($session.relative_report_root -like ".superpowers/reports/*") -Reason "wrong report root"
 
-$event = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "summary_added" -Title "Fixture Summary" -Summary "Report evidence was added." | ConvertFrom-Json
+$event = & $appendScript -RepoRoot $RepoRoot -ReportRoot $session.relative_report_root -Type "summary_added" -Title "Fixture Summary" -Summary "Report evidence was added." | ConvertFrom-Json
 Add-Check -Name "append event succeeds" -Ok ($event.ok -eq $true) -Reason "append failed"
 Add-Check -Name "manifest event count increments" -Ok ($event.event_count -eq 2) -Reason "unexpected event count"
 
-$failedAppend = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $appendScript -RepoRoot $RepoRoot -ReportRoot "..\outside" -Type "summary_added" -Title "Bad" -Summary "Bad" 2>&1
+$failedAppend = & $appendScript -RepoRoot $RepoRoot -ReportRoot "../outside" -Type "summary_added" -Title "Bad" -Summary "Bad" 2>&1
 Add-Check -Name "outside report root is rejected" -Ok ($LASTEXITCODE -ne 0 -and (($failedAppend | Out-String) -match "outside repo root|report root")) -Reason "outside root was accepted"
 
 $failed = @($checks | Where-Object { -not $_.ok })
@@ -305,23 +305,23 @@ if ($failed.Count -gt 0) { exit 1 }
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
 Expected: command exits nonzero because session scripts do not exist yet.
 
 - [ ] **Step 3: Create the companion report library**
 
-Create `skills/companion-interface/scripts/lib/companion-report.ps1` with these functions:
+Create `skills/companion-interface/scripts/lib/companion-report.sh` with these functions:
 
-```powershell
+```bash
 $ErrorActionPreference = "Stop"
 
 function Resolve-CompanionRepoRoot {
     param([string]$RepoRoot)
     if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
-        return (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path
+        return (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path
     }
     (Resolve-Path -LiteralPath $RepoRoot).Path
 }
@@ -358,11 +358,11 @@ function Write-CompanionJson {
 
 - [ ] **Step 4: Create the session script**
 
-Create `skills/companion-interface/scripts/new-report-session.ps1` with parameters:
+Create `skills/companion-interface/scripts/new-report-session.sh` with parameters:
 
-```powershell
+```bash
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$WorkflowName,
     [Parameter(Mandatory = $true)][string]$Title,
     [string]$SourcePath = ""
@@ -381,11 +381,11 @@ The script should:
 
 - [ ] **Step 5: Create the append script**
 
-Create `skills/companion-interface/scripts/append-event.ps1` with parameters:
+Create `skills/companion-interface/scripts/append-event.sh` with parameters:
 
-```powershell
+```bash
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$ReportRoot,
     [Parameter(Mandatory = $true)][ValidateSet("artifact_added", "artifact_changed", "markdown_rendered", "plot_added", "table_added", "command_result", "validation_result", "test_result", "file_inventory", "risk_added", "summary_added", "decision_needed", "decision_recorded", "cleanup_result", "run_completed")][string]$Type,
     [Parameter(Mandatory = $true)][string]$Title,
@@ -407,8 +407,8 @@ The script should:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true`.
@@ -417,8 +417,8 @@ Expected: JSON output has `"ok": true`.
 
 Run:
 
-```powershell
-git add skills\companion-interface\scripts
+```bash
+git add skills/companion-interface/scripts
 git commit -m "Add companion report session helpers"
 ```
 
@@ -433,30 +433,30 @@ Expected: commit succeeds.
 - The report has no external network dependency for its default layout.
 
 **Files:**
-- Create: `skills/companion-interface/scripts/render-report.ps1`
+- Create: `skills/companion-interface/scripts/render-report.sh`
 - Create: `skills/companion-interface/templates/report-template.html`
 - Create: `skills/companion-interface/templates/report.css`
 - Create: `skills/companion-interface/templates/report.js`
-- Modify: `skills/companion-interface/scripts/test-scenarios.ps1`
+- Modify: `skills/companion-interface/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Extend scenario tests for static rendering**
 
-Add a scenario to `skills/companion-interface/scripts/test-scenarios.ps1` that:
+Add a scenario to `skills/companion-interface/scripts/test-scenarios.sh` that:
 
 - creates a report session
 - appends `summary_added`, `validation_result`, and `decision_needed` events
-- runs `render-report.ps1`
+- runs `render-report.sh`
 - asserts `index.html` exists
 - asserts the HTML contains `Run Overview`, `Workflow Timeline`, `Artifact Browser`, `Evidence Feed`, `Decision Dock`, and `Interpretation Summary`
 - asserts the HTML does not contain `https://` or `http://`
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
-Expected: command exits nonzero because `render-report.ps1` and templates do not exist yet.
+Expected: command exits nonzero because `render-report.sh` and templates do not exist yet.
 
 - [ ] **Step 2: Create the static HTML template**
 
@@ -564,11 +564,11 @@ document.querySelectorAll("button[data-copy]").forEach((button) => {
 
 - [ ] **Step 5: Create the renderer script**
 
-Create `skills/companion-interface/scripts/render-report.ps1` with parameters:
+Create `skills/companion-interface/scripts/render-report.sh` with parameters:
 
-```powershell
+```bash
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$ReportRoot
 )
 ```
@@ -588,8 +588,8 @@ The script should:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true`, and the generated HTML contains all required section names with no `http://` or `https://`.
@@ -598,8 +598,8 @@ Expected: JSON output has `"ok": true`, and the generated HTML contains all requ
 
 Run:
 
-```powershell
-git add skills\companion-interface\scripts\render-report.ps1 skills\companion-interface\templates skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+git add skills/companion-interface/scripts/render-report.sh skills/companion-interface\templates skills/companion-interface/scripts/test-scenarios.sh
 git commit -m "Render companion reports as static HTML"
 ```
 
@@ -614,16 +614,16 @@ Expected: commit succeeds.
 - User sees command and validation receipts with exact exit state and output excerpt.
 
 **Files:**
-- Modify: `skills/companion-interface/scripts/lib/companion-report.ps1`
-- Modify: `skills/companion-interface/scripts/append-event.ps1`
-- Modify: `skills/companion-interface/scripts/render-report.ps1`
-- Modify: `skills/companion-interface/scripts/test-scenarios.ps1`
+- Modify: `skills/companion-interface/scripts/lib/companion-report.sh`
+- Modify: `skills/companion-interface/scripts/append-event.sh`
+- Modify: `skills/companion-interface/scripts/render-report.sh`
+- Modify: `skills/companion-interface/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Extend tests with Markdown, table, plot, and validation fixtures**
 
-In `skills/companion-interface/scripts/test-scenarios.ps1`, create fixture files under the generated report `artifacts/` directory:
+In `skills/companion-interface/scripts/test-scenarios.sh`, create fixture files under the generated report `artifacts/` directory:
 
-```powershell
+```bash
 $fixtureMarkdown = Join-Path $session.artifact_root "fixture-spec.md"
 Set-Content -LiteralPath $fixtureMarkdown -Encoding utf8NoBOM -Value @'
 ---
@@ -638,7 +638,7 @@ Inline math: $x^2 + y^2 = z^2$.
 | --- | --- |
 | markdown | pass |
 
-```powershell
+```bash
 Write-Output "hello"
 ```
 '@
@@ -667,17 +667,17 @@ Append events for `markdown_rendered`, `table_added`, `plot_added`, and `validat
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
 Expected: command exits nonzero because Markdown, table, plot, and validation renderers do not exist yet.
 
 - [ ] **Step 3: Add Markdown conversion helper**
 
-Add `Convert-CompanionMarkdownToHtml` to `skills/companion-interface/scripts/lib/companion-report.ps1`:
+Add `Convert-CompanionMarkdownToHtml` to `skills/companion-interface/scripts/lib/companion-report.sh`:
 
-```powershell
+```bash
 function Convert-CompanionMarkdownToHtml {
     param(
         [Parameter(Mandatory = $true)][string]$MarkdownPath
@@ -702,7 +702,7 @@ Add helpers that:
 
 Use function names:
 
-```powershell
+```bash
 Convert-CompanionTableToHtml
 Convert-CompanionValidationToHtml
 Convert-CompanionArtifactPathToHtml
@@ -710,7 +710,7 @@ Convert-CompanionArtifactPathToHtml
 
 - [ ] **Step 5: Wire artifact rendering into the static renderer**
 
-Update `skills/companion-interface/scripts/render-report.ps1` so:
+Update `skills/companion-interface/scripts/render-report.sh` so:
 
 - `markdown_rendered` events call `Convert-CompanionMarkdownToHtml`
 - `table_added` events call `Convert-CompanionTableToHtml`
@@ -721,8 +721,8 @@ Update `skills/companion-interface/scripts/render-report.ps1` so:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true`, and the generated report includes frontmatter, MathML markup, CSV rows, SVG image markup, validation command text, and exit code text.
@@ -731,8 +731,8 @@ Expected: JSON output has `"ok": true`, and the generated report includes frontm
 
 Run:
 
-```powershell
-git add skills\companion-interface\scripts
+```bash
+git add skills/companion-interface/scripts
 git commit -m "Render companion markdown tables plots and receipts"
 ```
 
@@ -751,27 +751,27 @@ Expected: commit succeeds.
 - Modify: `skills/brainstorm-spec/agents/openai.yaml`
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `scripts/test-companion-interface.ps1`
+- Modify: `scripts/test-companion-interface.sh`
 
 - [ ] **Step 1: Extend contract tests for opt-in integration**
 
-Update `scripts/test-companion-interface.ps1` to assert:
+Update `scripts/test-companion-interface.sh` to assert:
 
-```powershell
-Assert-Contains -Path "skills\brainstorm-spec\SKILL.md" -Needle "companion-interface" -Name "brainstorm mentions companion"
-Assert-Contains -Path "skills\brainstorm-spec\SKILL.md" -Needle "native approval" -Name "brainstorm preserves native approval"
-Assert-Contains -Path "skills\write-plan\SKILL.md" -Needle "companion-interface" -Name "write-plan mentions companion"
-Assert-Contains -Path "skills\write-plan\SKILL.md" -Needle "native continuation" -Name "write-plan preserves native continuation"
-Assert-Contains -Path "skills\brainstorm-spec\agents\openai.yaml" -Needle "companion-interface" -Name "brainstorm metadata mentions companion"
-Assert-Contains -Path "skills\write-plan\agents\openai.yaml" -Needle "companion-interface" -Name "write-plan metadata mentions companion"
+```bash
+Assert-Contains -Path "skills/brainstorm-spec\SKILL.md" -Needle "companion-interface" -Name "brainstorm mentions companion"
+Assert-Contains -Path "skills/brainstorm-spec\SKILL.md" -Needle "native approval" -Name "brainstorm preserves native approval"
+Assert-Contains -Path "skills/write-plan\SKILL.md" -Needle "companion-interface" -Name "write-plan mentions companion"
+Assert-Contains -Path "skills/write-plan\SKILL.md" -Needle "native continuation" -Name "write-plan preserves native continuation"
+Assert-Contains -Path "skills/brainstorm-spec\agents\openai.yaml" -Needle "companion-interface" -Name "brainstorm metadata mentions companion"
+Assert-Contains -Path "skills/write-plan\agents\openai.yaml" -Needle "companion-interface" -Name "write-plan metadata mentions companion"
 ```
 
 - [ ] **Step 2: Run the contract test and verify the expected failure**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
+```bash
+./scripts/test-companion-interface.sh
 ```
 
 Expected: command exits nonzero because `brainstorm-spec` and `write-plan` do not yet mention companion reporting.
@@ -808,10 +808,10 @@ Update `skills/write-plan/agents/openai.yaml` summary text to mention opt-in com
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\brainstorm-spec\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+```bash
+./scripts/test-companion-interface.sh
+./skills/brainstorm-spec/scripts/test-scenarios.sh
+./skills/write-plan/scripts/test-scenarios.sh
 ```
 
 Expected: all three commands exit `0`.
@@ -820,8 +820,8 @@ Expected: all three commands exit `0`.
 
 Run:
 
-```powershell
-git add scripts\test-companion-interface.ps1 skills\brainstorm-spec skills\write-plan
+```bash
+git add scripts/test-companion-interface.sh skills/brainstorm-spec skills/write-plan
 git commit -m "Add opt-in companion reporting to planning workflows"
 ```
 
@@ -842,8 +842,8 @@ Expected: commit succeeds.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-12-superpowers-html-companion-interface-plan.md
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-12-superpowers-html-companion-interface-plan.md
 ```
 
 Expected: JSON output has `"ok": true` and `task_count` is `6`.
@@ -852,9 +852,9 @@ Expected: JSON output has `"ok": true` and `task_count` is `6`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-companion-interface.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\companion-interface\scripts\test-scenarios.ps1
+```bash
+./scripts/test-companion-interface.sh
+./skills/companion-interface/scripts/test-scenarios.sh
 ```
 
 Expected: both commands exit `0` and emit JSON with `"ok": true`.
@@ -863,8 +863,8 @@ Expected: both commands exit `0` and emit JSON with `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: final JSON output has `"ok": true`.
@@ -873,8 +873,8 @@ Expected: final JSON output has `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: command exits `0` and reports source/live validation success.
@@ -883,8 +883,8 @@ Expected: command exits `0` and reports source/live validation success.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: output reports no matching leftover Codex processes for this repo.
@@ -893,8 +893,8 @@ Expected: output reports no matching leftover Codex processes for this repo.
 
 If Task 6 exposed validation-only source edits, run:
 
-```powershell
-git add scripts skills README.md docs\superpowers .codex-plugin
+```bash
+git add scripts skills README.md docs/superpowers .codex-plugin
 git commit -m "Validate companion interface workflow"
 ```
 
@@ -912,7 +912,7 @@ Expected: commit succeeds only when there are validation-related source edits to
 
 - Use `superpowers:test-driven-development` for each implementation task.
 - Use `superpowers:verification-before-completion` before reporting the feature complete.
-- Use `scripts\sync-live.ps1 -Validate` only after source validation passes.
+- Use `scripts/sync-live.sh --validate` only after source validation passes.
 - Run the cleanup hook before final closeout.
 
 ## Plan Self-Review

@@ -31,12 +31,12 @@
 
 | Proof | Command | Result |
 |---|---|---|
-| repo validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` | pass |
-| live sync validation | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` | pass |
-| version freshness | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent` | pass |
-| tracker roadmap proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-tracker-roadmap-proof.ps1 -RepoRoot . -IssueNumber 72 -ForbiddenIssueLabel status:ready -RequiredIssueMilestone "M1 - Source Of Truth"` | pass |
-| tracker align proof | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` | pass |
-| cleanup | `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` | pass |
+| repo validation | `./scripts/validate.sh` | pass |
+| live sync validation | `./scripts/sync-live.sh --validate` | pass |
+| version freshness | `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` | pass |
+| tracker roadmap proof | `./scripts/validate-tracker-roadmap-proof.sh -RepoRoot . -IssueNumber 72 -ForbiddenIssueLabel status:ready -RequiredIssueMilestone "M1 - Source Of Truth"` | pass |
+| tracker align proof | `./skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` | pass |
+| cleanup | `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .` | pass |
 | clean git state | `git status --short --branch` | pass |
 
 ## Tracker And Align Proof
@@ -50,4 +50,4 @@ GitHub-aware alignment and tracker hygiene are part of the proof. The tracker ro
 
 ## Clean State Proof
 
-The cleanup hook and clean Git state are required before final Done. This receipt is validated by `scripts/validate-workflow-normalization-proof.ps1`, and the final merge closeout must rerun the proof oracle from issue #72 before removing the issue mirror.
+The cleanup hook and clean Git state are required before final Done. This receipt is validated by `scripts/validate-workflow-normalization-proof.sh`, and the final merge closeout must rerun the proof oracle from issue #72 before removing the issue mirror.

@@ -9,7 +9,7 @@ The target experience is that typing `$project` exposes the whole Superpowers Pr
 ## Project Context Evidence
 
 - `.codex-plugin/plugin.json` currently uses `name: workflow`, so the natural plugin namespace is `superpowers-project`, not `project`.
-- `scripts/sync-live.ps1` currently deploys the source skills both to `C:\Users\Tanner\plugins\superpowers-project` and to `C:\Users\Tanner\.agents\skills`.
+- `scripts/sync-live.sh` currently deploys the source skills both to `/home/tnnrpolley21/.codex/plugins/superpowers-project` and to `/home/tnnrpolley21/.agents/skills`.
 - The global user-skill deployment creates unscoped prompt entries such as `$project:brainstorm-spec`, which undermines a clean plugin namespace.
 - The repo's current source skills are `superpowers-project`, `setup`, `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, and `audit-project`.
 - `docs/superpowers/PROJECT_CONTEXT.md` defines this repo as the durable source for Superpowers Project workflow skills, project context, roadmap mapping, GitHub issue linkage, native user-input grilling, and goal-backed execution.
@@ -19,8 +19,8 @@ The target experience is that typing `$project` exposes the whole Superpowers Pr
 
 - Use `project` as the plugin runtime namespace.
 - Keep `Superpowers Project` as the public display brand.
-- Move the live plugin deployment path to `C:\Users\Tanner\plugins\project`.
-- Stop copying canonical plugin skills into `C:\Users\Tanner\.agents\skills`.
+- Move the live plugin deployment path to `/home/tnnrpolley21/.codex/plugins/project`.
+- Stop copying canonical plugin skills into `/home/tnnrpolley21/.agents/skills`.
 - Remove old global user-skill copies after migration.
 - Do not keep compatibility wrappers, forwarding skills, alias stubs, or fake defaults for old names.
 - Use action-oriented skill names that read clearly under the `project:` namespace.
@@ -48,9 +48,9 @@ The implementation should make `project` the only canonical plugin namespace.
 
 `.codex-plugin/plugin.json` should change the plugin runtime `name` to `project` while keeping the human-facing display name as `Superpowers Project`. Documentation can continue to describe the package as Superpowers Project.
 
-`scripts/sync-live.ps1` should deploy the plugin to `C:\Users\Tanner\plugins\project`. It should stop copying active skills into `C:\Users\Tanner\.agents\skills`. It should remove previously deployed, repo-owned global user-skill directories for the retired names.
+`scripts/sync-live.sh` should deploy the plugin to `/home/tnnrpolley21/.codex/plugins/project`. It should stop copying active skills into `/home/tnnrpolley21/.agents/skills`. It should remove previously deployed, repo-owned global user-skill directories for the retired names.
 
-The migration should remove the old live plugin root `C:\Users\Tanner\plugins\superpowers-project` only after verifying it is owned by this plugin. It should also keep any retired `milestones` cleanup behavior that is still needed by current install drift checks.
+The migration should remove the old live plugin root `/home/tnnrpolley21/.codex/plugins/superpowers-project` only after verifying it is owned by this plugin. It should also keep any retired `milestones` cleanup behavior that is still needed by current install drift checks.
 
 Docs, tests, scenario scripts, validation scripts, and default prompts should use the new `project:*` names. References to old names should remain only where they describe migration history or retired-name cleanup.
 
@@ -92,8 +92,8 @@ Renaming `audit-project` to `audit-project` makes the skill clearer in autocompl
 - `skills/orchestrate-issues/SKILL.md` exists and has `name: orchestrate-issues`.
 - `skills/merge-changes/SKILL.md` exists and has `name: merge-changes`.
 - `skills/audit-project/SKILL.md` exists and has `name: audit-project`.
-- `scripts/sync-live.ps1 -Validate` deploys to `C:\Users\Tanner\plugins\project`.
-- `scripts/sync-live.ps1 -Validate` no longer deploys active skills to `C:\Users\Tanner\.agents\skills`.
+- `scripts/sync-live.sh --validate` deploys to `/home/tnnrpolley21/.codex/plugins/project`.
+- `scripts/sync-live.sh --validate` no longer deploys active skills to `/home/tnnrpolley21/.agents/skills`.
 - Old repo-owned user-skill directories such as `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, `audit-project`, and `superpowers-project` are removed during sync.
 - Validation rejects missing source skill directories for the new canonical names.
 - `README.md` and skill continuation prompts use `project:*` names.
@@ -103,7 +103,7 @@ Renaming `audit-project` to `audit-project` makes the skill clearer in autocompl
 
 - Should `project:initiate-workflow` keep a separate display phrase such as "Superpowers Project Workflow" inside docs and prompts, or should prompts use only the compact skill name?
 - Should the implementation plan migrate every skill directory in one change, or split runtime namespace and skill-name migration into separate validation steps to reduce blast radius?
-- Should the live sync script remove the old `C:\Users\Tanner\plugins\superpowers-project` directory in the same pass or report it first for a follow-up Doctor repair?
+- Should the live sync script remove the old `/home/tnnrpolley21/.codex/plugins/superpowers-project` directory in the same pass or report it first for a follow-up Doctor repair?
 
 ## Spec Self-Review
 

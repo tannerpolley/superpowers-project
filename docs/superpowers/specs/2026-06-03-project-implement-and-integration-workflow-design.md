@@ -139,7 +139,7 @@ Native UI prompts should use as many questions and options as the decision requi
 
 - `skills/advanced-user-input/SKILL.md` exists and validates.
 - `skills/project-implement/SKILL.md` exists and validates.
-- `scripts/validate.ps1` active skill list includes `advanced-user-input` and `project-implement`.
+- `scripts/validate.sh` active skill list includes `advanced-user-input` and `project-implement`.
 - `superpowers-project` routes to Implement.
 - `write-plan` continuation includes Project Implement and no longer treats branch-backed non-issue work as Quick Apply.
 - `project-implement` scenario tests cover missing plan, missing goal proof, inline topology, worktree topology, native publish permission, and merge-ready proof.

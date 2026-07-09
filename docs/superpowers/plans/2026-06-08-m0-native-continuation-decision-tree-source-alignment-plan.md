@@ -6,7 +6,7 @@
 
 **Architecture:** Treat this as a contract-first source alignment pass. First harden validation so the known drift fails, then update active skill contracts and metadata, then reconcile docs/assets, and finally run repo validation plus live-sync validation before any live deployment.
 
-**Tech Stack:** Markdown skill contracts, YAML skill metadata, PowerShell validators and scenario tests, README/workflow docs, local generated Auto Mode authorization ledger, git.
+**Tech Stack:** Markdown skill contracts, YAML skill metadata, Bash validators and scenario tests, README/workflow docs, local generated Auto Mode authorization ledger, git.
 
 ---
 
@@ -14,7 +14,7 @@
 
 **Source Spec:** `docs/superpowers/specs/2026-06-08-native-continuation-decision-tree-source-alignment-design.md`
 
-**Auto Mode Authorization Ledger:** `C:\Users\Tanner\AppData\Local\Temp\superpowers-project\auto-mode\2026-06-08-native-continuation-decision-tree-source-alignment-authorization.json`
+**Auto Mode Authorization Ledger:** `/tmp\superpowers-project\auto-mode\2026-06-08-native-continuation-decision-tree-source-alignment-authorization.json`
 
 **Selected Authority:** `bounded-auto-merge`
 
@@ -58,8 +58,8 @@
 - The readable decision tree keeps valid `Q<n>` and `A<n><letter>` labels.
 - The developer decision-tree document clearly states whether it is a desired route-ID map or an audit/source-drift map.
 - Validation fails if nested Stop or old direction-coded closeout labels return.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes before any live install sync is reported complete.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes before any live install sync is reported complete.
 - The cleanup hook passes before closeout.
 
 ## Test Complete And Metrics
@@ -74,25 +74,25 @@ Test complete means all of these are true:
 - recommendation-policy scans show no active governed text allowing Stop recommendation before verified final completion
 - readable decision-tree structural checks pass
 - updated scenario tests pass for all governed skills touched by the implementation
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` exits `0`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` exits `0`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` exits `0`
+- `./scripts/validate.sh` exits `0`
+- `./scripts/sync-live.sh --validate` exits `0`
+- `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .` exits `0`
 
 ## Proof Oracle
 
 Run these commands before claiming the implementation complete:
 
-```powershell
+```bash
 rg -n '^- (Down|Left|Right):' skills -g SKILL.md
 rg -n 'with Down|Down Continue|Down Merge|Right Stop|Down default progress' skills -g openai.yaml
 rg -n 'Right: `Stop|Right: Stop|stale terminal label|stale terminal option' skills README.md docs/assets docs/superpowers/closeout-startup-decision-tree*.md
 rg -n 'Recommend Stop only|recommended.*Stop.*blocker|Stop.*recommended.*locally complete|Stop.*recommended.*validation passed' skills README.md docs/superpowers/closeout-startup-decision-tree*.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+./scripts/test-native-continuation-loop.sh
+./scripts/test-advanced-user-input-policy.sh
+./scripts/test-native-qa-svg.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 git status --short --branch
 ```
 
@@ -140,22 +140,22 @@ Expected final state:
 - Modify: `docs/assets/native-qa-main-flow.svg`
 - Modify: `docs/superpowers/closeout-startup-decision-tree.md`
 - Modify: `docs/superpowers/closeout-startup-decision-tree-dev.md`
-- Modify: `scripts/test-native-continuation-loop.ps1`
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
-- Modify: `scripts/test-native-qa-svg.ps1`
-- Modify: governed skill `scripts/test-scenarios.ps1` files when they assert the old contract or miss the new guardrail
+- Modify: `scripts/test-native-continuation-loop.sh`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
+- Modify: `scripts/test-native-qa-svg.sh`
+- Modify: governed skill `scripts/test-scenarios.sh` files when they assert the old contract or miss the new guardrail
 
 ## Task 1: Harden Native Continuation Validation
 
 **Files:**
-- Modify: `scripts/test-native-continuation-loop.ps1`
-- Modify: governed skill `scripts/test-scenarios.ps1` files as needed
+- Modify: `scripts/test-native-continuation-loop.sh`
+- Modify: governed skill `scripts/test-scenarios.sh` files as needed
 
 - [ ] **Step 1: Add active source scans for visible direction labels**
 
-Update `scripts/test-native-continuation-loop.ps1` so active governed `SKILL.md` closeout sections fail when option lines start with:
+Update `scripts/test-native-continuation-loop.sh` so active governed `SKILL.md` closeout sections fail when option lines start with:
 
-```powershell
+```bash
 - Down:
 - Left:
 - Right:
@@ -205,8 +205,8 @@ Remove active-contract language that allows Stop recommendation before final com
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+```bash
+./scripts/test-native-continuation-loop.sh
 ```
 
 Expected: fails on the known active source drift.
@@ -216,7 +216,7 @@ Expected: fails on the known active source drift.
 **Files:**
 - Modify: `skills/advanced-user-input/SKILL.md`
 - Modify: `skills/advanced-user-input/agents/openai.yaml`
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
 
 - [ ] **Step 1: Update policy text**
 
@@ -238,14 +238,14 @@ Mirror the same compact policy in `skills/advanced-user-input/agents/openai.yaml
 
 - [ ] **Step 3: Update tests**
 
-Update `scripts/test-advanced-user-input-policy.ps1` to require the new policy and reject active text that permits Stop recommendation before verified final completion.
+Update `scripts/test-advanced-user-input-policy.sh` to require the new policy and reject active text that permits Stop recommendation before verified final completion.
 
 - [ ] **Step 4: Run the policy test**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
+```bash
+./scripts/test-advanced-user-input-policy.sh
 ```
 
 Expected: exits `0` after the shared policy and metadata align.
@@ -339,7 +339,7 @@ Mirror the source skill rule that the agent must not exit the loop by itself and
 - Modify: `docs/assets/native-qa-main-flow.svg`
 - Modify: `docs/superpowers/closeout-startup-decision-tree.md`
 - Modify: `docs/superpowers/closeout-startup-decision-tree-dev.md`
-- Modify: `scripts/test-native-qa-svg.ps1`
+- Modify: `scripts/test-native-qa-svg.sh`
 
 - [ ] **Step 1: Update README stale recommendation wording**
 
@@ -370,12 +370,12 @@ Maintain:
 
 - [ ] **Step 4: Update asset tests**
 
-Extend `scripts/test-native-qa-svg.ps1` so README/SVG/Mermaid checks reject stale `stale terminal option` recommendation wording and old direction labels in user-facing workflow docs.
+Extend `scripts/test-native-qa-svg.sh` so README/SVG/Mermaid checks reject stale `stale terminal option` recommendation wording and old direction labels in user-facing workflow docs.
 
 ## Task 6: Update Scenario Tests
 
 **Files:**
-- Modify: governed skill `scripts/test-scenarios.ps1` files
+- Modify: governed skill `scripts/test-scenarios.sh` files
 
 - [ ] **Step 1: Add positive assertions**
 
@@ -401,7 +401,7 @@ stale terminal option
 
 - [ ] **Step 3: Run all scenario suites**
 
-Run the governed skill scenario scripts through `scripts/validate.ps1` after targeted fixes are complete.
+Run the governed skill scenario scripts through `scripts/validate.sh` after targeted fixes are complete.
 
 ## Task 7: Validate, Sync Live, And Prepare Closeout
 
@@ -416,41 +416,41 @@ Run the `rg` proof oracle commands from this plan and inspect any matches.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
+```bash
+./scripts/test-native-continuation-loop.sh
+./scripts/test-advanced-user-input-policy.sh
+./scripts/test-native-qa-svg.sh
 ```
 
 - [ ] **Step 3: Run full validation**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 - [ ] **Step 4: Run live-sync validation**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 - [ ] **Step 5: Run cleanup hook**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 - [ ] **Step 6: Review git state**
 
 Run:
 
-```powershell
+```bash
 git status --short --branch
 git diff --stat
 ```

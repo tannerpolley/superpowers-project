@@ -15,7 +15,7 @@ GoalBuddy boards are outside the default execution model. Do not create `docs/go
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.issue_route: direct-inline-resolve-issue`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.issue_route: direct-inline-resolve-issue`, and `stop_outside_policy: true`.
 
 Auto Mode may choose direct current-thread issue resolution, create or verify native goal proof, execute the source plan, run verification, push PR-ready work, and route to merge without additional user input when the ready issue mirror came from the authorized source spec or derived plan. Carry the Auto Mode authorization ledger into PR-ready handoff evidence. If the issue mirror is not ready, proof is missing, checks fail, branch state is unsafe, or implementation needs a decision outside recorded defaults, stop outside policy before pushing or handoff.
 
@@ -34,8 +34,8 @@ Before implementation, block or route to `$superpowers-project:align-project` wh
 
 Task # Use Cases are a strict requirement for issue resolution because this skill executes the linked source plan. After source plan validation and before native goal activation, branch setup, or code edits, run the repo-root validator against the linked source plan:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <source-plan-path>
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath <source-plan-path>
 ```
 
 Every numbered `Task N` in the linked source plan MUST include a non-empty `**Use Cases:**` block with concrete user, system, acceptance, failure/recovery, validation, or workflow cases. If validation fails, stop issue execution and route back to `$superpowers-project:write-plan` with `Revise Plan` for the source plan. Do not treat issue acceptance criteria alone as a substitute for Task # Use Cases.
@@ -49,7 +49,7 @@ Stop immediately when any of these are true:
 - The issue mirror is outside `docs/superpowers/issues`.
 - The issue mirror has no linked source plan under `docs/superpowers/plans`.
 - The linked source plan does not exist.
-- The linked source plan fails `scripts/validate-plan-task-use-cases.ps1`.
+- The linked source plan fails `scripts/validate-plan-task-use-cases.sh`.
 - The issue mirror lacks acceptance criteria, proof oracle, AFK/HITL classification, or Outcome Summary.
 - The issue mirror is a GitHub hierarchy parent or plan-wrapper, or has `Executable: false`; direct execution is leaf-only.
 - Native goal proof is missing, a plain string, inactive, or not from `get_goal`.
@@ -66,10 +66,11 @@ Follow this order exactly:
 1. `repo gate`: verify the active repo and explicit target when needed.
 2. `issue mirror validation`: inspect `docs/superpowers/issues/<issue>.md`, including its Outcome Summary.
 3. `source plan validation`: read the linked `docs/superpowers/plans/<plan>.md`.
-4. `Task # Use Cases validation`: run `scripts/validate-plan-task-use-cases.ps1` against the linked source plan.
+4. `Task # Use Cases validation`: run `scripts/validate-plan-task-use-cases.sh` against the linked source plan.
 5. `preflight`: verify the repo is ready for one issue execution.
 6. `route check`: if worker-thread execution is requested, stop and route to `$superpowers-project:orchestrate-issues`.
-7. `native goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
+7. 
+ative goal activation`: call `get_goal`, create or activate the native `/goal`, then call `get_goal` again and capture structured proof.
 8. `setup validation`: write and validate the setup ledger for direct current-thread execution, including structured `outcome_proof`.
 9. `worktree and branch setup`: create or verify the current-thread worktree/branch.
 10. `Superpowers execution`: use Superpowers execution, TDD, debugging, dynamic workflow, and verification skills as applicable.
@@ -93,7 +94,8 @@ When the requested route is ambiguous and `request_user_input` is callable, the 
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not execute issue work, push branches, choose execution topology, or pretend a live user approved issue execution.
 ## Worker Route Boundary
@@ -104,23 +106,23 @@ Worker-thread orchestration is owned by `$superpowers-project:orchestrate-issues
 
 Run bundled scripts from this skill package with explicit `-RepoRoot`:
 
-- `scripts/prepare-execution.ps1 -Mode Inspect`: reads the issue mirror, validates the source plan and Outcome Summary, and emits handoff JSON plus the exact native goal objective.
-- `scripts/preflight.ps1`: validates issue mirror, source plan, branch, proof oracle, and clean starting state.
-- `scripts/prepare-execution.ps1 -Mode ApplySetup`: creates or verifies the implementation branch and prints the native goal objective.
-- `scripts/prepare-execution.ps1 -Mode FinalizeSetup`: accepts structured `get_goal` proof and writes the native setup ledger with the issue outcome proof.
-- `scripts/validate-setup.ps1`: rejects GoalBuddy board fields and requires issue mirror, source plan, branch, proof oracle, goal id or thread goal proof, structured outcome proof, and structured native goal proof.
-- `scripts/collect-pr-ready-ledger.ps1 -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrJson <json> -VerificationCommands <commands> -PushPermissionJson <json-or-path> -AcceptanceCoverageJson <json> -HandoffProofJson <json> -ReadinessReviewJson <json-or-path> -GoalCompletionProofJson <json> -OutputDir <temp-or-handoff-dir>`: generates the PR-ready ledger from PR evidence, outcome proof carry-forward, readiness review proof, push permission proof, acceptance coverage, verification receipts, handoff proof, and native goal completion proof.
-- `scripts/validate-pr-ready.ps1`: validates outcome proof carry-forward, readiness review proof, push permission proof, branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
-- `scripts/collect-continuation-ledger.ps1 -RepoRoot . -QuestionId <id> -Prompt <text> -Source <request_user_input|debug_question_mode> -SelectedOptionId <id> -RecommendedOptionId <id> -TerminalState <stop|continue|revisit> -OptionIds <id1,id2,id3> -OutputDir <temp-or-handoff-dir>`: records the structured continuation decision after a PR-ready native route question.
-- `scripts/validate-terminal-closeout.ps1 -RepoRoot . -PrReadyResultJson <json-or-path> -ContinuationDecisionJson <json-or-path>`: blocks terminal success unless the PR-ready gate passed and the continuation decision records explicit `Stop`.
+- `scripts/prepare-execution.sh -Mode Inspect`: reads the issue mirror, validates the source plan and Outcome Summary, and emits handoff JSON plus the exact native goal objective.
+- `scripts/preflight.sh`: validates issue mirror, source plan, branch, proof oracle, and clean starting state.
+- `scripts/prepare-execution.sh -Mode ApplySetup`: creates or verifies the implementation branch and prints the native goal objective.
+- `scripts/prepare-execution.sh -Mode FinalizeSetup`: accepts structured `get_goal` proof and writes the native setup ledger with the issue outcome proof.
+- `scripts/validate-setup.sh`: rejects GoalBuddy board fields and requires issue mirror, source plan, branch, proof oracle, goal id or thread goal proof, structured outcome proof, and structured native goal proof.
+- `scripts/collect-pr-ready-ledger.sh -RepoRoot . -SetupLedgerPath <setup-ledger.json> -PrJson <json> -VerificationCommands <commands> -PushPermissionJson <json-or-path> -AcceptanceCoverageJson <json> -HandoffProofJson <json> -ReadinessReviewJson <json-or-path> -GoalCompletionProofJson <json> -OutputDir <temp-or-handoff-dir>`: generates the PR-ready ledger from PR evidence, outcome proof carry-forward, readiness review proof, push permission proof, acceptance coverage, verification receipts, handoff proof, and native goal completion proof.
+- `scripts/validate-pr-ready.sh`: validates outcome proof carry-forward, readiness review proof, push permission proof, branch push proof, PR closing reference, acceptance coverage, verification proof, handoff proof, and native goal completion proof.
+- `scripts/collect-continuation-ledger.sh -RepoRoot . -QuestionId <id> -Prompt <text> -Source <request_user_input|debug_question_mode> -SelectedOptionId <id> -RecommendedOptionId <id> -TerminalState <stop|continue|revisit> -OptionIds <id1,id2,id3> -OutputDir <temp-or-handoff-dir>`: records the structured continuation decision after a PR-ready native route question.
+- `scripts/validate-terminal-closeout.sh -RepoRoot . -PrReadyResultJson <json-or-path> -ContinuationDecisionJson <json-or-path>`: blocks terminal success unless the PR-ready gate passed and the continuation decision records explicit `Stop`.
 
 All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is false, block with the script reason.
 
 ## Temp Plus Evidence
 
-Normal runs should use `scripts/collect-pr-ready-ledger.ps1` before `scripts/validate-pr-ready.ps1`. The collector writes generated ledgers to a temp directory by default, or to an explicit output directory when the final handoff needs selected evidence artifacts. This keeps generated ledgers passed to existing gates without making agents hand-build JSON during ordinary resolution. The validator remains authoritative; collector output is convenience evidence, not a replacement for the PR-ready gate.
+Normal runs should use `scripts/collect-pr-ready-ledger.sh` before `scripts/validate-pr-ready.sh`. The collector writes generated ledgers to a temp directory by default, or to an explicit output directory when the final handoff needs selected evidence artifacts. This keeps generated ledgers passed to existing gates without making agents hand-build JSON during ordinary resolution. The validator remains authoritative; collector output is convenience evidence, not a replacement for the PR-ready gate.
 
-Terminal closeout is separate from PR-ready proof. If the thread is about to stop after PR-ready, collect the continuation decision with `scripts/collect-continuation-ledger.ps1` and pass it to `scripts/validate-terminal-closeout.ps1`. That terminal validator is authoritative for whether `resolve-issue` may end the workflow; PR-ready proof alone is not terminal permission.
+Terminal closeout is separate from PR-ready proof. If the thread is about to stop after PR-ready, collect the continuation decision with `scripts/collect-continuation-ledger.sh` and pass it to `scripts/validate-terminal-closeout.sh`. That terminal validator is authoritative for whether `resolve-issue` may end the workflow; PR-ready proof alone is not terminal permission.
 
 There is no hand-authored JSON requirement for normal runs. Hand-authored JSON is acceptable only for fixture tests, debug smoke tests, or unusual recovery work where the collector cannot access the source evidence.
 
@@ -200,7 +202,7 @@ Before PR-ready handoff, collect structured `readiness_review` evidence:
 If native goal tools are callable, use them:
 
 - Call `get_goal` before activation. If an unrelated active goal exists, block.
-- Activate the exact `/goal` objective from `prepare-execution.ps1`.
+- Activate the exact `/goal` objective from `prepare-execution.sh`.
 - Call `get_goal` again and pass that structured proof to `FinalizeSetup`.
 - At PR-ready, call native goal completion when tool support exists and record the structured result in the PR-ready ledger.
 
@@ -301,7 +303,7 @@ Options:
 
 After the user selects an option, start the selected next skill in the same turn when tools and state allow it. Treat selected native answers as executable routing, not advisory text. If the route needs unavailable tools, stop with the exact pending state and resume target. Debug mode is only for explicit non-interactive smoke tests.
 
-Record the selected route in a structured continuation decision ledger. If the answer is `Stop`, collect the ledger and run `scripts/validate-terminal-closeout.ps1` before any final success-style response. If the answer is any non-terminal route such as `Merge`, `Resolve Another`, `Orchestrate Another`, `Review First`, `Revise Branch`, or `Address CI / Checks`, the ledger must still be recorded, and the thread must continue into that route instead of terminating.
+Record the selected route in a structured continuation decision ledger. If the answer is `Stop`, collect the ledger and run `scripts/validate-terminal-closeout.sh` before any final success-style response. If the answer is any non-terminal route such as `Merge`, `Resolve Another`, `Orchestrate Another`, `Review First`, `Revise Branch`, or `Address CI / Checks`, the ledger must still be recorded, and the thread must continue into that route instead of terminating.
 
 ## Completion Rule
 
@@ -317,4 +319,4 @@ Do not send a success-style final response until PR-ready proof shows:
 - Native resolve goal is marked complete.
 - PR-ready handoff was sent or recorded for `$superpowers-project:merge-changes`.
 - A structured continuation decision ledger was collected for the last native continuation answer.
-- `scripts/validate-terminal-closeout.ps1` passes with explicit `Stop`.
+- `scripts/validate-terminal-closeout.sh` passes with explicit `Stop`.

@@ -6,7 +6,7 @@
 
 **Architecture:** Harden the brainstorm-spec source skill and agent metadata, then lock the behavior with focused scenario tests. Reuse the upstream `superpowers:brainstorming` workflow as the authority; the project adapter adds repo context and native user input but cannot weaken or skip the upstream design checklist.
 
-**Tech Stack:** Markdown skill contracts, YAML agent metadata, PowerShell scenario validation, live plugin sync scripts.
+**Tech Stack:** Markdown skill contracts, YAML agent metadata, Bash scenario validation, live plugin sync scripts.
 
 ---
 
@@ -32,11 +32,11 @@
 
 ## Proof Oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-12-brainstorm-design-checklist-gate-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\brainstorm-spec\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-readability.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-12-brainstorm-design-checklist-gate-plan.md
+./skills/brainstorm-spec/scripts/test-scenarios.sh
+./scripts/test-skill-metadata-readability.sh
+./scripts/sync-live.sh --validate
 ```
 
 ## Test Complete
@@ -56,7 +56,7 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - A future edit that treats design-section approval as advisory fails focused validation.
 
 **Files:**
-- Modify: `skills/brainstorm-spec/scripts/test-scenarios.ps1`
+- Modify: `skills/brainstorm-spec/scripts/test-scenarios.sh`
 
 - [x] **Step 1: Add mandatory checklist scenario**
   Require strings for the upstream checklist gate, ordered checklist completion, Design 1, Design 2, 2-3 approaches, section approval, written design doc, self-review, user review, and transition only to planning.
@@ -97,14 +97,14 @@ No numerical engineering metrics apply. Pass/fail is contract-based: required st
 - Cleanup proof runs before reporting the repository work complete.
 
 **Files:**
-- Modify: live deployed plugin copy through `scripts\sync-live.ps1 -Validate`
+- Modify: live deployed plugin copy through `scripts/sync-live.sh --validate`
 - No direct edits to plugin cache paths
 
 - [x] **Step 1: Run focused validation**
   Run the plan use-case validator, brainstorm-spec scenario tests, and skill metadata readability tests.
 
 - [x] **Step 2: Sync live with validation**
-  Run `scripts\sync-live.ps1 -Validate`.
+  Run `scripts/sync-live.sh --validate`.
 
 - [x] **Step 3: Confirm version freshness and cleanup**
   Run the agent plugin version banner with `-RequireCurrent` when an observed root is available, then run the repo cleanup hook.

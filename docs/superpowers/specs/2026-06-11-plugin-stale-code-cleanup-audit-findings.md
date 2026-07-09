@@ -13,8 +13,8 @@ Audit the Superpowers Project plugin source for remaining inefficiencies, stale 
 
 - `skills/**/SKILL.md`
 - `skills/**/agents/openai.yaml`
-- `skills/**/scripts/**/*.ps1`
-- `scripts/**/*.ps1`
+- `skills/**/scripts/**/*.sh`
+- `scripts/**/*.sh`
 - `README.md`
 - `AGENTS.md`
 - `docs/agents/project-roadmap.json`
@@ -24,10 +24,10 @@ Audit the Superpowers Project plugin source for remaining inefficiencies, stale 
 
 Commands used:
 
-```powershell
+```bash
 git status --short --branch
-rg -n "Stop/Done|Stop or Done|stale terminal label|stale terminal option|goal_board|goalbuddy|namespace wrapper|compatibility wrapper|fallback|obsolete|legacy|TODO|FIXME|not_implemented|not_available|debug_question_mode|Use Cases" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md -g "*.md" -g "*.ps1" -g "*.yaml"
-rg -n "convert-idea-to-issue|milestones-validate|docs/ideas|docs/milestones/<milestone-folder>|canonical-skills|goalbuddy|GoalBuddy|Stop/Done|stale terminal label|stale terminal option|fallback|compatibility wrapper|namespace wrapper" scripts skills README.md AGENTS.md docs/superpowers/OUTCOME_WORKFLOW.md docs/superpowers/PROJECT_CONTEXT.md docs/agents -g "*.ps1" -g "*.md" -g "*.yaml" -g "*.json"
+rg -n "Stop/Done|Stop or Done|stale terminal label|stale terminal option|goal_board|goalbuddy|namespace wrapper|compatibility wrapper|fallback|obsolete|legacy|TODO|FIXME|not_implemented|not_available|debug_question_mode|Use Cases" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md -g "*.md" -g "*.sh" -g "*.yaml"
+rg -n "convert-idea-to-issue|milestones-validate|docs/ideas|docs/milestones/<milestone-folder>|canonical-skills|goalbuddy|GoalBuddy|Stop/Done|stale terminal label|stale terminal option|fallback|compatibility wrapper|namespace wrapper" scripts skills README.md AGENTS.md docs/superpowers/OUTCOME_WORKFLOW.md docs/superpowers/PROJECT_CONTEXT.md docs/agents -g "*.sh" -g "*.md" -g "*.yaml" -g "*.json"
 ```
 
 ## Findings
@@ -37,7 +37,7 @@ rg -n "convert-idea-to-issue|milestones-validate|docs/ideas|docs/milestones/<mil
 Evidence:
 
 - `AGENTS.md:16` forbids `docs/ideas`, root-level `docs/issues`, root-level `docs/plans`, and retired `docs/milestones/<milestone-folder>/ideas|issues|plans`.
-- `scripts/validate.ps1:149-153` only checks `docs/milestones/<milestone-folder>/ideas`, `docs/milestones/<milestone-folder>/issues`, `docs/plans`, and `docs/issues`.
+- `scripts/validate.sh:149-153` only checks `docs/milestones/<milestone-folder>/ideas`, `docs/milestones/<milestone-folder>/issues`, `docs/plans`, and `docs/issues`.
 - `docs/agents/project-roadmap.json:29-33` mirrors the same incomplete set.
 
 Impact:
@@ -46,21 +46,21 @@ The active validator and roadmap config omit `docs/ideas` and `docs/milestones/<
 
 Repair Requirement:
 
-Add `docs/ideas` and `docs/milestones/<milestone-folder>/plans` to the active forbidden-root contract in `scripts/validate.ps1` and `docs/agents/project-roadmap.json`. Add a regression check that fails if AGENTS-level forbidden roots are missing from the validator/config surface.
+Add `docs/ideas` and `docs/milestones/<milestone-folder>/plans` to the active forbidden-root contract in `scripts/validate.sh` and `docs/agents/project-roadmap.json`. Add a regression check that fails if AGENTS-level forbidden roots are missing from the validator/config surface.
 
 Proof Oracle:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 ### P2: Dead Retired-Skill Allowlist Remains In The Stale Scan
 
 Evidence:
 
-- `scripts/validate.ps1:345-347` defines `$allowedNegativeFixture = "skills\convert-idea-to-issue\scripts\test-scenarios.ps1"`.
-- `Test-Path skills\convert-idea-to-issue\scripts\test-scenarios.ps1` returned `False`.
-- `scripts/lib/project-skills.ps1:42` already records `convert-idea-to-issue` as a retired skill name.
+- `scripts/validate.sh:345-347` defines `$allowedNegativeFixture = "skills/convert-idea-to-issue/scripts/test-scenarios.sh"`.
+- `Test-Path skills/convert-idea-to-issue/scripts/test-scenarios.sh` returned `False`.
+- `scripts/lib/project-skills.sh:42` already records `convert-idea-to-issue` as a retired skill name.
 
 Impact:
 
@@ -72,17 +72,17 @@ Remove the dead `$allowedNegativeFixture` filter or replace it with an existence
 
 Proof Oracle:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-rg -n "convert-idea-to-issue" scripts\validate.ps1
+```bash
+./scripts/validate.sh
+rg -n "convert-idea-to-issue" scripts/validate.sh
 ```
 
 ### P2: Resolve And Merge Contract Libraries Duplicate Core Helpers
 
 Evidence:
 
-- `skills/resolve-issue/scripts/lib/contract.ps1:3`, `:15`, `:20`, `:25`, `:30`, `:44`, `:54`, `:60`, `:67`, `:73`, `:88`, `:103`, `:243`, and `:249` define common helper functions.
-- `skills/merge-changes/scripts/lib/contract.ps1:20`, `:32`, `:37`, `:42`, `:47`, `:61`, `:82`, `:104`, `:111`, `:117`, `:122`, `:137`, `:143`, and `:149` define the same helper function names.
+- `skills/resolve-issue/scripts/lib/contract.sh:3`, `:15`, `:20`, `:25`, `:30`, `:44`, `:54`, `:60`, `:67`, `:73`, `:88`, `:103`, `:243`, and `:249` define common helper functions.
+- `skills/merge-changes/scripts/lib/contract.sh:20`, `:32`, `:37`, `:42`, `:47`, `:61`, `:82`, `:104`, `:111`, `:117`, `:122`, `:137`, `:143`, and `:149` define the same helper function names.
 - The overlapping functions are `Write-ContractResult`, `Stop-Contract`, `Complete-Contract`, `Test-Property`, `Read-JsonInput`, `Get-StringArray`, `Normalize-RepoPath`, `Resolve-RepoRoot`, `Resolve-RepoFile`, `Get-RelativeRepoPath`, `Get-FieldValue`, `Get-IssueNumberFromUrl`, `Test-ClosingKeywordForIssue`, and `Test-ClosingReferenceIncludesIssue`.
 
 Impact:
@@ -91,14 +91,14 @@ Two workflow-contract libraries now carry 14 duplicated helpers. Any bug fix to 
 
 Repair Requirement:
 
-Extract the shared helpers into one source-owned PowerShell library, then dot-source it from both workflow contract files. Keep resolve-specific and merge-specific assertions in their current files.
+Extract the shared helpers into one source-owned Bash library, then dot-source it from both workflow contract files. Keep resolve-specific and merge-specific assertions in their current files.
 
 Proof Oracle:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 ### P2: Audit Findings Specs Cannot Originate Auto Mode
@@ -116,21 +116,21 @@ Audit findings are saved under `docs/superpowers/specs`, but they cannot directl
 
 Repair Requirement:
 
-Add an Auto Mode route to `$superpowers-project:audit-project` after a findings spec is saved and self-reviewed. The route must ask `project_auto_mode_authorization`, validate the ledger with `scripts/validate-auto-mode-authorization.ps1`, and then continue into `$superpowers-project:write-plan` with the audit findings spec as the source spec. Keep the same bounded policy as brainstorm Auto Mode: `bounded-auto-merge`, `recorded-defaults`, `issue-backed-orchestrate-only`, `preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
+Add an Auto Mode route to `$superpowers-project:audit-project` after a findings spec is saved and self-reviewed. The route must ask `project_auto_mode_authorization`, validate the ledger with `scripts/validate-auto-mode-authorization.sh`, and then continue into `$superpowers-project:write-plan` with the audit findings spec as the source spec. Keep the same bounded policy as brainstorm Auto Mode: `bounded-auto-merge`, `recorded-defaults`, `issue-backed-orchestrate-only`, `preauthorized-after-clean-premerge`, and `stop_outside_policy: true`.
 
 Proof Oracle:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/audit-project/scripts/test-scenarios.sh
+./scripts/test-contract-summary.sh
+./scripts/validate.sh
 ```
 
 ### P3: Main Validator Still Uses Retired Milestone Naming For Temp Output
 
 Evidence:
 
-- `scripts/validate.ps1:57` creates temporary output under a prefix named `milestones-validate-`.
+- `scripts/validate.sh:57` creates temporary output under a prefix named `milestones-validate-`.
 
 Impact:
 
@@ -142,17 +142,17 @@ Rename the temp prefix to `superpowers-project-validate-` or `project-validate-`
 
 Proof Oracle:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 ### P3: Stale Terminal Placeholder Text Still Appears In Active Test Sources
 
 Evidence:
 
-- `scripts/test-native-qa-svg.ps1:239` contains `stale terminal label`.
-- `scripts/test-native-continuation-loop.ps1:269`, `:311`, and `:312` contain `stale terminal label` or `stale terminal option`.
-- `scripts/test-advanced-user-input-policy.ps1:120-122` contains old `stale terminal option` policy text as forbidden examples.
+- `scripts/test-native-qa-svg.sh:239` contains `stale terminal label`.
+- `scripts/test-native-continuation-loop.sh:269`, `:311`, and `:312` contain `stale terminal label` or `stale terminal option`.
+- `scripts/test-advanced-user-input-policy.sh:120-122` contains old `stale terminal option` policy text as forbidden examples.
 - `rg -l "stale terminal label|stale terminal option" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md` found 12 files containing `stale terminal label` and 2 files containing `stale terminal option`, all in tests.
 
 Impact:
@@ -165,10 +165,10 @@ Rename the fixture terminology to neutral language such as `legacy terminal plac
 
 Proof Oracle:
 
-```powershell
+```bash
 rg -n "stale terminal label|stale terminal option" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
+./scripts/test-native-continuation-loop.sh
+./scripts/test-advanced-user-input-policy.sh
 ```
 
 ### P3: Debug-Mode Contract Text Is Hand-Copied Across Workflow Surfaces
@@ -189,17 +189,17 @@ Do not remove self-contained skill instructions blindly. Instead, create one sou
 
 Proof Oracle:
 
-```powershell
+```bash
 rg -l "Native Question Debug Ledger" skills scripts README.md docs/superpowers/OUTCOME_WORKFLOW.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+./scripts/test-native-continuation-loop.sh
+./scripts/validate.sh
 ```
 
 ## Non-Findings And Healthy Checks
 
 - The active source did not contain a live `Stop/Done` option-label contract. Remaining `Stop/Done` hits were in historical specs/plans outside active prompt and validation surfaces.
 - `GoalBuddy` references in `skills/resolve-issue` are active guardrails, not removable stale code. The current resolver explicitly rejects GoalBuddy board fields because GoalBuddy boards are outside the default execution model.
-- `scripts/lib/project-skills.ps1` keeps retired skill names for cleanup ownership. That list should not be deleted wholesale without proving `sync-live.ps1` and live cleanup no longer need those names.
+- `scripts/lib/project-skills.sh` keeps retired skill names for cleanup ownership. That list should not be deleted wholesale without proving `sync-live.sh` and live cleanup no longer need those names.
 - `docs/agents/project-roadmap.json` intentionally records forbidden roots as configuration, not as active artifact targets. The issue is incompleteness, not the presence of forbidden-root examples.
 
 ## Recommended Repair Route

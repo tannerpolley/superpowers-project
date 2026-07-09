@@ -215,13 +215,13 @@ Conflicts between source plan and issue mirror block execution until `$superpowe
 
 Focused proof should include:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 Required scenarios:
@@ -253,7 +253,7 @@ Required scenarios:
 
 ## Open Questions For Planning
 
-- Should the validator be one new `validate-plan-outcome-proof.ps1` script or an extension of `validate-plan-task-use-cases.ps1`?
+- Should the validator be one new `validate-plan-outcome-proof.sh` script or an extension of `validate-plan-task-use-cases.sh`?
 - Should issue mirror contract validation live in the create-issues mirror validator or a shared contract helper consumed by create, resolve, and merge scripts?
 - Which contract fields should become machine-readable ledger fields first if the implementation needs to land incrementally?
 

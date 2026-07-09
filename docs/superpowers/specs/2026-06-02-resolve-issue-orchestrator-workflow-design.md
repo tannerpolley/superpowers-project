@@ -22,7 +22,7 @@ The resolver should now support two execution shapes:
 
 `resolve-issue` currently treats issue execution as a single-thread lifecycle. That is enough for small issues, but it misses the stronger Superpowers pattern for complex work: isolate work in a worktree, let a worker implement the issue, and keep the main thread free to coordinate, review, and finish the GitHub lifecycle.
 
-The resolver also needs to loosen PowerShell scripts into safety gates instead of style enforcers. Scripts should block unsafe or invalid lifecycle states, but they should not make the workflow brittle by hard-coding every agent choice.
+The resolver also needs to loosen Bash scripts into safety gates instead of style enforcers. Scripts should block unsafe or invalid lifecycle states, but they should not make the workflow brittle by hard-coding every agent choice.
 
 ## Goals
 
@@ -36,7 +36,7 @@ The resolver also needs to loosen PowerShell scripts into safety gates instead o
 - Route independent work packets through `codex-dynamic-workflows`, `superpowers:dispatching-parallel-agents`, or `superpowers:subagent-driven-development` when the source plan supports it.
 - Use `superpowers:verification-before-completion` before PR-ready, merge-ready, and completion claims.
 - Use `superpowers:finishing-a-development-branch` with PR as the default finish path.
-- Keep PowerShell scripts focused on safety invariants and proof validation.
+- Keep Bash scripts focused on safety invariants and proof validation.
 
 ## Non-Goals
 
@@ -173,7 +173,7 @@ These fields guide the resolver and make GitHub issue mirrors readable. Missing 
 
 ### Script Gate Policy
 
-PowerShell scripts remain valuable, but their job is proof and safety.
+Bash scripts remain valuable, but their job is proof and safety.
 
 Scripts should block:
 
@@ -213,5 +213,5 @@ Scripts should report advisory checks for:
 - Native Codex worktree/thread support is preferred for worker execution.
 - TDD is required for feature and bug implementation.
 - PR is the default development branch finish path.
-- PowerShell scripts should enforce safety and proof, not every workflow style choice.
+- Bash scripts should enforce safety and proof, not every workflow style choice.
 

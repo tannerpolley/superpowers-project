@@ -8,9 +8,9 @@ The repo is still named and hosted as `tannerpolley/milestones-plugin`, and GitH
 
 Current public-readiness gaps found during inspection:
 
-- `README.md` explains the workflow but lacks a public-facing install story and still describes the live target as `C:\Users\Tanner\plugins\milestones`.
-- `scripts/sync-live.ps1` still deploys the live plugin copy to `C:\Users\Tanner\plugins\milestones`.
-- `skills/audit-project/scripts/audit-project.ps1` still treats `plugins/milestones` as the live plugin sync surface.
+- `README.md` explains the workflow but lacks a public-facing install story and still describes the live target as `/home/tnnrpolley21/.codex/plugins/milestones`.
+- `scripts/sync-live.sh` still deploys the live plugin copy to `/home/tnnrpolley21/.codex/plugins/milestones`.
+- `skills/audit-project/scripts/audit-project.sh` still treats `plugins/milestones` as the live plugin sync surface.
 - `.github/ISSUE_TEMPLATE/*.yml` still says "Milestones plugin" and points users to deleted `docs/milestones/...` paths.
 - `.codex-plugin/plugin.json` lacks public repository, homepage, license, and keyword metadata.
 - `docs/superpowers/PROJECT_CONTEXT.md`, `docs/agents/issue-tracker.md`, and `docs/agents/project-roadmap.json` still use the current private repo name as operational tracker state. Those should remain unchanged until the repo is actually renamed.
@@ -30,8 +30,8 @@ The quick implementation should:
 
 - keep manifest `name` as `superpowers-project`, because skill routing already uses that stable plugin identity;
 - add public manifest metadata that points at the intended public repository URL;
-- change the default live plugin install target to `C:\Users\Tanner\plugins\superpowers-project`;
-- remove stale owned skills from the retired `C:\Users\Tanner\plugins\milestones` live path when syncing;
+- change the default live plugin install target to `/home/tnnrpolley21/.codex/plugins/superpowers-project`;
+- remove stale owned skills from the retired `/home/tnnrpolley21/.codex/plugins/milestones` live path when syncing;
 - update Doctor live-sync checks to inspect the new live plugin path and report the retired path when it still exists;
 - update README install/share guidance for clone-based local installation;
 - update issue templates to say Superpowers Project and point to `docs/superpowers/issues/...`;
@@ -41,7 +41,7 @@ The quick implementation should:
 
 This avoids the risk of renaming the live GitHub repo and local workspace in a quick pass, but it means the README must clearly say the current GitHub repository may still be `milestones-plugin` until the public rename occurs.
 
-Changing the live plugin folder to `plugins\superpowers-project` makes the local install match the new public identity. Keeping a retired cleanup path for `plugins\milestones` prevents stale live copies from shadowing or confusing future installs.
+Changing the live plugin folder to `plugins/superpowers-project` makes the local install match the new public identity. Keeping a retired cleanup path for `plugins/milestones` prevents stale live copies from shadowing or confusing future installs.
 
 ## Non-Goals
 
@@ -59,12 +59,12 @@ Changing the live plugin folder to `plugins\superpowers-project` makes the local
 
 ## Proof Oracle Candidates
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
-- `Test-Path "$env:USERPROFILE\plugins\superpowers-project\.codex-plugin\plugin.json"`
-- `Test-Path "$env:USERPROFILE\plugins\milestones"`
-- `rg -n "Milestones plugin|docs/milestones|plugins\\milestones|plugins/milestones" README.md .github`
-- `Select-String -Path .\scripts\sync-live.ps1,.\skills\audit-project\scripts\audit-project.ps1 -Pattern "plugins\\project|plugins/project"`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
+- `Test-Path "$HOME\plugins/superpowers-project\.codex-plugin\plugin.json"`
+- `Test-Path "$HOME\plugins/milestones"`
+- `rg -n "Milestones plugin|docs/milestones|plugins/\milestones|plugins/milestones" README.md .github`
+- `Select-String -Path ./scripts/sync-live.sh,./skills/audit-project/scripts/audit-project.sh -Pattern "plugins/\project|plugins/project"`
 
 ## Open Questions
 

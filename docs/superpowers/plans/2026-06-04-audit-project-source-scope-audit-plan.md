@@ -15,6 +15,6 @@ Fix Project Doctor so product repos that do not own `skills/audit-project/SKILL.
 
 ## Proof Oracle
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+- `./skills/audit-project/scripts/test-scenarios.sh`
+- `./scripts/validate.sh`
 

@@ -6,7 +6,7 @@
 
 **Architecture:** Keep milestones as index/dashboard views. Skills that create, repair, validate, plan, issue, or resolve artifacts must point to the flat canonical roots and must treat nested milestone `specs`, `plans`, or `issues` folders as drift unless explicitly documented as generated view output.
 
-**Tech Stack:** Codex skill Markdown/YAML, PowerShell 7 scenario and validation scripts, GitHub issue mirrors, milestone Markdown indexes, `docs/superpowers` artifacts, and existing repo validation through `scripts/validate.ps1`.
+**Tech Stack:** Codex skill Markdown/YAML, Bash 7 scenario and validation scripts, GitHub issue mirrors, milestone Markdown indexes, `docs/superpowers` artifacts, and existing repo validation through `scripts/validate.sh`.
 
 ---
 
@@ -57,42 +57,42 @@ Modify:
 - `docs/superpowers/milestones/M1-source-of-truth.md`
 - `skills/project-context/SKILL.md`
 - `skills/project-context/agents/openai.yaml`
-- `skills/project-context/scripts/test-scenarios.ps1`
+- `skills/project-context/scripts/test-scenarios.sh`
 - `skills/brainstorm-spec/SKILL.md`
 - `skills/brainstorm-spec/agents/openai.yaml`
-- `skills/brainstorm-spec/scripts/test-scenarios.ps1`
+- `skills/brainstorm-spec/scripts/test-scenarios.sh`
 - `skills/write-plan/SKILL.md`
 - `skills/write-plan/agents/openai.yaml`
-- `skills/write-plan/scripts/test-scenarios.ps1`
+- `skills/write-plan/scripts/test-scenarios.sh`
 - `skills/create-issues/SKILL.md`
 - `skills/create-issues/agents/openai.yaml`
-- `skills/create-issues/scripts/test-scenarios.ps1`
+- `skills/create-issues/scripts/test-scenarios.sh`
 - `skills/resolve-issue/SKILL.md`
 - `skills/resolve-issue/agents/openai.yaml`
-- `skills/resolve-issue/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/scripts/test-scenarios.sh`
 - `skills/audit-project/SKILL.md`
 - `skills/audit-project/agents/openai.yaml`
-- `skills/audit-project/scripts/test-scenarios.ps1`
-- `scripts/validate.ps1`
+- `skills/audit-project/scripts/test-scenarios.sh`
+- `scripts/validate.sh`
 
 Create only if existing scripts need a shared check:
 
-- `scripts/test-flat-artifact-roots.ps1`
+- `scripts/test-flat-artifact-roots.sh`
 
 ## Proof Oracle
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\project-context\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+- `./skills/project-context/scripts/test-scenarios.sh`
+- `./skills/audit-project/scripts/test-scenarios.sh`
+- `./skills/create-issues/scripts/test-scenarios.sh`
+- `./skills/resolve-issue/scripts/test-scenarios.sh`
+- `./scripts/validate.sh`
 
 ## Task 1: Add Flat-Root Scenario Coverage
 
 **Files:**
 
 - Modify the test-scenario scripts listed in the file map.
-- Create `scripts/test-flat-artifact-roots.ps1` only if cross-skill validation is clearer as a shared repo contract.
+- Create `scripts/test-flat-artifact-roots.sh` only if cross-skill validation is clearer as a shared repo contract.
 
 - [ ] Add failing assertions that skill docs and scenario fixtures point canonical specs, plans, and issues to `docs/superpowers/specs`, `docs/superpowers/plans`, and `docs/superpowers/issues`.
 - [ ] Add failing assertions that nested `docs/superpowers/milestones/<milestone>/specs`, `plans`, or `issues` paths are rejected or called out as drift.
@@ -115,8 +115,8 @@ Create only if existing scripts need a shared check:
 
 **Files:**
 
-- Modify `skills/audit-project/scripts/test-scenarios.ps1`.
-- Modify `scripts/validate.ps1`.
+- Modify `skills/audit-project/scripts/test-scenarios.sh`.
+- Modify `scripts/validate.sh`.
 - Create or modify a repo contract script for flat-root validation.
 
 - [ ] Add Doctor scenario coverage for nested milestone `specs`, `plans`, and `issues` folders.

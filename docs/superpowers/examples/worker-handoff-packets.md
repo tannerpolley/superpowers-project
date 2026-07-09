@@ -14,12 +14,12 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   "branch_worktree_policy": "worker creates an isolated worktree for the branch",
   "reviewer_role": "main-thread-orchestrator",
   "proof_oracle": [
-    "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\test-worker-packets.ps1",
-    "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\skills\\orchestrate-issues\\scripts\\test-scenarios.ps1"
+    "./scripts/test-worker-packets.sh",
+    "./skills/orchestrate-issues/scripts/test-scenarios.sh"
   ],
   "validation": {
     "required_commands": [
-      "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\skills\\orchestrate-issues\\scripts\\validate-worker-handoff.ps1 -RepoRoot . -HandoffPath <handoff-json>"
+      "./skills/orchestrate-issues/scripts/validate-worker-handoff.sh -RepoRoot . -HandoffPath <handoff-json>"
     ]
   },
   "merge_handoff": {
@@ -38,24 +38,24 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   "source_plan": "docs/superpowers/plans/<source-plan>.md",
   "branch": "codex/issue-<issue-number>-<issue-slug>",
   "proof_oracle": [
-    "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\test-worker-packets.ps1",
-    "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\validate.ps1"
+    "./scripts/test-worker-packets.sh",
+    "./scripts/validate.sh"
   ],
   "diff_scope": {
     "changed_files": [
       "docs/superpowers/examples/worker-handoff-packets.md",
       "skills/orchestrate-issues/SKILL.md",
-      "skills/orchestrate-issues/scripts/validate-worker-handoff.ps1"
+      "skills/orchestrate-issues/scripts/validate-worker-handoff.sh"
     ]
   },
   "validation_receipt": {
     "commands": [
       {
-        "command": "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\test-worker-packets.ps1",
+        "command": "./scripts/test-worker-packets.sh",
         "exit_code": 0
       },
       {
-        "command": "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\\skills\\orchestrate-issues\\scripts\\test-scenarios.ps1",
+        "command": "./skills/orchestrate-issues/scripts/test-scenarios.sh",
         "exit_code": 0
       }
     ]

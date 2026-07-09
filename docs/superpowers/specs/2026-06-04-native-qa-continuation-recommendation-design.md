@@ -123,13 +123,13 @@ Keeping `stale terminal label` only at formal closeout gates makes the flowchart
 
 ## Proof Oracle Candidates
 
-- `scripts/test-advanced-user-input-policy.ps1` rejects nested `Yes` branch examples containing `stale terminal label`.
-- `scripts/test-native-continuation-loop.ps1` distinguishes top-level closeout gates from nested branch menus.
+- `scripts/test-advanced-user-input-policy.sh` rejects nested `Yes` branch examples containing `stale terminal label`.
+- `scripts/test-native-continuation-loop.sh` distinguishes top-level closeout gates from nested branch menus.
 - Scenario tests for `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `implement-plan`, `merge-changes`, `audit-project`, and `setup-project` reject nested route options that include `stale terminal label`.
 - Metadata scans reject default prompts that tell agents to put `stale terminal label` in nested route questions.
 - A debug-mode smoke transcript shows `Continue? -> Yes -> route menu` without a nested stop option.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` deploys the updated source contract to the live plugin.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` deploys the updated source contract to the live plugin.
 
 ## Open Questions For Planning
 

@@ -118,7 +118,7 @@ Route-specific source ranges:
       - Record or carry an Auto Mode authorization ledger tied to the startup mode selection.
       - Continue within the recorded defaults for one selected or derived route.
   - Validator:
-    - Resolve from the loaded Superpowers Project plugin root: `<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`.
+    - Resolve from the loaded Superpowers Project plugin root: `<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>`.
   - Stop outside policy when:
     - Proof is missing.
     - Validation fails.

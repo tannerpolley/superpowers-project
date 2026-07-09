@@ -4,9 +4,9 @@
 
 **Goal:** Build the first contracts-first Loop Controller layer above Auto Mode so Superpowers Project can coordinate repeated workflow runs without weakening existing approval gates.
 
-**Architecture:** Add a new source-owned `loop-controller` skill plus PowerShell validators for local run ledgers, budgets, candidate selection, verifier proof, terminal closeout, and metrics. Keep Auto Mode as route authorization only; Loop Controller records orchestration evidence and delegates actual work to the existing workflow skills.
+**Architecture:** Add a new source-owned `loop-controller` skill plus Bash validators for local run ledgers, budgets, candidate selection, verifier proof, terminal closeout, and metrics. Keep Auto Mode as route authorization only; Loop Controller records orchestration evidence and delegates actual work to the existing workflow skills.
 
-**Tech Stack:** PowerShell 7, Markdown skill contracts, JSON ledgers, existing Superpowers Project validators, existing `scripts/validate.ps1`, existing `scripts/sync-live.ps1`.
+**Tech Stack:** Bash 7, Markdown skill contracts, JSON ledgers, existing Superpowers Project validators, existing `scripts/validate.sh`, existing `scripts/sync-live.sh`.
 
 ---
 
@@ -16,21 +16,21 @@
 - User-approved design: Design 1, layered Loop Controller over Auto Mode.
 - User-approved first slice: `Contracts First`.
 - User-approved run state: generated local runtime ledgers under `.superpowers/runs/<run-id>`.
-- User-approved test-complete proof: focused Loop Controller tests, plan use-case validation, `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, and cleanup proof.
-- Existing Auto Mode proof surface: `scripts/lib/auto-mode-contract.ps1`, `scripts/validate-auto-mode-authorization.ps1`, `scripts/test-auto-mode-contract.ps1`.
-- Existing version proof surface: `scripts/get-agent-plugin-version.ps1`, `scripts/test-agent-plugin-version.ps1`.
-- Existing continuation proof surface: `scripts/test-native-continuation-loop.ps1`, `docs/superpowers/OUTCOME_WORKFLOW.md`.
+- User-approved test-complete proof: focused Loop Controller tests, plan use-case validation, `scripts/validate.sh`, `scripts/sync-live.sh --validate`, and cleanup proof.
+- Existing Auto Mode proof surface: `scripts/lib/auto-mode-contract.sh`, `scripts/validate-auto-mode-authorization.sh`, `scripts/test-auto-mode-contract.sh`.
+- Existing version proof surface: `scripts/get-agent-plugin-version.sh`, `scripts/test-agent-plugin-version.sh`.
+- Existing continuation proof surface: `scripts/test-native-continuation-loop.sh`, `docs/superpowers/OUTCOME_WORKFLOW.md`.
 
 ## Test-Complete Definition
 
 This plan is test complete when:
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-15-auto-mode-loop-controller-plan.md` passes.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1` passes.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1` passes.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` passes.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` passes before reporting live install readiness.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` reports no matching leftover repo-owned processes.
+- `./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-15-auto-mode-loop-controller-plan.md` passes.
+- `./scripts/test-loop-controller.sh` passes.
+- `./skills/loop-controller/scripts/test-scenarios.sh` passes.
+- `./scripts/validate.sh` passes.
+- `./scripts/sync-live.sh --validate` passes before reporting live install readiness.
+- `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .` reports no matching leftover repo-owned processes.
 
 No scientific or engineering numerical metrics are required. This is a workflow governance feature. Pass/fail is contract-based: required files exist, required question IDs exist, validators reject unsafe ledgers, fixture runs produce deterministic JSON, and native approval boundaries remain intact.
 
@@ -46,7 +46,7 @@ No scientific or engineering numerical metrics are required. This is a workflow 
 - Verifier ledger validation requires proof before merge-ready or final `Done`.
 - Terminal closeout validation rejects missing verifier proof, dirty repo state when a clean state is required, missing metrics, and invalid continuation decisions.
 - Metrics report generation records elapsed time, attempts, validation failures, retry count, human input count, PR/issue counts when present, final outcome, and accepted-change evidence.
-- Focused tests and full validation are wired into `scripts/validate.ps1`.
+- Focused tests and full validation are wired into `scripts/validate.sh`.
 - `docs/superpowers/OUTCOME_WORKFLOW.md` includes the Loop Controller route and native question IDs after regeneration.
 
 ## Non-Goals
@@ -64,21 +64,21 @@ No scientific or engineering numerical metrics are required. This is a workflow 
 
 - Create: `skills/loop-controller/SKILL.md`
 - Create: `skills/loop-controller/agents/openai.yaml`
-- Create: `skills/loop-controller/scripts/lib/loop-controller.ps1`
-- Create: `skills/loop-controller/scripts/validate-run-ledger.ps1`
-- Create: `skills/loop-controller/scripts/validate-budget.ps1`
-- Create: `skills/loop-controller/scripts/select-candidate.ps1`
-- Create: `skills/loop-controller/scripts/validate-verifier-ledger.ps1`
-- Create: `skills/loop-controller/scripts/validate-terminal-closeout.ps1`
-- Create: `skills/loop-controller/scripts/write-metrics-report.ps1`
-- Create: `skills/loop-controller/scripts/test-scenarios.ps1`
-- Create: `scripts/test-loop-controller.ps1`
+- Create: `skills/loop-controller/scripts/lib/loop-controller.sh`
+- Create: `skills/loop-controller/scripts/validate-run-ledger.sh`
+- Create: `skills/loop-controller/scripts/validate-budget.sh`
+- Create: `skills/loop-controller/scripts/select-candidate.sh`
+- Create: `skills/loop-controller/scripts/validate-verifier-ledger.sh`
+- Create: `skills/loop-controller/scripts/validate-terminal-closeout.sh`
+- Create: `skills/loop-controller/scripts/write-metrics-report.sh`
+- Create: `skills/loop-controller/scripts/test-scenarios.sh`
+- Create: `scripts/test-loop-controller.sh`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `README.md`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
-- Modify: `scripts/lib/project-skills.ps1`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/lib/project-skills.sh`
+- Modify: `scripts/validate.sh`
 - Modify: `CHANGELOG.md`
 
 ## Branch And Commit Strategy
@@ -97,21 +97,21 @@ No scientific or engineering numerical metrics are required. This is a workflow 
 - Contract summary generation lists Loop Controller native question IDs and final health gate status.
 
 **Files:**
-- Create: `scripts/test-loop-controller.ps1`
+- Create: `scripts/test-loop-controller.sh`
 - Create: `skills/loop-controller/SKILL.md`
 - Create: `skills/loop-controller/agents/openai.yaml`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `README.md`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
-- Modify: `scripts/lib/project-skills.ps1`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/lib/project-skills.sh`
+- Modify: `scripts/validate.sh`
 - Modify: `CHANGELOG.md`
 
 - [ ] **Step 1: Write the failing contract test**
 
-Create `scripts/test-loop-controller.ps1`:
+Create `scripts/test-loop-controller.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -137,16 +137,16 @@ function Assert-Contains {
 }
 
 try {
-    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "name: loop-controller" -Name "skill frontmatter exists"
-    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "Question id: `project_loop_next_step`" -Name "next-step question id exists"
-    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "Question id: `project_loop_final_health_gate`" -Name "final health gate question id exists"
-    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "Auto Mode is a route permission ledger" -Name "auto mode boundary exists"
-    Assert-Contains -Path "skills\loop-controller\SKILL.md" -Needle "scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent" -Name "startup version check exists"
-    Assert-Contains -Path "skills\loop-controller\agents\openai.yaml" -Needle "loop-controller" -Name "metadata exists"
+    Assert-Contains -Path "skills/loop-controller\SKILL.md" -Needle "name: loop-controller" -Name "skill frontmatter exists"
+    Assert-Contains -Path "skills/loop-controller\SKILL.md" -Needle "Question id: `project_loop_next_step`" -Name "next-step question id exists"
+    Assert-Contains -Path "skills/loop-controller\SKILL.md" -Needle "Question id: `project_loop_final_health_gate`" -Name "final health gate question id exists"
+    Assert-Contains -Path "skills/loop-controller\SKILL.md" -Needle "Auto Mode is a route permission ledger" -Name "auto mode boundary exists"
+    Assert-Contains -Path "skills/loop-controller\SKILL.md" -Needle "scripts/get-agent-plugin-version.sh -Banner -RequireCurrent" -Name "startup version check exists"
+    Assert-Contains -Path "skills/loop-controller\agents\openai.yaml" -Needle "loop-controller" -Name "metadata exists"
     Assert-Contains -Path ".codex-plugin\plugin.json" -Needle '$superpowers-project:loop-controller' -Name "plugin prompt lists route"
     Assert-Contains -Path "README.md" -Needle '$superpowers-project:loop-controller' -Name "README lists route"
-    Assert-Contains -Path "docs\superpowers\PROJECT_CONTEXT.md" -Needle "loop-controller" -Name "project context lists skill"
-    Assert-Contains -Path "scripts\lib\project-skills.ps1" -Needle '"loop-controller"' -Name "final-capable list includes loop-controller"
+    Assert-Contains -Path "docs/superpowers\PROJECT_CONTEXT.md" -Needle "loop-controller" -Name "project context lists skill"
+    Assert-Contains -Path "scripts/lib\project-skills.sh" -Needle '"loop-controller"' -Name "final-capable list includes loop-controller"
 
     $failed = @($checks | Where-Object { -not $_.ok })
     [pscustomobject]@{ ok = ($failed.Count -eq 0); phase = "loop-controller-contract"; checks = $checks } | ConvertTo-Json -Depth 8
@@ -162,8 +162,8 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
+```bash
+./scripts/test-loop-controller.sh
 ```
 
 Expected: command exits nonzero because `skills/loop-controller/SKILL.md` does not exist yet.
@@ -188,8 +188,8 @@ Loop Controller is the Superpowers Project orchestration layer for repeated work
 
 Before selecting candidates, run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent
+```bash
+./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent
 ```
 
 If the loaded plugin or skill root is known, pass `-ObservedPluginRoot` or `-ObservedSkillRoot`. Print the banner before routing.
@@ -216,12 +216,12 @@ Default generated run state lives under `.superpowers/runs/<run-id>`. Do not com
 
 ## Required Gates
 
-- Validate run ledgers with `skills/loop-controller/scripts/validate-run-ledger.ps1`.
-- Validate budget ledgers with `skills/loop-controller/scripts/validate-budget.ps1`.
-- Select candidates with `skills/loop-controller/scripts/select-candidate.ps1`.
-- Validate verifier evidence with `skills/loop-controller/scripts/validate-verifier-ledger.ps1`.
-- Validate terminal closeout with `skills/loop-controller/scripts/validate-terminal-closeout.ps1`.
-- Write metrics with `skills/loop-controller/scripts/write-metrics-report.ps1`.
+- Validate run ledgers with `skills/loop-controller/scripts/validate-run-ledger.sh`.
+- Validate budget ledgers with `skills/loop-controller/scripts/validate-budget.sh`.
+- Select candidates with `skills/loop-controller/scripts/select-candidate.sh`.
+- Validate verifier evidence with `skills/loop-controller/scripts/validate-verifier-ledger.sh`.
+- Validate terminal closeout with `skills/loop-controller/scripts/validate-terminal-closeout.sh`.
+- Write metrics with `skills/loop-controller/scripts/write-metrics-report.sh`.
 
 ## Native Continuation Gate
 
@@ -249,7 +249,7 @@ Options:
 - Revisit: review or repair evidence before terminal closeout.
 - Stop: pause with run state recorded, without claiming final completion.
 
-Terminal Done requires `validate-terminal-closeout.ps1` to pass. A saved plan, pushed branch, created issue, synced live plugin, or completed validator run is not terminal by itself.
+Terminal Done requires `validate-terminal-closeout.sh` to pass. A saved plan, pushed branch, created issue, synced live plugin, or completed validator run is not terminal by itself.
 ```
 
 - [ ] **Step 4: Create skill metadata**
@@ -286,9 +286,9 @@ Update `docs/superpowers/PROJECT_CONTEXT.md` extension skills with:
 - `loop-controller`
 ```
 
-Update `scripts/lib/project-skills.ps1`:
+Update `scripts/lib/project-skills.sh`:
 
-```powershell
+```bash
 function Get-ProjectFinalCapableSkillNames {
     @("align-project", "loop-controller", "merge-changes")
 }
@@ -302,11 +302,11 @@ Add a `CHANGELOG.md` unreleased entry:
 
 - [ ] **Step 6: Wire the contract test into full validation**
 
-Modify `scripts/validate.ps1` after the `Auto Mode authorization contract` check:
+Modify `scripts/validate.sh` after the `Auto Mode authorization contract` check:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Loop Controller contract" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-loop-controller.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-loop-controller.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Loop Controller contract failed" }
 }))
 ```
@@ -315,8 +315,8 @@ $results.Add((Invoke-Step "Loop Controller contract" {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
+```bash
+./scripts/test-loop-controller.sh
 ```
 
 Expected: JSON output has `"ok": true`.
@@ -325,8 +325,8 @@ Expected: JSON output has `"ok": true`.
 
 Run:
 
-```powershell
-git add .codex-plugin\plugin.json README.md CHANGELOG.md docs\superpowers\PROJECT_CONTEXT.md scripts\lib\project-skills.ps1 scripts\test-loop-controller.ps1 scripts\validate.ps1 skills\loop-controller\SKILL.md skills\loop-controller\agents\openai.yaml
+```bash
+git add .codex-plugin\plugin.json README.md CHANGELOG.md docs/superpowers\PROJECT_CONTEXT.md scripts/lib\project-skills.sh scripts/test-loop-controller.sh scripts/validate.sh skills/loop-controller\SKILL.md skills/loop-controller\agents\openai.yaml
 git commit -m "Add loop controller skill contract"
 ```
 
@@ -341,18 +341,18 @@ Expected: commit succeeds.
 - A stale observed plugin version blocks unattended continuation before work starts.
 
 **Files:**
-- Create: `skills/loop-controller/scripts/lib/loop-controller.ps1`
-- Create: `skills/loop-controller/scripts/validate-run-ledger.ps1`
-- Create: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Create: `skills/loop-controller/scripts/lib/loop-controller.sh`
+- Create: `skills/loop-controller/scripts/validate-run-ledger.sh`
+- Create: `skills/loop-controller/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Write failing scenario coverage for run ledgers**
 
-Create `skills/loop-controller/scripts/test-scenarios.ps1` with a first scenario that writes a valid ledger, validates it, writes an invalid ledger missing `plugin_contract_hash`, and proves validation rejects it:
+Create `skills/loop-controller/scripts/test-scenarios.sh` with a first scenario that writes a valid ledger, validates it, writes an invalid ledger missing `plugin_contract_hash`, and proves validation rejects it:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path
 )
 
 $ErrorActionPreference = "Stop"
@@ -366,7 +366,7 @@ function Add-Check {
 
 function Invoke-JsonScript {
     param([string]$Path, [string[]]$Arguments)
-    $raw = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $Path @Arguments 2>&1
+    $raw = & $Path @Arguments 2>&1
     [pscustomobject]@{ exit_code = $LASTEXITCODE; raw = ($raw | Out-String).Trim(); json = (($raw | Out-String).Trim() | ConvertFrom-Json) }
 }
 
@@ -401,7 +401,7 @@ try {
         terminal_decision = $null
     } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $validLedger -Encoding utf8NoBOM
 
-    $validator = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-run-ledger.ps1"
+    $validator = Join-Path $RepoRoot "skills/loop-controller/scripts/validate-run-ledger.sh"
     $valid = Invoke-JsonScript -Path $validator -Arguments @("-RepoRoot", $RepoRoot, "-RunLedgerPath", $validLedger)
     Add-Check -Name "valid run ledger passes" -Ok ($valid.exit_code -eq 0 -and $valid.json.ok -eq $true) -Reason $valid.raw
 
@@ -430,17 +430,17 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
-Expected: command exits nonzero because `validate-run-ledger.ps1` does not exist yet.
+Expected: command exits nonzero because `validate-run-ledger.sh` does not exist yet.
 
 - [ ] **Step 3: Add the shared Loop Controller library**
 
-Create `skills/loop-controller/scripts/lib/loop-controller.ps1`:
+Create `skills/loop-controller/scripts/lib/loop-controller.sh`:
 
-```powershell
+```bash
 $ErrorActionPreference = "Stop"
 
 function Test-LoopControllerProperty {
@@ -451,7 +451,7 @@ function Test-LoopControllerProperty {
 function Resolve-LoopControllerRepoRoot {
     param([string]$RepoRoot)
     if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
-        return (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path
+        return (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path
     }
     (Resolve-Path -LiteralPath $RepoRoot).Path
 }
@@ -492,17 +492,17 @@ function Assert-LoopRequiredProperties {
 
 - [ ] **Step 4: Add the run ledger validator**
 
-Create `skills/loop-controller/scripts/validate-run-ledger.ps1`:
+Create `skills/loop-controller/scripts/validate-run-ledger.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$RunLedgerPath
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\loop-controller.ps1")
+. (Join-Path $PSScriptRoot "lib\loop-controller.sh")
 
 try {
     $repo = Resolve-LoopControllerRepoRoot -RepoRoot $RepoRoot
@@ -534,8 +534,8 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true` for the run-ledger scenarios.
@@ -544,8 +544,8 @@ Expected: JSON output has `"ok": true` for the run-ledger scenarios.
 
 Run:
 
-```powershell
-git add skills\loop-controller\scripts
+```bash
+git add skills/loop-controller/scripts
 git commit -m "Validate loop controller run ledgers"
 ```
 
@@ -560,15 +560,15 @@ Expected: commit succeeds.
 - A future automation entrypoint can validate budget state without reading prose.
 
 **Files:**
-- Create: `skills/loop-controller/scripts/validate-budget.ps1`
-- Modify: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Create: `skills/loop-controller/scripts/validate-budget.sh`
+- Modify: `skills/loop-controller/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Extend scenarios with budget pass and fail cases**
 
-Add fixture ledgers to `skills/loop-controller/scripts/test-scenarios.ps1` that call `validate-budget.ps1` with:
+Add fixture ledgers to `skills/loop-controller/scripts/test-scenarios.sh` that call `validate-budget.sh` with:
 
-```powershell
-$budgetScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-budget.ps1"
+```bash
+$budgetScript = Join-Path $RepoRoot "skills/loop-controller/scripts/validate-budget.sh"
 $budgetOkPath = Join-Path $tempRoot "budget-ok.json"
 @{
     max_candidates = 2
@@ -614,25 +614,25 @@ Add-Check -Name "exhausted budget fails" -Ok ($budgetFail.exit_code -ne 0 -and $
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
-Expected: command exits nonzero because `validate-budget.ps1` does not exist yet.
+Expected: command exits nonzero because `validate-budget.sh` does not exist yet.
 
 - [ ] **Step 3: Add the budget validator**
 
-Create `skills/loop-controller/scripts/validate-budget.ps1`:
+Create `skills/loop-controller/scripts/validate-budget.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$BudgetLedgerPath
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\loop-controller.ps1")
+. (Join-Path $PSScriptRoot "lib\loop-controller.sh")
 
 function Assert-UnderLimit {
     param([object]$Ledger, [string]$Actual, [string]$Maximum)
@@ -661,8 +661,8 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true` and includes both passing and failing budget checks.
@@ -671,8 +671,8 @@ Expected: JSON output has `"ok": true` and includes both passing and failing bud
 
 Run:
 
-```powershell
-git add skills\loop-controller\scripts\validate-budget.ps1 skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+git add skills/loop-controller/scripts/validate-budget.sh skills/loop-controller/scripts/test-scenarios.sh
 git commit -m "Add loop controller budget validation"
 ```
 
@@ -687,15 +687,15 @@ Expected: commit succeeds.
 - The selector can run in local tests without GitHub network access or mutation.
 
 **Files:**
-- Create: `skills/loop-controller/scripts/select-candidate.ps1`
-- Modify: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Create: `skills/loop-controller/scripts/select-candidate.sh`
+- Modify: `skills/loop-controller/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Extend scenarios with candidate inventory fixtures**
 
 Add a candidate inventory fixture:
 
-```powershell
-$selectorScript = Join-Path $RepoRoot "skills\loop-controller\scripts\select-candidate.ps1"
+```bash
+$selectorScript = Join-Path $RepoRoot "skills/loop-controller/scripts/select-candidate.sh"
 $inventoryPath = Join-Path $tempRoot "candidate-inventory.json"
 @{
     candidates = @(
@@ -713,25 +713,25 @@ Add-Check -Name "selector records skipped candidates" -Ok ($selection.json.skipp
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
-Expected: command exits nonzero because `select-candidate.ps1` does not exist yet.
+Expected: command exits nonzero because `select-candidate.sh` does not exist yet.
 
 - [ ] **Step 3: Add the candidate selector**
 
-Create `skills/loop-controller/scripts/select-candidate.ps1`:
+Create `skills/loop-controller/scripts/select-candidate.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$InventoryPath
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\loop-controller.ps1")
+. (Join-Path $PSScriptRoot "lib\loop-controller.sh")
 
 function Get-RiskScore {
     param([string]$Risk)
@@ -782,8 +782,8 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true`, selected candidate `approved-spec-plan`, and at least one skipped candidate reason.
@@ -792,8 +792,8 @@ Expected: JSON output has `"ok": true`, selected candidate `approved-spec-plan`,
 
 Run:
 
-```powershell
-git add skills\loop-controller\scripts\select-candidate.ps1 skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+git add skills/loop-controller/scripts/select-candidate.sh skills/loop-controller/scripts/test-scenarios.sh
 git commit -m "Add loop controller candidate selection"
 ```
 
@@ -808,17 +808,17 @@ Expected: commit succeeds.
 - Terminal closeout distinguishes paused `Stop` from verified final `Done`.
 
 **Files:**
-- Create: `skills/loop-controller/scripts/validate-verifier-ledger.ps1`
-- Create: `skills/loop-controller/scripts/validate-terminal-closeout.ps1`
-- Modify: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Create: `skills/loop-controller/scripts/validate-verifier-ledger.sh`
+- Create: `skills/loop-controller/scripts/validate-terminal-closeout.sh`
+- Modify: `skills/loop-controller/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Extend scenarios with verifier and terminal fixtures**
 
 Add verifier and terminal fixture calls:
 
-```powershell
-$verifierScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-verifier-ledger.ps1"
-$terminalScript = Join-Path $RepoRoot "skills\loop-controller\scripts\validate-terminal-closeout.ps1"
+```bash
+$verifierScript = Join-Path $RepoRoot "skills/loop-controller/scripts/validate-verifier-ledger.sh"
+$terminalScript = Join-Path $RepoRoot "skills/loop-controller/scripts/validate-terminal-closeout.sh"
 $verifierPath = Join-Path $tempRoot "verifier-ledger.json"
 @{
     candidate_id = "approved-spec-plan"
@@ -827,7 +827,7 @@ $verifierPath = Join-Path $tempRoot "verifier-ledger.json"
     verifier_type = "script"
     independent = $false
     proof = @(
-        @{ command = "pwsh -File scripts/validate-plan-task-use-cases.ps1"; ok = $true; artifact = "docs/superpowers/plans/fixture.md" }
+        @{ command = "-File scripts/validate-plan-task-use-cases.sh"; ok = $true; artifact = "docs/superpowers/plans/fixture.md" }
     )
 } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $verifierPath -Encoding utf8NoBOM
 $verifierOk = Invoke-JsonScript -Path $verifierScript -Arguments @("-RepoRoot", $RepoRoot, "-VerifierLedgerPath", $verifierPath)
@@ -853,25 +853,25 @@ Add-Check -Name "terminal done proof passes" -Ok ($terminalOk.exit_code -eq 0 -a
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: command exits nonzero because verifier and terminal validators do not exist yet.
 
 - [ ] **Step 3: Add the verifier ledger validator**
 
-Create `skills/loop-controller/scripts/validate-verifier-ledger.ps1`:
+Create `skills/loop-controller/scripts/validate-verifier-ledger.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$VerifierLedgerPath
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\loop-controller.ps1")
+. (Join-Path $PSScriptRoot "lib\loop-controller.sh")
 
 try {
     $repo = Resolve-LoopControllerRepoRoot -RepoRoot $RepoRoot
@@ -892,17 +892,17 @@ try {
 
 - [ ] **Step 4: Add the terminal closeout validator**
 
-Create `skills/loop-controller/scripts/validate-terminal-closeout.ps1`:
+Create `skills/loop-controller/scripts/validate-terminal-closeout.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$RunResultPath
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\loop-controller.ps1")
+. (Join-Path $PSScriptRoot "lib\loop-controller.sh")
 
 try {
     $repo = Resolve-LoopControllerRepoRoot -RepoRoot $RepoRoot
@@ -930,8 +930,8 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true` and includes passing verifier and terminal closeout checks.
@@ -940,8 +940,8 @@ Expected: JSON output has `"ok": true` and includes passing verifier and termina
 
 Run:
 
-```powershell
-git add skills\loop-controller\scripts\validate-verifier-ledger.ps1 skills\loop-controller\scripts\validate-terminal-closeout.ps1 skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+git add skills/loop-controller/scripts/validate-verifier-ledger.sh skills/loop-controller/scripts/validate-terminal-closeout.sh skills/loop-controller/scripts/test-scenarios.sh
 git commit -m "Add loop controller verifier and terminal gates"
 ```
 
@@ -956,15 +956,15 @@ Expected: commit succeeds.
 - Future automation templates can consume the same metrics JSON without parsing chat prose.
 
 **Files:**
-- Create: `skills/loop-controller/scripts/write-metrics-report.ps1`
-- Modify: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Create: `skills/loop-controller/scripts/write-metrics-report.sh`
+- Modify: `skills/loop-controller/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Extend scenarios with metrics and a full local contract run**
 
 Add a metrics fixture:
 
-```powershell
-$metricsScript = Join-Path $RepoRoot "skills\loop-controller\scripts\write-metrics-report.ps1"
+```bash
+$metricsScript = Join-Path $RepoRoot "skills/loop-controller/scripts/write-metrics-report.sh"
 $metricsInput = Join-Path $tempRoot "metrics-input.json"
 $metricsOutput = Join-Path $tempRoot "metrics-output.json"
 @{
@@ -980,7 +980,7 @@ $metricsOutput = Join-Path $tempRoot "metrics-output.json"
     closed_issue_count = 0
     reverted_or_reopened_count = 0
     final_outcome = "done"
-    accepted_change_evidence = @("skills/loop-controller/scripts/test-scenarios.ps1")
+    accepted_change_evidence = @("skills/loop-controller/scripts/test-scenarios.sh")
 } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $metricsInput -Encoding utf8NoBOM
 $metrics = Invoke-JsonScript -Path $metricsScript -Arguments @("-RepoRoot", $RepoRoot, "-MetricsInputPath", $metricsInput, "-OutputPath", $metricsOutput)
 Add-Check -Name "metrics report writes json" -Ok ($metrics.exit_code -eq 0 -and $metrics.json.ok -eq $true -and (Test-Path -LiteralPath $metricsOutput)) -Reason $metrics.raw
@@ -990,26 +990,26 @@ Add-Check -Name "metrics report writes json" -Ok ($metrics.exit_code -eq 0 -and 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
-Expected: command exits nonzero because `write-metrics-report.ps1` does not exist yet.
+Expected: command exits nonzero because `write-metrics-report.sh` does not exist yet.
 
 - [ ] **Step 3: Add metrics report generation**
 
-Create `skills/loop-controller/scripts/write-metrics-report.ps1`:
+Create `skills/loop-controller/scripts/write-metrics-report.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Path,
+    [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../../..")).Path,
     [Parameter(Mandatory = $true)][string]$MetricsInputPath,
     [Parameter(Mandatory = $true)][string]$OutputPath
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\loop-controller.ps1")
+. (Join-Path $PSScriptRoot "lib\loop-controller.sh")
 
 try {
     $repo = Resolve-LoopControllerRepoRoot -RepoRoot $RepoRoot
@@ -1053,8 +1053,8 @@ try {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: JSON output has `"ok": true` and covers run ledger, budget, candidate selection, verifier proof, terminal closeout, and metrics.
@@ -1063,8 +1063,8 @@ Expected: JSON output has `"ok": true` and covers run ledger, budget, candidate 
 
 Run:
 
-```powershell
-git add skills\loop-controller\scripts\write-metrics-report.ps1 skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+git add skills/loop-controller/scripts/write-metrics-report.sh skills/loop-controller/scripts/test-scenarios.sh
 git commit -m "Add loop controller metrics fixture"
 ```
 
@@ -1086,8 +1086,8 @@ Expected: commit succeeds.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-15-auto-mode-loop-controller-plan.md
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-06-15-auto-mode-loop-controller-plan.md
 ```
 
 Expected: JSON output has `"ok": true` and `task_count` is `7`.
@@ -1096,9 +1096,9 @@ Expected: JSON output has `"ok": true` and `task_count` is `7`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
+```bash
+./scripts/test-loop-controller.sh
+./skills/loop-controller/scripts/test-scenarios.sh
 ```
 
 Expected: both commands exit `0` and emit JSON with `"ok": true`.
@@ -1107,9 +1107,9 @@ Expected: both commands exit `0` and emit JSON with `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\generate-contract-summary.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
+```bash
+./scripts/generate-contract-summary.sh
+./scripts/test-contract-summary.sh
 ```
 
 Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` lists `loop-controller`, `project_loop_next_step`, and `project_loop_final_health_gate`; the outcome workflow test exits `0`.
@@ -1118,8 +1118,8 @@ Expected: `docs/superpowers/OUTCOME_WORKFLOW.md` lists `loop-controller`, `proje
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: final JSON output has `"ok": true`.
@@ -1128,8 +1128,8 @@ Expected: final JSON output has `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: command exits `0` and reports source/live validation success. Do not claim live plugin readiness without this proof.
@@ -1138,8 +1138,8 @@ Expected: command exits `0` and reports source/live validation success. Do not c
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: output reports no matching leftover Codex processes under this repo.
@@ -1148,8 +1148,8 @@ Expected: output reports no matching leftover Codex processes under this repo.
 
 Run:
 
-```powershell
-git add docs\superpowers\OUTCOME_WORKFLOW.md
+```bash
+git add docs/superpowers\OUTCOME_WORKFLOW.md
 git commit -m "Update outcome workflow for loop controller"
 ```
 

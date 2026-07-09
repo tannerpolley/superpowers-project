@@ -246,16 +246,16 @@ The implementation plan should add focused tests for:
 
 Proof oracle candidates:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-initiate-workflow-mode-gate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot . -ModeLedgerPath <ledger>
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/test-initiate-workflow-mode-gate.sh
+./scripts/validate-workflow-mode-ledger.sh -RepoRoot . -ModeLedgerPath <ledger>
+./scripts/test-auto-mode-contract.sh
+./scripts/test-loop-controller.sh
+./skills/loop-controller/scripts/test-scenarios.sh
+./scripts/test-native-qa-svg.sh
+./scripts/test-contract-summary.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
 ```
 
 ## Milestone Linkage
@@ -278,7 +278,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Valid
 ## Open Questions For Planning
 
 - Should `project_workflow_mode` be mandatory for every `initiate-workflow` invocation or only when more than one route is plausible?
-- Should the mode ledger validator live at `scripts/validate-workflow-mode-ledger.ps1` or under `skills/initiate-workflow/scripts/`?
+- Should the mode ledger validator live at `scripts/validate-workflow-mode-ledger.sh` or under `skills/initiate-workflow/scripts/`?
 - Should Looping Mode's broad maintenance selector use one unified candidate inventory script or compose the existing Loop Controller selector with audit/align-specific inventory builders?
 - Should Looping Mode create committed summary receipts after each run, or keep all run evidence under ignored `.superpowers/runs/` unless explicitly requested?
 

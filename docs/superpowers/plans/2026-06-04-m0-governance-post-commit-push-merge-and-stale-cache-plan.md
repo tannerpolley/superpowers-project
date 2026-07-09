@@ -4,9 +4,9 @@
 
 **Goal:** Enforce explicit post-commit push approval, block final `Done` on dirty worktrees, fix the Auto Mode authorization helper/object-shape gap, and keep repo-owned workflow contracts and tests aligned.
 
-**Architecture:** Update the repo at three layers together: shared continuation policy text and repo-level tests, per-skill workflow contracts plus their concrete PowerShell validators/collectors, and the Auto Mode authorization helper that gates the route after brainstorming. Keep the work in the source repo only, validate locally, then run live-sync validation so source and installed copies stay aligned.
+**Architecture:** Update the repo at three layers together: shared continuation policy text and repo-level tests, per-skill workflow contracts plus their concrete Bash validators/collectors, and the Auto Mode authorization helper that gates the route after brainstorming. Keep the work in the source repo only, validate locally, then run live-sync validation so source and installed copies stay aligned.
 
-**Tech Stack:** PowerShell 7, Markdown skill contracts, repo validation scripts, git, local live-sync tooling
+**Tech Stack:** Bash 7, Markdown skill contracts, repo validation scripts, git, local live-sync tooling
 
 ---
 
@@ -25,8 +25,8 @@
 - `merge-changes` keeps explicit merge approval and explicitly ties final `Done` to clean closeout plus clean worktree state.
 - The Auto Mode authorization helper accepts both plain and ordered ledger objects with the same valid fields.
 - Repo tests fail when any of those rules regress.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` passes.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` passes.
+- `./scripts/validate.sh` passes.
+- `./scripts/sync-live.sh --validate` passes.
 
 ## Non-Goals
 
@@ -37,15 +37,15 @@
 
 ## Proof Oracle
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
+- `./scripts/test-auto-mode-contract.sh`
+- `./scripts/test-advanced-user-input-policy.sh`
+- `./scripts/test-native-continuation-loop.sh`
+- `./skills/audit-project/scripts/test-scenarios.sh`
+- `./skills/implement-plan/scripts/test-scenarios.sh`
+- `./skills/resolve-issue/scripts/test-scenarios.sh`
+- `./skills/merge-changes/scripts/test-scenarios.sh`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
 
 ## Risks And Dependencies
 
@@ -59,17 +59,17 @@
 **Files:**
 - Modify: `skills/advanced-user-input/SKILL.md`
 - Modify: `skills/advanced-user-input/agents/openai.yaml`
-- Modify: `scripts/lib/auto-mode-contract.ps1`
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
-- Modify: `scripts/test-native-continuation-loop.ps1`
-- Modify: `scripts/test-auto-mode-contract.ps1`
-- Test: `scripts/test-auto-mode-contract.ps1`
-- Test: `scripts/test-advanced-user-input-policy.ps1`
-- Test: `scripts/test-native-continuation-loop.ps1`
+- Modify: `scripts/lib/auto-mode-contract.sh`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
+- Modify: `scripts/test-native-continuation-loop.sh`
+- Modify: `scripts/test-auto-mode-contract.sh`
+- Test: `scripts/test-auto-mode-contract.sh`
+- Test: `scripts/test-advanced-user-input-policy.sh`
+- Test: `scripts/test-native-continuation-loop.sh`
 
 - [ ] **Step 1: Add the failing helper regression test for ordered ledgers**
 
-```powershell
+```bash
 Invoke-Scenario "ordered authorization passes" {
     $plain = New-HappyAuthorization
     $auth = [ordered]@{}
@@ -81,7 +81,7 @@ Invoke-Scenario "ordered authorization passes" {
 
 - [ ] **Step 2: Add the failing shared-policy checks for dirty-worktree final Done rules**
 
-```powershell
+```bash
 foreach ($needle in @(
     "Done is invalid whenever `git status --short` is non-empty",
     "A clean worktree is required before any verified final Done gate"
@@ -92,7 +92,7 @@ foreach ($needle in @(
 
 - [ ] **Step 3: Update the Auto Mode helper so it accepts ordered dictionaries and PSCustomObject ledgers**
 
-```powershell
+```bash
 function Has-AuthProperty {
     param([object]$Object, [string]$Name)
     if ($Object -is [System.Collections.IDictionary]) { return $Object.Contains($Name) }
@@ -109,10 +109,10 @@ A verified final Done gate requires both final proof and a clean worktree.
 
 - [ ] **Step 5: Run the targeted shared-policy tests and verify they pass**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+```bash
+./scripts/test-auto-mode-contract.sh
+./scripts/test-advanced-user-input-policy.sh
+./scripts/test-native-continuation-loop.sh
 ```
 
 Expected: all three scripts exit `0`, and the ordered-ledger scenario passes instead of failing with `missing question_id`.
@@ -120,7 +120,7 @@ Expected: all three scripts exit `0`, and the ordered-ledger scenario passes ins
 - [ ] **Step 6: Commit the shared-policy/helper hardening**
 
 ```bash
-git add skills/advanced-user-input/SKILL.md skills/advanced-user-input/agents/openai.yaml scripts/lib/auto-mode-contract.ps1 scripts/test-advanced-user-input-policy.ps1 scripts/test-native-continuation-loop.ps1 scripts/test-auto-mode-contract.ps1
+git add skills/advanced-user-input/SKILL.md skills/advanced-user-input/agents/openai.yaml scripts/lib/auto-mode-contract.sh scripts/test-advanced-user-input-policy.sh scripts/test-native-continuation-loop.sh scripts/test-auto-mode-contract.sh
 git commit -m "Harden final Done and Auto Mode helper contracts"
 ```
 
@@ -129,13 +129,13 @@ git commit -m "Harden final Done and Auto Mode helper contracts"
 **Files:**
 - Modify: `skills/audit-project/SKILL.md`
 - Modify: `skills/audit-project/agents/openai.yaml`
-- Modify: `skills/audit-project/scripts/audit-project.ps1`
-- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
-- Test: `skills/audit-project/scripts/test-scenarios.ps1`
+- Modify: `skills/audit-project/scripts/audit-project.sh`
+- Modify: `skills/audit-project/scripts/test-scenarios.sh`
+- Test: `skills/audit-project/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add a failing audit scenario for a dirty repo**
 
-```powershell
+```bash
 Invoke-Scenario "dirty worktree is repairable drift" {
     $repo = New-TestRepo
     Set-Content -LiteralPath (Join-Path $repo "DIRTY.txt") -Value "dirty`n" -Encoding utf8NoBOM
@@ -146,7 +146,7 @@ Invoke-Scenario "dirty worktree is repairable drift" {
 
 - [ ] **Step 2: Add git-worktree inspection to the audit script**
 
-```powershell
+```bash
 $statusOutput = (& git -C $RepoRoot status --short 2>$null | Out-String).Trim()
 if (-not [string]::IsNullOrWhiteSpace($statusOutput)) {
     $findings.repairable.Add([ordered]@{
@@ -166,8 +166,8 @@ If the repo has uncommitted changes, route to repair/commit/push/hold work inste
 
 - [ ] **Step 4: Run the Doctor scenario script**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
+```bash
+./skills/audit-project/scripts/test-scenarios.sh
 ```
 
 Expected: the new dirty-worktree scenario passes, and existing LocalDocs/GitHubAware coverage stays green.
@@ -175,7 +175,7 @@ Expected: the new dirty-worktree scenario passes, and existing LocalDocs/GitHubA
 - [ ] **Step 5: Commit the Doctor dirty-worktree hardening**
 
 ```bash
-git add skills/audit-project/SKILL.md skills/audit-project/agents/openai.yaml skills/audit-project/scripts/audit-project.ps1 skills/audit-project/scripts/test-scenarios.ps1
+git add skills/audit-project/SKILL.md skills/audit-project/agents/openai.yaml skills/audit-project/scripts/audit-project.sh skills/audit-project/scripts/test-scenarios.sh
 git commit -m "Block Doctor final Done on dirty worktrees"
 ```
 
@@ -184,15 +184,15 @@ git commit -m "Block Doctor final Done on dirty worktrees"
 **Files:**
 - Modify: `skills/implement-plan/SKILL.md`
 - Modify: `skills/implement-plan/agents/openai.yaml`
-- Modify: `skills/implement-plan/scripts/lib/contract.ps1`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/implement-plan/scripts/lib/contract.sh`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1`
-- Modify: `skills/resolve-issue/scripts/validate-pr-ready.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
-- Test: `skills/implement-plan/scripts/test-scenarios.ps1`
-- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/collect-pr-ready-ledger.sh`
+- Modify: `skills/resolve-issue/scripts/validate-pr-ready.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
+- Test: `skills/implement-plan/scripts/test-scenarios.sh`
+- Test: `skills/resolve-issue/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Replace the implement-plan finish question with an explicit push gate**
 
@@ -208,7 +208,7 @@ Options:
 
 - [ ] **Step 2: Update the implement-plan ledger contract to require push approval and push proof before merge-ready output**
 
-```powershell
+```bash
 if (-not (Test-Property $Ledger "push_permission")) { throw "native push permission is required" }
 if ([string]$Ledger.push_permission.question_id -ne "implement_plan_push_permission") { throw "push permission question_id is invalid" }
 if ([string]$Ledger.push_permission.selected_action -notin @("push-branch", "hold")) { throw "push permission selected_action is invalid" }
@@ -231,7 +231,7 @@ Options:
 
 - [ ] **Step 4: Thread the resolve push decision into the PR-ready collector and validator**
 
-```powershell
+```bash
 param(
     [string]$PushPermissionJson,
     [string]$PushPermissionPath
@@ -244,7 +244,7 @@ if ([string]$pushPermission.selected_action -ne "push-pr") { throw "PR-ready han
 
 - [ ] **Step 5: Add scenario failures for “commit -> merge” and “verify -> push/PR” without explicit push approval**
 
-```powershell
+```bash
 Invoke-Scenario "implement-plan rejects missing push gate" {
     $repo = New-FixtureRepo
     $ledger = New-HappyLedger
@@ -268,16 +268,16 @@ Invoke-Scenario "resolve PR-ready rejects missing push permission" {
         handoff_sent = @{ source = "worker-final-message"; status = "sent"; recipient = "main-thread-orchestrator" }
         goal_completion_proof = @{ source = "update_goal"; status = "complete"; issue_url = "https://github.com/example/repo/issues/12" }
     } | ConvertTo-Json -Depth 16 -Compress
-    $result = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", $setupJson, "-PrReadyLedgerJson", $prReady)
+    $result = Invoke-JsonScript -ScriptName "validate-pr-ready.sh" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", $setupJson, "-PrReadyLedgerJson", $prReady)
     Assert-True (-not $result.ok -and $result.reason -match "push permission") "expected missing push gate failure"
 }
 ```
 
 - [ ] **Step 6: Run both execution-path scenario suites**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
 Expected: both suites pass, and the new negative cases explicitly fail when the push gate or push proof is absent.
@@ -285,7 +285,7 @@ Expected: both suites pass, and the new negative cases explicitly fail when the 
 - [ ] **Step 7: Commit the push-gate execution hardening**
 
 ```bash
-git add skills/implement-plan/SKILL.md skills/implement-plan/agents/openai.yaml skills/implement-plan/scripts/lib/contract.ps1 skills/implement-plan/scripts/test-scenarios.ps1 skills/resolve-issue/SKILL.md skills/resolve-issue/agents/openai.yaml skills/resolve-issue/scripts/collect-pr-ready-ledger.ps1 skills/resolve-issue/scripts/validate-pr-ready.ps1 skills/resolve-issue/scripts/test-scenarios.ps1
+git add skills/implement-plan/SKILL.md skills/implement-plan/agents/openai.yaml skills/implement-plan/scripts/lib/contract.sh skills/implement-plan/scripts/test-scenarios.sh skills/resolve-issue/SKILL.md skills/resolve-issue/agents/openai.yaml skills/resolve-issue/scripts/collect-pr-ready-ledger.sh skills/resolve-issue/scripts/validate-pr-ready.sh skills/resolve-issue/scripts/test-scenarios.sh
 git commit -m "Require explicit push approval before merge routes"
 ```
 
@@ -294,11 +294,11 @@ git commit -m "Require explicit push approval before merge routes"
 **Files:**
 - Modify: `skills/merge-changes/SKILL.md`
 - Modify: `skills/merge-changes/agents/openai.yaml`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Modify: `scripts/validate.ps1` (only if a newly added script is not already covered)
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `scripts/validate.ps1`
-- Test: `scripts/sync-live.ps1`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
+- Modify: `scripts/validate.sh` (only if a newly added script is not already covered)
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `scripts/validate.sh`
+- Test: `scripts/sync-live.sh`
 
 - [ ] **Step 1: Make merge-changes say explicitly that final Done requires clean closeout proof and a clean worktree**
 
@@ -309,7 +309,7 @@ If the repo is still dirty after merge or cleanup, `Done` is invalid and the wor
 
 - [ ] **Step 2: Add test assertions that the final merge gate still enforces clean repo semantics**
 
-```powershell
+```bash
 foreach ($needle in @(
     "clean repo proof",
     "project_merge_final_health_gate",
@@ -321,17 +321,17 @@ foreach ($needle in @(
 
 - [ ] **Step 3: Run the merge scenario suite and full repo validation**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/merge-changes/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 Expected: merge scenarios stay green, and repo validation reports success for the shared-policy, skill-scenario, and Auto Mode helper checks.
 
 - [ ] **Step 4: Run live-sync validation without mutating the source of truth directly**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: validation succeeds against the live install surfaces, proving the source repo and deployed copy both expose the corrected workflow contracts.
@@ -339,7 +339,7 @@ Expected: validation succeeds against the live install surfaces, proving the sou
 - [ ] **Step 5: Commit the closeout/validation alignment**
 
 ```bash
-git add skills/merge-changes/SKILL.md skills/merge-changes/agents/openai.yaml skills/merge-changes/scripts/test-scenarios.ps1 scripts/validate.ps1
+git add skills/merge-changes/SKILL.md skills/merge-changes/agents/openai.yaml skills/merge-changes/scripts/test-scenarios.sh scripts/validate.sh
 git commit -m "Align merge closeout and validation contracts"
 ```
 
@@ -347,5 +347,5 @@ git commit -m "Align merge closeout and validation contracts"
 
 1. **Spec coverage:** The plan maps the spec into shared policy, Doctor dirty-worktree enforcement, implement-plan/resolve-issue push gates, merge closeout alignment, and live-sync validation.
 2. **Placeholder scan:** No `TBD` or “handle appropriately” language remains; every task names exact files, commands, and expected outcomes.
-3. **Task/file consistency:** The plan points at the concrete validators and collectors that actually control behavior (`auto-mode-contract.ps1`, `audit-project.ps1`, `implement-plan/scripts/lib/contract.ps1`, `collect-pr-ready-ledger.ps1`, `validate-pr-ready.ps1`, `merge-changes` tests), not just the Markdown skill files.
+3. **Task/file consistency:** The plan points at the concrete validators and collectors that actually control behavior (`auto-mode-contract.sh`, `audit-project.sh`, `implement-plan/scripts/lib/contract.sh`, `collect-pr-ready-ledger.sh`, `validate-pr-ready.sh`, `merge-changes` tests), not just the Markdown skill files.
 4. **Scope check:** This is one coherent governance hardening slice. It is broad enough to need staged commits, but it stays within one repo-owned implementation plan and does not require issue-mirror creation.

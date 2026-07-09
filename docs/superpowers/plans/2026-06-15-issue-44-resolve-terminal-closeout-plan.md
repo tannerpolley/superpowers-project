@@ -17,11 +17,11 @@ The resolver already has a terminal-closeout validator and continuation-decision
 
 **Steps:**
 
-- [ ] Add a scenario to `skills/resolve-issue/scripts/test-scenarios.ps1` named `resolve terminal closeout blocks missing continuation ledger`.
+- [ ] Add a scenario to `skills/resolve-issue/scripts/test-scenarios.sh` named `resolve terminal closeout blocks missing continuation ledger`.
 - [ ] Build a valid PR-ready result using the existing fixture pattern.
-- [ ] Call `validate-terminal-closeout.ps1` with the valid PR-ready result and no continuation decision input.
+- [ ] Call `validate-terminal-closeout.sh` with the valid PR-ready result and no continuation decision input.
 - [ ] Assert the result is not OK and the reason mentions `continuation decision`.
-- [ ] Run `skills/resolve-issue/scripts/test-scenarios.ps1`.
+- [ ] Run `skills/resolve-issue/scripts/test-scenarios.sh`.
 
 ## Task 2: Validate The Issue Mirror And Plan Gates
 
@@ -32,8 +32,8 @@ The resolver already has a terminal-closeout validator and continuation-decision
 
 **Steps:**
 
-- [ ] Run `skills/create-issues/scripts/validate-issue-mirror.ps1` with `-MilestoneRequired` for the #44 issue mirror.
-- [ ] Run `scripts/validate-plan-task-use-cases.ps1` for this plan.
+- [ ] Run `skills/create-issues/scripts/validate-issue-mirror.sh` with `-MilestoneRequired` for the #44 issue mirror.
+- [ ] Run `scripts/validate-plan-task-use-cases.sh` for this plan.
 - [ ] Update the issue mirror only if validation finds missing metadata or proof gaps.
 
 ## Task 3: Run Repo And Live-Sync Validation
@@ -46,9 +46,9 @@ The resolver already has a terminal-closeout validator and continuation-decision
 
 **Steps:**
 
-- [ ] Run `skills/resolve-issue/scripts/test-scenarios.ps1`.
-- [ ] Run `scripts/validate.ps1`.
-- [ ] Run `scripts/sync-live.ps1 -Validate`.
+- [ ] Run `skills/resolve-issue/scripts/test-scenarios.sh`.
+- [ ] Run `scripts/validate.sh`.
+- [ ] Run `scripts/sync-live.sh --validate`.
 - [ ] Run the repo cleanup hook.
 
 ## Task 4: Publish PR-Ready Work For Issue 44
@@ -64,5 +64,5 @@ The resolver already has a terminal-closeout validator and continuation-decision
 - [ ] Review changed artifacts and validation evidence before push permission.
 - [ ] Ask `project_resolve_push_permission`.
 - [ ] If approved, push the branch and open a PR that closes issue #44.
-- [ ] Validate PR-ready evidence with `skills/resolve-issue/scripts/validate-pr-ready.ps1`.
+- [ ] Validate PR-ready evidence with `skills/resolve-issue/scripts/validate-pr-ready.sh`.
 - [ ] Ask `project_resolve_next_step` and continue the selected route.

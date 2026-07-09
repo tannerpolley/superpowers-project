@@ -4,9 +4,9 @@
 
 **Goal:** Add `$project:merge-changes` and narrow `$project:resolve-issue` so issue implementation ends at PR-ready handoff and merge, issue closure, cleanup, and clean-state proof happen in a separate skill.
 
-**Architecture:** Keep `$project:resolve-issue` as the goal-backed implementation owner for one issue mirror and source plan. Add `$project:merge-changes` as the main-orchestrator integration owner that starts from a PR URL or worker handoff, asks native UI merge approval after premerge proof, then merges and cleans up. Preserve the current PowerShell gate style, but move merge-specific gates into `skills/merge-changes`.
+**Architecture:** Keep `$project:resolve-issue` as the goal-backed implementation owner for one issue mirror and source plan. Add `$project:merge-changes` as the main-orchestrator integration owner that starts from a PR URL or worker handoff, asks native UI merge approval after premerge proof, then merges and cleans up. Preserve the current Bash gate style, but move merge-specific gates into `skills/merge-changes`.
 
-**Tech Stack:** Codex skills in Markdown, skill metadata in YAML, PowerShell gate scripts and scenario tests, JSON ledgers, Git/GitHub evidence through `gh` or fixtures, native `request_user_input`, native goal tools, and Superpowers execution skills.
+**Tech Stack:** Codex skills in Markdown, skill metadata in YAML, Bash gate scripts and scenario tests, JSON ledgers, Git/GitHub evidence through `gh` or fixtures, native `request_user_input`, native goal tools, and Superpowers execution skills.
 
 ---
 
@@ -24,9 +24,9 @@
 
 ## Acceptance Criteria
 
-- [ ] `scripts/validate.ps1` treats `merge-changes` as an active skill.
+- [ ] `scripts/validate.sh` treats `merge-changes` as an active skill.
 - [ ] `skills/merge-changes` exists with `SKILL.md`, `agents/openai.yaml`, and scenario tests.
-- [ ] `$project:merge-changes` owns `premerge.ps1`, `closeout.ps1`, native merge approval validation, branch/worktree cleanup, prune evidence, and final clean repo proof.
+- [ ] `$project:merge-changes` owns `premerge.sh`, `closeout.sh`, native merge approval validation, branch/worktree cleanup, prune evidence, and final clean repo proof.
 - [ ] `$project:resolve-issue` no longer claims to merge PRs, close issues, or run final cleanup.
 - [ ] `$project:resolve-issue` completes its native goal at PR-ready evidence.
 - [ ] Worker-mode `$project:resolve-issue` records a lightweight Dynamic Work Packet Map in the setup ledger or worker handoff.
@@ -42,54 +42,54 @@ Create:
 
 - `skills/merge-changes/SKILL.md`: project integration skill instructions.
 - `skills/merge-changes/agents/openai.yaml`: skill metadata prompt.
-- `skills/merge-changes/scripts/lib/contract.ps1`: merge-skill JSON, path, GitHub URL, branch cleanup, and decision helpers.
-- `skills/merge-changes/scripts/premerge.ps1`: PR-to-issue and verification coverage gate.
-- `skills/merge-changes/scripts/validate-merge-decision.ps1`: native merge approval ledger gate.
-- `skills/merge-changes/scripts/closeout.ps1`: merged PR, issue close, branch/worktree cleanup, prune, cleanup hook, and clean repo proof gate.
-- `skills/merge-changes/scripts/test-scenarios.ps1`: local fixtures for the new skill.
+- `skills/merge-changes/scripts/lib/contract.sh`: merge-skill JSON, path, GitHub URL, branch cleanup, and decision helpers.
+- `skills/merge-changes/scripts/premerge.sh`: PR-to-issue and verification coverage gate.
+- `skills/merge-changes/scripts/validate-merge-decision.sh`: native merge approval ledger gate.
+- `skills/merge-changes/scripts/closeout.sh`: merged PR, issue close, branch/worktree cleanup, prune, cleanup hook, and clean repo proof gate.
+- `skills/merge-changes/scripts/test-scenarios.sh`: local fixtures for the new skill.
 
 Modify:
 
 - `skills/resolve-issue/SKILL.md`: end at PR-ready handoff and route to `$project:merge-changes`.
 - `skills/resolve-issue/agents/openai.yaml`: remove merge/issue-close/cleanup ownership from the prompt.
-- `skills/resolve-issue/scripts/lib/contract.ps1`: add Dynamic Work Packet Map and PR-ready handoff helpers.
-- `skills/resolve-issue/scripts/prepare-execution.ps1`: include packet map in worker setup ledger and worker handoff.
-- `skills/resolve-issue/scripts/validate-setup.ps1`: require packet map for orchestrated worker mode.
-- `skills/resolve-issue/scripts/test-scenarios.ps1`: replace merge closeout scenarios with PR-ready scenarios.
+- `skills/resolve-issue/scripts/lib/contract.sh`: add Dynamic Work Packet Map and PR-ready handoff helpers.
+- `skills/resolve-issue/scripts/prepare-execution.sh`: include packet map in worker setup ledger and worker handoff.
+- `skills/resolve-issue/scripts/validate-setup.sh`: require packet map for orchestrated worker mode.
+- `skills/resolve-issue/scripts/test-scenarios.sh`: replace merge closeout scenarios with PR-ready scenarios.
 - `skills/create-issues/SKILL.md`: document the `## Project Merge` section.
 - `skills/create-issues/agents/openai.yaml`: include merge section fields in issue creation guidance.
-- `skills/create-issues/scripts/validate-issue-mirror.ps1`: validate merge section fields.
-- `skills/create-issues/scripts/test-scenarios.ps1`: test happy issue mirrors with `## Project Merge`.
+- `skills/create-issues/scripts/validate-issue-mirror.sh`: validate merge section fields.
+- `skills/create-issues/scripts/test-scenarios.sh`: test happy issue mirrors with `## Project Merge`.
 - `skills/write-plan/SKILL.md`: replace vanilla execution-only handoff with native continuation routing.
 - `skills/write-plan/agents/openai.yaml`: include the continuation gate in project planning guidance.
-- `skills/write-plan/scripts/test-scenarios.ps1`: test continuation-gate text.
+- `skills/write-plan/scripts/test-scenarios.sh`: test continuation-gate text.
 - `docs/superpowers/issues/README.md`: document the merge section template.
 - `docs/superpowers/issues/smoke-test-workflow.md`: add the merge section.
 - `skills/initiate-workflow/SKILL.md`: route PR/handoff integration to `$project:merge-changes`.
 - `skills/initiate-workflow/agents/openai.yaml`: include `$project:merge-changes`.
-- `skills/initiate-workflow/scripts/test-scenarios.ps1`: require router text for `$project:merge-changes`.
+- `skills/initiate-workflow/scripts/test-scenarios.sh`: require router text for `$project:merge-changes`.
 - `docs/superpowers/PROJECT_CONTEXT.md`: list `merge-changes` in extension skills and execution model.
 - `README.md`: list `$project:merge-changes`.
 - `.codex-plugin/plugin.json`: add a default prompt for merge integration.
-- `scripts/validate.ps1`: add `merge-changes` to active skill names.
-- `scripts/test-superpowers-project-dummy-repo.ps1`: seed merge metadata and test PR-ready setup.
-- `scripts/test-superpowers-project-repo-contract.ps1`: require `merge-changes` and merge metadata.
+- `scripts/validate.sh`: add `merge-changes` to active skill names.
+- `scripts/test-superpowers-project-dummy-repo.sh`: seed merge metadata and test PR-ready setup.
+- `scripts/test-superpowers-project-repo-contract.sh`: require `merge-changes` and merge metadata.
 
 Delete after successful move:
 
-- `skills/resolve-issue/scripts/premerge.ps1`
-- `skills/resolve-issue/scripts/closeout.ps1`
+- `skills/resolve-issue/scripts/premerge.sh`
+- `skills/resolve-issue/scripts/closeout.sh`
 
 Test:
 
-- `skills/resolve-issue/scripts/test-scenarios.ps1`
-- `skills/merge-changes/scripts/test-scenarios.ps1`
-- `skills/create-issues/scripts/test-scenarios.ps1`
-- `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- `scripts/test-superpowers-project-dummy-repo.ps1`
-- `scripts/test-superpowers-project-repo-contract.ps1`
-- `scripts/validate.ps1`
-- `scripts/sync-live.ps1 -Validate`
+- `skills/resolve-issue/scripts/test-scenarios.sh`
+- `skills/merge-changes/scripts/test-scenarios.sh`
+- `skills/create-issues/scripts/test-scenarios.sh`
+- `skills/initiate-workflow/scripts/test-scenarios.sh`
+- `scripts/test-superpowers-project-dummy-repo.sh`
+- `scripts/test-superpowers-project-repo-contract.sh`
+- `scripts/validate.sh`
+- `scripts/sync-live.sh --validate`
 
 ## Non-Goals
 
@@ -120,32 +120,32 @@ Default continuation gates:
 
 Run these from the repository root:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/superpowers-project/scripts/test-scenarios.sh
+./scripts/test-superpowers-project-dummy-repo.sh
+./scripts/test-superpowers-project-repo-contract.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 ## Task 1: Add Failing Active-Skill And Router Expectations
 
 **Files:**
 
-- Modify: `scripts/validate.ps1`
-- Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `scripts/validate.ps1`
+- Modify: `scripts/validate.sh`
+- Modify: `scripts/test-superpowers-project-repo-contract.sh`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `scripts/validate.sh`
 
 - [ ] **Step 1: Add `merge-changes` to active skill validation**
 
-In `scripts/validate.ps1`, replace `Get-ActiveSkillNames` with:
+In `scripts/validate.sh`, replace `Get-ActiveSkillNames` with:
 
-```powershell
+```bash
 function Get-ActiveSkillNames {
     @(
         "superpowers-project",
@@ -162,11 +162,11 @@ function Get-ActiveSkillNames {
 
 - [ ] **Step 2: Add `merge-changes` to repo contract skill checks**
 
-In `scripts/test-superpowers-project-repo-contract.ps1`, add `"merge-changes"` to every active skill array that currently contains `"resolve-issue"` and `"audit-project"`.
+In `scripts/test-superpowers-project-repo-contract.sh`, add `"merge-changes"` to every active skill array that currently contains `"resolve-issue"` and `"audit-project"`.
 
 The active skill array should read:
 
-```powershell
+```bash
 foreach ($skillName in @(
     "superpowers-project",
     "project-context",
@@ -181,9 +181,9 @@ foreach ($skillName in @(
 
 - [ ] **Step 3: Add `merge-changes` to router scenario tests**
 
-In `skills/initiate-workflow/scripts/test-scenarios.ps1`, extend the router needle list so it includes `merge-changes`:
+In `skills/initiate-workflow/scripts/test-scenarios.sh`, extend the router needle list so it includes `merge-changes`:
 
-```powershell
+```bash
 foreach ($needle in @(
     'project-context',
     'brainstorm-spec',
@@ -205,8 +205,8 @@ foreach ($needle in @(
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: FAIL because `skills/merge-changes/SKILL.md` does not exist yet. The failure should mention `merge-changes` or a missing active skill file.
@@ -219,24 +219,24 @@ Do not commit this red state.
 
 - Create: `skills/merge-changes/SKILL.md`
 - Create: `skills/merge-changes/agents/openai.yaml`
-- Create: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `scripts/validate.ps1`
+- Create: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `scripts/validate.sh`
 
 - [ ] **Step 1: Create the skill directory**
 
 Run:
 
-```powershell
-New-Item -ItemType Directory -Path .\skills\merge-changes\agents -Force | Out-Null
-New-Item -ItemType Directory -Path .\skills\merge-changes\scripts\lib -Force | Out-Null
+```bash
+New-Item -ItemType Directory -Path ./skills/merge-changes\agents -Force | Out-Null
+New-Item -ItemType Directory -Path ./skills/merge-changes/scripts/lib -Force | Out-Null
 ```
 
 - [ ] **Step 2: Write the first `$project:merge-changes` scenario tests**
 
-Create `skills/merge-changes/scripts/test-scenarios.ps1` with:
+Create `skills/merge-changes/scripts/test-scenarios.sh` with:
 
-```powershell
+```bash
 [CmdletBinding()]
 param()
 
@@ -268,8 +268,8 @@ Invoke-Scenario "merge contract text is present" {
         "project_merge_approval",
         "Merge",
         "Decline",
-        "premerge.ps1",
-        "closeout.ps1",
+        "premerge.sh",
+        "closeout.sh",
         "git fetch --prune",
         "cleanup hook",
         "Do not merge without native UI approval"
@@ -295,8 +295,8 @@ if ($failed.Count -gt 0) { exit 1 }
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+```bash
+./skills/merge-changes/scripts/test-scenarios.sh
 ```
 
 Expected: FAIL with `missing SKILL.md`.
@@ -340,7 +340,7 @@ Follow this order exactly:
 
 1. `merge intake`: read the PR URL or worker handoff.
 2. `source linkage`: read the issue mirror, source plan, setup ledger, PR-ready handoff ledger, and verification ledger.
-3. `premerge`: run `scripts/premerge.ps1` with real GitHub evidence or local fixtures.
+3. `premerge`: run `scripts/premerge.sh` with real GitHub evidence or local fixtures.
 4. `merge approval`: explain the clean premerge evidence, then ask native UI question `project_merge_approval`.
 5. `merge`: merge the PR only when the user selects `Merge`.
 6. `issue closure`: verify the exact linked GitHub issue is closed.
@@ -349,7 +349,7 @@ Follow this order exactly:
 9. `worktree cleanup`: remove only the owned worktree when one exists.
 10. `prune`: run `git fetch --prune`.
 11. `cleanup hook`: run the repo cleanup hook.
-12. `clean state`: verify clean repo state and record closeout proof through `scripts/closeout.ps1`.
+12. `clean state`: verify clean repo state and record closeout proof through `scripts/closeout.sh`.
 
 ## Native Merge Approval
 
@@ -376,9 +376,9 @@ For explicit non-interactive smoke tests, use `debug_question_mode` only when th
 
 Run bundled scripts with explicit `-RepoRoot`:
 
-- `scripts/premerge.ps1`: validates PR closing reference, checks, issue acceptance state, changed-file coverage, and proof commands.
-- `scripts/validate-merge-decision.ps1`: validates the native merge approval ledger and blocks declined decisions.
-- `scripts/closeout.ps1`: validates merged PR proof, linked issue closure proof, branch cleanup, worktree cleanup, prune proof, cleanup hook proof, and clean repo proof.
+- `scripts/premerge.sh`: validates PR closing reference, checks, issue acceptance state, changed-file coverage, and proof commands.
+- `scripts/validate-merge-decision.sh`: validates the native merge approval ledger and blocks declined decisions.
+- `scripts/closeout.sh`: validates merged PR proof, linked issue closure proof, branch cleanup, worktree cleanup, prune proof, cleanup hook proof, and clean repo proof.
 
 All scripts emit JSON with `ok`, `phase`, `reason`, and `evidence`. If `ok` is false, block with the script reason.
 
@@ -411,8 +411,8 @@ skills:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+```bash
+./skills/merge-changes/scripts/test-scenarios.sh
 ```
 
 Expected: PASS.
@@ -421,8 +421,8 @@ Expected: PASS.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: FAIL until project context, router text, and active repo contract files mention `merge-changes`. Keep going to the routing and docs tasks before committing.
@@ -431,26 +431,26 @@ Expected: FAIL until project context, router text, and active repo contract file
 
 **Files:**
 
-- Create: `skills/merge-changes/scripts/lib/contract.ps1`
-- Create: `skills/merge-changes/scripts/premerge.ps1`
-- Create: `skills/merge-changes/scripts/validate-merge-decision.ps1`
-- Create: `skills/merge-changes/scripts/closeout.ps1`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Create: `skills/merge-changes/scripts/lib/contract.sh`
+- Create: `skills/merge-changes/scripts/premerge.sh`
+- Create: `skills/merge-changes/scripts/validate-merge-decision.sh`
+- Create: `skills/merge-changes/scripts/closeout.sh`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Copy the existing contract helpers**
 
 Run:
 
-```powershell
-Copy-Item -LiteralPath .\skills\resolve-issue\scripts\lib\contract.ps1 -Destination .\skills\merge-changes\scripts\lib\contract.ps1 -Force
+```bash
+Copy-Item -LiteralPath ./skills/resolve-issue/scripts/lib\contract.sh -Destination ./skills/merge-changes/scripts/lib\contract.sh -Force
 ```
 
 - [ ] **Step 2: Add merge-decision helpers to the copied contract**
 
-Append to `skills/merge-changes/scripts/lib/contract.ps1`:
+Append to `skills/merge-changes/scripts/lib/contract.sh`:
 
-```powershell
+```bash
 function Assert-MergeDecision {
     param($Decision)
     if ($null -eq $Decision) { throw "merge decision is required" }
@@ -480,11 +480,11 @@ function Assert-CleanRepoProof {
 }
 ```
 
-- [ ] **Step 3: Create `premerge.ps1` with JSON and fixture inputs**
+- [ ] **Step 3: Create `premerge.sh` with JSON and fixture inputs**
 
-Copy `skills/resolve-issue/scripts/premerge.ps1` to `skills/merge-changes/scripts/premerge.ps1`, then update the parameter block so it accepts real JSON or fixture paths:
+Copy `skills/resolve-issue/scripts/premerge.sh` to `skills/merge-changes/scripts/premerge.sh`, then update the parameter block so it accepts real JSON or fixture paths:
 
-```powershell
+```bash
 param(
     [string]$RepoRoot = ".",
     [string]$SetupLedgerJson,
@@ -500,18 +500,18 @@ param(
 
 In the body, replace PR and issue reads with:
 
-```powershell
+```bash
 $pr = Read-JsonInput -Json $PrJson -Path $PrFixturePath -Name "PR evidence"
 $issue = Read-JsonInput -Json $IssueJson -Path $IssueFixturePath -Name "issue evidence"
 ```
 
 Keep the existing checks for exact closing reference, required checks, acceptance criteria coverage, changed-file coverage, and proof commands.
 
-- [ ] **Step 4: Create `validate-merge-decision.ps1`**
+- [ ] **Step 4: Create `validate-merge-decision.sh`**
 
-Create `skills/merge-changes/scripts/validate-merge-decision.ps1` with:
+Create `skills/merge-changes/scripts/validate-merge-decision.sh` with:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = ".",
@@ -522,7 +522,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\contract.ps1")
+. (Join-Path $PSScriptRoot "lib\contract.sh")
 $phase = "merge-decision"
 
 try {
@@ -537,11 +537,11 @@ try {
 }
 ```
 
-- [ ] **Step 5: Create `closeout.ps1` for merge closeout**
+- [ ] **Step 5: Create `closeout.sh` for merge closeout**
 
-Copy `skills/resolve-issue/scripts/closeout.ps1` to `skills/merge-changes/scripts/closeout.ps1`, then change its parameter block to:
+Copy `skills/resolve-issue/scripts/closeout.sh` to `skills/merge-changes/scripts/closeout.sh`, then change its parameter block to:
 
-```powershell
+```bash
 param(
     [string]$RepoRoot = ".",
     [string]$SetupLedgerJson,
@@ -557,14 +557,14 @@ param(
 
 Replace fixture reads with:
 
-```powershell
+```bash
 $pr = Read-JsonInput -Json $PrJson -Path $PrFixturePath -Name "PR evidence"
 $issue = Read-JsonInput -Json $IssueJson -Path $IssueFixturePath -Name "issue evidence"
 ```
 
 Require these structured completion fields:
 
-```powershell
+```bash
 foreach ($field in @(
     "merge_decision",
     "merge_confirmation",
@@ -585,7 +585,7 @@ Assert-CleanRepoProof -Proof $completion.clean_repo_proof
 
 Remove the old requirement that `$project:merge-changes` must call `update_goal` by default. Instead, require `resolve_goal_completion_proof.status` to be `complete`:
 
-```powershell
+```bash
 $resolveGoal = $completion.resolve_goal_completion_proof
 if ($resolveGoal -is [string]) { throw "resolve goal completion proof must be structured" }
 if ([string]$resolveGoal.status -ne "complete") { throw "resolve goal completion proof must mark status complete" }
@@ -595,13 +595,13 @@ Keep the existing branch cleanup rule that only the setup branch may be deleted.
 
 - [ ] **Step 6: Add merge script scenarios**
 
-Extend `skills/merge-changes/scripts/test-scenarios.ps1` with helpers equivalent to the resolver tests:
+Extend `skills/merge-changes/scripts/test-scenarios.sh` with helpers equivalent to the resolver tests:
 
-```powershell
+```bash
 function Invoke-JsonScript {
     param([string]$ScriptName, [string[]]$Arguments)
     $scriptPath = Join-Path $scriptRoot $ScriptName
-    $output = & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath @Arguments 2>&1
+    $output = & $scriptPath @Arguments 2>&1
     $raw = ($output | Out-String).Trim()
     try {
         if ([string]::IsNullOrWhiteSpace($raw)) { throw "empty output" }
@@ -628,7 +628,7 @@ function New-VerificationLedger {
         acceptance_criteria_closeout_proof = $true
         changed_files_covered = @("src/example.txt", "docs/superpowers/issues/12-sample.md")
         verification_exemptions = @()
-        proof_commands = @("pwsh -NoProfile -Command 'exit 0'")
+        proof_commands = @("-NoProfile -Command 'exit 0'")
     } | ConvertTo-Json -Depth 12 -Compress
 }
 
@@ -646,7 +646,7 @@ function New-MergeDecision {
 
 Add scenarios:
 
-```powershell
+```bash
 Invoke-Scenario "premerge accepts happy fixture" {
     $pr = @{
         url = "https://github.com/example/repo/pull/5"
@@ -657,20 +657,20 @@ Invoke-Scenario "premerge accepts happy fixture" {
         files = @(@{ path = "src/example.txt" }, @{ path = "docs/superpowers/issues/12-sample.md" })
     } | ConvertTo-Json -Depth 12 -Compress
     $issue = @{ state = "OPEN"; body = "- [x] Sample issue is resolved" } | ConvertTo-Json -Depth 8 -Compress
-    $result = Invoke-JsonScript -ScriptName "premerge.ps1" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-VerificationLedgerJson", (New-VerificationLedger), "-PrJson", $pr, "-IssueJson", $issue)
+    $result = Invoke-JsonScript -ScriptName "premerge.sh" -Arguments @("-SetupLedgerJson", (New-SetupLedger), "-VerificationLedgerJson", (New-VerificationLedger), "-PrJson", $pr, "-IssueJson", $issue)
     if (-not $result.ok) { throw $result.reason }
 }
 
 Invoke-Scenario "merge approval blocks declined decision" {
     $premerge = @{ ok = $true; phase = "premerge"; reason = "passed"; evidence = @{} } | ConvertTo-Json -Depth 8 -Compress
-    $result = Invoke-JsonScript -ScriptName "validate-merge-decision.ps1" -Arguments @("-PremergeResultJson", $premerge, "-MergeDecisionJson", (New-MergeDecision -SelectedAction "decline"))
+    $result = Invoke-JsonScript -ScriptName "validate-merge-decision.sh" -Arguments @("-PremergeResultJson", $premerge, "-MergeDecisionJson", (New-MergeDecision -SelectedAction "decline"))
     if ($result.ok -or $result.reason -notmatch "declined") { throw "expected declined merge decision to block" }
 }
 ```
 
 Add a happy closeout scenario that includes:
 
-```powershell
+```bash
 $completion = @{
     pr_url = "https://github.com/example/repo/pull/5"
     issue_url = "https://github.com/example/repo/issues/12"
@@ -691,8 +691,8 @@ $completion = @{
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+```bash
+./skills/merge-changes/scripts/test-scenarios.sh
 ```
 
 Expected: PASS.
@@ -703,22 +703,22 @@ Expected: PASS.
 
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/lib/contract.ps1`
-- Modify: `skills/resolve-issue/scripts/prepare-execution.ps1`
-- Modify: `skills/resolve-issue/scripts/validate-setup.ps1`
-- Create: `skills/resolve-issue/scripts/validate-pr-ready.ps1`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
-- Delete: `skills/resolve-issue/scripts/premerge.ps1`
-- Delete: `skills/resolve-issue/scripts/closeout.ps1`
-- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/lib/contract.sh`
+- Modify: `skills/resolve-issue/scripts/prepare-execution.sh`
+- Modify: `skills/resolve-issue/scripts/validate-setup.sh`
+- Create: `skills/resolve-issue/scripts/validate-pr-ready.sh`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
+- Delete: `skills/resolve-issue/scripts/premerge.sh`
+- Delete: `skills/resolve-issue/scripts/closeout.sh`
+- Test: `skills/resolve-issue/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing resolver scenarios for packet map and PR-ready close**
 
-In `skills/resolve-issue/scripts/test-scenarios.ps1`, replace the `"happy closeout marks goal complete after merge and issue close"` scenario with `"happy PR-ready handoff marks resolve goal complete"`.
+In `skills/resolve-issue/scripts/test-scenarios.sh`, replace the `"happy closeout marks goal complete after merge and issue close"` scenario with `"happy PR-ready handoff marks resolve goal complete"`.
 
 Use this PR-ready ledger in the new scenario:
 
-```powershell
+```bash
 $prReady = @{
     pr_url = "https://github.com/example/repo/pull/5"
     issue_url = "https://github.com/example/repo/issues/12"
@@ -734,16 +734,16 @@ $prReady = @{
 
 Call the new script:
 
-```powershell
-$result = Invoke-JsonScript -ScriptName "validate-pr-ready.ps1" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", $prReady)
+```bash
+$result = Invoke-JsonScript -ScriptName "validate-pr-ready.sh" -Arguments @("-RepoRoot", $repo, "-SetupLedgerJson", (New-SetupLedger), "-PrReadyLedgerJson", $prReady)
 Assert-True ($result.ok) $result.reason
 Assert-True ($result.evidence.goal_status -eq "complete") "resolve goal completion was not recorded"
 ```
 
 Add a scenario named `"worker setup includes dynamic work packet map"`:
 
-```powershell
-$result = Invoke-JsonScript -ScriptName "prepare-execution.ps1" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "orchestrated-worker"))
+```bash
+$result = Invoke-JsonScript -ScriptName "prepare-execution.sh" -Arguments @("-Mode", "FinalizeSetup", "-RepoRoot", $repo, "-HandoffJson", (New-Handoff), "-GoalProofJson", (New-GoalProof), "-ExecutionDecisionJson", (New-ExecutionDecision -SelectedMode "orchestrated-worker"))
 Assert-True ($result.ok) $result.reason
 Assert-True ($result.setup_ledger.worker_handoff.dynamic_work_packet_map.worker_packet.objective -match "Implement") "worker packet objective missing"
 Assert-True ($result.setup_ledger.dynamic_work_packet_map.merge_owner -eq "merge-changes") "merge owner must be merge-changes"
@@ -753,17 +753,17 @@ Assert-True ($result.setup_ledger.dynamic_work_packet_map.merge_owner -eq "merge
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
-Expected: FAIL because `validate-pr-ready.ps1` and Dynamic Work Packet Map fields do not exist yet.
+Expected: FAIL because `validate-pr-ready.sh` and Dynamic Work Packet Map fields do not exist yet.
 
 - [ ] **Step 3: Add Dynamic Work Packet Map helpers**
 
-Append to `skills/resolve-issue/scripts/lib/contract.ps1`:
+Append to `skills/resolve-issue/scripts/lib/contract.sh`:
 
-```powershell
+```bash
 function New-DynamicWorkPacketMap {
     param($Handoff, $Decision)
     [ordered]@{
@@ -823,38 +823,38 @@ function Assert-DynamicWorkPacketMap {
 
 In `New-WorkerHandoff`, add this field before `closeout_owner`:
 
-```powershell
+```bash
 dynamic_work_packet_map = New-DynamicWorkPacketMap -Handoff $Handoff -Decision $Decision
 ```
 
 Change `closeout_owner` to:
 
-```powershell
+```bash
 integration_owner = "merge-changes"
 ```
 
-In `prepare-execution.ps1`, add this top-level setup ledger field:
+In `prepare-execution.sh`, add this top-level setup ledger field:
 
-```powershell
+```bash
 dynamic_work_packet_map = if ([string]$executionDecision.selected_mode -eq "orchestrated-worker") { New-DynamicWorkPacketMap -Handoff $handoff -Decision $executionDecision } else { $null }
 ```
 
 - [ ] **Step 5: Validate the map for worker mode**
 
-In `skills/resolve-issue/scripts/validate-setup.ps1`, after the existing worker handoff check, add:
+In `skills/resolve-issue/scripts/validate-setup.sh`, after the existing worker handoff check, add:
 
-```powershell
+```bash
 if ([string]$ledger.execution_decision.selected_mode -eq "orchestrated-worker") {
     Assert-DynamicWorkPacketMap -Map $ledger.dynamic_work_packet_map
     Assert-DynamicWorkPacketMap -Map $ledger.worker_handoff.dynamic_work_packet_map
 }
 ```
 
-- [ ] **Step 6: Create `validate-pr-ready.ps1`**
+- [ ] **Step 6: Create `validate-pr-ready.sh`**
 
-Create `skills/resolve-issue/scripts/validate-pr-ready.ps1` with:
+Create `skills/resolve-issue/scripts/validate-pr-ready.sh` with:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = ".",
@@ -865,7 +865,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "lib\contract.ps1")
+. (Join-Path $PSScriptRoot "lib\contract.sh")
 $phase = "pr-ready"
 
 try {
@@ -935,17 +935,17 @@ skills:
 
 Run:
 
-```powershell
-Remove-Item -LiteralPath .\skills\resolve-issue\scripts\premerge.ps1
-Remove-Item -LiteralPath .\skills\resolve-issue\scripts\closeout.ps1
+```bash
+Remove-Item -LiteralPath ./skills/resolve-issue/scripts/premerge.sh
+Remove-Item -LiteralPath ./skills/resolve-issue/scripts/closeout.sh
 ```
 
 - [ ] **Step 10: Run resolver scenario tests**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
+```bash
+./skills/resolve-issue/scripts/test-scenarios.sh
 ```
 
 Expected: PASS.
@@ -956,12 +956,12 @@ Expected: PASS.
 
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
-- Modify: `skills/create-issues/scripts/validate-issue-mirror.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/scripts/validate-issue-mirror.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
 - Modify: `docs/superpowers/issues/README.md`
 - Modify: `docs/superpowers/issues/smoke-test-workflow.md`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `scripts/test-superpowers-project-repo-contract.ps1`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `scripts/test-superpowers-project-repo-contract.sh`
 
 - [ ] **Step 1: Update issue mirror template text**
 
@@ -998,9 +998,9 @@ include a Project Merge section with Merge Owner, Merge Gate, Merge Policy, Work
 
 - [ ] **Step 3: Add merge section validation**
 
-In `skills/create-issues/scripts/validate-issue-mirror.ps1`, after workflow metadata validation, add:
+In `skills/create-issues/scripts/validate-issue-mirror.sh`, after workflow metadata validation, add:
 
-```powershell
+```bash
 $hasProjectMergeSection = [regex]::IsMatch($text, "(?im)^##\s*Project Merge\s*$")
 if (-not $hasProjectMergeSection) {
     Complete -Ok $false -Reason "Project Merge section is required"
@@ -1028,7 +1028,7 @@ foreach ($fieldName in $mergeFields.Keys) {
 
 - [ ] **Step 4: Update project issue scenarios**
 
-In `skills/create-issues/scripts/test-scenarios.ps1`, add the `## Project Merge` section to every happy issue mirror fixture:
+In `skills/create-issues/scripts/test-scenarios.sh`, add the `## Project Merge` section to every happy issue mirror fixture:
 
 ```markdown
 ## Project Merge
@@ -1042,7 +1042,7 @@ In `skills/create-issues/scripts/test-scenarios.ps1`, add the `## Project Merge`
 
 Add text needles for:
 
-```powershell
+```bash
 "Project Merge",
 "Merge Owner",
 "Merge Gate",
@@ -1077,8 +1077,8 @@ In `docs/superpowers/issues/smoke-test-workflow.md`, add the same `## Project Me
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+```bash
+./skills/create-issues/scripts/test-scenarios.sh
 ```
 
 Expected: PASS.
@@ -1089,15 +1089,15 @@ Expected: PASS.
 
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `README.md`
 - Modify: `.codex-plugin/plugin.json`
-- Modify: `scripts/test-superpowers-project-dummy-repo.ps1`
-- Modify: `scripts/test-superpowers-project-repo-contract.ps1`
-- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `scripts/test-superpowers-project-dummy-repo.ps1`
-- Test: `scripts/test-superpowers-project-repo-contract.ps1`
+- Modify: `scripts/test-superpowers-project-dummy-repo.sh`
+- Modify: `scripts/test-superpowers-project-repo-contract.sh`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `scripts/test-superpowers-project-dummy-repo.sh`
+- Test: `scripts/test-superpowers-project-repo-contract.sh`
 
 - [ ] **Step 1: Update router text**
 
@@ -1153,20 +1153,20 @@ In `.codex-plugin/plugin.json`, add this default prompt entry:
 
 - [ ] **Step 6: Update dummy repo fixture**
 
-In `scripts/test-superpowers-project-dummy-repo.ps1`, add the `## Project Merge` section to the seeded `12-dummy.md` issue mirror.
+In `scripts/test-superpowers-project-dummy-repo.sh`, add the `## Project Merge` section to the seeded `12-dummy.md` issue mirror.
 
 After the worker setup decision check, assert the packet map:
 
-```powershell
+```bash
 if (-not $workerFinalize.setup_ledger.dynamic_work_packet_map) { throw "dynamic work packet map was not recorded" }
 if ($workerFinalize.setup_ledger.dynamic_work_packet_map.merge_owner -ne "merge-changes") { throw "dynamic work packet map merge owner mismatch" }
 ```
 
 - [ ] **Step 7: Update repo contract checks**
 
-In `scripts/test-superpowers-project-repo-contract.ps1`, add `merge-changes` to the active skill arrays and add these required issue mirror needles:
+In `scripts/test-superpowers-project-repo-contract.sh`, add `merge-changes` to the active skill arrays and add these required issue mirror needles:
 
-```powershell
+```bash
 "Project Merge",
 "Merge Owner",
 "Merge Gate",
@@ -1179,10 +1179,10 @@ In `scripts/test-superpowers-project-repo-contract.ps1`, add `merge-changes` to 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
+```bash
+./skills/superpowers-project/scripts/test-scenarios.sh
+./scripts/test-superpowers-project-dummy-repo.sh
+./scripts/test-superpowers-project-repo-contract.sh
 ```
 
 Expected: all PASS.
@@ -1193,22 +1193,22 @@ Expected: all PASS.
 
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/merge-changes/SKILL.md`
 - Modify: `skills/initiate-workflow/SKILL.md`
-- Test: `skills/write-plan/scripts/test-scenarios.ps1`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Test: `skills/write-plan/scripts/test-scenarios.sh`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `skills/resolve-issue/scripts/test-scenarios.sh`
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add a failing `$project:write-plan` continuation test**
 
-In `skills/write-plan/scripts/test-scenarios.ps1`, add a scenario that requires the skill text to contain the executable continuation gate:
+In `skills/write-plan/scripts/test-scenarios.sh`, add a scenario that requires the skill text to contain the executable continuation gate:
 
-```powershell
+```bash
 Invoke-Scenario "native continuation gate is present" {
     $text = Get-Content -LiteralPath $skillFile -Raw
     foreach ($needle in @(
@@ -1227,7 +1227,7 @@ Invoke-Scenario "native continuation gate is present" {
 
 Add metadata needles:
 
-```powershell
+```bash
 Assert-Contains $metadata "project_plan_next_step" "missing continuation question id"
 Assert-Contains $metadata "start the selected next skill" "missing executable routing guidance"
 ```
@@ -1236,8 +1236,8 @@ Assert-Contains $metadata "start the selected next skill" "missing executable ro
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
 ```
 
 Expected: FAIL because the continuation-gate text is not present yet.
@@ -1316,12 +1316,12 @@ At major handoffs, use native continuation questions and treat the selected answ
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./skills/superpowers-project/scripts/test-scenarios.sh
 ```
 
 Expected: all PASS.
@@ -1330,21 +1330,21 @@ Expected: all PASS.
 
 **Files:**
 
-- Test: `skills/resolve-issue/scripts/test-scenarios.ps1`
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
-- Test: `scripts/validate.ps1`
-- Test: `scripts/sync-live.ps1`
+- Test: `skills/resolve-issue/scripts/test-scenarios.sh`
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
+- Test: `scripts/validate.sh`
+- Test: `scripts/sync-live.sh`
 
 - [ ] **Step 1: Run focused skill tests**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\superpowers-project\scripts\test-scenarios.ps1
+```bash
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/superpowers-project/scripts/test-scenarios.sh
 ```
 
 Expected: all PASS.
@@ -1353,8 +1353,8 @@ Expected: all PASS.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: PASS.
@@ -1363,8 +1363,8 @@ Expected: PASS.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected: PASS. Confirm the JSON output includes `merge-changes` under both deployed plugin skills and deployed user skills.
@@ -1373,8 +1373,8 @@ Expected: PASS. Confirm the JSON output includes `merge-changes` under both depl
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: no matching leftover Codex processes for this repo, or only processes clearly owned by the task if `-Kill` is explicitly used later.
@@ -1383,7 +1383,7 @@ Expected: no matching leftover Codex processes for this repo, or only processes 
 
 Run:
 
-```powershell
+```bash
 git status --short
 git add .codex-plugin/plugin.json README.md docs/superpowers skills scripts
 git commit -m "feat: add project merge workflow"

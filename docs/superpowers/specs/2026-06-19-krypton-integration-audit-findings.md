@@ -41,14 +41,14 @@ No implementation route was used. This is a findings-first audit for later plann
 
 ## Validation Evidence
 
-```powershell
+```bash
 bash ./scripts/validate.sh
 ```
 
 Result from `.codex-local/external/krypton`: `validation passed`.
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Result: no matching leftover Codex processes under the Superpowers Project repo.
@@ -75,9 +75,9 @@ Do not make Krypton a direct execution route inside Superpowers Project. If Kryp
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-flat-artifact-roots.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate-flat-artifact-roots.sh
+./scripts/validate.sh
 ```
 
 Add a fixture asserting that a plan with a Krypton-shaped `docs/goals` source is rejected unless the user explicitly opted into separate GoalBuddy work outside the default route.
@@ -110,10 +110,10 @@ Then add a validator or extend the plan validator so high-risk implementation pl
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <saved-plan-path>
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
+./scripts/validate-plan-task-use-cases.sh -PlanPath <saved-plan-path>
+./scripts/validate.sh
 ```
 
 Add pressure fixtures based on Krypton's wrong-layer, weak-evidence, and cutover-debt scenarios.
@@ -144,11 +144,11 @@ Thread Krypton-style role evidence into existing ledgers and artifact review gat
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 ### P3: Krypton's pressure scenarios are strong regression fixtures for this plugin
@@ -169,10 +169,10 @@ Add local Superpowers Project scenario tests that encode those failures against 
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 ## Healthy Checks

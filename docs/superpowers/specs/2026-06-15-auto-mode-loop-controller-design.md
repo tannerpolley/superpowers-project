@@ -10,7 +10,7 @@ The goal is to move from "the agent may continue through this approved route" to
 
 - `docs/superpowers/PROJECT_CONTEXT.md` defines the durable artifact roots and the execution model: setup, spec, plan, issue mirrors, native `/goal`, direct issue resolution, worker orchestration, and merge closeout.
 - `docs/superpowers/specs/2026-06-04-auto-mode-after-spec-design.md` defines Auto Mode as bounded auto-merge over existing skills, with recorded defaults, mutation scope, proof requirements, stop conditions, and clean premerge merge permission.
-- `scripts/lib/auto-mode-contract.ps1` validates Auto Mode authorization fields such as `project_auto_mode_authorization`, `bounded-auto-merge`, `recorded-defaults`, `stop_outside_policy`, `mutation_scope`, `required_proof`, and `stop_conditions`.
+- `scripts/lib/auto-mode-contract.sh` validates Auto Mode authorization fields such as `project_auto_mode_authorization`, `bounded-auto-merge`, `recorded-defaults`, `stop_outside_policy`, `mutation_scope`, `required_proof`, and `stop_conditions`.
 - `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md` already added CI, release receipts, stale contract detection, local-branch closeout helpers, e2e smoke tests, and generated contract summaries. Loop Controller should build on those mature surfaces instead of replacing them.
 - `README.md` documents strict native continuation geometry: intermediate gates use `Yes`, `Revisit`, and `Stop`; final health gates use `Done`, `Revisit`, and `Stop`; saved artifacts, pushed branches, created issues, merged PRs, completed audits, and live sync are not terminal by themselves.
 - `docs/superpowers/OUTCOME_WORKFLOW.md` records the current approval boundaries: push, publish, merge, board creation, GitHub mutation, Auto Mode authorization, and final `Done` require explicit proof and owning gates.
@@ -362,21 +362,21 @@ The implementation plan should add focused tests for:
 
 Proof oracle candidates:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-agent-plugin-version.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-e2e-project-workflow.ps1 -LocalOnly
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/test-auto-mode-contract.sh
+./scripts/test-agent-plugin-version.sh
+./scripts/test-e2e-project-workflow.sh -LocalOnly
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
 ```
 
 New proof oracle candidates:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-run-ledger.ps1 -RepoRoot . -RunLedgerPath <ledger>
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-budget.ps1 -RepoRoot . -BudgetLedgerPath <ledger>
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-terminal-closeout.ps1 -RepoRoot . -RunResultPath <result> -ContinuationDecisionPath <decision>
+```bash
+./skills/loop-controller/scripts/test-scenarios.sh
+./skills/loop-controller/scripts/validate-run-ledger.sh -RepoRoot . -RunLedgerPath <ledger>
+./skills/loop-controller/scripts/validate-budget.sh -RepoRoot . -BudgetLedgerPath <ledger>
+./skills/loop-controller/scripts/validate-terminal-closeout.sh -RepoRoot . -RunResultPath <result> -ContinuationDecisionPath <decision>
 ```
 
 ## Suggested Delivery Slices

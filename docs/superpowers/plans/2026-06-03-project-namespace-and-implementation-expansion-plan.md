@@ -4,9 +4,9 @@
 
 **Goal:** Migrate Superpowers Project to the `project:*` plugin namespace, bundle `advanced-user-input` as an official plugin skill, add the direct `implement-plan` route, and align setup, orchestration, merge, sync, and public-release surfaces around the new workflow.
 
-**Architecture:** Treat this as one source-of-truth migration in the plugin repo: source skills live only under `skills/`, runtime deployment goes to `C:\Users\Tanner\plugins\project`, and old global user-skill copies are removed. Implement behavior in validated skill docs plus bundled scenario scripts, then update repo validation and live sync so stale names, stale paths, and missing bundled skills fail loudly.
+**Architecture:** Treat this as one source-of-truth migration in the plugin repo: source skills live only under `skills/`, runtime deployment goes to `/home/tnnrpolley21/.codex/plugins/project`, and old global user-skill copies are removed. Implement behavior in validated skill docs plus bundled scenario scripts, then update repo validation and live sync so stale names, stale paths, and missing bundled skills fail loudly.
 
-**Tech Stack:** Codex skill Markdown/YAML, PowerShell 7 validation scripts, JSON ledgers, Git/GitHub CLI evidence, native `request_user_input`, `request_agent_input` written protocol, docs under `docs/superpowers`, and existing repo validators.
+**Tech Stack:** Codex skill Markdown/YAML, Bash 7 validation scripts, JSON ledgers, Git/GitHub CLI evidence, native `request_user_input`, `request_agent_input` written protocol, docs under `docs/superpowers`, and existing repo validators.
 
 ---
 
@@ -21,7 +21,7 @@
 
 **Bundled Skill Source:**
 
-- `C:\Users\Tanner\.agents\skills\advanced-user-input\SKILL.md`
+- `/home/tnnrpolley21/.agents/skills/advanced-user-input\SKILL.md`
 
 **Planning Grill Decisions:**
 
@@ -78,8 +78,8 @@
 - `advanced-user-input` is bundled under `skills/advanced-user-input` and validates as an official plugin skill.
 - The bundled `advanced-user-input` skill includes both `request_user_input` guidance and the `request_agent_input` worker-to-orchestrator protocol.
 - Current `write-plan` and future `write-plan` enforce planning grill plus native Q&A as hard gates before plan save when material decisions remain.
-- `scripts/sync-live.ps1 -Validate` deploys to `C:\Users\Tanner\plugins\project`.
-- `scripts/sync-live.ps1 -Validate` stops copying active plugin skills into `C:\Users\Tanner\.agents\skills`.
+- `scripts/sync-live.sh --validate` deploys to `/home/tnnrpolley21/.codex/plugins/project`.
+- `scripts/sync-live.sh --validate` stops copying active plugin skills into `/home/tnnrpolley21/.agents/skills`.
 - Sync removes repo-owned old user-skill copies and old live plugin roots after ownership checks.
 - `workflow` routes using `project:*` names and no longer advertises `$project-*` global skills.
 - `write-plan` continuation includes `Project Implement`, `Project Issue First`, `Review First`, `Revise Plan`, and `Stop`; Quick Apply remains only for guarded local-main small changes.
@@ -94,7 +94,7 @@
 ## Non-Goals
 
 - Do not keep compatibility wrappers, alias stubs, or forwarding skills for old names.
-- Do not copy active plugin skills into `C:\Users\Tanner\.agents\skills` after the namespace migration.
+- Do not copy active plugin skills into `/home/tnnrpolley21/.agents/skills` after the namespace migration.
 - Do not rename the local workspace folder.
 - Do not rewrite closed issue or PR history links.
 - Do not create `docs/superpowers/implementations`.
@@ -105,23 +105,23 @@
 ## File Map
 
 - Create: `skills/advanced-user-input/SKILL.md`
-- Create: `skills/advanced-user-input/scripts/test-scenarios.ps1`
+- Create: `skills/advanced-user-input/scripts/test-scenarios.sh`
 - Create: `skills/implement-plan/SKILL.md`
 - Create: `skills/implement-plan/agents/openai.yaml`
-- Create: `skills/implement-plan/scripts/test-scenarios.ps1`
-- Create: `skills/implement-plan/scripts/lib/contract.ps1`
-- Create: `scripts/test-project-namespace-migration.ps1`
-- Create: `scripts/test-plugin-only-live-sync.ps1`
+- Create: `skills/implement-plan/scripts/test-scenarios.sh`
+- Create: `skills/implement-plan/scripts/lib/contract.sh`
+- Create: `scripts/test-project-namespace-migration.sh`
+- Create: `scripts/test-plugin-only-live-sync.sh`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `.github/ISSUE_TEMPLATE/*.yml`
-- Modify: `scripts/validate.ps1`
-- Modify: `scripts/sync-live.ps1`
-- Modify: `scripts/test-sync-live.ps1`
-- Modify: `scripts/test-superpowers-project-repo-contract.ps1`
+- Modify: `scripts/validate.sh`
+- Modify: `scripts/sync-live.sh`
+- Modify: `scripts/test-sync-live.sh`
+- Modify: `scripts/test-superpowers-project-repo-contract.sh`
 - Modify: `README.md`
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
 - Modify/Rename: all existing `skills/<old-name>` directories into target `skills/<new-name>` directories.
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/agents/project-roadmap.json`
@@ -141,7 +141,7 @@
 - Bundle `advanced-user-input` before updating skills that reference it.
 - Keep validation green at every task checkpoint with scenario tests and focused migration checks.
 - Use `git mv` for skill directory renames so history is preserved.
-- Remove live user-skill copies only through `scripts/sync-live.ps1` ownership checks.
+- Remove live user-skill copies only through `scripts/sync-live.sh` ownership checks.
 - Treat `request_agent_input` as a written protocol, not a tool call. It is only valid for worker/subagent threads that need an orchestrator decision.
 - In this plugin, `request_agent_input` is narrower than the generic user-level skill: use it only for workers created by `project:orchestrate-issues` that have an explicit worker handoff naming the orchestrator, branch, issue/plan, reporting path, and why the worker may ask the orchestrator.
 - Because the repo rename and public visibility change are remote mutations, execute them only after validation and native confirmation inside the implementation task, even though this plan includes them in scope.
@@ -150,14 +150,14 @@
 
 Run these commands before claiming completion:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\advanced-user-input\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plugin-only-live-sync.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./skills/advanced-user-input/scripts/test-scenarios.sh
+./skills/implement-plan/scripts/test-scenarios.sh
+./scripts/test-project-namespace-migration.sh
+./scripts/test-plugin-only-live-sync.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 git status --short --branch
 ```
 
@@ -165,9 +165,9 @@ Expected final state:
 
 - Every command exits `0`.
 - `git status --short --branch` shows a clean branch after final commit.
-- `Test-Path "$env:USERPROFILE\plugins\project\.codex-plugin\plugin.json"` returns `True`.
-- `Test-Path "$env:USERPROFILE\plugins\superpowers-project"` returns `False` after ownership-checked cleanup, or is reported as a retired path if cleanup is deferred by an explicit user decision.
-- `Get-ChildItem "$env:USERPROFILE\.agents\skills"` does not include repo-owned old global copies such as `write-plan`, `resolve-issue`, or `superpowers-project`.
+- `Test-Path "$HOME\plugins/project\.codex-plugin\plugin.json"` returns `True`.
+- `Test-Path "$HOME\plugins/superpowers-project"` returns `False` after ownership-checked cleanup, or is reported as a retired path if cleanup is deferred by an explicit user decision.
+- `Get-ChildItem "$HOME\.agents\skills"` does not include repo-owned old global copies such as `write-plan`, `resolve-issue`, or `superpowers-project`.
 
 ### Task 1: Harden Current Plan-Writing Gate
 
@@ -175,12 +175,12 @@ Expected final state:
 
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
-- Test: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
+- Test: `skills/write-plan/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add a failing scenario for the Planning Grill Gate**
 
-In `skills/write-plan/scripts/test-scenarios.ps1`, add a scenario that requires these phrases in `SKILL.md`:
+In `skills/write-plan/scripts/test-scenarios.sh`, add a scenario that requires these phrases in `SKILL.md`:
 
 ```text
 ## Planning Grill Gate
@@ -225,15 +225,15 @@ Before saving a plan, use the Planning Grill Gate: apply grill-me behavior, insp
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
 ```
 
 Expected: all scenarios pass.
 
 - [ ] **Step 5: Commit checkpoint**
 
-```powershell
+```bash
 git add skills/write-plan
 git commit -m "fix: require planning grill native qa gate"
 ```
@@ -242,15 +242,15 @@ git commit -m "fix: require planning grill native qa gate"
 
 **Files:**
 
-- Create: `scripts/test-project-namespace-migration.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-project-namespace-migration.ps1`
+- Create: `scripts/test-project-namespace-migration.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-project-namespace-migration.sh`
 
 - [ ] **Step 1: Write the failing namespace test**
 
-Create `scripts/test-project-namespace-migration.ps1`:
+Create `scripts/test-project-namespace-migration.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -338,11 +338,11 @@ if ($failed.Count -gt 0) { exit 1 }
 
 - [ ] **Step 2: Wire the failing test into validation after the current skill source contract**
 
-In `scripts/validate.ps1`, add:
+In `scripts/validate.sh`, add:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "project namespace migration contract" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-project-namespace-migration.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-project-namespace-migration.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "project namespace migration contract failed" }
 }))
 ```
@@ -353,16 +353,16 @@ Place it after `Native Q&A SVG contract` while this migration is under active im
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
+```bash
+./scripts/test-project-namespace-migration.sh
 ```
 
 Expected: fails because `.codex-plugin/plugin.json` is still `superpowers-project`, old skill directories still exist, and target directories do not exist yet.
 
 - [ ] **Step 4: Commit checkpoint**
 
-```powershell
-git add scripts/test-project-namespace-migration.ps1 scripts/validate.ps1
+```bash
+git add scripts/test-project-namespace-migration.sh scripts/validate.sh
 git commit -m "test: add project namespace migration contract"
 ```
 
@@ -371,13 +371,13 @@ git commit -m "test: add project namespace migration contract"
 **Files:**
 
 - Create: `skills/advanced-user-input/SKILL.md`
-- Create: `skills/advanced-user-input/scripts/test-scenarios.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `skills/advanced-user-input/scripts/test-scenarios.ps1`
+- Create: `skills/advanced-user-input/scripts/test-scenarios.sh`
+- Modify: `scripts/validate.sh`
+- Test: `skills/advanced-user-input/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Adapt the source skill into the plugin**
 
-Create `skills/advanced-user-input/SKILL.md` using `C:\Users\Tanner\.agents\skills\advanced-user-input\SKILL.md` as source material, but adapt wording for the Superpowers Project plugin. Keep the generic native UI patterns, then narrow `request_agent_input` to the plugin's orchestrated-worker model.
+Create `skills/advanced-user-input/SKILL.md` using `/home/tnnrpolley21/.agents/skills/advanced-user-input\SKILL.md` as source material, but adapt wording for the Superpowers Project plugin. Keep the generic native UI patterns, then narrow `request_agent_input` to the plugin's orchestrated-worker model.
 
 The frontmatter must be:
 
@@ -413,9 +413,9 @@ Do not use `request_agent_input` in root user-facing threads, ordinary planning 
 
 - [ ] **Step 2: Add scenario tests for user and agent input contracts**
 
-Create `skills/advanced-user-input/scripts/test-scenarios.ps1`:
+Create `skills/advanced-user-input/scripts/test-scenarios.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param()
 
@@ -488,9 +488,9 @@ if ($failed.Count -gt 0) { exit 1 }
 
 - [ ] **Step 3: Update active skill validation**
 
-In `scripts/validate.ps1`, include `advanced-user-input` in the active skill list after the namespace migration is in place:
+In `scripts/validate.sh`, include `advanced-user-input` in the active skill list after the namespace migration is in place:
 
-```powershell
+```bash
 function Get-ActiveSkillNames {
     @(
         "advanced-user-input",
@@ -512,17 +512,17 @@ function Get-ActiveSkillNames {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\advanced-user-input\scripts\test-scenarios.ps1
-py -3.12 .\scripts\quick-validate-skill.py .\skills\advanced-user-input
+```bash
+./skills/advanced-user-input/scripts/test-scenarios.sh
+py -3.12 ./scripts/quick-validate-skill.py ./skills/advanced-user-input
 ```
 
 Expected: scenario JSON has `"ok": true` for every scenario, and `quick-validate-skill.py` prints `Skill is valid!`.
 
 - [ ] **Step 5: Commit checkpoint**
 
-```powershell
-git add skills/advanced-user-input scripts/validate.ps1
+```bash
+git add skills/advanced-user-input scripts/validate.sh
 git commit -m "feat: bundle advanced user input skill"
 ```
 
@@ -540,22 +540,22 @@ git commit -m "feat: bundle advanced user input skill"
 - Rename: `skills/resolve-issue` -> `skills/resolve-issue`
 - Rename: `skills/orchestrate-issues` -> `skills/orchestrate-issues`
 - Rename: `skills/merge-changes` -> `skills/merge-changes`
-- Test: `scripts/test-project-namespace-migration.ps1`
+- Test: `scripts/test-project-namespace-migration.sh`
 
 - [ ] **Step 1: Rename directories with Git**
 
 Run:
 
-```powershell
-git mv .\skills\superpowers-project .\skills\workflow
-git mv .\skills\setup .\skills\setup
-git mv .\skills\audit-project .\skills\audit-project
-git mv .\skills\brainstorm-spec .\skills\brainstorm-spec
-git mv .\skills\write-plan .\skills\write-plan
-git mv .\skills\create-issues .\skills\create-issues
-git mv .\skills\resolve-issue .\skills\resolve-issue
-git mv .\skills\orchestrate-issues .\skills\orchestrate-issues
-git mv .\skills\merge-changes .\skills\merge-changes
+```bash
+git mv ./skills/superpowers-project ./skills/workflow
+git mv ./skills/setup ./skills/setup
+git mv ./skills/audit-project ./skills/audit-project
+git mv ./skills/brainstorm-spec ./skills/brainstorm-spec
+git mv ./skills/write-plan ./skills/write-plan
+git mv ./skills/create-issues ./skills/create-issues
+git mv ./skills/resolve-issue ./skills/resolve-issue
+git mv ./skills/orchestrate-issues ./skills/orchestrate-issues
+git mv ./skills/merge-changes ./skills/merge-changes
 ```
 
 Expected: `git status --short` shows renames, not delete/add churn where Git can detect the move.
@@ -630,16 +630,16 @@ Do not add wrappers for old names.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
+```bash
+./scripts/test-project-namespace-migration.sh
 ```
 
 Expected: passes, or reports only documentation references intentionally labeled as migration history.
 
 - [ ] **Step 6: Commit checkpoint**
 
-```powershell
-git add .codex-plugin skills scripts/test-project-namespace-migration.ps1 scripts/validate.ps1
+```bash
+git add .codex-plugin skills scripts/test-project-namespace-migration.sh scripts/validate.sh
 git commit -m "feat: migrate skills to project namespace"
 ```
 
@@ -647,16 +647,16 @@ git commit -m "feat: migrate skills to project namespace"
 
 **Files:**
 
-- Create: `scripts/test-plugin-only-live-sync.ps1`
-- Modify: `scripts/sync-live.ps1`
-- Modify: `scripts/test-sync-live.ps1`
-- Test: `scripts/test-plugin-only-live-sync.ps1`
+- Create: `scripts/test-plugin-only-live-sync.sh`
+- Modify: `scripts/sync-live.sh`
+- Modify: `scripts/test-sync-live.sh`
+- Test: `scripts/test-plugin-only-live-sync.sh`
 
 - [ ] **Step 1: Add failing plugin-only sync test**
 
-Create `scripts/test-plugin-only-live-sync.ps1`:
+Create `scripts/test-plugin-only-live-sync.sh`:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -664,7 +664,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$syncPath = Join-Path $RepoRoot "scripts\sync-live.ps1"
+$syncPath = Join-Path $RepoRoot "scripts/sync-live.sh"
 $text = Get-Content -LiteralPath $syncPath -Raw
 $checks = [System.Collections.Generic.List[object]]::new()
 
@@ -677,9 +677,9 @@ function Add-Check {
     })
 }
 
-Add-Check "live plugin path is project" ($text.Contains('plugins\project')) "sync-live must deploy to USERPROFILE\plugins\project"
-Add-Check "retired superpowers-project path tracked" ($text.Contains('plugins\superpowers-project')) "sync-live must remove or report retired superpowers-project path"
-Add-Check "retired milestones path tracked" ($text.Contains('plugins\milestones')) "sync-live must keep milestones cleanup"
+Add-Check "live plugin path is project" ($text.Contains('plugins/project')) "sync-live must deploy to USERPROFILE\plugins/project"
+Add-Check "retired superpowers-project path tracked" ($text.Contains('plugins/superpowers-project')) "sync-live must remove or report retired superpowers-project path"
+Add-Check "retired milestones path tracked" ($text.Contains('plugins/milestones')) "sync-live must keep milestones cleanup"
 Add-Check "does not copy active skills to user skills" (-not $text.Contains('Copy-SkillDirectories -SourceRoot $sourceSkillsRoot -TargetRoot $userSkillsRootResolved')) "active plugin skills must not be copied to .agents\skills"
 Add-Check "removes old user skill names" ($text.Contains('Remove-StaleOwnedSkillDirectories') -and $text.Contains('write-plan')) "sync-live must remove old repo-owned global skill copies"
 
@@ -692,29 +692,29 @@ $failed = @($checks | Where-Object { -not $_.ok })
 if ($failed.Count -gt 0) { exit 1 }
 ```
 
-- [ ] **Step 2: Update `sync-live.ps1` defaults and ownership checks**
+- [ ] **Step 2: Update `sync-live.sh` defaults and ownership checks**
 
 Change the parameter default:
 
-```powershell
-[string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\project")
+```bash
+[string]$LivePluginRoot = (Join-Path $HOME "plugins/project")
 ```
 
 Set expected paths:
 
-```powershell
-$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\project"))
-$retiredSuperpowersProjectRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\superpowers-project"))
-$retiredMilestonesRoot = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE "plugins\milestones"))
+```bash
+$expectedLivePluginRoot = [IO.Path]::GetFullPath((Join-Path $HOME "plugins/project"))
+$retiredSuperpowersProjectRoot = [IO.Path]::GetFullPath((Join-Path $HOME "plugins/superpowers-project"))
+$retiredMilestonesRoot = [IO.Path]::GetFullPath((Join-Path $HOME "plugins/milestones"))
 ```
 
 Remove the active `Copy-SkillDirectories` call to `$userSkillsRootResolved`. Keep a cleanup pass that removes repo-owned retired user skills from `.agents\skills`.
 
 - [ ] **Step 3: Update retired skill cleanup list**
 
-In `scripts/sync-live.ps1`, include old names:
+In `scripts/sync-live.sh`, include old names:
 
-```powershell
+```bash
 $retiredSkillNames = @(
     "superpowers-project",
     "setup",
@@ -742,7 +742,7 @@ $retiredSkillNames = @(
 
 The final JSON should include:
 
-```powershell
+```bash
 [pscustomobject]@{
     ok = $true
     source = $repoRoot
@@ -760,17 +760,17 @@ The final JSON should include:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plugin-only-live-sync.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-sync-live.ps1
+```bash
+./scripts/test-plugin-only-live-sync.sh
+./scripts/test-sync-live.sh
 ```
 
 Expected: both pass.
 
 - [ ] **Step 6: Commit checkpoint**
 
-```powershell
-git add scripts/sync-live.ps1 scripts/test-sync-live.ps1 scripts/test-plugin-only-live-sync.ps1
+```bash
+git add scripts/sync-live.sh scripts/test-sync-live.sh scripts/test-plugin-only-live-sync.sh
 git commit -m "feat: deploy project plugin without global skill copies"
 ```
 
@@ -780,19 +780,19 @@ git commit -m "feat: deploy project plugin without global skill copies"
 
 - Create: `skills/implement-plan/SKILL.md`
 - Create: `skills/implement-plan/agents/openai.yaml`
-- Create: `skills/implement-plan/scripts/lib/contract.ps1`
-- Create: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Create: `skills/implement-plan/scripts/lib/contract.sh`
+- Create: `skills/implement-plan/scripts/test-scenarios.sh`
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Test: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Test: `skills/implement-plan/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add implementation contract helper**
 
-Create `skills/implement-plan/scripts/lib/contract.ps1`:
+Create `skills/implement-plan/scripts/lib/contract.sh`:
 
-```powershell
+```bash
 $ErrorActionPreference = "Stop"
 
 function Test-Property {
@@ -850,10 +850,10 @@ function Test-ImplementPlanLedger {
 
 - [ ] **Step 2: Add `implement-plan` scenario tests**
 
-Create `skills/implement-plan/scripts/test-scenarios.ps1` that imports the helper and proves:
+Create `skills/implement-plan/scripts/test-scenarios.sh` that imports the helper and proves:
 
-```powershell
-. (Join-Path $PSScriptRoot "lib\contract.ps1")
+```bash
+. (Join-Path $PSScriptRoot "lib\contract.sh")
 ```
 
 Scenarios must cover:
@@ -906,7 +906,7 @@ Implement Plan is the non-issue execution route for approved Superpowers Project
 8. Use `superpowers:verification-before-completion` before completion claims.
 9. Use `superpowers:finishing-a-development-branch` before integration.
 10. Ask native publish permission before push, local merge readiness, or merge handoff.
-11. Produce a merge-ready ledger accepted by `scripts/lib/contract.ps1`.
+11. Produce a merge-ready ledger accepted by `scripts/lib/contract.sh`.
 12. Route to `project:merge-changes`.
 ```
 
@@ -946,17 +946,17 @@ Recommend `Project Implement` for branch-backed non-issue implementation and `Pr
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/initiate-workflow/scripts/test-scenarios.sh
 ```
 
 Expected: all pass.
 
 - [ ] **Step 7: Commit checkpoint**
 
-```powershell
+```bash
 git add skills/implement-plan skills/workflow skills/write-plan
 git commit -m "feat: add implement plan execution route"
 ```
@@ -967,13 +967,13 @@ git commit -m "feat: add implement plan execution route"
 
 - Modify: `skills/merge-changes/SKILL.md`
 - Modify: `skills/merge-changes/agents/openai.yaml`
-- Modify: `skills/merge-changes/scripts/lib/contract.ps1`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
-- Test: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/scripts/lib/contract.sh`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
+- Test: `skills/merge-changes/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing merge mode scenarios**
 
-In `skills/merge-changes/scripts/test-scenarios.ps1`, add scenarios for:
+In `skills/merge-changes/scripts/test-scenarios.sh`, add scenarios for:
 
 ```text
 premerge accepts pr-issue with issue closure policy
@@ -986,9 +986,9 @@ merge decline can route to reassess plan or brainstorm
 
 - [ ] **Step 2: Extend contract helper**
 
-In `skills/merge-changes/scripts/lib/contract.ps1`, support:
+In `skills/merge-changes/scripts/lib/contract.sh`, support:
 
-```powershell
+```bash
 $allowedModes = @("pr-issue", "pr-no-issue", "local-branch")
 ```
 
@@ -1020,15 +1020,15 @@ When this thread is a worker/subagent and the merge decision belongs to the orch
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
+```bash
+./skills/merge-changes/scripts/test-scenarios.sh
 ```
 
 Expected: all merge mode scenarios pass.
 
 - [ ] **Step 5: Commit checkpoint**
 
-```powershell
+```bash
 git add skills/merge-changes
 git commit -m "feat: support non-issue and local branch merges"
 ```
@@ -1039,17 +1039,17 @@ git commit -m "feat: support non-issue and local branch merges"
 
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/setup-project/agents/openai.yaml`
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
 - Modify: `skills/orchestrate-issues/SKILL.md`
 - Modify: `skills/orchestrate-issues/agents/openai.yaml`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `docs/agents/project-roadmap.json`
 - Test: setup and orchestrate scenario scripts
 
 - [ ] **Step 1: Add setup board scenarios**
 
-In `skills/setup-project/scripts/test-scenarios.ps1`, add checks for:
+In `skills/setup-project/scripts/test-scenarios.sh`, add checks for:
 
 ```text
 GitHub Project board setup contract is present
@@ -1081,7 +1081,7 @@ Record the GitHub Project URL or id in `docs/superpowers/PROJECT_CONTEXT.md` and
 
 - [ ] **Step 3: Add orchestrate identity and autonomous selection scenarios**
 
-In `skills/orchestrate-issues/scripts/test-scenarios.ps1`, add checks for:
+In `skills/orchestrate-issues/scripts/test-scenarios.sh`, add checks for:
 
 ```text
 derive-worker-identity creates issue-<number>-<slug>
@@ -1122,16 +1122,16 @@ Derived names:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
 ```
 
 Expected: all pass.
 
 - [ ] **Step 6: Commit checkpoint**
 
-```powershell
+```bash
 git add skills/setup skills/orchestrate-issues docs/superpowers/PROJECT_CONTEXT.md docs/agents/project-roadmap.json
 git commit -m "feat: harden setup board and orchestration contracts"
 ```
@@ -1141,14 +1141,14 @@ git commit -m "feat: harden setup board and orchestration contracts"
 **Files:**
 
 - Modify: `skills/create-issues/SKILL.md`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Test: `skills/create-issues/scripts/test-scenarios.ps1`
+- Test: `skills/create-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add hydration scenario tests**
 
-In `skills/create-issues/scripts/test-scenarios.ps1`, add scenarios:
+In `skills/create-issues/scripts/test-scenarios.sh`, add scenarios:
 
 ```text
 external GitHub issue with Source Plan: TBD is intake only
@@ -1185,16 +1185,16 @@ In `skills/initiate-workflow/SKILL.md`, route prompts like `hydrate this GitHub 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
+```bash
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/initiate-workflow/scripts/test-scenarios.sh
 ```
 
 Expected: all pass.
 
 - [ ] **Step 5: Commit checkpoint**
 
-```powershell
+```bash
 git add skills/create-issues skills/workflow
 git commit -m "feat: hydrate external github issues before execution"
 ```
@@ -1209,7 +1209,7 @@ git commit -m "feat: hydrate external github issues before execution"
 - Modify: `docs/agents/issue-tracker.md`
 - Modify: `docs/agents/project-roadmap.json`
 - Modify: `.codex-plugin/plugin.json`
-- Test: `scripts/test-superpowers-project-repo-contract.ps1`
+- Test: `scripts/test-superpowers-project-repo-contract.sh`
 
 - [ ] **Step 1: Update README prompt surface**
 
@@ -1237,11 +1237,11 @@ Document install:
 
 Clone the repo, then sync the plugin:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
-The live plugin installs to `C:\Users\<you>\plugins\project`.
+The live plugin installs to `$HOME/.codex/plugins/project`.
 ```
 ```
 
@@ -1263,11 +1263,11 @@ docs/superpowers/issues
 
 - [ ] **Step 3: Update repo contract tests**
 
-In `scripts/test-superpowers-project-repo-contract.ps1`, update expected public paths and skill names:
+In `scripts/test-superpowers-project-repo-contract.sh`, update expected public paths and skill names:
 
 ```text
 project namespace
-C:\Users\Tanner\plugins\project
+/home/tnnrpolley21/.codex/plugins/project
 project:initiate-workflow
 project:implement-plan
 skills/advanced-user-input
@@ -1291,7 +1291,7 @@ tannerpolley/codex-superpowers-project
 Keep the local workspace path unchanged:
 
 ```text
-C:\Users\Tanner\Documents\Workspaces\Projects\milestones-plugin
+/home/tnnrpolley21/Workspaces/Projects/milestones-plugin
 ```
 
 Do not rename the local folder in this plan.
@@ -1300,17 +1300,17 @@ Do not rename the local folder in this plan.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-repo-contract.ps1
-rg -n "Milestones plugin|docs/milestones|plugins\\milestones|plugins/milestones" README.md .github
+```bash
+./scripts/test-superpowers-project-repo-contract.sh
+rg -n "Milestones plugin|docs/milestones|plugins/\milestones|plugins/milestones" README.md .github
 ```
 
 Expected: repo contract passes; `rg` returns no active public docs hits.
 
 - [ ] **Step 6: Commit docs and metadata before remote mutation**
 
-```powershell
-git add README.md .github CHANGELOG.md .codex-plugin docs/agents scripts/test-superpowers-project-repo-contract.ps1
+```bash
+git add README.md .github CHANGELOG.md .codex-plugin docs/agents scripts/test-superpowers-project-repo-contract.sh
 git commit -m "docs: update public project namespace surface"
 ```
 
@@ -1318,7 +1318,7 @@ git commit -m "docs: update public project namespace surface"
 
 Verify the current remote:
 
-```powershell
+```bash
 gh repo view tannerpolley/milestones-plugin --json nameWithOwner,visibility,url
 ```
 
@@ -1326,13 +1326,13 @@ Expected before rename: `nameWithOwner` is `tannerpolley/milestones-plugin`.
 
 Rename the GitHub repository:
 
-```powershell
+```bash
 gh repo rename -R tannerpolley/milestones-plugin codex-superpowers-project --yes
 ```
 
 Update the local remote URL:
 
-```powershell
+```bash
 git remote set-url origin https://github.com/tannerpolley/codex-superpowers-project.git
 git remote -v
 ```
@@ -1343,8 +1343,8 @@ Expected: `origin` points to `https://github.com/tannerpolley/codex-superpowers-
 
 Verify public readiness after the rename:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 gh repo view tannerpolley/codex-superpowers-project --json nameWithOwner,visibility,url
 ```
 
@@ -1352,13 +1352,13 @@ Expected: validation passes and repo is still accessible.
 
 Make the repo public:
 
-```powershell
+```bash
 gh repo edit tannerpolley/codex-superpowers-project --visibility public --accept-visibility-change-consequences
 ```
 
 Verify:
 
-```powershell
+```bash
 gh repo view tannerpolley/codex-superpowers-project --json nameWithOwner,visibility,url
 ```
 
@@ -1375,8 +1375,8 @@ Expected: `visibility` is `PUBLIC`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: final JSON has `"ok": true`.
@@ -1385,13 +1385,13 @@ Expected: final JSON has `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected:
 
-- live plugin root is `C:\Users\Tanner\plugins\project`;
+- live plugin root is `/home/tnnrpolley21/.codex/plugins/project`;
 - `deployed_user_skills` is empty;
 - old repo-owned global user skills are removed or listed as already absent;
 - old live plugin roots are removed or reported only after ownership checks.
@@ -1400,10 +1400,10 @@ Expected:
 
 Run:
 
-```powershell
-Test-Path "$env:USERPROFILE\plugins\project\.codex-plugin\plugin.json"
-Test-Path "$env:USERPROFILE\plugins\superpowers-project"
-Get-ChildItem "$env:USERPROFILE\.agents\skills" -Directory |
+```bash
+Test-Path "$HOME\plugins/project\.codex-plugin\plugin.json"
+Test-Path "$HOME\plugins/superpowers-project"
+Get-ChildItem "$HOME\.agents\skills" -Directory |
     Where-Object Name -in @("superpowers-project","write-plan","resolve-issue","merge-changes","audit-project","brainstorm-spec","create-issues","orchestrate-issues","setup") |
     Select-Object -ExpandProperty FullName
 ```
@@ -1418,8 +1418,8 @@ Expected:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: no matching leftover Codex processes under the repo.
@@ -1428,7 +1428,7 @@ Expected: no matching leftover Codex processes under the repo.
 
 If validation required final edits:
 
-```powershell
+```bash
 git add .
 git commit -m "test: complete project namespace migration validation"
 ```

@@ -6,7 +6,7 @@ interface:
     proof. Execute an approved plan under `docs/superpowers/plans`; this route does not create issue mirrors and
     must not claim GitHub issue closure. Read SKILL.md for exact setup, push, PR, and closeout gates; read docs/superpowers/workflow-contract.yml
     for route question ids and options. Task # Use Cases are a strict requirement; run
-    scripts/validate-plan-task-use-cases.ps1 before implementation. This route is the non-issue adapter for
+    scripts/validate-plan-task-use-cases.sh before implementation. This route is the non-issue adapter for
     superpowers:executing-plans. Require native `/goal` activation, development branch, request_user_input,
     implement_plan_topology with Inline, Worker, and Stop. implement_plan_push_permission has Push Branch
     and Hold. Require branch push proof, outcome proof, readiness review, merge-ready local-branch handoff to

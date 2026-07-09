@@ -13,7 +13,7 @@ The current readable tree documents the desired behavior, but the active skill f
 - `docs/superpowers/closeout-startup-decision-tree.md` defines the desired readable decision tree with `Q<n>` and `A<n><letter>` notation, visible `Yes`, `Revisit`, and `Stop` top-level options, and no nested Stop after top-level Yes or Revisit.
 - `docs/superpowers/closeout-startup-decision-tree-dev.md` preserves current source route IDs and explicitly records that many concrete source menus still include nested `Right: Stop`.
 - `README.md` and `docs/assets/native-qa-main-flow-mermaid.md` mostly describe the new top-level `Yes / Revisit / Stop` story, but source skills still carry the old direction-coded route definitions.
-- `scripts/validate.ps1` passes even while active source drift remains, so validation coverage is currently incomplete for this exact contract.
+- `scripts/validate.sh` passes even while active source drift remains, so validation coverage is currently incomplete for this exact contract.
 
 ## Audit Findings To Repair
 
@@ -67,12 +67,12 @@ This makes the plugin capable of loading old wording even when user-facing docs 
 
 ### P1: Validation Has A False Green
 
-`scripts/validate.ps1` passed while active skill sources still contain direction labels and nested Stop routes. The native continuation validation checks currently forbid nested `Right: terminal label`, but they do not catch plain nested `Right: Stop`.
+`scripts/validate.sh` passed while active skill sources still contain direction labels and nested Stop routes. The native continuation validation checks currently forbid nested `Right: terminal label`, but they do not catch plain nested `Right: Stop`.
 
 Representative evidence:
 
-- `scripts/test-native-continuation-loop.ps1:202` forbids `Right: terminal label`.
-- `scripts/test-native-continuation-loop.ps1:203` forbids `Right terminal label`.
+- `scripts/test-native-continuation-loop.sh:202` forbids `Right: terminal label`.
+- `scripts/test-native-continuation-loop.sh:203` forbids `Right terminal label`.
 - The same test does not fail on nested `Right: Stop`.
 
 Validation should fail when active skill source contradicts the desired tree.
@@ -269,10 +269,10 @@ Likely docs and assets:
 
 Likely validation:
 
-- `scripts/test-native-continuation-loop.ps1`
-- `scripts/test-advanced-user-input-policy.ps1`
-- `scripts/test-native-qa-svg.ps1`
-- skill-specific `scripts/test-scenarios.ps1` files under governed skills
+- `scripts/test-native-continuation-loop.sh`
+- `scripts/test-advanced-user-input-policy.sh`
+- `scripts/test-native-qa-svg.sh`
+- skill-specific `scripts/test-scenarios.sh` files under governed skills
 
 ## Validation Expectations
 
@@ -301,8 +301,8 @@ Validation should prove:
 - a structural checker for `docs/superpowers/closeout-startup-decision-tree.md` that verifies each `Q<n>` has matching `A<n><letter>` children
 - a nested-route checker that scans `Question id:` blocks and fails on nested terminal options after non-top-level route questions
 - a recommendation-policy checker that fails if governed skill text allows Stop to be recommended before verified final completion
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
 
 ## Tradeoffs
 

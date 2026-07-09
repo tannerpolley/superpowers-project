@@ -36,8 +36,8 @@ Stop before creating a worker thread when any of these are true:
 1. `issue intake`: inspect one ready issue mirror under `docs/superpowers/issues`.
 2. `route confirmation`: if the user did not already choose worker mode, ask native question `project_issue_resolution_route`.
 3. `goal ownership`: create or verify the native goal in the orchestrator thread when the issue is AFK or goal-backed.
-4. `worker identity`: run `scripts/derive-worker-identity.ps1`.
-5. `handoff preparation`: run `scripts/prepare-worker-handoff.ps1`.
+4. `worker identity`: run `scripts/derive-worker-identity.sh`.
+5. `handoff preparation`: run `scripts/prepare-worker-handoff.sh`.
 6. `worker thread creation`: create the Codex worktree worker with the derived thread title and branch name.
 7. `worker instructions`: send the topology handoff and require Superpowers execution, TDD, verification, and branch finishing.
 8. `progress monitoring`: wait for worker handoff, bounded heartbeat, or user resume.
@@ -46,13 +46,13 @@ Stop before creating a worker thread when any of these are true:
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.issue_route: direct-inline-resolve-issue`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.issue_route: direct-inline-resolve-issue`, and `stop_outside_policy: true`.
 
 Auto Mode uses `$superpowers-project:resolve-issue` for direct current-thread issue execution. `$superpowers-project:orchestrate-issues` is the explicit delegated worker-thread route, not an Auto Mode default or requirement. If Auto Mode reaches this skill without separate user approval for delegated worker execution, stop outside policy and route the ready issue mirror to `$superpowers-project:resolve-issue` instead. If worker recovery, reassignment, GitHub auth, missing proof, failed validation, or scope expansion needs a decision outside recorded defaults, stop outside policy and report the resume target.
 
 ## Worker Identity Contract
 
-Use `scripts/derive-worker-identity.ps1 -RepoRoot . -IssueFile <docs/superpowers/issues/<issue>.md>` before creating the worker. The derived identity is canonical for the worker run:
+Use `scripts/derive-worker-identity.sh -RepoRoot . -IssueFile <docs/superpowers/issues/<issue>.md>` before creating the worker. The derived identity is canonical for the worker run:
 
 - thread title: `Resolve #<issue-number>: <issue title>`
 - branch name: `codex/issue-<issue-number>-<slug>`
@@ -65,18 +65,19 @@ Do not hand-edit these names after derivation. If the issue title or slug is wro
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not create real worker threads, mutate GitHub, merge PRs, or pretend a live user approved delegated execution.
 ## Worker Handoff
 
-Run `scripts/prepare-worker-handoff.ps1 -RepoRoot . -IssueFile <docs/superpowers/issues/<issue>.md> -OutputPath <temp-or-handoff-json>` before starting a worker. It validates the issue mirror, source plan, proof oracle, and derived worker identity, then emits a handoff ledger.
+Run `scripts/prepare-worker-handoff.sh -RepoRoot . -IssueFile <docs/superpowers/issues/<issue>.md> -OutputPath <temp-or-handoff-json>` before starting a worker. It validates the issue mirror, source plan, proof oracle, and derived worker identity, then emits a handoff ledger.
 
-GitHub hierarchy parent and plan-wrapper mirrors are rollup records. `prepare-worker-handoff.ps1` must reject them before worker identity derivation or handoff file creation. Only `Sub-Issue Role: leaf` with `Executable: true`, plus old flat mirrors with no hierarchy fields, can become worker handoffs.
+GitHub hierarchy parent and plan-wrapper mirrors are rollup records. `prepare-worker-handoff.sh` must reject them before worker identity derivation or handoff file creation. Only `Sub-Issue Role: leaf` with `Executable: true`, plus old flat mirrors with no hierarchy fields, can become worker handoffs.
 
-Run `scripts/validate-worker-handoff.ps1 -RepoRoot . -HandoffPath <handoff-json>` before sending the handoff to the worker.
+Run `scripts/validate-worker-handoff.sh -RepoRoot . -HandoffPath <handoff-json>` before sending the handoff to the worker.
 
-Use `docs/superpowers/examples/worker-handoff-packets.md` as the canonical packet example for orchestrator-to-worker handoffs and worker-to-orchestrator PR-ready returns. Validate packet examples and fixtures with `scripts/validate-worker-packets.ps1 -RepoRoot . -PacketPath <packet-json-or-md>` and `scripts/test-worker-packets.ps1`. Worker handoff packets must include source plan, issue mirror, goal command, branch/worktree policy, proof oracle, validation commands, reviewer role, and merge handoff. PR-ready return packets must include branch, diff scope, validation receipt, issue mirror, source plan, proof oracle, and merge route.
+Use `docs/superpowers/examples/worker-handoff-packets.md` as the canonical packet example for orchestrator-to-worker handoffs and worker-to-orchestrator PR-ready returns. Validate packet examples and fixtures with `scripts/validate-worker-packets.sh -RepoRoot . -PacketPath <packet-json-or-md>` and `scripts/test-worker-packets.sh`. Worker handoff packets must include source plan, issue mirror, goal command, branch/worktree policy, proof oracle, validation commands, reviewer role, and merge handoff. PR-ready return packets must include branch, diff scope, validation receipt, issue mirror, source plan, proof oracle, and merge route.
 
 ## Superpowers Method Contract
 

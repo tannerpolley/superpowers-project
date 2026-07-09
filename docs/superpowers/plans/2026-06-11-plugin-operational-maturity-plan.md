@@ -6,7 +6,7 @@
 
 **Architecture:** Add source-owned scripts and generated documentation rather than new ad hoc workflow text. Keep native approval boundaries intact by separating evidence preparation from mutation-capable merge and release helpers.
 
-**Tech Stack:** PowerShell scripts, GitHub Actions YAML, Markdown docs, existing Superpowers Project validators.
+**Tech Stack:** Bash scripts, GitHub Actions YAML, Markdown docs, existing Superpowers Project validators.
 
 ---
 
@@ -24,8 +24,8 @@
 - [ ] Local-branch merge closeout has prepare/apply helpers that preserve native approval boundaries.
 - [ ] End-to-end smoke coverage has a safe local-only fixture test.
 - [ ] A generated outcome workflow exists and validation fails when it drifts from source.
-- [ ] `scripts/validate.ps1` wires all new validators.
-- [ ] `scripts/sync-live.ps1 -Validate` passes after implementation.
+- [ ] `scripts/validate.sh` wires all new validators.
+- [ ] `scripts/sync-live.sh --validate` passes after implementation.
 
 ## Non-Goals
 
@@ -39,49 +39,49 @@
 
 This is a workflow/plugin governance change. Numerical metrics are not applicable. Test complete means:
 
-- all new scripts parse under the repo PowerShell parser check;
+- all new scripts parse under the repo Bash parser check;
 - focused tests for each new script pass;
-- `scripts/validate.ps1` passes;
-- `scripts/sync-live.ps1 -Validate` passes;
+- `scripts/validate.sh` passes;
+- `scripts/sync-live.sh --validate` passes;
 - cleanup hook passes;
 - final branch merge closeout proof passes.
 
 ## Proof Oracle
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-contract-summary.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\detect-stale-skill-contract.ps1 -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\prepare-release.ps1 -CheckOnly`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-e2e-project-workflow.ps1 -LocalOnly`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
+- `./scripts/test-contract-summary.sh`
+- `./scripts/detect-stale-skill-contract.sh -SkillName brainstorm-spec -ExpectedQuestionId project_brainstorm_start_route`
+- `./scripts/prepare-release.sh -CheckOnly`
+- `./scripts/test-e2e-project-workflow.sh -LocalOnly`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
 
 ## Task 1: Generate Outcome Workflow
 
 **Files:**
-- Create: `scripts/generate-contract-summary.ps1`
-- Create: `scripts/test-contract-summary.ps1`
+- Create: `scripts/generate-contract-summary.sh`
+- Create: `scripts/test-contract-summary.sh`
 - Create: `docs/superpowers/OUTCOME_WORKFLOW.md`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/validate.sh`
 
 - [ ] **Step 1: Add generator**
-  - Parse active workflow skills from `scripts/lib/project-skills.ps1`.
+  - Parse active workflow skills from `scripts/lib/project-skills.sh`.
   - Extract skill frontmatter name, description, question ids, final gate ids, and key contract markers.
   - Emit deterministic Markdown to `docs/superpowers/OUTCOME_WORKFLOW.md`.
 - [ ] **Step 2: Add summary validator**
   - Generate to temp and compare normalized content against the checked-in summary.
   - Fail if a workflow skill, question id, final gate, canonical namespace, or validation command is missing.
 - [ ] **Step 3: Wire validation**
-  - Add `scripts/test-contract-summary.ps1` to `scripts/validate.ps1`.
+  - Add `scripts/test-contract-summary.sh` to `scripts/validate.sh`.
 - [ ] **Step 4: Run focused proof**
-  - Run `scripts/generate-contract-summary.ps1`.
-  - Run `scripts/test-contract-summary.ps1`.
+  - Run `scripts/generate-contract-summary.sh`.
+  - Run `scripts/test-contract-summary.sh`.
 
 ## Task 2: Add Stale Skill Detector
 
 **Files:**
-- Create: `scripts/detect-stale-skill-contract.ps1`
-- Create: `scripts/test-stale-skill-contract.ps1`
-- Modify: `scripts/validate.ps1`
+- Create: `scripts/detect-stale-skill-contract.sh`
+- Create: `scripts/test-stale-skill-contract.sh`
+- Modify: `scripts/validate.sh`
 
 - [ ] **Step 1: Implement detector**
   - Inputs: `-SkillName`, `-ExpectedQuestionId`, `-LivePluginRoot`, `-UserSkillsRoot`.
@@ -94,16 +94,16 @@ This is a workflow/plugin governance change. Numerical metrics are not applicabl
   - Positive test for `brainstorm-spec` with `project_brainstorm_start_route`.
   - Negative temp fixture with missing question id.
 - [ ] **Step 4: Wire validation**
-  - Add the test script to `scripts/validate.ps1`.
+  - Add the test script to `scripts/validate.sh`.
 
 ## Task 3: Add Release Preparation Receipt
 
 **Files:**
-- Create: `scripts/prepare-release.ps1`
-- Create: `scripts/test-prepare-release.ps1`
+- Create: `scripts/prepare-release.sh`
+- Create: `scripts/test-prepare-release.sh`
 - Modify: `docs/superpowers/RELEASE_POLICY.md`
 - Modify: `CHANGELOG.md`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/validate.sh`
 
 - [ ] **Step 1: Implement release check script**
   - Support `-CheckOnly`, `-Version`, and optional `-OutputPath`.
@@ -120,9 +120,9 @@ This is a workflow/plugin governance change. Numerical metrics are not applicabl
 ## Task 4: Add Local-Branch Merge Closeout Helpers
 
 **Files:**
-- Create: `skills/merge-changes/scripts/prepare-local-branch-closeout.ps1`
-- Create: `skills/merge-changes/scripts/apply-local-branch-closeout.ps1`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Create: `skills/merge-changes/scripts/prepare-local-branch-closeout.sh`
+- Create: `skills/merge-changes/scripts/apply-local-branch-closeout.sh`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Prepare helper**
   - Collect setup ledger, clean synced main proof, validation proof, changed file inventory, and premerge proof.
@@ -139,8 +139,8 @@ This is a workflow/plugin governance change. Numerical metrics are not applicabl
 ## Task 5: Add End-To-End Local Fixture Smoke Test
 
 **Files:**
-- Create: `scripts/test-e2e-project-workflow.ps1`
-- Modify: `scripts/validate.ps1`
+- Create: `scripts/test-e2e-project-workflow.sh`
+- Modify: `scripts/validate.sh`
 
 - [ ] **Step 1: Implement local-only fixture**
   - Create a temp repo.
@@ -150,7 +150,7 @@ This is a workflow/plugin governance change. Numerical metrics are not applicabl
   - Prove terminal `Done` is blocked before closeout proof.
   - Prove missing expected question id or missing proof fails with a clear phase.
 - [ ] **Step 3: Wire validation**
-  - Run in `-LocalOnly` mode from `scripts/validate.ps1`.
+  - Run in `-LocalOnly` mode from `scripts/validate.sh`.
 
 ## Task 6: Strengthen CI Workflow
 
@@ -174,14 +174,14 @@ This is a workflow/plugin governance change. Numerical metrics are not applicabl
 - Modify as needed for validator fallout.
 
 - [ ] **Step 1: Run focused checks**
-  - `scripts/test-contract-summary.ps1`
-  - `scripts/test-stale-skill-contract.ps1`
-  - `scripts/test-prepare-release.ps1`
-  - `scripts/test-e2e-project-workflow.ps1 -LocalOnly`
-  - `skills/merge-changes/scripts/test-scenarios.ps1`
+  - `scripts/test-contract-summary.sh`
+  - `scripts/test-stale-skill-contract.sh`
+  - `scripts/test-prepare-release.sh`
+  - `scripts/test-e2e-project-workflow.sh -LocalOnly`
+  - `skills/merge-changes/scripts/test-scenarios.sh`
 - [ ] **Step 2: Run full validation**
-  - `scripts/validate.ps1`
-  - `scripts/sync-live.ps1 -Validate`
+  - `scripts/validate.sh`
+  - `scripts/sync-live.sh --validate`
 - [ ] **Step 3: Cleanup and branch finish**
   - Run cleanup hook.
   - Commit.

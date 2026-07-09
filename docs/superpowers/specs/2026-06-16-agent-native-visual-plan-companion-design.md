@@ -15,7 +15,7 @@ Native Codex chat and `request_user_input` remain the only approval and continua
 - `README.md` requires artifacts to be shown before closeout, push, publish, or merge questions. The replacement keeps that gate, but the rich review surface becomes Agent-Native MDX instead of generated HTML.
 - `skills/companion-interface/SKILL.md` currently describes a static HTML workbench, report sessions, `manifest.json`, `events.jsonl`, and generated `index.html`.
 - `docs/superpowers/specs/2026-06-12-superpowers-html-companion-interface-design.md` and `docs/superpowers/plans/2026-06-12-superpowers-html-companion-interface-plan.md` implemented an HTML direction that is now superseded by this spec.
-- `scripts/test-companion-interface.ps1` and `skills/companion-interface/scripts/test-scenarios.ps1` currently assert HTML companion contracts. A follow-up implementation plan must rewrite those checks around MDX source, local preview, and native approval boundaries.
+- `scripts/test-companion-interface.sh` and `skills/companion-interface/scripts/test-scenarios.sh` currently assert HTML companion contracts. A follow-up implementation plan must rewrite those checks around MDX source, local preview, and native approval boundaries.
 - The fresh Codex thread does not expose hosted Plan MCP tools such as `create-visual-plan`, `get-plan-blocks`, `read-visual-plan-source`, `patch-visual-plan-source`, or `export-visual-plan`.
 - The local Agent-Native CLI can fetch the block catalog and supports local-files privacy mode, which writes repo-owned `plans/<slug>/plan.mdx` and previews it with `npx @agent-native/core@latest plan local preview --dir plans/<slug> --kind plan --open`.
 
@@ -150,10 +150,10 @@ The reviewer still answers approvals in Codex chat or native `request_user_input
 
 The implementation should delete or fully retire:
 
-- `skills/companion-interface/scripts/new-report-session.ps1`
-- `skills/companion-interface/scripts/append-event.ps1`
-- `skills/companion-interface/scripts/render-report.ps1`
-- `skills/companion-interface/scripts/lib/companion-report.ps1`
+- `skills/companion-interface/scripts/new-report-session.sh`
+- `skills/companion-interface/scripts/append-event.sh`
+- `skills/companion-interface/scripts/render-report.sh`
+- `skills/companion-interface/scripts/lib/companion-report.sh`
 - `skills/companion-interface/templates/report-template.html`
 - `skills/companion-interface/templates/report.css`
 - `skills/companion-interface/templates/report.js`
@@ -200,8 +200,8 @@ Validation should prove:
 - A fixture `plans/<slug>/plan.mdx` can be created and previewed locally.
 - The visual-plan artifact includes project evidence, alternatives, file map, validation expectations, and native approval boundary.
 - Hosted Plan MCP absence routes to local-files mode without repeated auth attempts.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes before reporting live install readiness.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes before reporting live install readiness.
 - The cleanup hook reports no repo-owned leftover processes.
 
 ## Proof Oracle Candidates

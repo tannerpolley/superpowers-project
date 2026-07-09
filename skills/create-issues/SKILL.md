@@ -28,7 +28,7 @@ Use `request_user_input` when callable to approve granularity, dependencies, mil
 
 ## Auto Mode Input
 
-When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.issue_route: direct-inline-resolve-issue`, and `stop_outside_policy: true`.
+When invoked from Auto Mode, require an Auto Mode authorization ledger from `project_auto_mode_authorization`. Validate it with the plugin-provided Auto Mode validator from the loaded Superpowers Project plugin root (`<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>`); the valid authority is `bounded-auto-merge`, with `recorded-defaults` / recorded defaults decision policy, `route_policy.issue_route: direct-inline-resolve-issue`, and `stop_outside_policy: true`.
 
 Auto Mode may create issue mirrors and GitHub issues only from the authorized source spec or a plan derived from that source spec. It may classify AFK/HITL, choose issue count, assign proof oracles, and hand the first ready AFK issue to `$superpowers-project:resolve-issue` for direct current-thread execution when repo evidence supports the choice. Auto Mode must not route issue execution to `$superpowers-project:orchestrate-issues`. If issue boundaries, labels, milestone, dependencies, publication, GitHub auth, proof policy, or delegated worker execution require a decision outside the ledger, stop outside policy before publishing or handing issues to execution.
 
@@ -36,7 +36,8 @@ Auto Mode may create issue mirrors and GitHub issues only from the authorized so
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not publish GitHub issues or pretend a live user approved issue boundaries, dependencies, labels, milestones, AFK/HITL classification, or publication.
 ## Slice Rules
@@ -131,7 +132,7 @@ Options:
 - `Publish Approved Commands`: run the exact validated commands.
 - `Revise Before Publish`: return to hierarchy planning before any GitHub mutation.
 
-Run `validate-issue-title-policy.ps1` for every new parent, wrapper, and leaf title. clean-title validation runs before any GitHub mutation. Run `build-issue-hierarchy-plan.ps1` before publication and show its dry command receipt in the artifact review card. The receipt must show parent-first publication order, `gh issue create --parent` for new children or wrappers under a parent, and `gh issue edit --add-sub-issue` for attaching existing child issues. Do not encode milestone names, milestone numbers, hierarchy order, or pseudo sub-milestone numbers in issue titles.
+Run `validate-issue-title-policy.sh` for every new parent, wrapper, and leaf title. clean-title validation runs before any GitHub mutation. Run `build-issue-hierarchy-plan.sh` before publication and show its dry command receipt in the artifact review card. The receipt must show parent-first publication order, `gh issue create --parent` for new children or wrappers under a parent, and `gh issue edit --add-sub-issue` for attaching existing child issues. Do not encode milestone names, milestone numbers, hierarchy order, or pseudo sub-milestone numbers in issue titles.
 
 ## Issue Mirror Contract
 
@@ -256,7 +257,7 @@ For HITL issues, use the configured triage or blocked status label until the mis
 
 ## Mirror Validation
 
-Use the bundled `scripts/validate-issue-mirror.ps1 -IssueFile <docs/superpowers/issues/file.md>` before publishing an issue mirror or handing it to `$superpowers-project:resolve-issue`.
+Use the bundled `scripts/validate-issue-mirror.sh -IssueFile <docs/superpowers/issues/file.md>` before publishing an issue mirror or handing it to `$superpowers-project:resolve-issue`.
 
 Validation must prove:
 
@@ -276,7 +277,7 @@ Validation must prove:
 
 ## External GitHub Issue Hydration
 
-External GitHub issues are intake, not ready execution inputs, until they have local mirrors and source artifacts. In routing checks, external GitHub issues are intake until the local mirror and source plan validation passes. Use `scripts/hydrate-external-issue.ps1` when a GitHub issue exists before `docs/superpowers/issues/<issue-number>-<slug>.md` or when the issue body contains `Source Plan: TBD`.
+External GitHub issues are intake, not ready execution inputs, until they have local mirrors and source artifacts. In routing checks, external GitHub issues are intake until the local mirror and source plan validation passes. Use `scripts/hydrate-external-issue.sh` when a GitHub issue exists before `docs/superpowers/issues/<issue-number>-<slug>.md` or when the issue body contains `Source Plan: TBD`.
 
 Protocol:
 
@@ -286,15 +287,15 @@ Protocol:
 4. Preserve GitHub hierarchy into mirror fields: `Hierarchy Mode`, `Sub-Issue Role`, `Executable`, `Parent Issue`, `Parent Mirror`, `Child Issues`, `Rollup Policy`, and `Title Policy`.
 5. Create or update `## Outcome Summary` with `Outcome Source`, `Interface`, `Cutover`, `Acceptance Proof`, `Stop Criteria`, and `Avoid` before validation.
 6. If `Source Spec` or `Source Plan` is missing or `TBD`, create a defensible source plan under `docs/superpowers/plans` from the issue body and repo context before execution.
-7. Validate the local mirror with `scripts/validate-issue-mirror.ps1`.
+7. Validate the local mirror with `scripts/validate-issue-mirror.sh`.
 8. Only then route to `$superpowers-project:resolve-issue` or `$superpowers-project:orchestrate-issues`.
 
 Hydration may create a source plan and pass mirror validation in the same command, but the original GitHub issue remains intake until the local mirror and source plan exist and validation has passed. Do not hand raw GitHub issue text to execution skills.
 
 Script contract:
 
-```powershell
-scripts/hydrate-external-issue.ps1 -RepoRoot . -IssueUrl <github-issue-url> [-IssueBodyPath <body.md>] [-IssueJsonPath <issue.json>] [-IssueTitle <title>] [-OutputPlanSlug <slug>]
+```bash
+scripts/hydrate-external-issue.sh -RepoRoot . -IssueUrl <github-issue-url> [-IssueBodyPath <body.md>] [-IssueJsonPath <issue.json>] [-IssueTitle <title>] [-OutputPlanSlug <slug>]
 ```
 
 ## Execution Boundary

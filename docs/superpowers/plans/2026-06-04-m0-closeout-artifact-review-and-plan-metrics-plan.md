@@ -6,7 +6,7 @@
 
 **Architecture:** Treat the current repo state as partially implemented governance work, not greenfield. Preserve the shared closeout contract already present in `advanced-user-input`, `brainstorm-spec`, `write-plan`, `create-issues`, `implement-plan`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, and `audit-project`, then propagate the same explicit artifact-review and findings-summary rules into the remaining router/setup surfaces and the shared validator that should catch contract drift. Keep this as direct repo maintenance on the current branch; do not create issue mirrors for this slice.
 
-**Tech Stack:** PowerShell 7, Markdown skill contracts, YAML skill metadata, repo validation scripts, scenario test suites, Auto Mode authorization ledger JSON, git
+**Tech Stack:** Bash 7, Markdown skill contracts, YAML skill metadata, repo validation scripts, scenario test suites, Auto Mode authorization ledger JSON, git
 
 ---
 
@@ -28,19 +28,19 @@
 - `skills/write-plan/SKILL.md` already contains the direct test-complete and scientific/engineering metrics gate.
 - `skills/initiate-workflow/SKILL.md` still uses a summary-first closeout description instead of the full artifact-review and findings-summary contract.
 - `skills/setup-project/SKILL.md` still uses a summary-first closeout description instead of the full artifact-review and findings-summary contract.
-- `skills/initiate-workflow/scripts/test-scenarios.ps1`, `skills/setup-project/scripts/test-scenarios.ps1`, and `scripts/test-native-continuation-loop.ps1` do not yet enforce the stronger artifact-review contract on those remaining surfaces.
+- `skills/initiate-workflow/scripts/test-scenarios.sh`, `skills/setup-project/scripts/test-scenarios.sh`, and `scripts/test-native-continuation-loop.sh` do not yet enforce the stronger artifact-review contract on those remaining surfaces.
 
 ## Auto Mode Planning Authorization
 
 - `source spec path`: `docs/superpowers/specs/2026-06-04-closeout-artifact-review-and-plan-metrics-design.md`
-- `authorization ledger path`: `C:\Users\Tanner\AppData\Local\Temp\superpowers-project\auto-mode\2026-06-04-closeout-artifact-review-and-plan-metrics-authorization.json`
+- `authorization ledger path`: `/tmp\superpowers-project\auto-mode\2026-06-04-closeout-artifact-review-and-plan-metrics-authorization.json`
 - `selected authority`: `bounded-auto-merge`
 - `route choice`: `Project Implement`
 - `route reason`: This is source-of-truth plugin maintenance in the current repository, the remaining work is narrow and locally verifiable, and no new GitHub issue mirrors are required to make the repo contract correct.
 - `decision defaults used`:
   - revise the existing canonical plan instead of creating a duplicate plan artifact
   - target only the remaining router/setup contract gaps plus the shared validator coverage that should catch them
-  - keep validation on targeted suites first, then full `scripts/validate.ps1`, then `scripts/sync-live.ps1 -Validate`, then the cleanup hook
+  - keep validation on targeted suites first, then full `scripts/validate.sh`, then `scripts/sync-live.sh --validate`, then the cleanup hook
   - stop outside policy if implementation reveals a broader downstream gap that requires new scope or a tracker-backed split
 - `proof oracle`: targeted scenario suites, shared validator, repo validation, live-sync validation, cleanup hook
 - `stop conditions inherited by downstream skills`: `missing-proof`, `dirty-unsafe-state`, `failed-validation`, `decision-outside-policy`
@@ -52,12 +52,12 @@
 - `setup-project` explicitly requires an artifact-review gate before any closeout continuation question.
 - `setup-project` explicitly requires a findings summary that covers result meaning, goal impact, broader/full project-context impact, and recommended next steps.
 - The router/setup metadata mirrors the same artifact-review and findings-summary contract.
-- `scripts/test-native-continuation-loop.ps1` fails when governed skills lack the artifact-review gate or the required interpretation-summary language.
-- `skills/initiate-workflow/scripts/test-scenarios.ps1` and `skills/setup-project/scripts/test-scenarios.ps1` explicitly assert the new artifact-review closeout contract.
+- `scripts/test-native-continuation-loop.sh` fails when governed skills lack the artifact-review gate or the required interpretation-summary language.
+- `skills/initiate-workflow/scripts/test-scenarios.sh` and `skills/setup-project/scripts/test-scenarios.sh` explicitly assert the new artifact-review closeout contract.
 - Existing `write-plan` test-complete and scientific/engineering metrics gate remains intact.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` passes.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` passes.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` passes.
+- `./scripts/validate.sh` passes.
+- `./scripts/sync-live.sh --validate` passes.
+- `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .` passes.
 
 ## Non-Goals
 
@@ -71,25 +71,25 @@
 ## File Map
 
 - Modify: `docs/superpowers/plans/2026-06-04-m0-closeout-artifact-review-and-plan-metrics-plan.md`
-- Modify: `scripts/test-native-continuation-loop.ps1`
+- Modify: `scripts/test-native-continuation-loop.sh`
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/setup-project/agents/openai.yaml`
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
 
 ## Proof Oracle
 
 Run these commands before claiming implementation complete:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./skills/initiate-workflow/scripts/test-scenarios.sh
+./skills/setup-project/scripts/test-scenarios.sh
+./scripts/test-native-continuation-loop.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 git status --short --branch
 ```
 
@@ -97,7 +97,7 @@ Expected final state:
 
 - every command exits `0`
 - the router/setup skills and metadata contain the explicit artifact-review and findings-summary contract
-- `scripts/test-native-continuation-loop.ps1` catches missing artifact-review closeout wording on governed skills
+- `scripts/test-native-continuation-loop.sh` catches missing artifact-review closeout wording on governed skills
 - `git status --short --branch` shows only intentional branch changes before commit, and a clean worktree after final commit
 
 ## Test Complete Definition
@@ -117,7 +117,7 @@ Scientific or engineering numerical thresholds do not apply to this plan because
 
 - `initiate-workflow` is a router rather than a heavy artifact-producing skill, so the closeout contract must be adapted carefully without inventing fake artifacts.
 - `setup-project` can own GitHub board and roadmap evidence, so the artifact-review contract must stay compatible with that broader artifact surface.
-- `scripts/test-native-continuation-loop.ps1` currently checks generic continuation semantics across many skills. Tightening it too broadly without matching actual compliant text will create noisy false failures.
+- `scripts/test-native-continuation-loop.sh` currently checks generic continuation semantics across many skills. Tightening it too broadly without matching actual compliant text will create noisy false failures.
 - The current branch already has unrelated in-progress governance edits. Implementation should build on them and avoid reverting nearby work.
 - Full validation is slow enough that targeted suites should go green before the full validation pass.
 
@@ -126,8 +126,8 @@ Scientific or engineering numerical thresholds do not apply to this plan because
 **Files:**
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Change the router closeout text from summary-only language to explicit artifact-review language**
 
@@ -144,7 +144,7 @@ The findings summary must state what the results say, what the agent thinks thos
 
 - [ ] **Step 3: Mirror the same contract in `agents/openai.yaml` and strengthen the router scenario suite**
 
-```powershell
+```bash
 foreach ($needle in @(
     "artifact review gate",
     "what the agent thinks those results mean",
@@ -159,8 +159,8 @@ foreach ($needle in @(
 
 - [ ] **Step 4: Run the router scenario suite**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
+```bash
+./skills/initiate-workflow/scripts/test-scenarios.sh
 ```
 
 Expected: the suite exits `0` and fails if `initiate-workflow` falls back to summary-only closeout wording.
@@ -168,7 +168,7 @@ Expected: the suite exits `0` and fails if `initiate-workflow` falls back to sum
 - [ ] **Step 5: Commit the router closeout hardening**
 
 ```bash
-git add skills/initiate-workflow/SKILL.md skills/initiate-workflow/agents/openai.yaml skills/initiate-workflow/scripts/test-scenarios.ps1
+git add skills/initiate-workflow/SKILL.md skills/initiate-workflow/agents/openai.yaml skills/initiate-workflow/scripts/test-scenarios.sh
 git commit -m "Harden initiate-workflow closeout review"
 ```
 
@@ -177,8 +177,8 @@ git commit -m "Harden initiate-workflow closeout review"
 **Files:**
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/setup-project/agents/openai.yaml`
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
-- Test: `skills/setup-project/scripts/test-scenarios.ps1`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
+- Test: `skills/setup-project/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Replace summary-only setup closeout wording with explicit artifact-review requirements**
 
@@ -195,7 +195,7 @@ The findings summary must name the changed or verified artifacts, what the resul
 
 - [ ] **Step 3: Require exact artifact paths, rendered Markdown handling, and machine-readable summaries in setup metadata and tests**
 
-```powershell
+```bash
 foreach ($needle in @(
     "artifact review gate",
     "exact artifact paths and links",
@@ -211,8 +211,8 @@ foreach ($needle in @(
 
 - [ ] **Step 4: Run the setup scenario suite**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
 ```
 
 Expected: the suite exits `0` and proves `setup-project` no longer uses a weaker summary-only closeout.
@@ -220,19 +220,19 @@ Expected: the suite exits `0` and proves `setup-project` no longer uses a weaker
 - [ ] **Step 5: Commit the setup closeout hardening**
 
 ```bash
-git add skills/setup-project/SKILL.md skills/setup-project/agents/openai.yaml skills/setup-project/scripts/test-scenarios.ps1
+git add skills/setup-project/SKILL.md skills/setup-project/agents/openai.yaml skills/setup-project/scripts/test-scenarios.sh
 git commit -m "Harden setup-project closeout review"
 ```
 
 ### Task 3: Extend the shared continuation validator to catch router/setup drift
 
 **Files:**
-- Modify: `scripts/test-native-continuation-loop.ps1`
-- Test: `scripts/test-native-continuation-loop.ps1`
+- Modify: `scripts/test-native-continuation-loop.sh`
+- Test: `scripts/test-native-continuation-loop.sh`
 
 - [ ] **Step 1: Add explicit artifact-review and findings-summary checks for governed skills**
 
-```powershell
+```bash
 foreach ($needle in @(
     "artifact review gate",
     "what the agent thinks those results mean",
@@ -245,7 +245,7 @@ foreach ($needle in @(
 
 - [ ] **Step 2: Keep the validator scoped to active skill contracts rather than historical specs and plans**
 
-```powershell
+```bash
 $workflowSkillNames = @(
     "initiate-workflow",
     "setup-project",
@@ -262,8 +262,8 @@ $workflowSkillNames = @(
 
 - [ ] **Step 3: Run the shared continuation validator**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+```bash
+./scripts/test-native-continuation-loop.sh
 ```
 
 Expected: the validator exits `0` and fails if any governed skill omits the artifact-review or findings-summary contract.
@@ -271,7 +271,7 @@ Expected: the validator exits `0` and fails if any governed skill omits the arti
 - [ ] **Step 4: Commit the validator hardening**
 
 ```bash
-git add scripts/test-native-continuation-loop.ps1
+git add scripts/test-native-continuation-loop.sh
 git commit -m "Enforce artifact review in continuation validator"
 ```
 
@@ -279,37 +279,37 @@ git commit -m "Enforce artifact review in continuation validator"
 
 **Files:**
 - Modify: none expected
-- Test: `skills/initiate-workflow/scripts/test-scenarios.ps1`
-- Test: `skills/setup-project/scripts/test-scenarios.ps1`
-- Test: `scripts/test-native-continuation-loop.ps1`
-- Test: `scripts/validate.ps1`
-- Test: `scripts/sync-live.ps1 -Validate`
+- Test: `skills/initiate-workflow/scripts/test-scenarios.sh`
+- Test: `skills/setup-project/scripts/test-scenarios.sh`
+- Test: `scripts/test-native-continuation-loop.sh`
+- Test: `scripts/validate.sh`
+- Test: `scripts/sync-live.sh --validate`
 
 - [ ] **Step 1: Run the targeted scenario suites and shared validator**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+```bash
+./skills/initiate-workflow/scripts/test-scenarios.sh
+./skills/setup-project/scripts/test-scenarios.sh
+./scripts/test-native-continuation-loop.sh
 ```
 
 - [ ] **Step 2: Run full repo validation and live-sync validation**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
 ```
 
 - [ ] **Step 3: Run the required cleanup hook and inspect branch state**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 git status --short --branch
 ```
 
 - [ ] **Step 4: Commit the validated plan implementation result**
 
 ```bash
-git add skills/initiate-workflow skills/setup-project scripts/test-native-continuation-loop.ps1
+git add skills/initiate-workflow skills/setup-project scripts/test-native-continuation-loop.sh
 git commit -m "Finish closeout artifact review propagation"
 ```

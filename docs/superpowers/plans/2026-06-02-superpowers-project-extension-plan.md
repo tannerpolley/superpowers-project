@@ -6,7 +6,7 @@
 
 **Architecture:** Keep Superpowers as the base workflow and turn this plugin into an extension layer. Rename the public skill surface around project workflows, move canonical artifact contracts to `docs/superpowers`, convert issue handling to local GitHub issue mirrors, and remove GoalBuddy board setup from default execution. Preserve the existing validation discipline by writing scenario tests before changing each skill contract.
 
-**Tech Stack:** Codex plugin manifest, Codex skills, PowerShell 7 validation scripts, Markdown artifacts, GitHub CLI/fixtures, native goal tools or slash-command goal activation.
+**Tech Stack:** Codex plugin manifest, Codex skills, Bash 7 validation scripts, Markdown artifacts, GitHub CLI/fixtures, native goal tools or slash-command goal activation.
 
 ---
 
@@ -24,7 +24,7 @@
 - `create-issues` uses vertical-slice issue decomposition, AFK/HITL classification, blocked-by relationships, GitHub issue mirrors, labels, and milestones.
 - `resolve-issue` requires native `/goal` or goal-tool proof before issue execution and does not create GoalBuddy boards.
 - `audit-project` audits drift across project context, milestones, specs, plans, issue mirrors, GitHub issues, labels, and live plugin sync.
-- `scripts/sync-live.ps1 -Validate` removes retired Milestones-owned skill directories from live deploy paths.
+- `scripts/sync-live.sh --validate` removes retired Milestones-owned skill directories from live deploy paths.
 - A dummy repo scenario proves setup, spec, plan, issue mirror, GitHub fixture, and goal-required execution gates.
 
 ## File Map
@@ -48,9 +48,9 @@
 - Modify: `canonical-skills/resolve-issue/`
 - Create: `canonical-skills/audit-project/`
 - Create matching plugin wrappers under `skills/<skill-name>/`
-- Modify: `scripts/sync-live.ps1`
-- Modify: `scripts/validate.ps1`
-- Create: `scripts/test-superpowers-project-dummy-repo.ps1`
+- Modify: `scripts/sync-live.sh`
+- Modify: `scripts/validate.sh`
+- Create: `scripts/test-superpowers-project-dummy-repo.sh`
 - Delete after replacement: obsolete canonical skill folders that only serve the old Milestones artifact model
 - Delete after replacement: obsolete plugin wrappers that only serve the old Milestones artifact model
 
@@ -89,7 +89,7 @@ Retired skill names after migration:
 - Modify: `docs/agents/project-roadmap.md`
 - Modify: `docs/agents/project-roadmap.json`
 - Modify: `README.md`
-- Test: `scripts/validate.ps1 -SkipScenarioTests`
+- Test: `scripts/validate.sh -SkipScenarioTests`
 
 - [ ] **Step 1: Write the project context file**
 
@@ -204,8 +204,8 @@ Modify `docs/agents/project-roadmap.json` so the templates are:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+```bash
+./scripts/validate.sh -SkipScenarioTests
 ```
 
 Expected: exits zero.
@@ -214,7 +214,7 @@ Expected: exits zero.
 
 Run:
 
-```powershell
+```bash
 git add README.md docs/agents docs/superpowers/PROJECT_CONTEXT.md docs/superpowers/milestones
 git commit -m "docs: define superpowers project artifact model"
 ```
@@ -225,9 +225,9 @@ git commit -m "docs: define superpowers project artifact model"
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
-- Modify: `scripts/sync-live.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/validate.ps1 -SkipScenarioTests`
+- Modify: `scripts/sync-live.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/validate.sh -SkipScenarioTests`
 
 - [ ] **Step 1: Update plugin manifest metadata**
 
@@ -250,9 +250,9 @@ Keep existing author metadata unless it conflicts with the new name.
 
 - [ ] **Step 2: Record retired skill names for live cleanup**
 
-In `scripts/sync-live.ps1`, set:
+In `scripts/sync-live.sh`, set:
 
-```powershell
+```bash
 $retiredSkillNames = @(
     "using-milestones",
     "setup-project-milestones",
@@ -275,7 +275,7 @@ Do not include `resolve-issue` in the retired list.
 
 - [ ] **Step 3: Update validation to reject active old canonical paths**
 
-In `scripts/validate.ps1`, add a check named `Superpowers project path contract` that fails if active canonical skill text instructs new specs, plans, or issue mirrors to be written under:
+In `scripts/validate.sh`, add a check named `Superpowers project path contract` that fails if active canonical skill text instructs new specs, plans, or issue mirrors to be written under:
 
 ```text
 docs/milestones/<milestone-folder>/ideas
@@ -290,8 +290,8 @@ Allow those strings only in migration docs and retired issue files under `docs/m
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+```bash
+./scripts/validate.sh -SkipScenarioTests
 ```
 
 Expected: exits zero and includes `Superpowers project path contract`.
@@ -300,8 +300,8 @@ Expected: exits zero and includes `Superpowers project path contract`.
 
 Run:
 
-```powershell
-git add .codex-plugin/plugin.json README.md CHANGELOG.md scripts/sync-live.ps1 scripts/validate.ps1
+```bash
+git add .codex-plugin/plugin.json README.md CHANGELOG.md scripts/sync-live.sh scripts/validate.sh
 git commit -m "feat: rename plugin to superpowers project"
 ```
 
@@ -310,17 +310,17 @@ git commit -m "feat: rename plugin to superpowers project"
 **Files:**
 - Create: `canonical-skills/initiate-workflow/SKILL.md`
 - Create: `canonical-skills/initiate-workflow/agents/openai.yaml`
-- Create: `canonical-skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Create: `canonical-skills/initiate-workflow/scripts/test-scenarios.sh`
 - Create: `canonical-skills/project-context/SKILL.md`
 - Create: `canonical-skills/project-context/agents/openai.yaml`
-- Create: `canonical-skills/project-context/scripts/test-scenarios.ps1`
+- Create: `canonical-skills/project-context/scripts/test-scenarios.sh`
 - Create: `skills/initiate-workflow/SKILL.md`
 - Create: `skills/project-context/SKILL.md`
 - Test: targeted scenario scripts
 
 - [ ] **Step 1: Write failing router scenario tests**
 
-Create `canonical-skills/initiate-workflow/scripts/test-scenarios.ps1` with assertions that `SKILL.md` contains:
+Create `canonical-skills/initiate-workflow/scripts/test-scenarios.sh` with assertions that `SKILL.md` contains:
 
 ```text
 project-context
@@ -339,8 +339,8 @@ docs/superpowers
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\superpowers-project\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/superpowers-project/scripts/test-scenarios.sh
 ```
 
 Expected: fails because the skill does not exist yet.
@@ -396,7 +396,7 @@ The skill must require `docs/superpowers/PROJECT_CONTEXT.md` and `docs/superpowe
 For both new skills, create `skills/<skill-name>/SKILL.md` wrappers that point to:
 
 ```text
-C:\Users\Tanner\.agents\skills\<skill-name>\SKILL.md
+/home/tnnrpolley21/.agents/skills/<skill-name>\SKILL.md
 ```
 
 The wrapper must include:
@@ -412,9 +412,9 @@ Treat this plugin wrapper as organization only; do not invent separate behavior 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\superpowers-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\project-context\scripts\test-scenarios.ps1
+```bash
+./canonical-skills/superpowers-project/scripts/test-scenarios.sh
+./canonical-skills/project-context/scripts/test-scenarios.sh
 ```
 
 Expected: both exit zero.
@@ -423,7 +423,7 @@ Expected: both exit zero.
 
 Run:
 
-```powershell
+```bash
 git add canonical-skills/workflow canonical-skills/project-context skills/workflow skills/project-context
 git commit -m "feat: add superpowers project routing skills"
 ```
@@ -523,10 +523,10 @@ Use git removal so deletions are tracked.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\brainstorm-spec\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+```bash
+./canonical-skills/brainstorm-spec/scripts/test-scenarios.sh
+./canonical-skills/write-plan/scripts/test-scenarios.sh
+./scripts/validate.sh -SkipScenarioTests
 ```
 
 Expected: all exit zero.
@@ -535,7 +535,7 @@ Expected: all exit zero.
 
 Run:
 
-```powershell
+```bash
 git add canonical-skills/brainstorm-spec canonical-skills/write-plan skills/brainstorm-spec skills/write-plan
 git add -u canonical-skills/explore-ideas canonical-skills/milestone-writing-issue-plan skills/explore-ideas skills/milestone-writing-issue-plan
 git commit -m "feat: add superpowers brainstorming and planning adapters"
@@ -548,7 +548,7 @@ git commit -m "feat: add superpowers brainstorming and planning adapters"
 - Create: `skills/create-issues/`
 - Delete: `canonical-skills/convert-idea-to-issue/`
 - Delete: `skills/convert-idea-to-issue/`
-- Test: `canonical-skills/create-issues/scripts/test-scenarios.ps1`
+- Test: `canonical-skills/create-issues/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Write failing `create-issues` tests**
 
@@ -591,7 +591,7 @@ Create `canonical-skills/create-issues/SKILL.md` that borrows `to-issues` behavi
 
 - [ ] **Step 3: Create issue mirror validation script**
 
-Create `canonical-skills/create-issues/scripts/validate-issue-mirror.ps1` that validates:
+Create `canonical-skills/create-issues/scripts/validate-issue-mirror.sh` that validates:
 
 - file path is under `docs/superpowers/issues`;
 - source spec or source plan exists;
@@ -614,9 +614,9 @@ skills/convert-idea-to-issue
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+```bash
+./canonical-skills/create-issues/scripts/test-scenarios.sh
+./scripts/validate.sh -SkipScenarioTests
 ```
 
 Expected: both exit zero.
@@ -625,7 +625,7 @@ Expected: both exit zero.
 
 Run:
 
-```powershell
+```bash
 git add canonical-skills/create-issues skills/create-issues
 git add -u canonical-skills/convert-idea-to-issue skills/convert-idea-to-issue
 git commit -m "feat: add superpowers issue mirror generation"
@@ -636,17 +636,17 @@ git commit -m "feat: add superpowers issue mirror generation"
 **Files:**
 - Modify: `canonical-skills/resolve-issue/SKILL.md`
 - Modify: `canonical-skills/resolve-issue/agents/openai.yaml`
-- Modify: `canonical-skills/resolve-issue/scripts/prepare-execution.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/validate-setup.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/preflight.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/premerge.ps1`
-- Modify: `canonical-skills/resolve-issue/scripts/closeout.ps1`
+- Modify: `canonical-skills/resolve-issue/scripts/prepare-execution.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/validate-setup.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/preflight.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/premerge.sh`
+- Modify: `canonical-skills/resolve-issue/scripts/closeout.sh`
 - Delete: `canonical-skills/resolve-issue/scripts/validate-goalbuddy-contract.mjs`
-- Test: `canonical-skills/resolve-issue/scripts/test-scenarios.ps1`
+- Test: `canonical-skills/resolve-issue/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Write failing native-goal scenario tests**
 
-Modify `test-scenarios.ps1` so these scenarios fail before implementation:
+Modify `test-scenarios.sh` so these scenarios fail before implementation:
 
 - issue mirror path outside `docs/superpowers/issues` blocks;
 - missing source plan blocks;
@@ -682,7 +682,7 @@ The skill must say that GoalBuddy boards are outside the default execution model
 
 - [ ] **Step 3: Update prepare-execution**
 
-Change `prepare-execution.ps1` to:
+Change `prepare-execution.sh` to:
 
 - read `docs/superpowers/issues/<issue>.md`;
 - read linked source plan;
@@ -694,7 +694,7 @@ Change `prepare-execution.ps1` to:
 
 - [ ] **Step 4: Update validate-setup**
 
-Change `validate-setup.ps1` to reject any setup ledger containing:
+Change `validate-setup.sh` to reject any setup ledger containing:
 
 ```text
 goal_board_path
@@ -734,9 +734,9 @@ Closeout must:
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+```bash
+./canonical-skills/resolve-issue/scripts/test-scenarios.sh
+./scripts/validate.sh -SkipScenarioTests
 ```
 
 Expected: both exit zero.
@@ -745,7 +745,7 @@ Expected: both exit zero.
 
 Run:
 
-```powershell
+```bash
 git add canonical-skills/resolve-issue
 git commit -m "feat: resolve issues with native goals"
 ```
@@ -761,7 +761,7 @@ git commit -m "feat: resolve issues with native goals"
 - Delete: `skills/milestones-doctor/`
 - Delete: `skills/setup-project-milestones/`
 - Delete: `skills/using-milestones/`
-- Modify: `scripts/validate.ps1`
+- Modify: `scripts/validate.sh`
 - Test: targeted scenario scripts
 
 - [ ] **Step 1: Write `audit-project` tests**
@@ -805,7 +805,7 @@ skills/using-milestones
 
 - [ ] **Step 4: Update validate wrapper contract**
 
-Ensure `scripts/validate.ps1` now expects wrappers exactly for:
+Ensure `scripts/validate.sh` now expects wrappers exactly for:
 
 ```text
 superpowers-project
@@ -821,9 +821,9 @@ audit-project
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\canonical-skills\audit-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+```bash
+./canonical-skills/audit-project/scripts/test-scenarios.sh
+./scripts/validate.sh -SkipScenarioTests
 ```
 
 Expected: both exit zero.
@@ -832,8 +832,8 @@ Expected: both exit zero.
 
 Run:
 
-```powershell
-git add canonical-skills/audit-project skills/audit-project scripts/validate.ps1
+```bash
+git add canonical-skills/audit-project skills/audit-project scripts/validate.sh
 git add -u canonical-skills/milestones-doctor canonical-skills/setup-project-milestones canonical-skills/using-milestones
 git add -u skills/milestones-doctor skills/setup-project-milestones skills/using-milestones
 git commit -m "feat: add project doctor and retire milestones skills"
@@ -842,13 +842,13 @@ git commit -m "feat: add project doctor and retire milestones skills"
 ## Task 8: Add Dummy Repo End-To-End Validation
 
 **Files:**
-- Create: `scripts/test-superpowers-project-dummy-repo.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-superpowers-project-dummy-repo.ps1`
+- Create: `scripts/test-superpowers-project-dummy-repo.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-superpowers-project-dummy-repo.sh`
 
 - [ ] **Step 1: Create dummy repo test script**
 
-Create `scripts/test-superpowers-project-dummy-repo.ps1` that:
+Create `scripts/test-superpowers-project-dummy-repo.sh` that:
 
 1. Creates a temporary Git repo.
 2. Adds `AGENTS.md`.
@@ -875,11 +875,11 @@ The script must output:
 
 - [ ] **Step 2: Add dummy repo test to validation**
 
-Modify `scripts/validate.ps1` to run the dummy repo test after PowerShell parser check and sync helper tests:
+Modify `scripts/validate.sh` to run the dummy repo test after Bash parser check and sync helper tests:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "superpowers project dummy repo" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-superpowers-project-dummy-repo.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-superpowers-project-dummy-repo.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "superpowers project dummy repo failed" }
 }))
 ```
@@ -888,9 +888,9 @@ $results.Add((Invoke-Step "superpowers project dummy repo" {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-superpowers-project-dummy-repo.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+```bash
+./scripts/test-superpowers-project-dummy-repo.sh
+./scripts/validate.sh -SkipScenarioTests
 ```
 
 Expected: both exit zero.
@@ -899,8 +899,8 @@ Expected: both exit zero.
 
 Run:
 
-```powershell
-git add scripts/test-superpowers-project-dummy-repo.ps1 scripts/validate.ps1
+```bash
+git add scripts/test-superpowers-project-dummy-repo.sh scripts/validate.sh
 git commit -m "test: add superpowers project dummy repo validation"
 ```
 
@@ -919,8 +919,8 @@ Update release docs to say the first release after this migration is `v0.2.0` an
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: exits zero and includes all new skill scenario tests plus the dummy repo test.
@@ -929,23 +929,23 @@ Expected: exits zero and includes all new skill scenario tests plus the dummy re
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 Expected:
 
 - exits zero;
 - deploys exactly the seven active skills;
-- removes retired skill directories listed in `scripts/sync-live.ps1`;
+- removes retired skill directories listed in `scripts/sync-live.sh`;
 - reports no source/live drift.
 
 - [ ] **Step 4: Run cleanup hook**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: exits zero.
@@ -954,7 +954,7 @@ Expected: exits zero.
 
 Run:
 
-```powershell
+```bash
 git add README.md docs/milestones/M2-distribution/RELEASE_POLICY.md
 git commit -m "docs: document superpowers project release"
 ```

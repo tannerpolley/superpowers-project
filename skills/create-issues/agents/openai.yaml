@@ -8,7 +8,7 @@ interface:
     canonical roots; issue mirrors include the GitHub issue number. missing or malformed workflow metadata is blocking for every issue mirror.
     For hierarchy modes, support flat, issue-set, and sub-milestone publication; require a dry command receipt and read SKILL.md for hierarchy route details.
     Outcome Summary requires Outcome Source, Interface, Cutover, and Stop Criteria. For external GitHub issue hydration,
-    use hydrate-external-issue.ps1; Source Plan: TBD means intake only until a local mirror and source plan exist.
+    use hydrate-external-issue.sh; Source Plan: TBD means intake only until a local mirror and source plan exist.
     summarize artifact review gate status, broader project context, recommended next route, and machine-readable
     artifacts. project_issue_next_step is the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml
     for resolve, orchestrate, and review child routes before starting the selected next skill.

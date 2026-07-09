@@ -66,18 +66,18 @@ GitHub Milestones remain the milestone tracker. Parent issues and optional plan-
 
 To host the checked-in Agent-Native companion preview from a container:
 
-```powershell
-docker compose -f .\docker-compose.agent-native-preview.yml up --build
+```bash
+docker compose -f ./docker-compose.agent-native-preview.yml up --build
 ```
 
 Then open `http://localhost:8097/preview.html`. The image runs Agent-Native `plan local check`, generates the local preview inside the container, and serves only the generated preview HTML.
 
 To preview another local artifact or a recap:
 
-```powershell
-$env:PLAN_DIR = "/repo/plans/<slug>"
-$env:PLAN_KIND = "recap"
-docker compose -f .\docker-compose.agent-native-preview.yml up --build
+```bash
+export PLAN_DIR="/repo/plans/<slug>"
+export PLAN_KIND="recap"
+docker compose -f ./docker-compose.agent-native-preview.yml up --build
 ```
 
 The Docker preview is a local rendering bridge for source-controlled MDX. Hosted comments, feedback tools, and full Agent-Native collaboration require hosted Plan tools or a proper local Plan app using the same plan source.
@@ -117,30 +117,30 @@ Before any closeout, push, publish, or merge question, the agent must show the a
 
 Auto Mode ledgers are validated by the plugin-provided validator from the loaded Superpowers Project plugin root:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```bash
+<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>
 ```
 
 Workflow mode ledgers are validated by the plugin-provided validator from the loaded Superpowers Project plugin root before mode-driven routing:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
+```bash
+<Superpowers Project plugin root>/scripts/validate-workflow-mode-ledger.sh -RepoRoot <active repo> -ModeLedgerPath <ledger>
 ```
 
 ## Task # Use Cases
 
 Implementation plans must include `Task # Use Cases`: every numbered `Task N` needs a non-empty `**Use Cases:**` block before files and steps. This is a strict requirement before a plan is ready, before `$superpowers-project:implement-plan` starts code work, and before `$superpowers-project:resolve-issue` executes a linked source plan.
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <plan>
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath <plan>
 ```
 
 ## Outcome Proofs
 
 Implementation plans must also include an `Outcome Proof` and `Implementation Boundaries`. The proof names the target outcome, owner, interface, cutover, replaced path, evidence, acceptance proof, stop criteria, avoid list, and risk. Issue mirrors carry that proof forward as an `Outcome Summary`.
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath <plan>
+```bash
+./scripts/validate-plan-outcome-proof.sh -PlanPath <plan>
 ```
 
 `$superpowers-project:implement-plan` and `$superpowers-project:resolve-issue` carry the approved proof as structured `outcome_proof` ledger evidence. `$superpowers-project:merge-changes` requires structured `readiness_review` proof with `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` all true before merge approval.
@@ -156,9 +156,9 @@ Implement Plan uses a development branch, native `/goal` where applicable, Super
 ```text
 .codex-plugin/plugin.json
 skills/<skill-name>/
-scripts/install.ps1
-scripts/sync-live.ps1
-scripts/validate.ps1
+scripts/install.sh
+scripts/sync-live.sh
+scripts/validate.sh
 docs/superpowers/PROJECT_CONTEXT.md
 docs/superpowers/specs/
 docs/superpowers/plans/
@@ -172,28 +172,28 @@ The retired Milestones artifact model is migration history only. New Superpowers
 
 ## Validate
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 ## Agent Version Tracking
 
 At Superpowers Project startup, agents should print a concise version banner before selecting a workflow route:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent
+```bash
+<Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -Banner -RequireCurrent
 ```
 
 Use the JSON version tracker when an agent needs machine-readable proof of the exact Superpowers Project plugin copy it is using:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -RequireCurrent
+```bash
+<Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -RequireCurrent
 ```
 
 The checker reports the manifest version, source commit, and runtime `contract_hash` for source, live install, local cache candidates, and an optional observed plugin or skill root. If an agent has an observed skill root from its loaded context, pass it explicitly:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
+```bash
+<Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -ObservedSkillRoot <loaded-skill-root> -RequireCurrent
 ```
 
 If source and live are current but the observed surface differs, run validated live sync. Live sync refreshes the live user install and matching local plugin cache roots that already exist, so existing threads can see updated files when they re-read plugin skill bodies. It cannot rewrite prompt text already loaded into an agent context; if the observed surface still differs after sync, start a fresh agent session.
@@ -202,25 +202,25 @@ If source and live are current but the observed surface differs, run validated l
 
 GitHub Actions runs the same validation command used locally:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Release gates and tag rules are documented in `docs/superpowers/RELEASE_POLICY.md`. The first release after this migration is `v0.2.0`.
 
 ## Sync To Live Codex Install
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
 The sync script deploys this repo's plugin manifest and full skill implementations to:
 
-- `C:\Users\Tanner\plugins\superpowers-project`
+- `/home/tnnrpolley21/.codex/plugins/superpowers-project`
 
 It also deploys only the shared helper skill to:
 
-- `C:\Users\Tanner\.agents\skills\advanced-user-input`
+- `/home/tnnrpolley21/.agents/skills/advanced-user-input`
 
 By default, the same command also refreshes matching existing local plugin cache candidates for this plugin. Use `-SkipCacheRefresh` only when intentionally validating the live install without updating already-materialized cache copies.
 
@@ -228,10 +228,10 @@ By default, the same command also refreshes matching existing local plugin cache
 
 From a local clone:
 
-```powershell
+```bash
 git clone https://github.com/tannerpolley/superpowers-project.git
 cd superpowers-project
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
+./scripts/install.sh
 ```
 
 After install, start with `$superpowers-project:initiate-workflow` in Codex to route setup, brainstorming, code/workflow audits, planning, issue creation, issue resolution, orchestration, merge cleanup, or alignment checks.

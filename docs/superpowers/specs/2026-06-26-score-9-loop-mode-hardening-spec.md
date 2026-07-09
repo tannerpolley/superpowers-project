@@ -21,7 +21,7 @@ The previous repair wave landed the major architecture pieces:
 - generated-state guardrails
 - golden-path workflow examples
 - worker handoff packet examples
-- expanded `scripts/validate.ps1` coverage
+- expanded `scripts/validate.sh` coverage
 
 The next wave should make those pieces authoritative enough that a fresh agent cannot accidentally flatten route menus, misread Looping Mode as open-ended autonomy, or trust a stale workflow-contract entry that disagrees with a `SKILL.md` route block.
 
@@ -53,7 +53,7 @@ The target is not merely “tests pass.” The project should hit or exceed thes
 7. Active backlog exists and separates ready candidates from historical plan checkboxes.
 8. Generated runtime state guardrails exist.
 9. Workflow golden paths and worker packets exist.
-10. `scripts/validate.ps1` has much broader coverage than before.
+10. `scripts/validate.sh` has much broader coverage than before.
 
 ### What still blocks a 9+ score
 
@@ -155,7 +155,7 @@ options:
 
 ### Validator requirements
 
-Update `scripts/validate-workflow-contract.ps1` so it:
+Update `scripts/validate-workflow-contract.sh` so it:
 
 1. Parses every `Question id: ` block from every workflow `SKILL.md`.
 2. Extracts the nearest following `Prompt:` and `Options:` block.
@@ -189,14 +189,14 @@ If the identifier is intentionally not a native gate, it must be listed in a con
 - [ ] The known mismatches in `align-project`, `setup-project`, `merge-changes`, and `implement-plan` are fixed.
 - [ ] `project_setup_board_approval` is either registered with exact prompt/options or rewritten into a canonical `Question id:` block and registered.
 - [ ] `project_issue_resolution_route` is either registered with exact prompt/options or removed from active prose and replaced by a registered gate.
-- [ ] `scripts/test-workflow-contract.ps1` has fixtures for exact-option mismatch, missing gate registration, invalid terminal option in nested route, approval gate, permission gate, topology gate, and final health gate.
+- [ ] `scripts/test-workflow-contract.sh` has fixtures for exact-option mismatch, missing gate registration, invalid terminal option in nested route, approval gate, permission gate, topology gate, and final health gate.
 
 ### Proof oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-contract.ps1 -RepoRoot .
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/test-workflow-contract.sh
+./scripts/validate-workflow-contract.sh -RepoRoot .
+./scripts/validate.sh
 ```
 
 ## Workstream B: Prevent Metadata From Flattening Route Geometry
@@ -207,7 +207,7 @@ Compact metadata should help select the skill, not restate route trees incorrect
 
 ### Required changes
 
-Update `scripts/validate-skill-metadata-contract.ps1` so it can distinguish top-level gate summaries from child-route summaries. Metadata may mention routes only in one of these safe forms:
+Update `scripts/validate-skill-metadata-contract.sh` so it can distinguish top-level gate summaries from child-route summaries. Metadata may mention routes only in one of these safe forms:
 
 Safe form 1:
 
@@ -239,10 +239,10 @@ Because that flattens a child menu into a top-level continuation gate.
 
 ### Proof oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-skill-metadata-contract.ps1 -RepoRoot .
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/test-skill-metadata-contract.sh
+./scripts/validate-skill-metadata-contract.sh -RepoRoot .
+./scripts/validate.sh
 ```
 
 ## Workstream C: Clean Skill Prose After Centralization
@@ -277,16 +277,16 @@ Before this push gate, show the helper Artifact Review Card. Route-specific card
 - [ ] No `SKILL.md` contains duplicate sentence fragments caused by the previous rewrite.
 - [ ] No route-specific Artifact Review Card paragraph repeats the full helper findings-summary paragraph.
 - [ ] Every route-specific section still lists the artifacts that are unique to that route.
-- [ ] `validate-global-policy-deduplication.ps1` still passes.
-- [ ] `test-artifact-review-card.ps1` still passes.
+- [ ] `validate-global-policy-deduplication.sh` still passes.
+- [ ] `test-artifact-review-card.sh` still passes.
 
 ### Proof oracle
 
-```powershell
+```bash
 rg -n "Add the helper-required findings summary|permission question:\.|artifacts are shown.*Add the helper" skills
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-global-policy-deduplication.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-artifact-review-card.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+./scripts/test-global-policy-deduplication.sh
+./scripts/test-artifact-review-card.sh
+./scripts/validate.sh
 ```
 
 ## Workstream D: Make Looping Mode A Strict State Machine
@@ -382,16 +382,16 @@ Likely files:
 
 ```text
 skills/loop-controller/SKILL.md
-skills/loop-controller/scripts/select-candidate.ps1
-skills/loop-controller/scripts/validate-run-ledger.ps1
-skills/loop-controller/scripts/validate-budget.ps1
-skills/loop-controller/scripts/validate-verifier-ledger.ps1
-skills/loop-controller/scripts/validate-terminal-closeout.ps1
-skills/loop-controller/scripts/validate-loop-state-machine.ps1
-skills/loop-controller/scripts/test-scenarios.ps1
-scripts/test-loop-controller.ps1
-scripts/validate-workflow-examples.ps1
-scripts/validate.ps1
+skills/loop-controller/scripts/select-candidate.sh
+skills/loop-controller/scripts/validate-run-ledger.sh
+skills/loop-controller/scripts/validate-budget.sh
+skills/loop-controller/scripts/validate-verifier-ledger.sh
+skills/loop-controller/scripts/validate-terminal-closeout.sh
+skills/loop-controller/scripts/validate-loop-state-machine.sh
+skills/loop-controller/scripts/test-scenarios.sh
+scripts/test-loop-controller.sh
+scripts/validate-workflow-examples.sh
+scripts/validate.sh
 docs/superpowers/workflow-contract.yml
 docs/superpowers/examples/workflow-golden-paths.md
 docs/superpowers/backlog/ACTIVE.md
@@ -413,7 +413,7 @@ Add fixtures for at least these cases:
 ### Acceptance criteria
 
 - [ ] Looping Mode phases are documented in a source-owned contract.
-- [ ] Looping Mode phase validator exists and is wired into `scripts/validate.ps1`.
+- [ ] Looping Mode phase validator exists and is wired into `scripts/validate.sh`.
 - [ ] Looping Mode cannot select a second candidate without a recorded `project_loop_next_step` answer.
 - [ ] Looping Mode cannot use Auto Mode authorization as broad queue-draining authority.
 - [ ] Candidate source precedence is explicit and tested.
@@ -425,12 +425,12 @@ Add fixtures for at least these cases:
 
 ### Proof oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\validate-loop-state-machine.ps1 -RepoRoot . -RunRoot .superpowers/runs/<fixture-run>
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-examples.ps1 -RepoRoot .
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/test-loop-controller.sh
+./skills/loop-controller/scripts/test-scenarios.sh
+./skills/loop-controller/scripts/validate-loop-state-machine.sh -RepoRoot . -RunRoot .superpowers/runs/<fixture-run>
+./scripts/validate-workflow-examples.sh -RepoRoot .
+./scripts/validate.sh
 ```
 
 ## Workstream E: Add A Scorecard Validator And Receipt
@@ -474,8 +474,8 @@ The receipt should include:
 Add a validator such as:
 
 ```text
-scripts/validate-scorecard-proof.ps1
-scripts/test-scorecard-proof.ps1
+scripts/validate-scorecard-proof.sh
+scripts/test-scorecard-proof.sh
 ```
 
 ### Acceptance criteria
@@ -489,10 +489,10 @@ scripts/test-scorecard-proof.ps1
 
 ### Proof oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-scorecard-proof.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-scorecard-proof.ps1 -RepoRoot .
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/test-scorecard-proof.sh
+./scripts/validate-scorecard-proof.sh -RepoRoot .
+./scripts/validate.sh
 ```
 
 ## Workstream F: Improve Project Context And Issue Readiness Narrative
@@ -532,11 +532,11 @@ docs/superpowers/backlog/ACTIVE.md
 
 ### Proof oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-generated-state.ps1 -RepoRoot .
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-active-backlog.ps1 -RepoRoot .
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-scorecard-proof.ps1 -RepoRoot .
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate-generated-state.sh -RepoRoot .
+./scripts/validate-active-backlog.sh -RepoRoot .
+./scripts/validate-scorecard-proof.sh -RepoRoot .
+./scripts/validate.sh
 ```
 
 ## Workstream G: Keep Grilling At 9+ With Real Examples
@@ -571,10 +571,10 @@ or be added to golden paths.
 
 ### Proof oracle
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path <example-spec> -Kind spec
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path <example-plan> -Kind plan
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-decision-ledger.ps1
+```bash
+./scripts/validate-decision-ledger.sh -Path <example-spec> -Kind spec
+./scripts/validate-decision-ledger.sh -Path <example-plan> -Kind plan
+./scripts/test-decision-ledger.sh
 ```
 
 ## Proposed Issue Slices
@@ -668,14 +668,14 @@ Acceptance criteria:
 
 The program is complete only when all of these are true:
 
-- [ ] `scripts/validate.ps1` passes.
-- [ ] `scripts/sync-live.ps1 -Validate` passes.
-- [ ] `scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent` passes.
+- [ ] `scripts/validate.sh` passes.
+- [ ] `scripts/sync-live.sh --validate` passes.
+- [ ] `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` passes.
 - [ ] New workflow contract exact-option validator passes.
 - [ ] New metadata geometry validator passes.
 - [ ] New Looping Mode state-machine validator passes.
 - [ ] New scorecard proof validator passes with every score target >= 9.
-- [ ] `skills/align-project/scripts/align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` passes or produces only documented non-blocking findings.
+- [ ] `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` passes or produces only documented non-blocking findings.
 - [ ] Repo cleanup hook passes.
 - [ ] `git status --short --branch` is clean.
 - [ ] Milestone receipt records command proof.

@@ -30,21 +30,21 @@ Selecting Auto Mode at project_workflow_mode is the Auto Mode invocation. Do not
 
 Record a workflow mode ledger under `.superpowers/runs/<run-id>/workflow-mode-ledger.json`. Resolve the workflow-mode validator from the loaded Superpowers Project plugin root, then validate the ledger with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-workflow-mode-ledger.ps1 -RepoRoot <active repo> -ModeLedgerPath <ledger>
+```bash
+<Superpowers Project plugin root>/scripts/validate-workflow-mode-ledger.sh -RepoRoot <active repo> -ModeLedgerPath <ledger>
 ```
 
-Canonical marker: `scripts/validate-workflow-mode-ledger.ps1`.
+Canonical marker: `scripts/validate-workflow-mode-ledger.sh`.
 
-Do not run `.\scripts\validate-workflow-mode-ledger.ps1` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
+Do not run `./scripts/validate-workflow-mode-ledger.sh` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
 
 When Auto Mode needs the bounded route authority used by downstream planning, implementation, verification, merge, or live-sync proof, record an Auto Mode authorization ledger tied to the startup mode selection and the source artifact. The valid authority is `Bounded Auto Merge`. Resolve the Auto Mode validator from the loaded Superpowers Project plugin root. This is the plugin-provided Auto Mode validator:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\validate-auto-mode-authorization.ps1 -RepoRoot <active repo> -AuthorizationPath <ledger>
+```bash
+<Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh -RepoRoot <active repo> -AuthorizationPath <ledger>
 ```
 
-Do not run `.\scripts\validate-auto-mode-authorization.ps1` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
+Do not run `./scripts/validate-auto-mode-authorization.sh` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
 
 Recommend `Manual Mode` when the user has not asked for autonomy. Recommend `Auto Mode` only when one route is clear and source evidence is already strong. Recommend `Looping Mode` when the user asks to operate, maintain, drain issues, keep going, resolve a queue, or run broad project maintenance.
 
@@ -138,7 +138,8 @@ For `$superpowers-project:brainstorm-spec`, use native UI more aggressively: if 
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not route into mutation or pretend a live user approved workflow scope, publication, execution, or setup.
 ## Goal Routing

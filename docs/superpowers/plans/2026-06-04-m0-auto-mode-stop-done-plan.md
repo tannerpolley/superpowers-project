@@ -6,7 +6,7 @@
 
 **Architecture:** Implement this as contract-first skill work: add a shared Auto Mode authorization validator, update native continuation policy in shared docs and validators, then propagate the new route and terminal-label semantics through active skill docs, metadata, scenario scripts, README, and workflow assets. Keep execution on existing project routes (`write-plan`, `implement-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, and `merge-changes`) instead of adding a new execution engine.
 
-**Tech Stack:** Codex skill Markdown/YAML, PowerShell 7 scenario scripts and validators, JSON authorization ledgers, README/SVG/Mermaid docs assets, Git/GitHub workflow evidence, and existing `scripts/validate.ps1` plus `scripts/sync-live.ps1 -Validate`.
+**Tech Stack:** Codex skill Markdown/YAML, Bash 7 scenario scripts and validators, JSON authorization ledgers, README/SVG/Mermaid docs assets, Git/GitHub workflow evidence, and existing `scripts/validate.sh` plus `scripts/sync-live.sh --validate`.
 
 ---
 
@@ -43,7 +43,7 @@
 - `Done` appears only after verified final closeout: clean merge closeout followed by a healthy-style gate, or healthy audit with no remaining repair route.
 - Active contract validation excludes historical specs and plans from old-label scans.
 - README, Mermaid, SVG, and asset validation match the new Auto Mode and lifecycle-specific Stop/Done semantics.
-- `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, and the user-level cleanup hook pass before implementation closeout.
+- `scripts/validate.sh`, `scripts/sync-live.sh --validate`, and the user-level cleanup hook pass before implementation closeout.
 
 ## Non-Goals
 
@@ -57,44 +57,44 @@
 
 ## File Map
 
-- Create: `scripts/lib/auto-mode-contract.ps1`
-- Create: `scripts/test-auto-mode-contract.ps1`
-- Modify: `scripts/validate.ps1`
-- Modify: `scripts/test-native-continuation-loop.ps1`
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
-- Modify: `scripts/test-native-qa-svg.ps1`
+- Create: `scripts/lib/auto-mode-contract.sh`
+- Create: `scripts/test-auto-mode-contract.sh`
+- Modify: `scripts/validate.sh`
+- Modify: `scripts/test-native-continuation-loop.sh`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
+- Modify: `scripts/test-native-qa-svg.sh`
 - Modify: `skills/advanced-user-input/SKILL.md`
 - Modify: `skills/advanced-user-input/agents/openai.yaml`
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/setup-project/agents/openai.yaml`
-- Modify: `skills/setup-project/scripts/test-scenarios.ps1`
+- Modify: `skills/setup-project/scripts/test-scenarios.sh`
 - Modify: `skills/brainstorm-spec/SKILL.md`
 - Modify: `skills/brainstorm-spec/agents/openai.yaml`
-- Modify: `skills/brainstorm-spec/scripts/test-scenarios.ps1`
+- Modify: `skills/brainstorm-spec/scripts/test-scenarios.sh`
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
 - Modify: `skills/implement-plan/SKILL.md`
 - Modify: `skills/implement-plan/agents/openai.yaml`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
 - Modify: `skills/orchestrate-issues/SKILL.md`
 - Modify: `skills/orchestrate-issues/agents/openai.yaml`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 - Modify: `skills/merge-changes/SKILL.md`
 - Modify: `skills/merge-changes/agents/openai.yaml`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
 - Modify: `skills/audit-project/SKILL.md`
 - Modify: `skills/audit-project/agents/openai.yaml`
-- Modify: `skills/audit-project/scripts/test-scenarios.ps1`
+- Modify: `skills/audit-project/scripts/test-scenarios.sh`
 - Modify: `README.md`
 - Modify: `docs/assets/native-qa-main-flow-mermaid.md`
 - Modify: `docs/assets/native-qa-main-flow.svg`
@@ -104,22 +104,22 @@
 
 Run these commands before claiming implementation complete:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\brainstorm-spec\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+./scripts/test-auto-mode-contract.sh
+./scripts/test-advanced-user-input-policy.sh
+./scripts/test-native-continuation-loop.sh
+./scripts/test-native-qa-svg.sh
+./skills/brainstorm-spec/scripts/test-scenarios.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./skills/audit-project/scripts/test-scenarios.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 git status --short --branch
 ```
 
@@ -134,21 +134,21 @@ Expected final state:
 
 **Files:**
 
-- Create: `scripts/lib/auto-mode-contract.ps1`
-- Create: `scripts/test-auto-mode-contract.ps1`
-- Modify: `scripts/validate.ps1`
+- Create: `scripts/lib/auto-mode-contract.sh`
+- Create: `scripts/test-auto-mode-contract.sh`
+- Modify: `scripts/validate.sh`
 
 - [ ] **Step 1: Write the failing Auto Mode contract test**
 
-Create `scripts/test-auto-mode-contract.ps1` with this structure:
+Create `scripts/test-auto-mode-contract.sh` with this structure:
 
-```powershell
+```bash
 [CmdletBinding()]
 param()
 
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
-$helper = Join-Path $repoRoot "scripts\lib\auto-mode-contract.ps1"
+$helper = Join-Path $repoRoot "scripts/lib\auto-mode-contract.sh"
 $results = [System.Collections.Generic.List[object]]::new()
 
 function Add-Result {
@@ -224,17 +224,17 @@ if ($failed.Count -gt 0) { exit 1 }
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
+```bash
+./scripts/test-auto-mode-contract.sh
 ```
 
-Expected: exits `1` with a result named `helper exists` failing because `scripts\lib\auto-mode-contract.ps1` does not exist.
+Expected: exits `1` with a result named `helper exists` failing because `scripts/lib\auto-mode-contract.sh` does not exist.
 
 - [ ] **Step 3: Add the shared helper**
 
-Create `scripts/lib/auto-mode-contract.ps1` with:
+Create `scripts/lib/auto-mode-contract.sh` with:
 
-```powershell
+```bash
 function Test-AutoModeAuthorization {
     [CmdletBinding()]
     param(
@@ -272,7 +272,7 @@ function Test-AutoModeAuthorization {
     }
 
     $specPath = Join-Path $RepoRoot ([string]$Authorization.source_spec)
-    $specRoot = Join-Path $RepoRoot "docs\superpowers\specs"
+    $specRoot = Join-Path $RepoRoot "docs/superpowers\specs"
     $resolvedSpecRoot = [IO.Path]::GetFullPath($specRoot)
     $resolvedSpecPath = [IO.Path]::GetFullPath($specPath)
     if (-not $resolvedSpecPath.StartsWith($resolvedSpecRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -319,19 +319,19 @@ function Test-AutoModeAuthorization {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-auto-mode-contract.ps1
+```bash
+./scripts/test-auto-mode-contract.sh
 ```
 
 Expected: exits `0`; output includes `happy authorization passes` and `direct worker mode blocks` with `ok: true`.
 
 - [ ] **Step 5: Wire the contract test into validation**
 
-In `scripts/validate.ps1`, add this step after `Advanced user input policy contract`:
+In `scripts/validate.sh`, add this step after `Advanced user input policy contract`:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Auto Mode authorization contract" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-auto-mode-contract.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-auto-mode-contract.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Auto Mode authorization contract failed" }
 }))
 ```
@@ -340,8 +340,8 @@ $results.Add((Invoke-Step "Auto Mode authorization contract" {
 
 Run:
 
-```powershell
-git add scripts/lib/auto-mode-contract.ps1 scripts/test-auto-mode-contract.ps1 scripts/validate.ps1
+```bash
+git add scripts/lib/auto-mode-contract.sh scripts/test-auto-mode-contract.sh scripts/validate.sh
 git commit -m "Add auto mode authorization contract"
 ```
 
@@ -349,16 +349,16 @@ git commit -m "Add auto mode authorization contract"
 
 **Files:**
 
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
-- Modify: `scripts/test-native-continuation-loop.ps1`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
+- Modify: `scripts/test-native-continuation-loop.sh`
 - Modify: `skills/advanced-user-input/SKILL.md`
 - Modify: `skills/advanced-user-input/agents/openai.yaml`
 
 - [ ] **Step 1: Add failing shared policy assertions**
 
-In `scripts/test-advanced-user-input-policy.ps1`, replace checks that require `stale terminal option` as a universal terminal label with checks for:
+In `scripts/test-advanced-user-input-policy.sh`, replace checks that require `stale terminal option` as a universal terminal label with checks for:
 
-```powershell
+```bash
 foreach ($needle in @(
     "Use Stop for mid-loop exits",
     "Use Done only for verified final states",
@@ -379,9 +379,9 @@ foreach ($forbidden in @(
 
 - [ ] **Step 2: Add failing active-contract scan**
 
-In `scripts/test-native-continuation-loop.ps1`, define active intermediate and final skills:
+In `scripts/test-native-continuation-loop.sh`, define active intermediate and final skills:
 
-```powershell
+```bash
 $intermediateSkills = @(
     "initiate-workflow",
     "setup-project",
@@ -397,7 +397,7 @@ $finalCapableSkills = @("merge-changes", "audit-project")
 
 Then replace old universal checks with:
 
-```powershell
+```bash
 foreach ($skillName in $intermediateSkills) {
     $text = Get-Content -LiteralPath (Join-Path $skillRoot "$skillName\SKILL.md") -Raw
     $agentText = Get-Content -LiteralPath (Join-Path $skillRoot "$skillName\agents\openai.yaml") -Raw
@@ -414,9 +414,9 @@ foreach ($skillName in $finalCapableSkills) {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+```bash
+./scripts/test-advanced-user-input-policy.sh
+./scripts/test-native-continuation-loop.sh
 ```
 
 Expected: both exit `1`; failures name missing lifecycle-specific policy and old `stale terminal label` text still present.
@@ -457,8 +457,8 @@ Expected: both exit `0`.
 
 Run:
 
-```powershell
-git add scripts/test-advanced-user-input-policy.ps1 scripts/test-native-continuation-loop.ps1 skills/advanced-user-input/SKILL.md skills/advanced-user-input/agents/openai.yaml
+```bash
+git add scripts/test-advanced-user-input-policy.sh scripts/test-native-continuation-loop.sh skills/advanced-user-input/SKILL.md skills/advanced-user-input/agents/openai.yaml
 git commit -m "Refine native terminal label policy"
 ```
 
@@ -468,16 +468,16 @@ git commit -m "Refine native terminal label policy"
 
 - Modify: `skills/brainstorm-spec/SKILL.md`
 - Modify: `skills/brainstorm-spec/agents/openai.yaml`
-- Modify: `skills/brainstorm-spec/scripts/test-scenarios.ps1`
+- Modify: `skills/brainstorm-spec/scripts/test-scenarios.sh`
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `skills/initiate-workflow/agents/openai.yaml`
-- Modify: `skills/initiate-workflow/scripts/test-scenarios.ps1`
+- Modify: `skills/initiate-workflow/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing brainstorm scenario assertions**
 
-In `skills/brainstorm-spec/scripts/test-scenarios.ps1`, add an Auto Mode scenario:
+In `skills/brainstorm-spec/scripts/test-scenarios.sh`, add an Auto Mode scenario:
 
-```powershell
+```bash
 Invoke-Scenario "auto mode route after spec creation is present" {
     $text = Get-Content -LiteralPath $skillFile -Raw
     foreach ($needle in @(
@@ -488,7 +488,7 @@ Invoke-Scenario "auto mode route after spec creation is present" {
         "bounded-auto-merge",
         "recorded defaults",
         "issue-backed-orchestrate-only",
-        "scripts/lib/auto-mode-contract.ps1",
+        "scripts/lib/auto-mode-contract.sh",
         "Auto Mode starts only after the spec is saved and self-reviewed"
     )) {
         Assert-Contains $text $needle "missing Auto Mode brainstorm route: $needle"
@@ -501,14 +501,14 @@ Update the metadata scenario to require the same route strings in `agents/openai
 
 - [ ] **Step 2: Add failing router scenario assertions**
 
-In `skills/initiate-workflow/scripts/test-scenarios.ps1`, add required strings:
+In `skills/initiate-workflow/scripts/test-scenarios.sh`, add required strings:
 
-```powershell
+```bash
 foreach ($needle in @(
     "Auto Mode",
     "project_auto_mode_authorization",
     "bounded-auto-merge",
-    "scripts/lib/auto-mode-contract.ps1",
+    "scripts/lib/auto-mode-contract.sh",
     "route project_auto_mode_authorization only after brainstorm-spec saves a spec"
 )) {
     Assert-Contains -Text $skill -Needle $needle -Reason "missing Auto Mode router contract: $needle"
@@ -520,9 +520,9 @@ Assert-NotContains -Text $skill -Needle "stale terminal label" -Reason "router m
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\brainstorm-spec\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
+```bash
+./skills/brainstorm-spec/scripts/test-scenarios.sh
+./skills/initiate-workflow/scripts/test-scenarios.sh
 ```
 
 Expected: both exit `1` with missing Auto Mode route strings.
@@ -541,7 +541,7 @@ Prompt: `How should this saved spec continue?`
 Options:
 
 - Down: `Manual Planning`: choose one-plan or multi-spec planning.
-- Left: `Auto Mode`: ask `project_auto_mode_authorization`, validate the ledger with `scripts/lib/auto-mode-contract.ps1`, then continue into `$project:write-plan`.
+- Left: `Auto Mode`: ask `project_auto_mode_authorization`, validate the ledger with `scripts/lib/auto-mode-contract.sh`, then continue into `$project:write-plan`.
 - Right: `Stop`: stop with the saved spec as the current artifact.
 ```
 
@@ -585,7 +585,7 @@ Expected: both exit `0`.
 
 Run:
 
-```powershell
+```bash
 git add skills/brainstorm-spec skills/initiate-workflow
 git commit -m "Add auto mode route after spec creation"
 ```
@@ -595,7 +595,7 @@ git commit -m "Add auto mode route after spec creation"
 **Files:**
 
 - Modify: all active project `SKILL.md` files and `agents/openai.yaml` files listed in the File Map.
-- Modify: all active project skill `scripts/test-scenarios.ps1` files listed in the File Map.
+- Modify: all active project skill `scripts/test-scenarios.sh` files listed in the File Map.
 
 - [ ] **Step 1: Update intermediate skill scenario tests first**
 
@@ -603,7 +603,7 @@ For each intermediate skill scenario script (`setup-project`, `brainstorm-spec`,
 
 Use this pattern:
 
-```powershell
+```bash
 Assert-Contains $text "Stop" "missing intermediate Stop label"
 Assert-NotContains $text "stale terminal label" "intermediate skill must not use combined stale terminal label label"
 ```
@@ -612,9 +612,9 @@ For metadata tests, apply the same assertions to `$metadata`.
 
 - [ ] **Step 2: Update final-capable skill scenario tests**
 
-In `skills/merge-changes/scripts/test-scenarios.ps1`, add checks for:
+In `skills/merge-changes/scripts/test-scenarios.sh`, add checks for:
 
-```powershell
+```bash
 foreach ($needle in @(
     "verified final Done gate",
     "project_merge_final_health_gate",
@@ -625,9 +625,9 @@ foreach ($needle in @(
 }
 ```
 
-In `skills/audit-project/scripts/test-scenarios.ps1`, add checks for:
+In `skills/audit-project/scripts/test-scenarios.sh`, add checks for:
 
-```powershell
+```bash
 foreach ($needle in @(
     "verified final Done gate",
     "Healthy -> Done",
@@ -642,17 +642,17 @@ foreach ($needle in @(
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\setup-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\brainstorm-spec\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\initiate-workflow\scripts\test-scenarios.ps1
+```bash
+./skills/setup-project/scripts/test-scenarios.sh
+./skills/brainstorm-spec/scripts/test-scenarios.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./skills/audit-project/scripts/test-scenarios.sh
+./skills/initiate-workflow/scripts/test-scenarios.sh
 ```
 
 Expected: at least the intermediate skills fail because active docs still contain stale terminal labels.
@@ -711,10 +711,10 @@ If audit findings are blocking or repairable, the terminal option is Stop. Done 
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\merge-changes\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\audit-project\scripts\test-scenarios.ps1
+```bash
+./scripts/test-native-continuation-loop.sh
+./skills/merge-changes/scripts/test-scenarios.sh
+./skills/audit-project/scripts/test-scenarios.sh
 ```
 
 Expected: all exit `0`.
@@ -723,8 +723,8 @@ Expected: all exit `0`.
 
 Run:
 
-```powershell
-git add skills scripts/test-native-continuation-loop.ps1
+```bash
+git add skills scripts/test-native-continuation-loop.sh
 git commit -m "Apply lifecycle-specific terminal labels"
 ```
 
@@ -734,31 +734,31 @@ git commit -m "Apply lifecycle-specific terminal labels"
 
 - Modify: `skills/write-plan/SKILL.md`
 - Modify: `skills/write-plan/agents/openai.yaml`
-- Modify: `skills/write-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/write-plan/scripts/test-scenarios.sh`
 - Modify: `skills/implement-plan/SKILL.md`
 - Modify: `skills/implement-plan/agents/openai.yaml`
-- Modify: `skills/implement-plan/scripts/test-scenarios.ps1`
+- Modify: `skills/implement-plan/scripts/test-scenarios.sh`
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
 - Modify: `skills/resolve-issue/SKILL.md`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
-- Modify: `skills/resolve-issue/scripts/test-scenarios.ps1`
+- Modify: `skills/resolve-issue/scripts/test-scenarios.sh`
 - Modify: `skills/orchestrate-issues/SKILL.md`
 - Modify: `skills/orchestrate-issues/agents/openai.yaml`
-- Modify: `skills/orchestrate-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/orchestrate-issues/scripts/test-scenarios.sh`
 - Modify: `skills/merge-changes/SKILL.md`
 - Modify: `skills/merge-changes/agents/openai.yaml`
-- Modify: `skills/merge-changes/scripts/test-scenarios.ps1`
+- Modify: `skills/merge-changes/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Add failing Auto Mode assertions to downstream scenarios**
 
 Add these shared required strings to affected scenario scripts:
 
-```powershell
+```bash
 foreach ($needle in @(
     "Auto Mode authorization ledger",
-    "scripts/lib/auto-mode-contract.ps1",
+    "scripts/lib/auto-mode-contract.sh",
     "bounded-auto-merge",
     "recorded defaults",
     "stop outside policy"
@@ -789,7 +789,7 @@ Add:
 ```markdown
 ## Auto Mode Planning Authorization
 
-When a valid Auto Mode authorization ledger is present, validate it with `scripts/lib/auto-mode-contract.ps1` before using it.
+When a valid Auto Mode authorization ledger is present, validate it with `scripts/lib/auto-mode-contract.sh` before using it.
 
 Auto Mode authorization can satisfy the planning grill only when material decisions are covered by the source spec or the ledger's recorded defaults. If the plan needs a decision outside the ledger, stop outside policy and report the exact missing decision.
 
@@ -849,7 +849,7 @@ Expected: all exit `0`.
 
 Run:
 
-```powershell
+```bash
 git add skills/write-plan skills/implement-plan skills/create-issues skills/resolve-issue skills/orchestrate-issues skills/merge-changes
 git commit -m "Document auto mode downstream authorization"
 ```
@@ -862,13 +862,13 @@ git commit -m "Document auto mode downstream authorization"
 - Modify: `docs/assets/native-qa-main-flow-mermaid.md`
 - Modify: `docs/assets/native-qa-main-flow.svg`
 - Modify: `docs/assets/native-qa-main-flow-preview.html` only if needed.
-- Modify: `scripts/test-native-qa-svg.ps1`
+- Modify: `scripts/test-native-qa-svg.sh`
 
 - [ ] **Step 1: Add failing asset/readme assertions**
 
-In `scripts/test-native-qa-svg.ps1`, update README/Mermaid checks:
+In `scripts/test-native-qa-svg.sh`, update README/Mermaid checks:
 
-```powershell
+```bash
 foreach ($needle in @(
     "Auto Mode",
     "project_auto_mode_authorization",
@@ -888,7 +888,7 @@ foreach ($forbidden in @(
 
 Add SVG checks:
 
-```powershell
+```bash
 foreach ($needle in @("Auto Mode", "Stop means pause", "Done means complete")) {
     Add-Check $checks "SVG contains label $needle" ($svgText.Contains($needle)) "SVG must show workflow label: $needle"
 }
@@ -899,8 +899,8 @@ Add-Check $checks "SVG omits Stop Done combined label" (-not $svgText.Contains("
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
+```bash
+./scripts/test-native-qa-svg.sh
 ```
 
 Expected: exits `1` with missing Auto Mode and lifecycle-specific label assertions.
@@ -942,8 +942,8 @@ Keep the existing centered skill rail and right-side stop node geometry intact.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
+```bash
+./scripts/test-native-qa-svg.sh
 ```
 
 Expected: exits `0`.
@@ -952,8 +952,8 @@ Expected: exits `0`.
 
 Run:
 
-```powershell
-git add README.md docs/assets/native-qa-main-flow-mermaid.md docs/assets/native-qa-main-flow.svg docs/assets/native-qa-main-flow-preview.html scripts/test-native-qa-svg.ps1
+```bash
+git add README.md docs/assets/native-qa-main-flow-mermaid.md docs/assets/native-qa-main-flow.svg docs/assets/native-qa-main-flow-preview.html scripts/test-native-qa-svg.sh
 git commit -m "Update native workflow docs for auto mode"
 ```
 
@@ -965,7 +965,7 @@ git commit -m "Update native workflow docs for auto mode"
 
 - [ ] **Step 1: Run focused proof oracle commands**
 
-Run every command in the Proof Oracle except `sync-live.ps1 -Validate` first.
+Run every command in the Proof Oracle except `sync-live.sh --validate` first.
 
 Expected: each command exits `0`; if any command fails, fix the failing active contract rather than loosening the assertion.
 
@@ -973,8 +973,8 @@ Expected: each command exits `0`; if any command fails, fix the failing active c
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: exits `0`.
@@ -983,18 +983,18 @@ Expected: exits `0`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+```bash
+./scripts/sync-live.sh --validate
 ```
 
-Expected: exits `0` and reports the repo's plugin source can sync to `C:\Users\Tanner\plugins\superpowers-project`.
+Expected: exits `0` and reports the repo's plugin source can sync to `/home/tnnrpolley21/.codex/plugins/superpowers-project`.
 
 - [ ] **Step 4: Run cleanup hook**
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: exits `0` and reports no matching leftover Codex processes for this repo.
@@ -1003,7 +1003,7 @@ Expected: exits `0` and reports no matching leftover Codex processes for this re
 
 Run:
 
-```powershell
+```bash
 git status --short --branch
 ```
 
@@ -1013,7 +1013,7 @@ Expected: branch is `codex/add-automode-option`; no unstaged or untracked files 
 
 If validation required final edits, commit them:
 
-```powershell
+```bash
 git add <exact files changed by validation fixes>
 git commit -m "Validate auto mode workflow contracts"
 ```

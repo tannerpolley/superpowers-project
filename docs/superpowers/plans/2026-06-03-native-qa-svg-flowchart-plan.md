@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the public diagram as a source-controlled SVG asset under `docs/assets` and embed it from `README.md`. Add a repo validation script that enforces the diagram contract structurally so future edits do not regress the centered skill column, right-side Stop nodes, left-side alternate-action boxes, or dark-mode arrow styling.
 
-**Tech Stack:** Markdown, SVG, PowerShell validation scripts, Playwright CLI for optional visual screenshot checks, existing `scripts/validate.ps1`.
+**Tech Stack:** Markdown, SVG, Bash validation scripts, Playwright CLI for optional visual screenshot checks, existing `scripts/validate.sh`.
 
 ---
 
@@ -27,7 +27,7 @@
 - All Stop nodes are right of the primary skill column.
 - All gray alternate-action boxes are left of the primary skill column.
 - Visual smoke screenshots render in light and dark mode.
-- `scripts/validate.ps1` passes.
+- `scripts/validate.sh` passes.
 
 **Non-Goals:**
 - No `project-implement` skill changes.
@@ -35,8 +35,8 @@
 - No `merge-changes`, `resolve-issue`, `orchestrate-issues`, or `advanced-user-input` changes.
 
 **Proof Oracle:**
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+- `./scripts/test-native-qa-svg.sh`
+- `./scripts/validate.sh`
 - Optional visual checks:
   - `npx playwright screenshot --viewport-size="1400,1960" --color-scheme=light file:///C:/Users/Tanner/Documents/Workspaces/Projects/milestones-plugin/docs/assets/native-qa-main-flow.svg "$env:TEMP\native-qa-main-flow-light.png"`
   - `npx playwright screenshot --viewport-size="1400,1960" --color-scheme=dark file:///C:/Users/Tanner/Documents/Workspaces/Projects/milestones-plugin/docs/assets/native-qa-main-flow.svg "$env:TEMP\native-qa-main-flow-dark.png"`
@@ -49,23 +49,23 @@
 - Create/Modify: `docs/assets/native-qa-main-flow.svg`
   - Source-controlled fixed-layout flowchart.
   - Theme-aware CSS variables for background, arrows, labels, and arrowheads.
-- Create: `scripts/test-native-qa-svg.ps1`
+- Create: `scripts/test-native-qa-svg.sh`
   - Structural SVG/README contract test.
-- Modify: `scripts/validate.ps1`
-  - Invoke `scripts/test-native-qa-svg.ps1` as part of the normal validation suite.
+- Modify: `scripts/validate.sh`
+  - Invoke `scripts/test-native-qa-svg.sh` as part of the normal validation suite.
 
 ### Task 1: Add SVG Contract Test
 
 **Files:**
-- Create: `scripts/test-native-qa-svg.ps1`
+- Create: `scripts/test-native-qa-svg.sh`
 - Modify: none
-- Test: `scripts/test-native-qa-svg.ps1`
+- Test: `scripts/test-native-qa-svg.sh`
 
 - [ ] **Step 1: Create the failing contract test**
 
-Create `scripts/test-native-qa-svg.ps1` with this content:
+Create `scripts/test-native-qa-svg.sh` with this content:
 
-```powershell
+```bash
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -135,8 +135,8 @@ if ($failed.Count -gt 0) {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
+```bash
+./scripts/test-native-qa-svg.sh
 ```
 
 Expected before Task 2 or Task 3 is complete: failure on the missing SVG, archived Mermaid section, or missing validation tokens.
@@ -145,8 +145,8 @@ Expected before Task 2 or Task 3 is complete: failure on the missing SVG, archiv
 
 After the test is created and observed failing for the expected reason:
 
-```powershell
-git add scripts/test-native-qa-svg.ps1
+```bash
+git add scripts/test-native-qa-svg.sh
 git commit -m "test: add native qa svg contract"
 ```
 
@@ -155,7 +155,7 @@ git commit -m "test: add native qa svg contract"
 **Files:**
 - Modify: `README.md`
 - Create/Modify: `docs/assets/native-qa-main-flow.svg`
-- Test: `scripts/test-native-qa-svg.ps1`
+- Test: `scripts/test-native-qa-svg.sh`
 
 - [ ] **Step 1: Remove the archived Mermaid block from README**
 
@@ -222,15 +222,15 @@ Ensure Stop rectangles use `class="stop"` and `x` greater than `880`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
+```bash
+./scripts/test-native-qa-svg.sh
 ```
 
 Expected: JSON output with `"ok": true`.
 
 - [ ] **Step 4: Commit checkpoint**
 
-```powershell
+```bash
 git add README.md docs/assets/native-qa-main-flow.svg
 git commit -m "docs: add native qa svg flowchart"
 ```
@@ -238,16 +238,16 @@ git commit -m "docs: add native qa svg flowchart"
 ### Task 3: Wire SVG Contract Into Repo Validation
 
 **Files:**
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/validate.ps1`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/validate.sh`
 
 - [ ] **Step 1: Add the validation step**
 
-In `scripts/validate.ps1`, after the `Superpowers project path contract` step and before the PowerShell parser check, add:
+In `scripts/validate.sh`, after the `Superpowers project path contract` step and before the Bash parser check, add:
 
-```powershell
+```bash
 $results.Add((Invoke-Step "Native Q&A SVG contract" {
-    & pwsh.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "test-native-qa-svg.ps1") | Out-Host
+    & (Join-Path $PSScriptRoot "test-native-qa-svg.sh") | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Native Q&A SVG contract failed" }
 }))
 ```
@@ -256,8 +256,8 @@ $results.Add((Invoke-Step "Native Q&A SVG contract" {
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
+```bash
+./scripts/test-native-qa-svg.sh
 ```
 
 Expected: JSON output with `"ok": true`.
@@ -266,16 +266,16 @@ Expected: JSON output with `"ok": true`.
 
 Run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: final JSON output with `"ok": true`.
 
 - [ ] **Step 4: Commit checkpoint**
 
-```powershell
-git add scripts/validate.ps1 scripts/test-native-qa-svg.ps1
+```bash
+git add scripts/validate.sh scripts/test-native-qa-svg.sh
 git commit -m "test: validate native qa svg flowchart"
 ```
 
@@ -289,8 +289,8 @@ git commit -m "test: validate native qa svg flowchart"
 
 Run:
 
-```powershell
-$svgPath = (Resolve-Path .\docs\assets\native-qa-main-flow.svg).Path
+```bash
+$svgPath = (Resolve-Path ./docs/assets\native-qa-main-flow.svg).Path
 $url = 'file:///' + ($svgPath -replace '\\','/')
 npx playwright screenshot --viewport-size="1400,1960" --color-scheme=light $url "$env:TEMP\native-qa-main-flow-light.png"
 ```
@@ -301,8 +301,8 @@ Expected: screenshot file exists at `$env:TEMP\native-qa-main-flow-light.png`.
 
 Run:
 
-```powershell
-$svgPath = (Resolve-Path .\docs\assets\native-qa-main-flow.svg).Path
+```bash
+$svgPath = (Resolve-Path ./docs/assets\native-qa-main-flow.svg).Path
 $url = 'file:///' + ($svgPath -replace '\\','/')
 npx playwright screenshot --viewport-size="1400,1960" --color-scheme=dark $url "$env:TEMP\native-qa-main-flow-dark.png"
 ```
@@ -325,9 +325,9 @@ Open both screenshots. Verify:
 
 If a visual defect is found, edit `docs/assets/native-qa-main-flow.svg`, then rerun:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-qa-svg.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/test-native-qa-svg.sh
+./scripts/validate.sh
 ```
 
 Expected: both commands pass.
@@ -340,23 +340,23 @@ Expected: both commands pass.
 
 - [ ] **Step 1: Run full validation**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./scripts/validate.sh
 ```
 
 Expected: final JSON output with `"ok": true`.
 
 - [ ] **Step 2: Run cleanup hook**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Expected: no matching leftover Codex processes under the repo.
 
 - [ ] **Step 3: Check git status**
 
-```powershell
+```bash
 git status --short --branch
 ```
 
@@ -366,8 +366,8 @@ Expected: only intentional changes remain, or the working tree is clean after co
 
 If any intentional files remain uncommitted:
 
-```powershell
-git add README.md docs/assets/native-qa-main-flow.svg scripts/test-native-qa-svg.ps1 scripts/validate.ps1
+```bash
+git add README.md docs/assets/native-qa-main-flow.svg scripts/test-native-qa-svg.sh scripts/validate.sh
 git commit -m "docs: finalize native qa svg flowchart"
 ```
 

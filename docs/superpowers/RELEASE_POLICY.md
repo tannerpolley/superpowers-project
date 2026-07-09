@@ -6,16 +6,16 @@ Superpowers Project plugin releases are tags on the canonical source repository.
 
 Before creating a release tag:
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` exits zero.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate` exits zero.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\prepare-release.ps1 -CheckOnly` exits zero and records the source commit, plugin version, changelog evidence, dirty status, and required gates.
+- `./scripts/validate.sh` exits zero.
+- `./scripts/sync-live.sh --validate` exits zero.
+- `./scripts/prepare-release.sh -CheckOnly` exits zero and records the source commit, plugin version, changelog evidence, dirty status, and required gates.
 - `CHANGELOG.md` contains the version entry.
 - The live plugin and user-level skill copies match source after sync.
 - `git status --short` is empty before tagging.
 
 ## Release Receipts
 
-`scripts/prepare-release.ps1` creates a release receipt. The receipt is evidence only: it does not publish, tag, push, sync live copies, or approve mutation. A release receipt records:
+`scripts/prepare-release.sh` creates a release receipt. The receipt is evidence only: it does not publish, tag, push, sync live copies, or approve mutation. A release receipt records:
 
 - plugin manifest name and version;
 - release base version after removing local build metadata;
@@ -48,7 +48,7 @@ Use `-CheckOnly` during normal validation so in-flight branch work can prove the
 
 Run tags from `main` only after the gates pass:
 
-```powershell
+```bash
 git tag v0.2.0
 git push origin v0.2.0
 ```

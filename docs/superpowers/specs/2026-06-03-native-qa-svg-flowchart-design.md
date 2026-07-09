@@ -66,7 +66,7 @@ Out of scope:
 - SVG smoke check confirms Stop nodes are right of the main column.
 - SVG smoke check confirms gray alternate-action boxes are left of the main column.
 - Playwright screenshot checks render the SVG in light and dark mode.
-- `scripts/validate.ps1` passes.
+- `scripts/validate.sh` passes.
 
 ## Spec Self-Review
 

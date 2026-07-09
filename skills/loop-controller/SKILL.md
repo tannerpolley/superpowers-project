@@ -13,15 +13,15 @@ Loop Controller is the Superpowers Project orchestration layer for repeated work
 
 Before selecting candidates, resolve the loaded Superpowers Project plugin root and run:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent
+```bash
+<Superpowers Project plugin root>/scripts/get-agent-plugin-version.sh -Banner -RequireCurrent
 ```
 
 If the loaded plugin or skill root is known, pass `-ObservedPluginRoot` or `-ObservedSkillRoot`. Print the banner before routing.
 
-Canonical marker: `scripts/get-agent-plugin-version.ps1 -Banner -RequireCurrent`.
+Canonical marker: `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`.
 
-Do not run `.\scripts\get-agent-plugin-version.ps1` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
+Do not run `./scripts/get-agent-plugin-version.sh` from the active repo unless the active repo is this Superpowers Project source checkout. Other project repos are expected not to have that script.
 
 ## Boundary
 
@@ -47,7 +47,7 @@ Existing skills own work:
 
 ## Loop State Machine
 
-The source-owned loop contract is `<Superpowers Project plugin root>\docs\superpowers\loop-mode-contract.yml`. It is plugin workflow infrastructure, not a required file in the active target repo. Missing `docs/superpowers/loop-mode-contract.yml` in a target repo is not a Looping Mode blocker. The required phase order is:
+The source-owned loop contract is `<Superpowers Project plugin root>/docs/superpowers/loop-mode-contract.yml`. It is plugin workflow infrastructure, not a required file in the active target repo. Missing `docs/superpowers/loop-mode-contract.yml` in a target repo is not a Looping Mode blocker. The required phase order is:
 
 1. startup version check
 2. workflow mode ledger validation
@@ -69,44 +69,44 @@ Default generated run state lives under `.superpowers/runs/<run-id>`. Do not com
 
 Validate run ledgers with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\skills\loop-controller\scripts\validate-run-ledger.ps1 -RepoRoot <active repo> -RunLedgerPath <ledger-path>
+```bash
+<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-run-ledger.sh -RepoRoot <active repo> -RunLedgerPath <ledger-path>
 ```
 
 Validate budget ledgers with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\skills\loop-controller\scripts\validate-budget.ps1 -RepoRoot <active repo> -BudgetLedgerPath <ledger-path>
+```bash
+<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-budget.sh -RepoRoot <active repo> -BudgetLedgerPath <ledger-path>
 ```
 
 Select deterministic safe candidates with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\skills\loop-controller\scripts\select-candidate.ps1 -RepoRoot <active repo> -InventoryPath <inventory-path>
+```bash
+<Superpowers Project plugin root>/skills/loop-controller/scripts/select-candidate.sh -RepoRoot <active repo> -InventoryPath <inventory-path>
 ```
 
 Validate verifier ledgers with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\skills\loop-controller\scripts\validate-verifier-ledger.ps1 -RepoRoot <active repo> -VerifierLedgerPath <ledger-path>
+```bash
+<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-verifier-ledger.sh -RepoRoot <active repo> -VerifierLedgerPath <ledger-path>
 ```
 
 Validate terminal closeout with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\skills\loop-controller\scripts\validate-terminal-closeout.ps1 -RepoRoot <active repo> -RunResultPath <run-result-path>
+```bash
+<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-terminal-closeout.sh -RepoRoot <active repo> -RunResultPath <run-result-path>
 ```
 
 Validate loop state-machine ledgers with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\skills\loop-controller\scripts\validate-loop-state-machine.ps1 -RepoRoot <active repo> -StatePath <state-path>
+```bash
+<Superpowers Project plugin root>/skills/loop-controller/scripts/validate-loop-state-machine.sh -RepoRoot <active repo> -StatePath <state-path>
 ```
 
 Write metrics reports with:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <Superpowers Project plugin root>\skills\loop-controller\scripts\write-metrics-report.ps1 -RepoRoot <active repo> -MetricsInputPath <input-path> -OutputPath <output-path>
+```bash
+<Superpowers Project plugin root>/skills/loop-controller/scripts/write-metrics-report.sh -RepoRoot <active repo> -MetricsInputPath <input-path> -OutputPath <output-path>
 ```
 
 The active repo is the project being operated on. The plugin root is where this skill and its bundled scripts were loaded from. Keep those roots distinct during Looping Mode startup and validation.

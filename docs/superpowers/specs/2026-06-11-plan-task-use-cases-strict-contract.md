@@ -24,8 +24,8 @@ Every actual implementation plan under `docs/superpowers/plans` must include `Ta
 
 The authoritative command is:
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <plan>
+```bash
+./scripts/validate-plan-task-use-cases.sh -PlanPath <plan>
 ```
 
 ## Recovery
@@ -34,5 +34,5 @@ If validation fails, route back to `$superpowers-project:write-plan` with `Revis
 
 ## Validation
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plan-task-use-cases.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
+- `./scripts/test-plan-task-use-cases.sh`
+- `./scripts/validate.sh`

@@ -14,8 +14,8 @@ Tighten the Superpowers Project workflow contract so branch-producing work canno
 - `skills/merge-changes/SKILL.md` already has an explicit merge approval gate (`project_merge_approval`) and a strong final closeout proof contract that includes synced default branch, cleanup proof, and clean repo proof.
 - The bundled Superpowers `finishing-a-development-branch` skill already treats push and merge as distinct choices: `Merge back locally` or `Push and create a Pull Request`. That means the repo-owned adapters are weaker than the upstream branch-finish contract they claim to require.
 - This repo has already seen stale-session symptoms where an open thread continued using older loaded skill text after the source repo and live install had been updated.
-- `skills/brainstorm-spec/SKILL.md`, `skills/brainstorm-spec/agents/openai.yaml`, and `skills/brainstorm-spec/scripts/test-scenarios.ps1` all define and assert the nested Auto Mode route after brainstorming: `project_brainstorm_start_route`, `project_auto_mode_authorization`, and `Bounded Auto Merge`.
-- The live installed plugin copy under `C:\Users\Tanner\plugins\superpowers-project\skills\brainstorm-spec\` also contains the Auto Mode route.
+- `skills/brainstorm-spec/SKILL.md`, `skills/brainstorm-spec/agents/openai.yaml`, and `skills/brainstorm-spec/scripts/test-scenarios.sh` all define and assert the nested Auto Mode route after brainstorming: `project_brainstorm_start_route`, `project_auto_mode_authorization`, and `Bounded Auto Merge`.
+- The live installed plugin copy under `/home/tnnrpolley21/.codex/plugins/superpowers-project\skills/brainstorm-spec\` also contains the Auto Mode route.
 - The exact cached bundle path that the user invoked for `brainstorm-spec` did not contain those Auto Mode strings, which is concrete evidence that at least one loaded cache surface is stale or unsynced relative to source and live install.
 - The plugin-provided Auto Mode validator currently rejects an `[ordered]@{}` authorization ledger with `missing question_id` because its property probe recognizes `Hashtable` and `PSObject` but not ordered dictionaries. That means a valid ledger shape can fail validation depending on how the caller constructs it.
 
@@ -151,20 +151,20 @@ Likely files:
 
 - `skills/advanced-user-input/SKILL.md`
 - `skills/advanced-user-input/agents/openai.yaml`
-- `scripts/test-advanced-user-input-policy.ps1`
-- `scripts/test-native-continuation-loop.ps1`
+- `scripts/test-advanced-user-input-policy.sh`
+- `scripts/test-native-continuation-loop.sh`
 - `skills/implement-plan/SKILL.md`
 - `skills/implement-plan/agents/openai.yaml`
-- `skills/implement-plan/scripts/test-scenarios.ps1`
+- `skills/implement-plan/scripts/test-scenarios.sh`
 - `skills/resolve-issue/SKILL.md`
 - `skills/resolve-issue/agents/openai.yaml`
-- `skills/resolve-issue/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/scripts/test-scenarios.sh`
 - `skills/merge-changes/SKILL.md`
 - `skills/merge-changes/agents/openai.yaml`
-- `skills/merge-changes/scripts/test-scenarios.ps1`
+- `skills/merge-changes/scripts/test-scenarios.sh`
 - `skills/audit-project/SKILL.md`
 - `skills/audit-project/agents/openai.yaml`
-- `skills/audit-project/scripts/test-scenarios.ps1`
+- `skills/audit-project/scripts/test-scenarios.sh`
 - repo-level README or workflow docs only if they still describe weaker continuation semantics
 
 If a shared helper is needed, it should live in the repo source and validate clean-worktree final gates or structured push ledgers without depending on cache paths.
@@ -180,8 +180,8 @@ Validation should prove:
 - `merge-changes` final `Done` still requires clean closeout proof and now also clean worktree proof
 - repo-level continuation policy tests enforce the "no Done with uncommitted changes" rule
 - stale-thread guidance exists and tells the workflow to warn and re-ask missed gates rather than terminate
-- `scripts/validate.ps1` passes
-- `scripts/sync-live.ps1 -Validate` passes before live install update
+- `scripts/validate.sh` passes
+- `scripts/sync-live.sh --validate` passes before live install update
 
 ## Error Handling
 
@@ -226,14 +226,14 @@ The main complexity is local-branch flow. A universal push gate means the repo m
 - `rg -n "Done is valid only" skills` shows clean-worktree language at final gates.
 - `rg -n "push permission|push approval|ask to push" skills/implement-plan skills/resolve-issue` shows explicit pre-merge push gates.
 - `Select-String` or equivalent checks show `project_brainstorm_start_route`, `project_auto_mode_authorization`, and `Bounded Auto Merge` in the source repo and live install.
-- `skills/implement-plan/scripts/test-scenarios.ps1` fails if merge-ready routing can happen without push approval.
-- `skills/resolve-issue/scripts/test-scenarios.ps1` fails if PR-ready routing can happen without push approval.
-- `skills/audit-project/scripts/test-scenarios.ps1` fails if healthy `Done` can happen while the repo is dirty.
-- `skills/brainstorm-spec/scripts/test-scenarios.ps1` fails if the active brainstorm-spec contract stops exposing Auto Mode after brainstorming.
-- `scripts/test-advanced-user-input-policy.ps1` and `scripts/test-native-continuation-loop.ps1` fail if the shared contract omits the clean-worktree final-state rule.
-- `scripts/lib/auto-mode-contract.ps1` accepts both ordered and plain authorization ledger objects when they contain the same valid fields.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes.
+- `skills/implement-plan/scripts/test-scenarios.sh` fails if merge-ready routing can happen without push approval.
+- `skills/resolve-issue/scripts/test-scenarios.sh` fails if PR-ready routing can happen without push approval.
+- `skills/audit-project/scripts/test-scenarios.sh` fails if healthy `Done` can happen while the repo is dirty.
+- `skills/brainstorm-spec/scripts/test-scenarios.sh` fails if the active brainstorm-spec contract stops exposing Auto Mode after brainstorming.
+- `scripts/test-advanced-user-input-policy.sh` and `scripts/test-native-continuation-loop.sh` fail if the shared contract omits the clean-worktree final-state rule.
+- `scripts/lib/auto-mode-contract.sh` accepts both ordered and plain authorization ledger objects when they contain the same valid fields.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes.
 
 ## Open Questions For Planning
 

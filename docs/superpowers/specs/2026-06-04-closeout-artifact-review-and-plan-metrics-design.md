@@ -74,7 +74,7 @@ Artifacts to surface can include:
 
 - saved specs, plans, issue mirrors, milestone docs, or repair docs
 - validation reports and audit outputs
-- JSON, YAML, or PowerShell-generated ledgers
+- JSON, YAML, or Bash-generated ledgers
 - verification receipts
 - branch names, commit ids, PR URLs, merge confirmations, or sync-live outputs
 
@@ -222,8 +222,8 @@ Likely files:
 - `skills/orchestrate-issues/agents/openai.yaml`
 - `skills/merge-changes/SKILL.md`
 - `skills/merge-changes/agents/openai.yaml`
-- `scripts/test-advanced-user-input-policy.ps1`
-- `scripts/test-native-continuation-loop.ps1`
+- `scripts/test-advanced-user-input-policy.sh`
+- `scripts/test-native-continuation-loop.sh`
 - skill-specific scenario suites for `brainstorm-spec`, `write-plan`, `implement-plan`, `resolve-issue`, `orchestrate-issues`, and `merge-changes`
 
 If a shared helper is useful, it should validate that required closeout artifact entries and interpretation-summary sections exist before a continuation gate is treated as valid.
@@ -248,8 +248,8 @@ Validation should prove:
 - scenario tests that fail when a continuation question is asked without prior artifact review language
 - scenario tests that fail when push or merge approval appears without prior evidence-summary language
 - scenario tests that fail when `write-plan` can close out without test-complete and metrics prompts
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
 
 ## Tradeoffs
 

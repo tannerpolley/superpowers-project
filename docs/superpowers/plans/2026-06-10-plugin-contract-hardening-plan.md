@@ -6,7 +6,7 @@
 
 **Architecture:** Add a shared project-skill registry and read-only live-install comparer, then make validators consume those shared contracts. Normalize the native final-gate schema, Align final gate, canonical namespace text, issue metadata strictness, debug-mode proof policy, and metadata readability in active skill text, metadata YAML, and scenario tests.
 
-**Tech Stack:** PowerShell 7, Markdown, YAML, Git, existing repo validation scripts, existing Superpowers Project skill scenario tests.
+**Tech Stack:** Bash 7, Markdown, YAML, Git, existing repo validation scripts, existing Superpowers Project skill scenario tests.
 
 ---
 
@@ -35,7 +35,7 @@ This plan covers all 10 audit findings. The first repair slice is P1-1 through P
 - Active contracts no longer use the plain phrase `Stop or Done` as a soft terminal instruction, and no option-label context permits `Stop/Done`.
 - `$superpowers-project:*` is the canonical user-facing namespace in README, plugin prompt text, issue docs, active skills, and metadata.
 - `$project:*` is absent from active docs and active skill contracts except inside explicitly named historical plan files if old plans are intentionally left untouched.
-- Missing issue workflow metadata fails `validate-issue-mirror.ps1` for every mirror.
+- Missing issue workflow metadata fails `validate-issue-mirror.sh` for every mirror.
 - Debug mode policy is centralized through `advanced-user-input` and every skill uses the same proof and guard requirements.
 - `skills/*/agents/openai.yaml` remains parseable YAML, but `default_prompt` text is wrapped into readable physical lines with a validator-enforced line-length limit.
 - Full repo validation and live sync validation pass before the implementation branch is considered ready.
@@ -52,23 +52,23 @@ This plan covers all 10 audit findings. The first repair slice is P1-1 through P
 
 Test complete means all of these commands exit `0` from the repo root:
 
-```powershell
+```bash
 git diff --check
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plugin-only-live-sync.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+./scripts/test-plugin-only-live-sync.sh
+./scripts/test-native-continuation-loop.sh
+./scripts/test-advanced-user-input-policy.sh
+./scripts/test-project-namespace-migration.sh
+./skills/align-project/scripts/test-scenarios.sh
+./skills/create-issues/scripts/test-scenarios.sh
+./scripts/validate.sh
+./scripts/sync-live.sh --validate
+"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
 ```
 
 Pass/fail metrics:
 
-- `scripts\validate.ps1` returns JSON with `"ok": true`.
-- `scripts\sync-live.ps1 -Validate` returns JSON with `"ok": true` and no drift exception.
+- `scripts/validate.sh` returns JSON with `"ok": true`.
+- `scripts/sync-live.sh --validate` returns JSON with `"ok": true` and no drift exception.
 - Metadata line-length validator reports zero lines above the agreed limit.
 - Native continuation validators report zero active `Stop/Done` option labels and zero plain active-contract `Stop or Done` instructions.
 - Issue mirror validator rejects a fixture missing any workflow metadata field.
@@ -79,9 +79,9 @@ This is not scientific or numerical modeling work. No units, tolerances, statist
 
 Create:
 
-- `scripts/lib/project-skills.ps1`
-- `scripts/lib/live-install.ps1`
-- `scripts/test-skill-metadata-readability.ps1`
+- `scripts/lib/project-skills.sh`
+- `scripts/lib/live-install.sh`
+- `scripts/test-skill-metadata-readability.sh`
 
 Modify:
 
@@ -89,27 +89,27 @@ Modify:
 - `.codex-plugin/plugin.json`
 - `docs/superpowers/closeout-startup-decision-tree-dev.md`
 - `docs/superpowers/issues/README.md`
-- `scripts/validate.ps1`
-- `scripts/sync-live.ps1`
-- `scripts/lib/sync-tree.ps1`
-- `scripts/test-advanced-user-input-policy.ps1`
-- `scripts/test-native-continuation-loop.ps1`
-- `scripts/test-plugin-only-live-sync.ps1`
-- `scripts/test-project-namespace-migration.ps1`
+- `scripts/validate.sh`
+- `scripts/sync-live.sh`
+- `scripts/lib/sync-tree.sh`
+- `scripts/test-advanced-user-input-policy.sh`
+- `scripts/test-native-continuation-loop.sh`
+- `scripts/test-plugin-only-live-sync.sh`
+- `scripts/test-project-namespace-migration.sh`
 - `skills/advanced-user-input/SKILL.md`
 - `skills/advanced-user-input/agents/openai.yaml`
 - `skills/align-project/SKILL.md`
 - `skills/align-project/agents/openai.yaml`
-- `skills/align-project/scripts/align-project.ps1`
-- `skills/align-project/scripts/test-scenarios.ps1`
+- `skills/align-project/scripts/align-project.sh`
+- `skills/align-project/scripts/test-scenarios.sh`
 - `skills/audit-project/SKILL.md`
 - `skills/audit-project/agents/openai.yaml`
 - `skills/brainstorm-spec/SKILL.md`
 - `skills/brainstorm-spec/agents/openai.yaml`
 - `skills/create-issues/SKILL.md`
 - `skills/create-issues/agents/openai.yaml`
-- `skills/create-issues/scripts/validate-issue-mirror.ps1`
-- `skills/create-issues/scripts/test-scenarios.ps1`
+- `skills/create-issues/scripts/validate-issue-mirror.sh`
+- `skills/create-issues/scripts/test-scenarios.sh`
 - `skills/implement-plan/SKILL.md`
 - `skills/implement-plan/agents/openai.yaml`
 - `skills/initiate-workflow/SKILL.md`
@@ -129,21 +129,21 @@ Modify:
 
 **Files:**
 
-- Create: `scripts/lib/project-skills.ps1`
-- Create: `scripts/lib/live-install.ps1`
-- Modify: `scripts/lib/sync-tree.ps1`
-- Modify: `scripts/sync-live.ps1`
-- Modify: `scripts/validate.ps1`
-- Modify: `scripts/test-plugin-only-live-sync.ps1`
-- Modify: `scripts/test-project-namespace-migration.ps1`
-- Modify: `skills/align-project/scripts/align-project.ps1`
-- Modify: `skills/align-project/scripts/test-scenarios.ps1`
+- Create: `scripts/lib/project-skills.sh`
+- Create: `scripts/lib/live-install.sh`
+- Modify: `scripts/lib/sync-tree.sh`
+- Modify: `scripts/sync-live.sh`
+- Modify: `scripts/validate.sh`
+- Modify: `scripts/test-plugin-only-live-sync.sh`
+- Modify: `scripts/test-project-namespace-migration.sh`
+- Modify: `skills/align-project/scripts/align-project.sh`
+- Modify: `skills/align-project/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Write the failing shared-registry tests**
 
-  In `scripts/test-plugin-only-live-sync.ps1`, dot-source `scripts/lib/project-skills.ps1` and add checks with this exact intent:
+  In `scripts/test-plugin-only-live-sync.sh`, dot-source `scripts/lib/project-skills.sh` and add checks with this exact intent:
 
-  ```powershell
+  ```bash
   $active = @(Get-ProjectActiveSkillNames)
   $retired = @(Get-ProjectRetiredSkillNames)
   $intersection = @($active | Where-Object { $retired -contains $_ })
@@ -158,15 +158,15 @@ Modify:
 
   Expected first run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plugin-only-live-sync.ps1
+  ```bash
+  ./scripts/test-plugin-only-live-sync.sh
   ```
 
-  Expected result before implementation: fail because `scripts/lib/project-skills.ps1` does not exist.
+  Expected result before implementation: fail because `scripts/lib/project-skills.sh` does not exist.
 
 - [ ] **Step 2: Write the failing live-install comparer test**
 
-  In `scripts/test-plugin-only-live-sync.ps1`, create temp source, live plugin, user skill, and marketplace roots. Copy a source tree, then mutate `live\skills\merge-changes\agents\openai.yaml` and `user\advanced-user-input\SKILL.md`. Assert `Compare-SuperpowersProjectLiveInstall` returns drift labels containing:
+  In `scripts/test-plugin-only-live-sync.sh`, create temp source, live plugin, user skill, and marketplace roots. Copy a source tree, then mutate `live\skills/merge-changes\agents\openai.yaml` and `user\advanced-user-input\SKILL.md`. Assert `Compare-SuperpowersProjectLiveInstall` returns drift labels containing:
 
   ```text
   plugin skill merge-changes
@@ -177,16 +177,16 @@ Modify:
 
 - [ ] **Step 3: Write the failing Align LocalDocs drift scenario**
 
-  In `skills/align-project/scripts/test-scenarios.ps1`, add a scenario named `LocalDocs reports full plugin live drift`. The fixture should pass temp `-LivePluginRoot`, `-UserSkillsRoot`, and `-MarketplacePath` arguments to `align-project.ps1`, mutate only `merge-changes/agents/openai.yaml`, and assert the resulting repairable findings contain `live-sync`.
+  In `skills/align-project/scripts/test-scenarios.sh`, add a scenario named `LocalDocs reports full plugin live drift`. The fixture should pass temp `-LivePluginRoot`, `-UserSkillsRoot`, and `-MarketplacePath` arguments to `align-project.sh`, mutate only `merge-changes/agents/openai.yaml`, and assert the resulting repairable findings contain `live-sync`.
 
   Expected result before implementation: fail because Align does not accept those live-install arguments and only compares the Align skill file.
 
 - [ ] **Step 4: Implement the shared registry**
 
-  Add `scripts/lib/project-skills.ps1` with these functions:
+  Add `scripts/lib/project-skills.sh` with these functions:
 
-  ```powershell
-  function Get-ProjectActiveSkillNames { @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot "..\..\skills") -Directory | Sort-Object Name | Select-Object -ExpandProperty Name) }
+  ```bash
+  function Get-ProjectActiveSkillNames { @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot "../../skills") -Directory | Sort-Object Name | Select-Object -ExpandProperty Name) }
   function Get-ProjectWorkflowSkillNames { @(Get-ProjectActiveSkillNames | Where-Object { $_ -ne "advanced-user-input" }) }
   function Get-ProjectFinalCapableSkillNames { @("align-project", "merge-changes") }
   function Get-ProjectUserSkillNames { @("advanced-user-input") }
@@ -199,7 +199,7 @@ Modify:
 
 - [ ] **Step 5: Implement the live-install comparer**
 
-  Add `scripts/lib/live-install.ps1`. Dot-source `sync-tree.ps1` and `project-skills.ps1`. Implement `Compare-SuperpowersProjectLiveInstall` as a read-only function that compares:
+  Add `scripts/lib/live-install.sh`. Dot-source `sync-tree.sh` and `project-skills.sh`. Implement `Compare-SuperpowersProjectLiveInstall` as a read-only function that compares:
 
   - `.codex-plugin` manifest directory
   - `assets` when source assets exist
@@ -211,7 +211,7 @@ Modify:
 
   It must return objects shaped like:
 
-  ```powershell
+  ```bash
   [pscustomobject]@{
       label = "plugin skill merge-changes"
       source = $sourcePath
@@ -225,11 +225,11 @@ Modify:
 
 - [ ] **Step 6: Replace scattered active-skill lists**
 
-  Update `scripts/sync-live.ps1`, `scripts/validate.ps1`, `scripts/test-native-continuation-loop.ps1`, `scripts/test-project-namespace-migration.ps1`, and `scripts/test-plugin-only-live-sync.ps1` to consume `project-skills.ps1`.
+  Update `scripts/sync-live.sh`, `scripts/validate.sh`, `scripts/test-native-continuation-loop.sh`, `scripts/test-project-namespace-migration.sh`, and `scripts/test-plugin-only-live-sync.sh` to consume `project-skills.sh`.
 
-  In `scripts/sync-live.ps1`, replace `$retiredSkillNames` with:
+  In `scripts/sync-live.sh`, replace `$retiredSkillNames` with:
 
-  ```powershell
+  ```bash
   $activeSkillNames = @(Get-ProjectActiveSkillNames)
   $userSkillNames = @(Get-ProjectUserSkillNames)
   $retiredSkillNames = @(Get-ProjectRetiredSkillNames)
@@ -239,14 +239,14 @@ Modify:
 
 - [ ] **Step 7: Make sync and Align use the comparer**
 
-  In `scripts/sync-live.ps1`, after copying and marketplace sync, call `Assert-SuperpowersProjectLiveInstallInSync` instead of manually looping over one-off `Assert-NoTreeDrift` calls.
+  In `scripts/sync-live.sh`, after copying and marketplace sync, call `Assert-SuperpowersProjectLiveInstallInSync` instead of manually looping over one-off `Assert-NoTreeDrift` calls.
 
-  In `skills/align-project/scripts/align-project.ps1`, add parameters:
+  In `skills/align-project/scripts/align-project.sh`, add parameters:
 
-  ```powershell
-  [string]$LivePluginRoot = (Join-Path $env:USERPROFILE "plugins\superpowers-project"),
-  [string]$UserSkillsRoot = (Join-Path $env:USERPROFILE ".agents\skills"),
-  [string]$MarketplacePath = (Join-Path $env:USERPROFILE ".agents\plugins\marketplace.json")
+  ```bash
+  [string]$LivePluginRoot = (Join-Path $HOME "plugins/superpowers-project"),
+  [string]$UserSkillsRoot = (Join-Path $HOME ".agents\skills"),
+  [string]$MarketplacePath = (Join-Path $HOME ".agents\plugins/marketplace.json")
   ```
 
   Replace the current two-file live check with `Compare-SuperpowersProjectLiveInstall`. Report any returned drift under repairable finding id `live-sync`; report healthy only when the comparer returns zero drift.
@@ -255,18 +255,18 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plugin-only-live-sync.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1
+  ```bash
+  ./scripts/test-plugin-only-live-sync.sh
+  ./scripts/test-project-namespace-migration.sh
+  ./skills/align-project/scripts/test-scenarios.sh
   ```
 
   Expected result: all return `"ok": true`.
 
   Commit:
 
-  ```powershell
-  git add scripts/lib/project-skills.ps1 scripts/lib/live-install.ps1 scripts/lib/sync-tree.ps1 scripts/sync-live.ps1 scripts/validate.ps1 scripts/test-plugin-only-live-sync.ps1 scripts/test-project-namespace-migration.ps1 skills/align-project/scripts/align-project.ps1 skills/align-project/scripts/test-scenarios.ps1
+  ```bash
+  git add scripts/lib/project-skills.sh scripts/lib/live-install.sh scripts/lib/sync-tree.sh scripts/sync-live.sh scripts/validate.sh scripts/test-plugin-only-live-sync.sh scripts/test-project-namespace-migration.sh skills/align-project/scripts/align-project.sh skills/align-project/scripts/test-scenarios.sh
   git commit -m "test: harden live plugin drift checks"
   ```
 
@@ -282,13 +282,13 @@ Modify:
 - Modify: `skills/merge-changes/agents/openai.yaml`
 - Modify: `README.md`
 - Modify: `docs/superpowers/closeout-startup-decision-tree-dev.md`
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
-- Modify: `scripts/test-native-continuation-loop.ps1`
-- Modify: `skills/align-project/scripts/test-scenarios.ps1`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
+- Modify: `scripts/test-native-continuation-loop.sh`
+- Modify: `skills/align-project/scripts/test-scenarios.sh`
 
 - [ ] **Step 1: Write failing final-gate schema tests**
 
-  In `scripts/test-advanced-user-input-policy.ps1`, replace the current final-gate expectation with these required strings:
+  In `scripts/test-advanced-user-input-policy.sh`, replace the current final-gate expectation with these required strings:
 
   ```text
   Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop
@@ -306,15 +306,15 @@ Modify:
 
   Expected first run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
+  ```bash
+  ./scripts/test-advanced-user-input-policy.sh
   ```
 
   Expected result before implementation: fail on the old `Yes`, `Revisit`, `Done` final-gate text.
 
 - [ ] **Step 2: Write failing final-capable skill tests**
 
-  In `scripts/test-native-continuation-loop.ps1`, for each skill from `Get-ProjectFinalCapableSkillNames`, require a question block ending in `_final_health_gate` that contains:
+  In `scripts/test-native-continuation-loop.sh`, for each skill from `Get-ProjectFinalCapableSkillNames`, require a question block ending in `_final_health_gate` that contains:
 
   ```text
   Done
@@ -374,17 +374,17 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1
+  ```bash
+  ./scripts/test-advanced-user-input-policy.sh
+  ./scripts/test-native-continuation-loop.sh
+  ./skills/align-project/scripts/test-scenarios.sh
   ```
 
   Expected result: all return `"ok": true`.
 
   Commit:
 
-  ```powershell
+  ```bash
   git add skills scripts README.md docs/superpowers/closeout-startup-decision-tree-dev.md
   git commit -m "fix: normalize final continuation gates"
   ```
@@ -396,15 +396,15 @@ Modify:
 - Modify: `README.md`
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `docs/superpowers/issues/README.md`
-- Modify: `scripts/test-project-namespace-migration.ps1`
+- Modify: `scripts/test-project-namespace-migration.sh`
 - Modify: active `skills/*/SKILL.md`
 - Modify: active `skills/*/agents/openai.yaml`
 
 - [ ] **Step 1: Write the failing namespace scan**
 
-  In `scripts/test-project-namespace-migration.ps1`, require:
+  In `scripts/test-project-namespace-migration.sh`, require:
 
-  ```powershell
+  ```bash
   Assert-Contains -Text $readme -Needle 'prompt surface is `$superpowers-project:*`' -Reason "README must declare canonical prompt surface"
   ```
 
@@ -414,8 +414,8 @@ Modify:
 
   Expected first run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
+  ```bash
+  ./scripts/test-project-namespace-migration.sh
   ```
 
   Expected result before implementation: fail on `docs/superpowers/issues/README.md` and `.codex-plugin/plugin.json`.
@@ -446,7 +446,7 @@ Modify:
 
   Run:
 
-  ```powershell
+  ```bash
   rg -n '\$project:|(?<!\$)superpowers-project:' README.md .codex-plugin docs/superpowers/issues skills
   ```
 
@@ -456,16 +456,16 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
+  ```bash
+  ./scripts/test-project-namespace-migration.sh
   ```
 
   Expected result: returns `"ok": true`.
 
   Commit:
 
-  ```powershell
-  git add README.md .codex-plugin/plugin.json docs/superpowers/issues/README.md skills scripts/test-project-namespace-migration.ps1
+  ```bash
+  git add README.md .codex-plugin/plugin.json docs/superpowers/issues/README.md skills scripts/test-project-namespace-migration.sh
   git commit -m "docs: standardize project plugin namespace"
   ```
 
@@ -475,17 +475,17 @@ Modify:
 
 - Modify: `skills/create-issues/SKILL.md`
 - Modify: `skills/create-issues/agents/openai.yaml`
-- Modify: `skills/create-issues/scripts/validate-issue-mirror.ps1`
-- Modify: `skills/create-issues/scripts/test-scenarios.ps1`
+- Modify: `skills/create-issues/scripts/validate-issue-mirror.sh`
+- Modify: `skills/create-issues/scripts/test-scenarios.sh`
 - Modify: `docs/superpowers/issues/README.md`
 
 - [ ] **Step 1: Write the failing strict-metadata scenario**
 
-  In `skills/create-issues/scripts/test-scenarios.ps1`, add a scenario named `issue mirror validator rejects missing workflow metadata`. Create a temp issue mirror with source plan, GitHub issue, classification, goal command, acceptance criteria, and Project Merge section, but omit `Execution Mode`.
+  In `skills/create-issues/scripts/test-scenarios.sh`, add a scenario named `issue mirror validator rejects missing workflow metadata`. Create a temp issue mirror with source plan, GitHub issue, classification, goal command, acceptance criteria, and Project Merge section, but omit `Execution Mode`.
 
   Assert:
 
-  ```powershell
+  ```bash
   $result = Run-Validator -RepoRoot $root -IssuePath $issuePath
   if ($result.ok) { throw "missing workflow metadata must fail validation" }
   if (-not ([string]$result.reason).Contains("Execution Mode is required")) {
@@ -495,24 +495,24 @@ Modify:
 
   Expected first run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+  ```bash
+  ./skills/create-issues/scripts/test-scenarios.sh
   ```
 
   Expected result before implementation: fail because missing workflow metadata is currently advisory.
 
 - [ ] **Step 2: Make missing workflow metadata blocking**
 
-  In `skills/create-issues/scripts/validate-issue-mirror.ps1`, replace:
+  In `skills/create-issues/scripts/validate-issue-mirror.sh`, replace:
 
-  ```powershell
+  ```bash
   Add-Check -Name "workflow metadata: $fieldName" -Ok $false -Reason "advisory: missing"
   continue
   ```
 
   with:
 
-  ```powershell
+  ```bash
   Complete -Ok $false -Reason "$fieldName is required"
   ```
 
@@ -544,15 +544,15 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+  ```bash
+  ./skills/create-issues/scripts/test-scenarios.sh
   ```
 
   Expected result: returns `"ok": true`.
 
   Commit:
 
-  ```powershell
+  ```bash
   git add skills/create-issues docs/superpowers/issues/README.md
   git commit -m "fix: require issue workflow metadata"
   ```
@@ -565,12 +565,12 @@ Modify:
 - Modify: `skills/advanced-user-input/agents/openai.yaml`
 - Modify: active `skills/*/SKILL.md`
 - Modify: active `skills/*/agents/openai.yaml`
-- Modify: `scripts/test-advanced-user-input-policy.ps1`
-- Modify: `scripts/test-native-continuation-loop.ps1`
+- Modify: `scripts/test-advanced-user-input-policy.sh`
+- Modify: `scripts/test-native-continuation-loop.sh`
 
 - [ ] **Step 1: Write failing debug-policy tests**
 
-  In `scripts/test-advanced-user-input-policy.ps1`, require advanced-user-input to contain these exact policy fragments:
+  In `scripts/test-advanced-user-input-policy.sh`, require advanced-user-input to contain these exact policy fragments:
 
   ```text
   Native Question Debug Mode
@@ -582,7 +582,7 @@ Modify:
   debug mode must not approve mutation
   ```
 
-  In `scripts/test-native-continuation-loop.ps1`, scan every workflow skill `SKILL.md` and metadata file that contains `debug_question_mode`. Fail unless it also contains `no tool exists to answer the modal prompt` and `Native Question Debug Ledger`.
+  In `scripts/test-native-continuation-loop.sh`, scan every workflow skill `SKILL.md` and metadata file that contains `debug_question_mode`. Fail unless it also contains `no tool exists to answer the modal prompt` and `Native Question Debug Ledger`.
 
   Expected result before implementation: fail for the weaker local debug-mode paragraphs.
 
@@ -623,17 +623,17 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
+  ```bash
+  ./scripts/test-advanced-user-input-policy.sh
+  ./scripts/test-native-continuation-loop.sh
   ```
 
   Expected result: both return `"ok": true`.
 
   Commit:
 
-  ```powershell
-  git add skills scripts/test-advanced-user-input-policy.ps1 scripts/test-native-continuation-loop.ps1
+  ```bash
+  git add skills scripts/test-advanced-user-input-policy.sh scripts/test-native-continuation-loop.sh
   git commit -m "docs: centralize native question debug policy"
   ```
 
@@ -641,23 +641,23 @@ Modify:
 
 **Files:**
 
-- Create: `scripts/test-skill-metadata-readability.ps1`
-- Modify: `scripts/validate.ps1`
+- Create: `scripts/test-skill-metadata-readability.sh`
+- Modify: `scripts/validate.sh`
 - Modify: active `skills/*/agents/openai.yaml`
 
 - [ ] **Step 1: Write the failing metadata readability test**
 
-  Add `scripts/test-skill-metadata-readability.ps1`. It must:
+  Add `scripts/test-skill-metadata-readability.sh`. It must:
 
   - Resolve every `skills/*/agents/openai.yaml`
-  - Parse each file through the same Python/PyYAML path used by `scripts/validate.ps1`
+  - Parse each file through the same Python/PyYAML path used by `scripts/validate.sh`
   - Fail when any physical line exceeds 240 characters
   - Fail when `default_prompt` is empty
   - Report each failure as `path:line:length`
 
   The core line check should be:
 
-  ```powershell
+  ```bash
   $maxLength = 240
   $lines = Get-Content -LiteralPath $yamlPath
   for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -667,12 +667,12 @@ Modify:
   }
   ```
 
-  Wire it into `scripts/validate.ps1` as `Skill metadata readability`.
+  Wire it into `scripts/validate.sh` as `Skill metadata readability`.
 
   Expected first run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-readability.ps1
+  ```bash
+  ./scripts/test-skill-metadata-readability.sh
   ```
 
   Expected result before implementation: fail because current `default_prompt` lines are thousands of characters long.
@@ -687,17 +687,17 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-readability.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1 -SkipScenarioTests
+  ```bash
+  ./scripts/test-skill-metadata-readability.sh
+  ./scripts/validate.sh -SkipScenarioTests
   ```
 
   Expected result: both commands return success.
 
   Commit:
 
-  ```powershell
-  git add scripts/test-skill-metadata-readability.ps1 scripts/validate.ps1 skills
+  ```bash
+  git add scripts/test-skill-metadata-readability.sh scripts/validate.sh skills
   git commit -m "docs: wrap skill metadata prompts"
   ```
 
@@ -711,15 +711,15 @@ Modify:
 
   Run:
 
-  ```powershell
+  ```bash
   git diff --check
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-plugin-only-live-sync.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-native-continuation-loop.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-advanced-user-input-policy.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-project-namespace-migration.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-readability.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\test-scenarios.ps1
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\create-issues\scripts\test-scenarios.ps1
+  ./scripts/test-plugin-only-live-sync.sh
+  ./scripts/test-native-continuation-loop.sh
+  ./scripts/test-advanced-user-input-policy.sh
+  ./scripts/test-project-namespace-migration.sh
+  ./scripts/test-skill-metadata-readability.sh
+  ./skills/align-project/scripts/test-scenarios.sh
+  ./skills/create-issues/scripts/test-scenarios.sh
   ```
 
   Expected result: every command exits `0`.
@@ -728,8 +728,8 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+  ```bash
+  ./scripts/validate.sh
   ```
 
   Expected result: final JSON contains `"ok": true`.
@@ -738,8 +738,8 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate
+  ```bash
+  ./scripts/sync-live.sh --validate
   ```
 
   Expected result: final JSON contains `"ok": true`, `deployed_plugin_skills` lists all active skills, and `deployed_user_skills` lists `advanced-user-input`.
@@ -748,8 +748,8 @@ Modify:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+  ```bash
+  "$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .
   ```
 
   Expected result: no leftover Codex processes under the repo root.
@@ -758,7 +758,7 @@ Modify:
 
   If Task 7 needed edits, commit them:
 
-  ```powershell
+  ```bash
   git add .
   git commit -m "test: validate plugin contract hardening"
   ```
@@ -769,7 +769,7 @@ Modify:
 
 - Rewrapping metadata is broad and mechanical. Keep it isolated in Task 6 so behavioral diffs from Tasks 1 through 5 stay reviewable.
 - Adding strict issue metadata may cause old mirrors in this repo or downstream repos to fail. That is intentional per the selected policy; repair those mirrors rather than adding leniency.
-- Align's live-install comparer must stay read-only. Mutations remain owned by `scripts/sync-live.ps1` and require the existing approval path.
+- Align's live-install comparer must stay read-only. Mutations remain owned by `scripts/sync-live.sh` and require the existing approval path.
 - Namespace standardization is user-facing only. Do not rename skill directories or plugin manifest identity.
 
 ## Self-Review

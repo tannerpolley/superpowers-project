@@ -123,14 +123,14 @@ Adding Auto Mode only after `write-plan` would be easier, but it would not satis
 
 ## Proof Oracle Candidates
 
-- `skills/brainstorm-spec/scripts/test-scenarios.ps1` proves Auto Mode is offered only after spec creation and only under the nested continuation route.
-- `skills/write-plan/scripts/test-scenarios.ps1` proves Auto Mode ledgers can satisfy planning gates only when recorded defaults cover material decisions.
-- `skills/implement-plan/scripts/test-scenarios.ps1` proves Auto Mode still requires approved plan, native goal proof, development branch, verification, publish evidence, and no issue closure claim.
-- `skills/create-issues/scripts/test-scenarios.ps1` proves Auto Mode issue creation records AFK/HITL classification, route reason, labels, milestone, proof oracle, and publication evidence.
-- `skills/resolve-issue/scripts/test-scenarios.ps1` and `skills/orchestrate-issues/scripts/test-scenarios.ps1` prove Auto Mode can execute ready issue mirrors without live route prompts only when the authorization ledger covers the selected topology.
-- `skills/merge-changes/scripts/test-scenarios.ps1` proves Auto Mode merge permission is accepted only after clean premerge proof and rejected when premerge or closeout evidence is missing.
-- `scripts/validate.ps1` passes.
-- `scripts/sync-live.ps1 -Validate` passes before updating the live install.
+- `skills/brainstorm-spec/scripts/test-scenarios.sh` proves Auto Mode is offered only after spec creation and only under the nested continuation route.
+- `skills/write-plan/scripts/test-scenarios.sh` proves Auto Mode ledgers can satisfy planning gates only when recorded defaults cover material decisions.
+- `skills/implement-plan/scripts/test-scenarios.sh` proves Auto Mode still requires approved plan, native goal proof, development branch, verification, publish evidence, and no issue closure claim.
+- `skills/create-issues/scripts/test-scenarios.sh` proves Auto Mode issue creation records AFK/HITL classification, route reason, labels, milestone, proof oracle, and publication evidence.
+- `skills/resolve-issue/scripts/test-scenarios.sh` and `skills/orchestrate-issues/scripts/test-scenarios.sh` prove Auto Mode can execute ready issue mirrors without live route prompts only when the authorization ledger covers the selected topology.
+- `skills/merge-changes/scripts/test-scenarios.sh` proves Auto Mode merge permission is accepted only after clean premerge proof and rejected when premerge or closeout evidence is missing.
+- `scripts/validate.sh` passes.
+- `scripts/sync-live.sh --validate` passes before updating the live install.
 - The user-level repo cleanup hook passes before closeout.
 
 ## Open Questions For Planning

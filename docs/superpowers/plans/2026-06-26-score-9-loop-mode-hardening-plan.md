@@ -6,7 +6,7 @@
 
 **Architecture:** Use the promoted score 9+ spec as the source of truth, create issue-backed repair slices, and strengthen validators before relying on docs. The workflow contract becomes typed and option-authoritative, metadata is validated against continuation geometry, Looping Mode gains a state-machine contract, and final completion is recorded by a scorecard receipt plus live-sync and tracker proof.
 
-**Tech Stack:** PowerShell validators and fixtures, YAML workflow contract, Markdown skill/spec/plan/docs, GitHub issue mirrors, Loop Controller ledgers, existing Superpowers Project validation scripts, and GitHub CLI issue/PR workflow.
+**Tech Stack:** Bash validators and fixtures, YAML workflow contract, Markdown skill/spec/plan/docs, GitHub issue mirrors, Loop Controller ledgers, existing Superpowers Project validation scripts, and GitHub CLI issue/PR workflow.
 
 ---
 
@@ -16,7 +16,7 @@
 
 ## Test-Complete Definition
 
-Test complete means every new or changed validator has passing and failing fixtures where practical, known contract/SKILL/YAML mismatches are repaired, Looping Mode state-machine fixtures cover the required unsafe states, the scorecard receipt validates every target at `>= 9`, `scripts/validate.ps1` passes, `scripts/sync-live.ps1 -Validate` passes, version freshness passes, GitHub-aware align/tracker hygiene passes or records only documented non-blocking findings, the cleanup hook passes, and `git status --short --branch` is clean.
+Test complete means every new or changed validator has passing and failing fixtures where practical, known contract/SKILL/YAML mismatches are repaired, Looping Mode state-machine fixtures cover the required unsafe states, the scorecard receipt validates every target at `>= 9`, `scripts/validate.sh` passes, `scripts/sync-live.sh --validate` passes, version freshness passes, GitHub-aware align/tracker hygiene passes or records only documented non-blocking findings, the cleanup hook passes, and `git status --short --branch` is clean.
 
 Pass/fail metrics are command exit codes, validator JSON receipts, exact fixture assertions, GitHub issue and PR state, and clean repository state. Numerical tolerances are not part of this workflow-plugin hardening plan; the measurable threshold is zero failing required validators and every scorecard target at least `9`.
 
@@ -27,24 +27,24 @@ Pass/fail metrics are command exit codes, validator JSON receipts, exact fixture
 **Expected Outcome:** Every material native gate is registered with gate type and exact options, metadata cannot flatten route geometry, route-local skill prose is clean, Looping Mode validates one candidate per iteration with required ledgers and gates, scorecard proof records every target at `>= 9`, project docs explain source-of-truth roles, and Decision Ledger examples validate.
 **Target Output:** A merged issue-backed hardening program with strict validators, updated contract and docs, issue mirrors, a scorecard receipt, passing live-sync/tracker proof, and no ready backlog candidates left unintentionally.
 **Owner:** `docs/superpowers/workflow-contract.yml` owns route contract data; `skills/loop-controller` owns loop coordination rules; `skills/advanced-user-input` owns shared native-question semantics; scripts under `scripts/` own validation proof; issue mirrors own slice execution.
-**Interface:** Validators read YAML, Markdown skills, metadata YAML, examples, active backlog, generated run fixtures, scorecard receipts, GitHub issue state where needed, and Git status; they emit pass/fail receipts consumed by `scripts/validate.ps1` and merge closeout.
+**Interface:** Validators read YAML, Markdown skills, metadata YAML, examples, active backlog, generated run fixtures, scorecard receipts, GitHub issue state where needed, and Git status; they emit pass/fail receipts consumed by `scripts/validate.sh` and merge closeout.
 **Cutover:** Tighten validators first, repair drift in contract/SKILL/YAML/docs, then rely on the strict contract and Looping Mode state machine for future workflow routing.
 **Replaced Path:** Loose question-ID indexing, prose-only Looping Mode semantics, metadata route summaries that flatten nested routes, and subjective score claims stop being sufficient proof.
 **Evidence:** Typed workflow contract, exact-option validator, metadata geometry validator, loop state-machine contract and fixtures, scorecard proof receipt, updated project context docs, Decision Ledger examples, issue mirrors, validation logs, live-sync proof, align/tracker proof, cleanup proof, and merged PR evidence.
-**Acceptance Proof:** The proof oracle commands in each issue slice pass, followed by final `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, version freshness, scorecard validation, align/tracker hygiene, cleanup hook, and clean Git state.
+**Acceptance Proof:** The proof oracle commands in each issue slice pass, followed by final `scripts/validate.sh`, `scripts/sync-live.sh --validate`, version freshness, scorecard validation, align/tracker hygiene, cleanup hook, and clean Git state.
 **Stop Criteria:** Stop before push or merge if a validator is weaker than the spec requires, if a native gate cannot be mapped to exact contract options, if Looping Mode can select a second candidate without `project_loop_next_step`, if scorecard proof is subjective, or if source/live/tracker proof is incomplete.
 **Avoid:** Do not create a new user-facing workflow skill, do not weaken native gates, do not treat `.chatgpt/**` or `.superpowers/**` as canonical docs, do not keep compatibility wrappers for obsolete behavior, do not use one giant implementation issue when issue-backed slices are available.
 **Risk:** The highest risk is overfitting validators to current text while still missing actual route geometry drift. The plan mitigates this by parsing real `Question id:`, `Prompt:`, and `Options:` blocks from active `SKILL.md` files.
 
 ## Implementation Boundaries
 
-**Files To Create:** `docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md`, optional `docs/superpowers/loop-mode-contract.yml`, `scripts/validate-loop-state-machine.ps1`, `scripts/test-loop-controller.ps1`, `scripts/validate-scorecard-proof.ps1`, `scripts/test-scorecard-proof.ps1`, `docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md`, `docs/superpowers/examples/decision-ledger-examples.md`, and issue mirrors under `docs/superpowers/issues/`.
-**Files To Modify:** `docs/superpowers/workflow-contract.yml`, `skills/*/SKILL.md`, `skills/*/agents/openai.yaml`, `skills/loop-controller/scripts/*.ps1`, `scripts/validate-workflow-contract.ps1`, `scripts/test-workflow-contract.ps1`, `scripts/validate-skill-metadata-contract.ps1`, `scripts/test-skill-metadata-contract.ps1`, `scripts/validate-global-policy-deduplication.ps1`, `scripts/test-artifact-review-card.ps1`, `scripts/validate-workflow-examples.ps1`, `scripts/validate.ps1`, `docs/superpowers/PROJECT_CONTEXT.md`, `README.md`, `docs/superpowers/OUTCOME_WORKFLOW.md`, milestone pages, and `docs/superpowers/backlog/ACTIVE.md`.
+**Files To Create:** `docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md`, optional `docs/superpowers/loop-mode-contract.yml`, `scripts/validate-loop-state-machine.sh`, `scripts/test-loop-controller.sh`, `scripts/validate-scorecard-proof.sh`, `scripts/test-scorecard-proof.sh`, `docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md`, `docs/superpowers/examples/decision-ledger-examples.md`, and issue mirrors under `docs/superpowers/issues/`.
+**Files To Modify:** `docs/superpowers/workflow-contract.yml`, `skills/*/SKILL.md`, `skills/*/agents/openai.yaml`, `skills/loop-controller/scripts/*.sh`, `scripts/validate-workflow-contract.sh`, `scripts/test-workflow-contract.sh`, `scripts/validate-skill-metadata-contract.sh`, `scripts/test-skill-metadata-contract.sh`, `scripts/validate-global-policy-deduplication.sh`, `scripts/test-artifact-review-card.sh`, `scripts/validate-workflow-examples.sh`, `scripts/validate.sh`, `docs/superpowers/PROJECT_CONTEXT.md`, `README.md`, `docs/superpowers/OUTCOME_WORKFLOW.md`, milestone pages, and `docs/superpowers/backlog/ACTIVE.md`.
 **Files To Avoid:** deployed live plugin copies, plugin cache paths, `.chatgpt/**` after source promotion, committed `.superpowers/**` run ledgers, unrelated workspaces, and retired milestone-local canonical artifact roots.
 **Source Of Truth:** This plan and the promoted source spec drive issue creation; after Task 1, `docs/superpowers/workflow-contract.yml` and any loop-mode contract file own the route and loop state contracts.
 **Read Path:** Validators read skill Markdown, metadata YAML, workflow contract YAML, loop contract YAML, examples, issue mirrors, active backlog, milestone receipts, Git tracked state, and generated fixture run roots.
-**Write Path:** Source edits happen only in this repo. Live install proof is produced by `scripts/sync-live.ps1 -Validate` after source validation passes.
-**Integration Points:** `scripts/validate.ps1`, `scripts/sync-live.ps1`, `scripts/get-agent-plugin-version.ps1`, `skills/align-project/scripts/align-project.ps1`, loop-controller ledgers, create-issues mirrors, resolve-issue PR-ready proof, and merge-changes closeout proof.
+**Write Path:** Source edits happen only in this repo. Live install proof is produced by `scripts/sync-live.sh --validate` after source validation passes.
+**Integration Points:** `scripts/validate.sh`, `scripts/sync-live.sh`, `scripts/get-agent-plugin-version.sh`, `skills/align-project/scripts/align-project.sh`, loop-controller ledgers, create-issues mirrors, resolve-issue PR-ready proof, and merge-changes closeout proof.
 **Migration Or Cutover:** Add strict tests first, update validators and contracts until failures are meaningful, repair content drift, then wire new validators into full validation and scorecard proof.
 **Replaced Path Handling:** Remove stale route summaries, machine-patched duplicate prose fragments, and any metadata text that lists child routes as top-level options beside terminal labels.
 **Acceptance Proof Gate:** No issue slice is merge-ready until its focused validators and relevant full validation subset pass; the program is not final Done until every issue slice is merged and final proof oracle commands pass.
@@ -70,7 +70,7 @@ Pass/fail metrics are command exit codes, validator JSON receipts, exact fixture
 - [ ] Scorecard receipt validates every target area at `>= 9` with command receipts and source links.
 - [ ] Project context docs explain workflow contract, active backlog, examples, receipts, `.chatgpt/**`, and `.superpowers/**` roles.
 - [ ] Decision Ledger examples validate for spec and plan shapes and are referenced by `brainstorm-spec` and `write-plan`.
-- [ ] Final `scripts/validate.ps1`, `scripts/sync-live.ps1 -Validate`, version freshness, align/tracker hygiene, cleanup hook, and clean Git state pass.
+- [ ] Final `scripts/validate.sh`, `scripts/sync-live.sh --validate`, version freshness, align/tracker hygiene, cleanup hook, and clean Git state pass.
 
 ## Non-Goals
 
@@ -102,14 +102,14 @@ Create seven issue mirrors from this plan:
 
 **Files:**
 - Modify: `docs/superpowers/workflow-contract.yml`
-- Modify: `scripts/validate-workflow-contract.ps1`
-- Modify: `scripts/test-workflow-contract.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-workflow-contract.ps1`
+- Modify: `scripts/validate-workflow-contract.sh`
+- Modify: `scripts/test-workflow-contract.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-workflow-contract.sh`
 
 - [ ] **Step 1: Add failing fixtures for exact option mismatches**
   - Add fixtures for missing gate registration, extra contract option, extra skill option, invalid nested terminal option, approval gate, permission gate, topology gate, and final health gate.
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`
+  - Run: `./scripts/test-workflow-contract.sh`
 - [ ] **Step 2: Extend the contract schema**
   - Add `gate_type`, `parent_question_id`, `parent_option`, effect mappings, and allowlist reasons where needed.
   - Register material prose gates such as `project_setup_board_approval` and `project_issue_resolution_route` or rewrite them into canonical blocks first.
@@ -122,8 +122,8 @@ Create seven issue mirrors from this plan:
 - [ ] **Step 5: Repair known drift**
   - Align `align-project`, `setup-project`, `merge-changes`, and `implement-plan` contract entries with their actual skill option labels.
 - [ ] **Step 6: Validate**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-contract.ps1 -RepoRoot .`
+  - Run: `./scripts/test-workflow-contract.sh`
+  - Run: `./scripts/validate-workflow-contract.sh -RepoRoot .`
 
 ## Task 2: Metadata Geometry Guardrails
 
@@ -133,15 +133,15 @@ Create seven issue mirrors from this plan:
 - Metadata can mention child routes only in clearly nested wording.
 
 **Files:**
-- Modify: `scripts/validate-skill-metadata-contract.ps1`
-- Modify: `scripts/test-skill-metadata-contract.ps1`
+- Modify: `scripts/validate-skill-metadata-contract.sh`
+- Modify: `scripts/test-skill-metadata-contract.sh`
 - Modify: `skills/setup-project/agents/openai.yaml`
 - Modify: `skills/create-issues/agents/openai.yaml`
 - Modify: `skills/merge-changes/agents/openai.yaml`
 - Modify: `skills/resolve-issue/agents/openai.yaml`
 - Modify: `skills/brainstorm-spec/agents/openai.yaml`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-skill-metadata-contract.ps1`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-skill-metadata-contract.sh`
 
 - [ ] **Step 1: Add metadata geometry fixtures**
   - Add passing safe-form fixtures and failing flattened top-level continuation fixtures.
@@ -153,8 +153,8 @@ Create seven issue mirrors from this plan:
   - Remove flattened route summaries from the named metadata files.
   - Keep compact pointers to `SKILL.md` and `docs/superpowers/workflow-contract.yml`.
 - [ ] **Step 4: Validate**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-skill-metadata-contract.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-skill-metadata-contract.ps1 -RepoRoot .`
+  - Run: `./scripts/test-skill-metadata-contract.sh`
+  - Run: `./scripts/validate-skill-metadata-contract.sh -RepoRoot .`
 
 ## Task 3: Register All Material Native Gates
 
@@ -167,9 +167,9 @@ Create seven issue mirrors from this plan:
 - Modify: `skills/setup-project/SKILL.md`
 - Modify: `skills/initiate-workflow/SKILL.md`
 - Modify: `docs/superpowers/workflow-contract.yml`
-- Modify: `scripts/validate-workflow-contract.ps1`
-- Modify: `scripts/test-workflow-contract.ps1`
-- Test: `scripts/test-workflow-contract.ps1`
+- Modify: `scripts/validate-workflow-contract.sh`
+- Modify: `scripts/test-workflow-contract.sh`
+- Test: `scripts/test-workflow-contract.sh`
 
 - [ ] **Step 1: Inventory native-question-like identifiers**
   - Search active workflow skills for `project_[a-z0-9_]+` and `implement_plan_[a-z0-9_]+`.
@@ -181,8 +181,8 @@ Create seven issue mirrors from this plan:
   - Require a reason for every identifier that is intentionally not a native gate.
   - Fail if a new identifier appears without registration or allowlist.
 - [ ] **Step 4: Validate**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-workflow-contract.ps1 -RepoRoot .`
+  - Run: `./scripts/test-workflow-contract.sh`
+  - Run: `./scripts/validate-workflow-contract.sh -RepoRoot .`
 
 ## Task 4: Looping Mode State Machine
 
@@ -193,19 +193,19 @@ Create seven issue mirrors from this plan:
 
 **Files:**
 - Create: `docs/superpowers/loop-mode-contract.yml`
-- Create: `skills/loop-controller/scripts/validate-loop-state-machine.ps1`
-- Create: `scripts/test-loop-controller.ps1`
+- Create: `skills/loop-controller/scripts/validate-loop-state-machine.sh`
+- Create: `scripts/test-loop-controller.sh`
 - Modify: `skills/loop-controller/SKILL.md`
-- Modify: `skills/loop-controller/scripts/select-candidate.ps1`
-- Modify: `skills/loop-controller/scripts/validate-run-ledger.ps1`
-- Modify: `skills/loop-controller/scripts/validate-budget.ps1`
-- Modify: `skills/loop-controller/scripts/validate-verifier-ledger.ps1`
-- Modify: `skills/loop-controller/scripts/validate-terminal-closeout.ps1`
-- Modify: `skills/loop-controller/scripts/test-scenarios.ps1`
+- Modify: `skills/loop-controller/scripts/select-candidate.sh`
+- Modify: `skills/loop-controller/scripts/validate-run-ledger.sh`
+- Modify: `skills/loop-controller/scripts/validate-budget.sh`
+- Modify: `skills/loop-controller/scripts/validate-verifier-ledger.sh`
+- Modify: `skills/loop-controller/scripts/validate-terminal-closeout.sh`
+- Modify: `skills/loop-controller/scripts/test-scenarios.sh`
 - Modify: `docs/superpowers/examples/workflow-golden-paths.md`
-- Modify: `scripts/validate-workflow-examples.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-loop-controller.ps1`
+- Modify: `scripts/validate-workflow-examples.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-loop-controller.sh`
 
 - [ ] **Step 1: Define loop phases and invariants**
   - Document the required phase order and candidate-source precedence.
@@ -216,10 +216,10 @@ Create seven issue mirrors from this plan:
   - Cover one ready candidate, two ready candidates without auto-drain, no-ready, Auto Mode misuse, budget exhausted, dirty repo, owner mismatch, and historical checkbox.
 - [ ] **Step 4: Wire examples and validation**
   - Update the Looping Mode golden path so it matches the strict state machine.
-  - Add the new tests and validator to `scripts/validate.ps1`.
+  - Add the new tests and validator to `scripts/validate.sh`.
 - [ ] **Step 5: Validate**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-loop-controller.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\loop-controller\scripts\test-scenarios.ps1`
+  - Run: `./scripts/test-loop-controller.sh`
+  - Run: `./skills/loop-controller/scripts/test-scenarios.sh`
 
 ## Task 5: Scorecard Proof Receipt And Project Context Narrative
 
@@ -230,16 +230,16 @@ Create seven issue mirrors from this plan:
 
 **Files:**
 - Create: `docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md`
-- Create: `scripts/validate-scorecard-proof.ps1`
-- Create: `scripts/test-scorecard-proof.ps1`
+- Create: `scripts/validate-scorecard-proof.sh`
+- Create: `scripts/test-scorecard-proof.sh`
 - Modify: `docs/superpowers/PROJECT_CONTEXT.md`
 - Modify: `README.md`
 - Modify: `docs/superpowers/OUTCOME_WORKFLOW.md`
 - Modify: `docs/superpowers/milestones/M0-governance.md`
 - Modify: `docs/superpowers/milestones/M1-source-of-truth.md`
 - Modify: `docs/superpowers/backlog/ACTIVE.md`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-scorecard-proof.ps1`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-scorecard-proof.sh`
 
 - [ ] **Step 1: Add scorecard receipt validator fixtures**
   - Fail missing evidence, target below `9`, missing command receipt, and missing Looping Mode proof.
@@ -250,8 +250,8 @@ Create seven issue mirrors from this plan:
   - Document workflow contract, active backlog, examples, packet examples, milestone receipts, `.chatgpt/**`, and `.superpowers/**` roles.
   - Ensure docs do not call `.chatgpt/**` or `.superpowers/**` canonical.
 - [ ] **Step 4: Validate**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-scorecard-proof.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-scorecard-proof.ps1 -RepoRoot .`
+  - Run: `./scripts/test-scorecard-proof.sh`
+  - Run: `./scripts/validate-scorecard-proof.sh -RepoRoot .`
 
 ## Task 6: Skill Prose Polish And Artifact Card Clarity
 
@@ -262,12 +262,12 @@ Create seven issue mirrors from this plan:
 
 **Files:**
 - Modify: `skills/*/SKILL.md`
-- Modify: `scripts/validate-global-policy-deduplication.ps1`
-- Modify: `scripts/test-global-policy-deduplication.ps1`
-- Modify: `scripts/test-artifact-review-card.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-global-policy-deduplication.ps1`
-- Test: `scripts/test-artifact-review-card.ps1`
+- Modify: `scripts/validate-global-policy-deduplication.sh`
+- Modify: `scripts/test-global-policy-deduplication.sh`
+- Modify: `scripts/test-artifact-review-card.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-global-policy-deduplication.sh`
+- Test: `scripts/test-artifact-review-card.sh`
 
 - [ ] **Step 1: Add prose-smell checks**
   - Search for duplicate fragments such as `Add the helper-required findings summary`, `permission question:.`, and `artifacts are shown.*Add the helper`.
@@ -277,8 +277,8 @@ Create seven issue mirrors from this plan:
   - Keep exact artifacts needed by each route.
 - [ ] **Step 3: Validate**
   - Run: `rg -n "Add the helper-required findings summary|permission question:\\.|artifacts are shown.*Add the helper" skills`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-global-policy-deduplication.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-artifact-review-card.ps1`
+  - Run: `./scripts/test-global-policy-deduplication.sh`
+  - Run: `./scripts/test-artifact-review-card.sh`
 
 ## Task 7: Decision Ledger Examples
 
@@ -291,9 +291,9 @@ Create seven issue mirrors from this plan:
 - Create: `docs/superpowers/examples/decision-ledger-examples.md`
 - Modify: `skills/brainstorm-spec/SKILL.md`
 - Modify: `skills/write-plan/SKILL.md`
-- Modify: `scripts/test-decision-ledger.ps1`
-- Modify: `scripts/validate.ps1`
-- Test: `scripts/test-decision-ledger.ps1`
+- Modify: `scripts/test-decision-ledger.sh`
+- Modify: `scripts/validate.sh`
+- Test: `scripts/test-decision-ledger.sh`
 
 - [ ] **Step 1: Add example fixtures**
   - Include spec-style and plan-style Decision Ledger examples with user answer, repo evidence, planning grill, and deferred decision rows.
@@ -302,16 +302,16 @@ Create seven issue mirrors from this plan:
 - [ ] **Step 3: Reference examples from skills**
   - Link the examples from `brainstorm-spec` and `write-plan` near the Decision Ledger requirements.
 - [ ] **Step 4: Validate**
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-decision-ledger.ps1`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path .\docs\superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md -Kind spec`
-  - Run: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-decision-ledger.ps1 -Path .\docs\superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md -Kind plan`
+  - Run: `./scripts/test-decision-ledger.sh`
+  - Run: `./scripts/validate-decision-ledger.sh -Path ./docs/superpowers/specs/2026-06-26-score-9-loop-mode-hardening-spec.md -Kind spec`
+  - Run: `./scripts/validate-decision-ledger.sh -Path ./docs/superpowers/plans/2026-06-26-score-9-loop-mode-hardening-plan.md -Kind plan`
 
 ## Final Program Proof
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-live.ps1 -Validate`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1 -Banner -RequireCurrent`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-scorecard-proof.ps1 -RepoRoot .`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`
+- `./scripts/validate.sh`
+- `./scripts/sync-live.sh --validate`
+- `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`
+- `./scripts/validate-scorecard-proof.sh -RepoRoot .`
+- `./skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene`
+- `"$HOME\.codex\hooks\codex-cleanup.sh" -RepoRoot .`
 - `git status --short --branch`

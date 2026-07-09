@@ -14,7 +14,7 @@ Follow `skills/advanced-user-input/SKILL.md` for global native continuation, Cus
 After every completed route-specific action, ask the next native continuation or permission question when `request_user_input` is callable. If the selected route can continue with available tools and state, start it in the same turn; if it is blocked, ask or report the exact blocker through the next native question instead of silently stopping.
 ## Scripted Audit Gate
 
-Run `skills/align-project/scripts/align-project.ps1` before proposing or applying repairs.
+Run `skills/align-project/scripts/align-project.sh` before proposing or applying repairs.
 
 Supported modes:
 
@@ -88,9 +88,9 @@ Check for drift across:
 - issue execution fields vs native `/goal` requirements
 - live plugin install vs source repo, including retired skill directories and active wrappers
 
-Run `skills/align-project/scripts/align-project.ps1 -RepoRoot . -Mode LocalDocs` for a local-docs audit, or `skills/align-project/scripts/align-project.ps1 -RepoRoot . -Mode GitHubAware` when GitHub or fixture evidence is available. The scripted audit reports stale closed issue mirrors as repairable drift unless the mirror is explicitly marked `**Mirror Retention:** Keep`.
+Run `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode LocalDocs` for a local-docs audit, or `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware` when GitHub or fixture evidence is available. The scripted audit reports stale closed issue mirrors as repairable drift unless the mirror is explicitly marked `**Mirror Retention:** Keep`.
 
-Run `skills/align-project/scripts/align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` for tracker hygiene. Use `-ApplyTrackerRepairs` only after native approval and include the `repair_receipt` in the handoff or audit report.
+Run `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` for tracker hygiene. Use `-ApplyTrackerRepairs` only after native approval and include the `repair_receipt` in the handoff or audit report.
 
 For repositories that support native GitHub issue types, GitHub-aware audits must inspect issue type state through GraphQL issue evidence in addition to compatibility labels such as `type:task`, `type:bug`, and `type:feature`. If GraphQL reports no native issue type on an issue or no enabled repository issue types, report explicit label-only behavior rather than treating missing high-level `gh issue --type` flags as proof that native issue types are unavailable.
 
@@ -106,7 +106,8 @@ Default mode is audit-only. If repairs are needed, ask the user which repair set
 
 Normal runs must use `request_user_input` when it is callable and a material user decision is needed. Use `debug_question_mode` only for explicit non-interactive smoke tests, or when a background-thread native prompt is proven stuck in `waitingOnUserInput` and no tool exists to answer the modal prompt.
 
-In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, `no_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
+In `debug_question_mode`, do not call `request_user_input`. Record a Native Question Debug Ledger before executing the selected answer. Each ledger entry must include `skill_name`, `thread_id`, `observed_status: waitingOnUserInput`, `question_id`, `prompt`, `options`, `recommended_option`, `selected_answer`, `answer_source: recommended-default | user-provided-debug-answer`, 
+o_answer_tool_available: true`, and `mutation_allowed: false`. Selecting the recommended answer is allowed only when the user or smoke prompt authorized recommended defaults.
 
 Debug mode must not approve mutation. Debug mode must not perform repairs or pretend a live user approved alignment mutation.
 ## Report Shape

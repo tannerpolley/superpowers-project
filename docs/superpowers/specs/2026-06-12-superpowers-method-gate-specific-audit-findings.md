@@ -20,18 +20,18 @@ No implementation or mutation companion skill was used. This is a findings-first
 
 - `skills/implement-plan/SKILL.md`
 - `skills/implement-plan/agents/openai.yaml`
-- `skills/implement-plan/scripts/lib/contract.ps1`
-- `skills/implement-plan/scripts/test-scenarios.ps1`
+- `skills/implement-plan/scripts/lib/contract.sh`
+- `skills/implement-plan/scripts/test-scenarios.sh`
 - `skills/resolve-issue/SKILL.md`
 - `skills/resolve-issue/agents/openai.yaml`
-- `skills/resolve-issue/scripts/test-scenarios.ps1`
+- `skills/resolve-issue/scripts/test-scenarios.sh`
 - `skills/orchestrate-issues/SKILL.md`
 - `skills/orchestrate-issues/agents/openai.yaml`
-- `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1`
-- `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1`
+- `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh`
+- `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`
 - `skills/write-plan/SKILL.md`
 - `skills/write-plan/agents/openai.yaml`
-- `skills/write-plan/scripts/test-scenarios.ps1`
+- `skills/write-plan/scripts/test-scenarios.sh`
 - `skills/initiate-workflow/SKILL.md`
 - Upstream method contracts by canonical skill name: `superpowers:using-git-worktrees`, `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:systematic-debugging`, `superpowers:verification-before-completion`, `superpowers:finishing-a-development-branch`, and `superpowers:subagent-driven-development`
 
@@ -43,7 +43,7 @@ No implementation or mutation companion skill was used. This is a findings-first
 
 - `skills/implement-plan/SKILL.md:46` through `skills/implement-plan/SKILL.md:62` requires only a development branch and topology choice before implementation.
 - `skills/implement-plan/SKILL.md:64` through `skills/implement-plan/SKILL.md:74` requires `superpowers:executing-plans`, TDD, debugging, verification, and optional subagent discipline, but omits `superpowers:using-git-worktrees`.
-- `skills/implement-plan/scripts/lib/contract.ps1:27` through `skills/implement-plan/scripts/lib/contract.ps1:32` validates native goal, branch, topology, and passed verification, but has no field for worktree isolation proof or clean baseline proof.
+- `skills/implement-plan/scripts/lib/contract.sh:27` through `skills/implement-plan/scripts/lib/contract.sh:32` validates native goal, branch, topology, and passed verification, but has no field for worktree isolation proof or clean baseline proof.
 - A source search for `using-git-worktrees` under `skills/implement-plan` returns no active contract requirement.
 
 **Impact:**
@@ -66,14 +66,14 @@ Add an `Isolation And Baseline Gate` to `$superpowers-project:implement-plan` be
 
 - `skills/implement-plan/SKILL.md` explicitly names `superpowers:using-git-worktrees` as mandatory.
 - `skills/implement-plan/agents/openai.yaml` repeats the isolation and baseline gate for startup-loaded agents.
-- `skills/implement-plan/scripts/lib/contract.ps1` rejects handoff ledgers missing isolation proof or baseline proof.
-- `skills/implement-plan/scripts/test-scenarios.ps1` fails if the worktree/baseline gate text or contract checks are removed.
+- `skills/implement-plan/scripts/lib/contract.sh` rejects handoff ledgers missing isolation proof or baseline proof.
+- `skills/implement-plan/scripts/test-scenarios.sh` fails if the worktree/baseline gate text or contract checks are removed.
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 Add a fixture where an implement-plan ledger has branch, topology, and passed verification but no isolation or baseline fields. The contract helper must reject it.
@@ -83,8 +83,8 @@ Add a fixture where an implement-plan ledger has branch, topology, and passed ve
 **Observed evidence:**
 
 - `skills/orchestrate-issues/SKILL.md:77` through `skills/orchestrate-issues/SKILL.md:87` says the route adapts `superpowers:subagent-driven-development`, but only requires a companion skill set in the worker handoff.
-- `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1:85` through `skills/orchestrate-issues/scripts/prepare-worker-handoff.ps1:89` emits skill names, but no review policy fields.
-- `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1:59` validates required skill names, but not fresh subagent per task, spec compliance review, code quality review, re-review loops, final review, or blocked-status handling.
+- `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh:85` through `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh:89` emits skill names, but no review policy fields.
+- `skills/orchestrate-issues/scripts/validate-worker-handoff.sh:59` validates required skill names, but not fresh subagent per task, spec compliance review, code quality review, re-review loops, final review, or blocked-status handling.
 - Source search under `skills/orchestrate-issues` finds no active references to `two-stage`, `spec compliance`, `code quality`, or `final code reviewer`.
 
 **Impact:**
@@ -108,15 +108,15 @@ Add a `Subagent Review Gate` to `$superpowers-project:orchestrate-issues` and it
 
 - `skills/orchestrate-issues/SKILL.md` explicitly requires the two-stage review loop from `superpowers:subagent-driven-development`.
 - `skills/orchestrate-issues/agents/openai.yaml` repeats the two-stage review requirement.
-- `prepare-worker-handoff.ps1` emits structured review policy fields.
-- `validate-worker-handoff.ps1` rejects handoffs missing spec-review, code-quality-review, re-review, or final-review requirements.
+- `prepare-worker-handoff.sh` emits structured review policy fields.
+- `validate-worker-handoff.sh` rejects handoffs missing spec-review, code-quality-review, re-review, or final-review requirements.
 - Scenario tests fail if the review gate is weakened to skill-name presence only.
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 Add one fixture that lists all companion skills but omits review policy. Validation must fail.
@@ -128,8 +128,8 @@ Add one fixture that lists all companion skills but omits review policy. Validat
 - `skills/implement-plan/SKILL.md:69` requires `superpowers:test-driven-development` for feature and bug work unless the approved plan records an opt-out.
 - `skills/resolve-issue/SKILL.md:186` requires `superpowers:test-driven-development` for feature or bug code unless the source plan records an opt-out.
 - `skills/orchestrate-issues/SKILL.md:82` requires `superpowers:test-driven-development` in the worker handoff.
-- `skills/implement-plan/scripts/lib/contract.ps1:32` requires only `verification.passed`, not TDD red/green proof.
-- `skills/orchestrate-issues/scripts/validate-worker-handoff.ps1:59` requires the skill name but not test-first receipts.
+- `skills/implement-plan/scripts/lib/contract.sh:32` requires only `verification.passed`, not TDD red/green proof.
+- `skills/orchestrate-issues/scripts/validate-worker-handoff.sh:59` requires the skill name but not test-first receipts.
 
 **Impact:**
 
@@ -154,11 +154,11 @@ Add a `TDD Red/Green Proof Gate` to `$superpowers-project:implement-plan`, `$sup
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\orchestrate-issues\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/orchestrate-issues/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 ### P2: Execution adapters require debugging discipline by name but not the upstream phase gates
@@ -193,11 +193,11 @@ Add a `Debugging Phase Proof Gate` for bug, regression, CI, performance, or uncl
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\implement-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\resolve-issue\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/implement-plan/scripts/test-scenarios.sh
+./skills/resolve-issue/scripts/test-scenarios.sh
+./skills/write-plan/scripts/test-scenarios.sh
+./scripts/validate.sh
 ```
 
 ### P2: `write-plan` is still softer than upstream `superpowers:writing-plans` on exact plan content
@@ -229,14 +229,14 @@ Add a `Plan Exactness Gate` to `$superpowers-project:write-plan`:
 - `skills/write-plan/SKILL.md` includes the upstream no-placeholder failure list as a blocking gate.
 - `skills/write-plan/agents/openai.yaml` summarizes the exactness gate for startup-loaded agents.
 - A new or existing validator rejects ready plans with placeholders, generic code instructions, missing expected output, or "similar to" shortcuts.
-- `scripts/validate.ps1` includes the exactness validator.
+- `scripts/validate.sh` includes the exactness validator.
 
 **Proof oracle candidates:**
 
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\write-plan\scripts\test-scenarios.ps1
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <fixture-plan>
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1
+```bash
+./skills/write-plan/scripts/test-scenarios.sh
+./scripts/validate-plan-task-use-cases.sh -PlanPath <fixture-plan>
+./scripts/validate.sh
 ```
 
 ## Healthy Checks

@@ -15,9 +15,9 @@
 - `git status --short --branch` reported `## main...origin/main`.
 - `gh issue list --state open --limit 100 --json number,title,state,url` returned `[]`.
 - Recent GitHub PRs for the sub-issue and loop-mode work are merged.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1` passed.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\get-agent-plugin-version.ps1` reported source/live parity and a clean source tree.
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\skills\align-project\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware -TrackerHygiene` reported `ok=True`, `blocking=0`, `repairable=7`, `informational=10`, `healthy=30`.
+- `./scripts/test-workflow-contract.sh` passed.
+- `./scripts/get-agent-plugin-version.sh` reported source/live parity and a clean source tree.
+- `./skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` reported `ok=True`, `blocking=0`, `repairable=7`, `informational=10`, `healthy=30`.
 - The seven repairables from that alignment run were all `closed-mirror-lifecycle`.
 - The same alignment run reported `GitHub milestone evidence was not inspected`, `GitHub label evidence was not inspected`, and `Project V2 state evidence was not inspected`.
 - `gh issue list --state closed --limit 200 --json number,title,labels,milestone` found 50 closed issues with `status:*` labels still attached.
@@ -27,15 +27,15 @@
 
 ## Resolution Proof
 
-- **P1 tracker hygiene:** `align-project` now evaluates closed/open issue `status:*` label hygiene without Project V2 fixtures while keeping Project item checks gated on Project V2 evidence. `skills/align-project/scripts/test-scenarios.ps1` includes the no-Project-fixture regression and passes.
+- **P1 tracker hygiene:** `align-project` now evaluates closed/open issue `status:*` label hygiene without Project V2 fixtures while keeping Project item checks gated on Project V2 evidence. `skills/align-project/scripts/test-scenarios.sh` includes the no-Project-fixture regression and passes.
 - **P1 native route prose:** Active skills, metadata, and `docs/superpowers/workflow-contract.yml` now route top-level continuation through `Yes`, `Revisit`, and `Stop`; child route options stay under their own native questions. The stale active-route scan returns no matches in `skills` or `docs/superpowers/workflow-contract.yml`.
-- **P1 validator coverage:** `scripts/validate-workflow-contract.ps1` now extracts `If the user selects ...` trigger prose and rejects route labels outside the declared contract. It also rejects composite metadata labels such as `Yes Do Work`. `scripts/test-workflow-contract.ps1` passes with both failing fixtures.
+- **P1 validator coverage:** `scripts/validate-workflow-contract.sh` now extracts `If the user selects ...` trigger prose and rejects route labels outside the declared contract. It also rejects composite metadata labels such as `Yes Do Work`. `scripts/test-workflow-contract.sh` passes with both failing fixtures.
 - **P2 closed mirror lifecycle:** Closed mirrors 97-103 were deleted from `docs/superpowers/issues/`. Their durable history moved to `docs/superpowers/milestones/M1-source-of-truth.md` closed summaries with GitHub issue and PR evidence where available.
 - **P2 live GitHub evidence:** GitHub-aware alignment now reads live milestones and labels through `gh` when fixture paths are absent. The live alignment proof reports only `dirty-worktree` and `live-sync` repairables while this branch is unmerged, with `closed-mirror-lifecycle`, `milestone-membership-drift`, and `label-drift` healthy.
 - **P2 closed status labels:** Closed GitHub issues now have zero `status:*` labels.
-- **P3 file pressure:** `skills/merge-changes/scripts/test-scenarios.ps1` was reduced from 1087 lines to 945 lines by extracting reusable test fixtures to `skills/merge-changes/scripts/lib/test-fixtures.ps1`. `docs/superpowers/workflow-contract.yml` remains the single canonical contract registry; this is bounded by the stricter route-prose and metadata validators rather than split during this repair.
-- **Closed mirror fixture regression:** `skills/loop-controller/scripts/test-scenarios.ps1` no longer depends on deleted closed mirrors 97 and 102; it now creates temporary hierarchy mirrors for selector tests.
-- **Validation:** `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate.ps1` passes after the repairs.
+- **P3 file pressure:** `skills/merge-changes/scripts/test-scenarios.sh` was reduced from 1087 lines to 945 lines by extracting reusable test fixtures to `skills/merge-changes/scripts/lib/test-fixtures.sh`. `docs/superpowers/workflow-contract.yml` remains the single canonical contract registry; this is bounded by the stricter route-prose and metadata validators rather than split during this repair.
+- **Closed mirror fixture regression:** `skills/loop-controller/scripts/test-scenarios.sh` no longer depends on deleted closed mirrors 97 and 102; it now creates temporary hierarchy mirrors for selector tests.
+- **Validation:** `./scripts/validate.sh` passes after the repairs.
 
 ## P1 - Tracker Hygiene Skips Closed Status Labels Without Project V2 Fixtures
 
@@ -46,12 +46,12 @@ Evidence:
 - `gh issue list --state closed --limit 200 --json number,title,labels,milestone` found 50 closed issues with `status:*` labels.
 - Recent examples include `#103 status:ready`, `#102 status:ready`, `#101 status:ready`, `#100 status:ready`, `#99 status:ready`, `#98 status:ready`, and `#97 status:triage`.
 - `skills/align-project/SKILL.md` defines tracker hygiene as reporting closed issue status-label drift and removing `status:*` labels from closed issues during approved repair.
-- `skills/align-project/scripts/align-project.ps1:503` defines `Invoke-TrackerHygieneAudit`.
-- `skills/align-project/scripts/align-project.ps1:527` computes `$statusLabels`.
-- `skills/align-project/scripts/align-project.ps1:533` reports `closed-status-label-drift`.
-- `skills/align-project/scripts/align-project.ps1:754` only enters tracker hygiene when `-TrackerHygiene` is set.
-- `skills/align-project/scripts/align-project.ps1:755` reports Project V2 as not inspected when `$projectFixture` is null.
-- `skills/align-project/scripts/align-project.ps1:758` only calls `Invoke-TrackerHygieneAudit` when `$projectFixture` exists.
+- `skills/align-project/scripts/align-project.sh:503` defines `Invoke-TrackerHygieneAudit`.
+- `skills/align-project/scripts/align-project.sh:527` computes `$statusLabels`.
+- `skills/align-project/scripts/align-project.sh:533` reports `closed-status-label-drift`.
+- `skills/align-project/scripts/align-project.sh:754` only enters tracker hygiene when `-TrackerHygiene` is set.
+- `skills/align-project/scripts/align-project.sh:755` reports Project V2 as not inspected when `$projectFixture` is null.
+- `skills/align-project/scripts/align-project.sh:758` only calls `Invoke-TrackerHygieneAudit` when `$projectFixture` exists.
 
 Impact:
 
@@ -70,7 +70,7 @@ Proof target:
 - `align-project -Mode GitHubAware -TrackerHygiene` reports `closed-status-label-drift` before repair when closed `status:*` labels exist.
 - After approved repair, the closed issue status-label count is zero:
 
-```powershell
+```bash
 gh issue list --state closed --limit 200 --json labels --jq '[.[] | select(any(.labels[]?; .name|startswith("status:")))] | length'
 ```
 
@@ -84,7 +84,7 @@ Evidence:
 - `skills/audit-project/SKILL.md:100` then says `If the user selects Prepare Repair Work`, but that label is not a top-level option.
 - `skills/audit-project/SKILL.md:147` says `If the user selects Review Or Extend Findings`, but that label is not a top-level option.
 - `skills/audit-project/agents/openai.yaml:10` still says `project_audit_next_step can route to Yes Prepare Repair Work or Revisit Review Or Extend Findings`.
-- `skills/audit-project/scripts/test-scenarios.ps1:66` and `:67` assert those composite route phrases.
+- `skills/audit-project/scripts/test-scenarios.sh:66` and `:67` assert those composite route phrases.
 - `skills/align-project/SKILL.md:130` declares top-level `project_align_next_step` with `Yes`, `Revisit`, and `Stop`.
 - `skills/align-project/SKILL.md:152` says `If the user selects Apply Or Prepare Repair`, but that label is not a top-level option.
 - `skills/align-project/SKILL.md:163` says `If the user selects Prepare Repair Work`.
@@ -108,7 +108,7 @@ Repair requirement:
 
 Proof target:
 
-```powershell
+```bash
 rg -n "Yes Prepare Repair Work|Revisit Review Or Extend Findings|Apply Or Prepare Repair|Rerun / Review Alignment|If the user selects `Prepare Repair Work`|If the user selects `Review Or Extend Findings`" skills docs/superpowers/workflow-contract.yml
 ```
 
@@ -120,12 +120,12 @@ The workflow contract validator is strong on question IDs and option arrays, but
 
 Evidence:
 
-- `scripts/validate-workflow-contract.ps1` checks that skill question IDs are registered, contract gates exist, option arrays match, gate types are valid, nested routes exclude terminal options, and next routes are known.
-- `scripts/validate-workflow-contract.ps1` does not inspect `If the user selects ...` route-trigger prose.
-- `scripts/validate-workflow-contract.ps1` does not inspect `skills/*/agents/openai.yaml` route phrases.
-- `scripts/test-workflow-contract.ps1` includes fixtures for invalid nested terminal options, option mismatch, missing typed gate, and missing allowlist reason.
-- `scripts/test-workflow-contract.ps1` has no failing fixture where skill prose routes from `Yes` to a nonexistent synthetic option.
-- `scripts/test-workflow-contract.ps1` passed while the stale route prose and metadata in the previous finding remained present.
+- `scripts/validate-workflow-contract.sh` checks that skill question IDs are registered, contract gates exist, option arrays match, gate types are valid, nested routes exclude terminal options, and next routes are known.
+- `scripts/validate-workflow-contract.sh` does not inspect `If the user selects ...` route-trigger prose.
+- `scripts/validate-workflow-contract.sh` does not inspect `skills/*/agents/openai.yaml` route phrases.
+- `scripts/test-workflow-contract.sh` includes fixtures for invalid nested terminal options, option mismatch, missing typed gate, and missing allowlist reason.
+- `scripts/test-workflow-contract.sh` has no failing fixture where skill prose routes from `Yes` to a nonexistent synthetic option.
+- `scripts/test-workflow-contract.sh` passed while the stale route prose and metadata in the previous finding remained present.
 
 Impact:
 
@@ -133,7 +133,7 @@ The repo can claim workflow-contract validation is green while the actual agent-
 
 Repair requirement:
 
-- Extend validation to extract route-trigger prose from workflow skills, especially patterns like `If the user selects \`...\``.
+- Extend validation to extract route-trigger prose from workflow skills, especially patterns like `If the user selects \`.../``.
 - Verify each trigger is either a valid top-level option for the preceding top-level gate, a valid option for the directly preceding nested gate, or explicitly allowlisted with a reason.
 - Add metadata checks for `skills/*/agents/*.yaml` so embedded route summaries cannot mention composite labels that are not contract options.
 - Add a failing fixture where prose names `Prepare Repair Work` as a top-level branch while the top-level gate only offers `Yes`, `Revisit`, and `Stop`.
@@ -141,7 +141,7 @@ Repair requirement:
 Proof target:
 
 - The validator fails before the route-prose repair.
-- After repair, `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-workflow-contract.ps1` passes.
+- After repair, `./scripts/test-workflow-contract.sh` passes.
 
 ## P2 - Closed Hierarchy Rollout Mirrors Remain As Active Mirrors
 
@@ -185,11 +185,11 @@ Normal GitHub-aware alignment inspects issues from live GitHub, but milestone-me
 
 Evidence:
 
-- `skills/align-project/scripts/align-project.ps1:314` reads live GitHub issue evidence through GraphQL when no issue fixture is supplied.
-- `skills/align-project/scripts/align-project.ps1:659` reads milestone evidence with `Read-JsonArray -Path $MilestoneFixturePath`.
-- `skills/align-project/scripts/align-project.ps1:660` reads label evidence with `Read-JsonArray -Path $LabelFixturePath`.
-- `skills/align-project/scripts/align-project.ps1:738` emits `GitHub milestone evidence was not inspected` when no milestone fixture exists.
-- `skills/align-project/scripts/align-project.ps1:751` emits `GitHub label evidence was not inspected` when no label fixture exists.
+- `skills/align-project/scripts/align-project.sh:314` reads live GitHub issue evidence through GraphQL when no issue fixture is supplied.
+- `skills/align-project/scripts/align-project.sh:659` reads milestone evidence with `Read-JsonArray -Path $MilestoneFixturePath`.
+- `skills/align-project/scripts/align-project.sh:660` reads label evidence with `Read-JsonArray -Path $LabelFixturePath`.
+- `skills/align-project/scripts/align-project.sh:738` emits `GitHub milestone evidence was not inspected` when no milestone fixture exists.
+- `skills/align-project/scripts/align-project.sh:751` emits `GitHub label evidence was not inspected` when no label fixture exists.
 - Live GitHub evidence is available:
   - M0 Governance: open 0, closed 18.
   - M1 Source Of Truth: open 0, closed 36.
@@ -220,10 +220,10 @@ Several workflow governance files are now large enough that future issue-resolut
 Evidence:
 
 - `docs/superpowers/workflow-contract.yml` is 1277 lines.
-- `skills/merge-changes/scripts/test-scenarios.ps1` is 1030 lines.
-- `skills/create-issues/scripts/test-scenarios.ps1` is 806 lines.
-- `skills/align-project/scripts/align-project.ps1` is 754 lines.
-- `skills/resolve-issue/scripts/test-scenarios.ps1` is 590 lines.
+- `skills/merge-changes/scripts/test-scenarios.sh` is 1030 lines.
+- `skills/create-issues/scripts/test-scenarios.sh` is 806 lines.
+- `skills/align-project/scripts/align-project.sh` is 754 lines.
+- `skills/resolve-issue/scripts/test-scenarios.sh` is 590 lines.
 
 Impact:
 
