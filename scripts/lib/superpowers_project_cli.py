@@ -1115,10 +1115,15 @@ def command_test_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
     with tempfile.TemporaryDirectory(prefix="prepare-release-") as tmp:
         root = Path(tmp); (root / ".codex-plugin").mkdir()
         shutil.copy2(ctx.plugin_root / ".codex-plugin/plugin.json", root / ".codex-plugin/plugin.json")
+        shutil.copy2(ctx.plugin_root / ".codex-plugin/runtime-package.yml", root / ".codex-plugin/runtime-package.yml")
         shutil.copy2(ctx.plugin_root / "CHANGELOG.md", root / "CHANGELOG.md")
+        shutil.copy2(ctx.plugin_root / "requirements-validation.txt", root / "requirements-validation.txt")
         run(["git", "init", "-q"], root); run(["git", "add", "."], root); run(["git", "-c", "user.email=fixture@example.com", "-c", "user.name=fixture", "commit", "-qm", "fixture"], root)
         (root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
-        status = command_prepare_release(ctx, {"RepoRoot": str(root)})
+        release_handler = resolve_handler("command_prepare_release")
+        if release_handler is None:
+            raise ScriptError("prepare-release handler is missing")
+        status = release_handler(ctx, {"RepoRoot": str(root)})
     ok = status != 0
     return emit({"ok": ok, "phase": "prepare-release-test", "dirty_release_rejected": ok}, 0 if ok else 1)
 
@@ -2190,6 +2195,8 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
         step("Superpowers project path contract", lambda: validate_superpowers_paths(root))
         step("Runtime package manifest", lambda: run_must(["python3", str(root / "scripts" / "validate-runtime-package.py"), "--repo-root", str(root)], root))
         step("Plugin manifest validation", lambda: run_must(["python3", str(root / "scripts" / "validate-plugin.py"), str(root)], root))
+        step("Generated workflow references", lambda: run_must(["bash", str(root / "scripts" / "generate-outcome-workflow-summary.sh"), "-RepoRoot", str(root), "-Check"], root))
+        step("Python unit suite", lambda: run_must([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], root))
         for skill in active_skill_names(root):
             step(f"quick_validate {skill}", lambda skill=skill: run_must(["python3", str(root / "scripts" / "quick-validate-skill.py"), str(root / "skills" / skill)], root))
         test_scripts = sorted((root / "scripts").glob("test-*.sh"))
@@ -2209,6 +2216,12 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
                     step(f"scenario tests {skill}", lambda scenario=scenario: run_must(["bash", str(scenario)], root, timeout=int(arg_value(args, "ScenarioTimeoutSeconds", default=600))))
         step("flat artifact root contract", lambda: command_validate_flat_roots(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("flat artifact root validator failed")))
         step("generated runtime state guardrails", lambda: command_validate_generated_state(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("generated runtime state validator failed")))
+        trial_receipts = root / "tests" / "workflow-trials" / "receipts" / "current"
+        if trial_receipts.is_dir():
+            receipt_handler = resolve_handler("command_validate_agent_usability_receipt")
+            if receipt_handler is None:
+                raise ScriptError("fresh-agent receipt handler is missing")
+            step("fresh-agent usability receipts", lambda: receipt_handler(ctx, {"RepoRoot": str(root), "ReceiptDir": str(trial_receipts)}) == 0 or (_ for _ in ()).throw(ScriptError("fresh-agent receipt validation failed")))
         stale_scan(root)
         return emit({"ok": True, "repo_root": str(root), "checks": checks})
     except Exception as exc:

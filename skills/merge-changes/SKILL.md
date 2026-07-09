@@ -36,4 +36,4 @@ Read `skills/advanced-user-input/SKILL.md` for global continuation, artifact dis
 
 ## Stop Conditions And Final Health
 
-Stop on missing approval, failed checks/validation, stale evidence, conflicts, dirty main, ambiguous cleanup ownership, or mismatched source plan. Use `project_merge_next_step` for repair/review routes. `Done` is valid only at `project_merge_final_health_gate` after merge, validation, cleanup, closeout receipt, workflow completion, and a clean worktree; otherwise retain `Stop` as the terminal choice.
+Stop on missing approval, failed checks/validation, stale evidence, conflicts, dirty main, ambiguous cleanup ownership, or mismatched source plan. Use `project_merge_next_step` for repair/review routes. `Done` is a verified final state only at `project_merge_final_health_gate` after merge, validation, cleanup, closeout receipt, workflow completion, and a clean worktree; otherwise retain `Stop` as the terminal choice.

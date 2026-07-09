@@ -22,7 +22,7 @@ def card() -> dict:
 
 class ArtifactReviewCardTests(unittest.TestCase):
     def run_validator(self, payload: dict) -> subprocess.CompletedProcess[str]:
-        with tempfile.TemporaryDirectory(dir=ROOT / ".superpowers" / "sdd") as tmp:
+        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
             path = Path(tmp) / "card.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             return subprocess.run(

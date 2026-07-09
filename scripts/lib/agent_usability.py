@@ -8,8 +8,10 @@ from typing import Any
 
 try:
     from .package_provenance import runtime_contract_hash
+    from .workflow_state import replay_events
 except ImportError:
     from package_provenance import runtime_contract_hash
+    from workflow_state import replay_events
 
 
 class TrialReceiptError(ValueError):
@@ -59,17 +61,30 @@ def validate_trial_receipt(receipt: dict[str, Any], plugin_root: Path) -> None:
         raise TrialReceiptError("trial attempted external mutation")
     if not isinstance(receipt.get("repository_evidence"), list) or not receipt["repository_evidence"]:
         raise TrialReceiptError("repository evidence is required")
+    for item in receipt["repository_evidence"]:
+        evidence_path = Path(str((item or {}).get("path", "")))
+        if evidence_path.is_absolute():
+            raise TrialReceiptError("repository evidence paths must be relative")
+        evidence_path = (project_root / evidence_path).resolve()
+        try:
+            evidence_path.relative_to(project_root)
+        except ValueError as exc:
+            raise TrialReceiptError("repository evidence escaped the disposable project") from exc
+        if not evidence_path.is_file():
+            raise TrialReceiptError("repository evidence file is missing")
+        expected_digest = str((item or {}).get("sha256", ""))
+        if hashlib.sha256(evidence_path.read_bytes()).hexdigest() != expected_digest:
+            raise TrialReceiptError("repository evidence hash does not match receipt")
     ledger = receipt.get("event_ledger") or {}
     ledger_path = Path(str(ledger.get("path", "")))
     if not ledger_path.is_absolute():
         ledger_path = project_root / ledger_path
     if not ledger_path.is_file():
         raise TrialReceiptError("event ledger is missing")
-    lines = [line for line in ledger_path.read_text(encoding="utf-8").splitlines() if line]
-    if not lines:
+    projection = replay_events(ledger_path)
+    if projection.events == 0:
         raise TrialReceiptError("event ledger is empty")
-    last = json.loads(lines[-1])
-    if last.get("hash") != ledger.get("last_hash"):
+    if projection.last_hash != ledger.get("last_hash"):
         raise TrialReceiptError("event ledger hash does not match receipt")
     if receipt.get("verifier_decision") != receipt.get("expected_outcome"):
         raise TrialReceiptError("independent verifier did not confirm the expected outcome")

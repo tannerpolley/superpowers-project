@@ -40,7 +40,6 @@ def runtime_call(plugin_root: Path, project: Path, run_root: Path, authorization
 def create_fixture(plugin_root: Path, trial_root: Path, scenario: str, repetition: int) -> tuple[Path, Path, Path]:
     project = trial_root / "project"
     project.mkdir(parents=True)
-    run(["git", "init", "-q"], project)
     authorization = project / "authorization.json"
     mode = "auto" if scenario == "auto-golden" else "looping"
     authorization.write_text(json.dumps({"source": "trial-fixture", "mode": mode, "repo_root": str(project.resolve()), "candidate_scope": ["one"] if mode == "auto" else ["one", "two"]}, indent=2) + "\n")
