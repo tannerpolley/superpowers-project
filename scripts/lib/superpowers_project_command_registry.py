@@ -43,7 +43,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/test-plugin-only-live-sync.sh': 'command_test_plugin_only_live_sync',
     'scripts/test-prepare-release.sh': 'command_test_prepare_release',
     'scripts/test-project-namespace-migration.sh': 'command_test_project_namespace_migration',
-    'scripts/test-release-proof.sh': 'command_unimplemented',
+    'scripts/test-release-proof.sh': 'command_test_prepare_release',
     'scripts/test-scorecard-proof.sh': 'command_test_scorecard_proof',
     'scripts/test-skill-metadata-contract.sh': 'command_validate_skill_metadata_contract',
     'scripts/test-skill-metadata-readability.sh': 'command_validate_skill_metadata_contract',
