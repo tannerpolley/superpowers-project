@@ -39,7 +39,7 @@ class CommandRegistryTests(unittest.TestCase):
             resolve_command("scripts/test-unknown.sh")
 
     def test_unimplemented_launcher_from_arbitrary_cwd(self):
-        script = ROOT / "scripts/test-native-qa-svg.sh"
+        script = ROOT / "scripts/detect-stale-skill-contract.sh"
         p = subprocess.run(["bash", str(script)], cwd="/tmp", text=True, capture_output=True)
         self.assertNotEqual(p.returncode, 0)
         payload = __import__('json').loads(p.stdout)
