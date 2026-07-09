@@ -78,6 +78,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/validate-workflow-mode-ledger.sh': 'command_validate_workflow_mode',
     'scripts/validate-workflow-normalization-proof.sh': 'command_validate_workflow_contract',
     'scripts/validate.sh': 'command_validate',
+    'scripts/workflow-run.sh': 'command_workflow_run',
     'skills/align-project/scripts/align-project.sh': 'command_align_project',
     'skills/align-project/scripts/test-scenarios.sh': 'command_validate_skill_scenario',
     'skills/audit-project/scripts/test-scenarios.sh': 'command_validate_skill_scenario',

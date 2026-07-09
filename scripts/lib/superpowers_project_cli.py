@@ -2005,6 +2005,32 @@ def command_generate_outcome_workflow_summary(ctx: Context, args: dict[str, Any]
     return emit({"ok": True, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "workflow_skill_count": len(skills)})
 
 
+def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:
+    from workflow_runtime import execute_workflow_action
+
+    root = project_root_for(ctx, args)
+    run_root_value = arg_value(args, "RunRoot")
+    authorization_value = arg_value(args, "AuthorizationPath")
+    action = str(arg_value(args, "Action", default=""))
+    if not run_root_value or not authorization_value or not action:
+        raise ScriptError("RunRoot, AuthorizationPath, and Action are required")
+    run_root = project_path_for(root, str(run_root_value), "RunRoot")
+    authorization_path = project_path_for(root, str(authorization_value), "AuthorizationPath")
+    receipt = execute_workflow_action(
+        ctx.plugin_root or ctx.repo_root,
+        root,
+        run_root,
+        authorization_path,
+        action,
+        run_id=str(arg_value(args, "RunId", default="")),
+        mode=str(arg_value(args, "Mode", default="")),
+        candidate=str(arg_value(args, "Candidate", default="")),
+        claim=str(arg_value(args, "Claim", default="")),
+        reason=str(arg_value(args, "Reason", default="")),
+    )
+    return emit(receipt)
+
+
 def command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     manifest_path = root / ".codex-plugin" / "plugin.json"
