@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-home="$(mktemp -d)"; bin="$(mktemp -d)"; trap 'rm -rf "$home" "$bin"' EXIT
+command -v codex >/dev/null || { echo "codex CLI is required for marketplace lifecycle proof" >&2; exit 127; }
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+home="$tmp/codex-home"; market="$tmp/market"; source="$market/plugins/superpowers-project"
+mkdir -p "$home" "$market/.agents/plugins" "$source"
+cp -a "$root/.codex-plugin" "$root/assets" "$root/skills" "$root/scripts" "$source/"
+python3 - "$market/.agents/plugins/marketplace.json" <<'PY'
+import json, sys
+json.dump({"name":"fixture","interface":{"displayName":"Fixture"},"plugins":[{"name":"superpowers-project","source":{"source":"local","path":"./plugins/superpowers-project"},"policy":{"installation":"AVAILABLE","authentication":"ON_INSTALL"},"category":"Engineering"}]}, open(sys.argv[1],"w"))
+PY
 export CODEX_HOME="$home"
-cat >"$bin/codex" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-state="$CODEX_HOME/plugins.json"; mkdir -p "$(dirname "$state")"
-cmd="${1:-}"; sub="${2:-}"
-case "$cmd $sub" in
-  "plugin marketplace") [[ "${3:-}" == add ]] && touch "$CODEX_HOME/marketplace-added";;
-  "plugin add") mkdir -p "$CODEX_HOME/plugins/superpowers-project"; cp -a "${3#local:}/." "$CODEX_HOME/plugins/superpowers-project/"; echo installed >"$state";;
-  "plugin list") test -f "$state";;
-  "plugin remove") rm -rf "$CODEX_HOME/plugins/superpowers-project"; rm -f "$state";;
-  *) exit 64;;
-esac
-EOF
-chmod +x "$bin/codex"; export PATH="$bin:$PATH"
-codex plugin marketplace add "$root"
-codex plugin add "local:$root"
-codex plugin list
-test -f "$CODEX_HOME/plugins/superpowers-project/.codex-plugin/plugin.json"
-codex plugin remove superpowers-project
-test ! -e "$CODEX_HOME/plugins/superpowers-project"
-python3 -m unittest "$root/tests/test_package_provenance.py" -q
-printf '%s\n' '{"ok":true,"phase":"marketplace-lifecycle","reason":"isolated marketplace add/list/remove passed"}'
+codex plugin marketplace add "$market" --json >/dev/null
+available="$(codex plugin list --available --json)"
+python3 - "$available" <<'PY'
+import json, sys
+d=json.loads(sys.argv[1]); assert any(p.get("pluginId") == "superpowers-project@fixture" for p in d["available"])
+PY
+codex plugin add superpowers-project@fixture --json >/dev/null
+installed="$(codex plugin list --json)"
+python3 - "$installed" <<'PY'
+import json, sys
+d=json.loads(sys.argv[1]); assert any(p.get("pluginId") == "superpowers-project@fixture" and p.get("installed") for p in d["installed"])
+PY
+codex plugin remove superpowers-project@fixture --json >/dev/null
+printf '%s\n' '{"ok":true,"phase":"marketplace-lifecycle","reason":"real Codex marketplace add/list/install/remove passed in isolated CODEX_HOME"}'
