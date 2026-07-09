@@ -19,7 +19,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/test-advanced-user-input-policy.sh': 'command_validate_advanced_user_input_policy',
     'scripts/test-auto-loop-trials.sh': 'command_test_auto_loop_trials',
     'scripts/test-agent-native-companion-preview.sh': 'command_test_agent_native_companion_preview',
-    'scripts/test-agent-plugin-version.sh': 'command_unimplemented',
+    'scripts/test-agent-plugin-version.sh': 'command_test_agent_plugin_version',
     'scripts/test-artifact-review-card.sh': 'command_unimplemented',
     'scripts/test-auto-mode-contract.sh': 'command_unimplemented',
     'scripts/test-companion-interface.sh': 'command_unimplemented',

@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
+import io
 import json
 import os
 import re
@@ -1432,6 +1434,61 @@ def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
         ]))
         return 0 if ok else 1
     return emit(report, 0 if ok else 1)
+
+
+def command_test_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
+    """Exercise version freshness against isolated live and observed fixtures."""
+    root = project_root_for(ctx, args)
+    checks: list[dict[str, Any]] = []
+
+    def run_version(extra: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            status = command_get_agent_plugin_version(ctx, {"RepoRoot": str(root), **extra})
+        text = output.getvalue().strip()
+        try:
+            report = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ScriptError(f"version checker emitted invalid JSON: {text!r}") from exc
+        return status, report
+
+    with tempfile.TemporaryDirectory(prefix="agent-plugin-version-") as tmp:
+        fixture = Path(tmp)
+        live = fixture / "live"
+        observed = fixture / "observed"
+        shutil.copytree(root, live, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
+        shutil.copytree(root, observed, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
+
+        status, current = run_version({"LivePluginRoot": str(live), "RequireCurrent": True})
+        checks.append({
+            "name": "isolated live surface is current",
+            "ok": status == 0 and current.get("ok") is True and current.get("live", {}).get("matches_source") is True,
+            "reason": current.get("reason", "version check did not pass"),
+        })
+
+        observed_checker = observed / "scripts" / "get-agent-plugin-version.sh"
+        if not observed_checker.is_file():
+            raise ScriptError(f"observed fixture is missing {observed_checker.relative_to(observed)}")
+        observed_checker.write_text(observed_checker.read_text(encoding="utf-8") + "\n# fixture drift\n", encoding="utf-8")
+        status, stale = run_version({
+            "LivePluginRoot": str(live),
+            "ObservedPluginRoot": str(observed),
+            "RequireCurrent": True,
+        })
+        reason = str(stale.get("reason", ""))
+        checks.append({
+            "name": "observed runtime drift is rejected",
+            "ok": status != 0 and stale.get("ok") is False and stale.get("observed", {}).get("matches_source") is False and "observed plugin differs from source" in reason,
+            "reason": reason,
+        })
+
+    ok = all(bool(check["ok"]) for check in checks)
+    return emit({
+        "ok": ok,
+        "phase": "agent-plugin-version-test",
+        "reason": "isolated freshness fixtures passed" if ok else "agent plugin version fixture failed",
+        "checks": checks,
+    }, 0 if ok else 1)
 
 
 def copy_tree(source: Path, target: Path) -> None:
