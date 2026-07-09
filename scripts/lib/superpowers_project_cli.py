@@ -904,7 +904,7 @@ def command_validate_advanced_user_input_policy(ctx: Context, args: dict[str, An
         "request_agent_input",
         "Use Stop for mid-loop exits",
         "Use Done only for verified final states",
-        "Intermediate closeout gates use Yes, Revisit, and Stop",
+        "Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop",
         "Final clean closeout gates may use Yes, Revisit, and Done",
         "custom answers that claim completion before proof exists are treated as Stop",
     ], "advanced-user-input policy")
