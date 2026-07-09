@@ -1,56 +1,39 @@
 # Release Policy
 
-Superpowers Project plugin releases are tags on the canonical source repository.
+Superpowers Project releases are immutable tags on a clean, verified `main` commit. The source repository keeps project history; `.codex-plugin/runtime-package.yml` defines the installed package.
 
-## Gates
+## Current Release
 
-Before creating a release tag:
+`v0.3.0` is the workflow-runtime and agent-usability release. It includes typed command ownership, replayable governance, generated graph references, capability-aware concise skills, real-agent proof, explicit package provenance, and read-only revision status.
 
-- `./scripts/validate.sh` exits zero.
-- `./scripts/sync-live.sh --validate` exits zero.
-- `./scripts/prepare-release.sh -CheckOnly` exits zero and records the source commit, plugin version, changelog evidence, dirty status, and required gates.
-- `CHANGELOG.md` contains the version entry.
-- The live plugin and user-level skill copies match source after sync.
-- `git status --short` is empty before tagging.
+## Required Evidence
 
-## Release Receipts
+Before creating a local release tag, prove all of the following against the same commit and runtime package hash:
 
-`scripts/prepare-release.sh` creates a release receipt. The receipt is evidence only: it does not publish, tag, push, sync live copies, or approve mutation. A release receipt records:
+- `./scripts/validate.sh` exits zero;
+- source changes are committed;
+- `./scripts/sync-live.sh --validate` exits zero;
+- `codex plugin add superpowers-project@personal --json` refreshes the supported marketplace snapshot;
+- `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` confirms source/live freshness;
+- five Auto golden and three Looping adversarial fresh-agent receipts pass independent verification;
+- the cleanup hook exits zero;
+- `git status --short --branch` is clean;
+- `./scripts/prepare-release.sh` validates the assembled release evidence.
 
-Package installation is validated through the supported Codex marketplace/plugin CLI in an isolated home. Direct mutation of Codex cache directories is not a supported release operation. Release evidence must include the package provenance manifest and contract hash, plus a clean-worktree receipt.
+Validation, sync, installation, cleanup, and agent receipts must name the same commit, package hash, and manifest version where applicable. `-CheckOnly` verifies release wiring during branch work without claiming publish readiness.
 
-- plugin manifest name and version;
-- release base version after removing local build metadata;
-- source branch and commit;
-- dirty worktree status;
-- changelog evidence for `Unreleased` or the target version;
-- the validation and live-sync gates that still need to pass before tagging.
+## Version And Tag Rules
 
-Use `-CheckOnly` during normal validation so in-flight branch work can prove the release process is wired without requiring a clean worktree. Omit `-CheckOnly` only at an actual release gate, where dirty status and the versioned changelog entry must pass.
+- Patch versions cover compatible fixes.
+- Minor versions cover new skill, workflow, or plugin capabilities.
+- Major versions cover breaking prompt namespace, artifact-root, or installation contracts.
+- Build metadata may identify a local snapshot but never appears in a tag.
+- Tags use `v<major>.<minor>.<patch>`; `0.3.0+local` therefore maps to `v0.3.0`.
 
-## Versioning
-
-- Use `v0.2.0` for the first release after the Superpowers Project rename and artifact-model migration.
-- Use patch releases for validation, sync, docs, and workflow fixes after `v0.2.0`.
-- Use minor releases for new skill behavior or new plugin capabilities.
-- Use major releases only for breaking prompt namespace, artifact-root, or live-sync contract changes.
-- Keep local build metadata such as `+codex.YYYYMMDDHHMMSS` out of Git tags. Tags use the base version, for example `v0.2.1`.
-
-## v0.2.0 Scope
-
-`v0.2.0` represents the migration from the parallel Milestones workflow to the Superpowers Project extension model:
-
-- plugin identity is `superpowers-project`;
-- canonical artifacts live under `docs/superpowers`;
-- issue mirrors live under `docs/superpowers/issues`;
-- issue execution uses native `/goal` proof and Superpowers execution skills;
-- retired Milestones skills are removed from source and live sync.
-
-## Tag Command
-
-Run tags from `main` only after the gates pass:
+Create `v0.3.0` locally only after every gate passes. Do not push the tag unless the user grants separate remote-publication authority.
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
 ```
+
+The release receipt and local tag do not authorize a push, GitHub release, package publication, or cache mutation.

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-07-09
+
+- Completed every public Bash launcher with typed ownership, exact dispatch probes, and substantive named behavior.
+- Added an immutable, replayable workflow runtime with Auto and Looping governance plus scoped completion claims.
+- Made the typed workflow graph authoritative and generated the outcome workflow and route index from it.
+- Added capability preflight contracts and reduced route skill instruction lines by more than 80 percent while preserving mandatory Superpowers pairings.
+- Added fresh-agent usability trial schemas, disposable scenarios, independent verification, and release-proof thresholds.
+- Added an explicit runtime package manifest, read-only revision status, local-only merge proof, pinned validation dependencies, and reproducible release evidence.
+
+### Earlier unreleased work
+
 - Added a deployed Auto Mode authorization validator script so project repos can validate bounded Auto Mode ledgers through the plugin surface instead of requiring a repo-local helper.
 - Added source-owned operational maturity tooling for contract summaries, stale skill detection, release receipts, local branch closeout, and local workflow smoke coverage.
 - Added agent plugin version tracking with manifest version plus runtime content hashes for source, live install, observed plugin roots, and local cache candidates.

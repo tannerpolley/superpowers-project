@@ -1,6 +1,6 @@
 {
   "name": "superpowers-project",
-  "version": "0.2.0+codex.20260604172859",
+  "version": "0.3.0",
   "description": "Superpowers extension for durable project setup, GitHub issues and milestones, native user-input grilling, goal-backed execution, and worker-thread orchestration.",
   "author": {
     "name": "Tanner Polley"

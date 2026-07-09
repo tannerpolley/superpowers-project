@@ -9,16 +9,14 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from superpowers_project_command_registry import build_command_registry, resolve_command
-from superpowers_project_context import RuntimeContext, resolve_project_root, resolve_project_path
 from package_provenance import runtime_contract_hash as package_contract_hash, runtime_manifest, verify_runtime_provenance
 from command_catalog import load_command_catalog
+from command_support import *
+from commands import load_handlers
 
 try:
     import yaml
@@ -66,161 +64,6 @@ RETIRED_SKILLS = {
     "workflow",
     "setup",
 }
-
-
-class ScriptError(Exception):
-    pass
-
-
-@dataclass
-class Context:
-    script_path: Path
-    repo_root: Path
-    script_rel: str
-    script_name: str
-    args: list[str]
-    plugin_root: Path | None = None
-    invocation_cwd: Path | None = None
-
-
-def find_repo_root(path: Path) -> Path:
-    current = path.resolve().parent
-    while current != current.parent:
-        if (current / ".codex-plugin" / "plugin.json").is_file() and (current / "scripts").is_dir():
-            return current
-        current = current.parent
-    raise ScriptError(f"could not locate repo root for {path}")
-
-
-def normalize_rel(path: Path | str, root: Path | None = None) -> str:
-    p = Path(path)
-    if root is not None:
-        try:
-            p = p.resolve().relative_to(root.resolve())
-        except Exception:
-            p = Path(os.path.relpath(str(p), str(root)))
-    return p.as_posix().lstrip("./")
-
-
-def resolve_under(root: Path, value: str, label: str = "path") -> Path:
-    candidate = Path(value)
-    if not candidate.is_absolute():
-        candidate = root / candidate
-    resolved = candidate.resolve()
-    root_resolved = root.resolve()
-    try:
-        resolved.relative_to(root_resolved)
-    except ValueError as exc:
-            raise ScriptError(f"{label} is outside repo root: {resolved}") from exc
-    return resolved
-
-def project_root_for(ctx: Context, args: dict[str, Any]) -> Path:
-    runtime = RuntimeContext(ctx.script_path, ctx.plugin_root or ctx.repo_root, ctx.invocation_cwd or Path.cwd(), ctx.script_rel)
-    return resolve_project_root(runtime, args)
-
-def project_path_for(root: Path, value: str, label: str = "path") -> Path:
-    return resolve_project_path(root, value, label)
-
-
-def parse_ps_args(argv: list[str]) -> dict[str, Any]:
-    parsed: dict[str, Any] = {"_positional": []}
-    i = 0
-    while i < len(argv):
-        token = argv[i]
-        if token.startswith("--"):
-            key = token[2:].replace("-", "_")
-        elif token.startswith("-") and token != "-":
-            key = token[1:]
-        else:
-            parsed["_positional"].append(token)
-            i += 1
-            continue
-        if i + 1 < len(argv) and not argv[i + 1].startswith("-"):
-            value: Any = argv[i + 1]
-            i += 2
-        else:
-            value = True
-            i += 1
-        if key in parsed:
-            if not isinstance(parsed[key], list):
-                parsed[key] = [parsed[key]]
-            parsed[key].append(value)
-        else:
-            parsed[key] = value
-    return parsed
-
-
-def arg_value(args: dict[str, Any], *names: str, default: Any = None) -> Any:
-    lowered = {k.lower(): v for k, v in args.items()}
-    for name in names:
-        key = name.lower()
-        if key in lowered:
-            return lowered[key]
-    return default
-
-
-def has_switch(args: dict[str, Any], *names: str) -> bool:
-    value = arg_value(args, *names, default=False)
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.lower() not in {"", "false", "0", "no"}
-    return bool(value)
-
-
-def read_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
-def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def read_json_arg(root: Path, args: dict[str, Any], json_name: str, path_name: str, required: bool = True) -> tuple[Any, str]:
-    inline = arg_value(args, json_name)
-    path_value = arg_value(args, path_name)
-    if inline and path_value:
-        raise ScriptError(f"provide exactly one of {json_name} or {path_name}")
-    if inline:
-        return json.loads(str(inline)), ""
-    if path_value:
-        path = project_path_for(root, str(path_value), path_name)
-        if not path.is_file():
-            raise ScriptError(f"{path_name} is missing: {path_value}")
-        return json.loads(read_text(path)), normalize_rel(path, root)
-    if required:
-        raise ScriptError(f"{json_name} or {path_name} is required")
-    return None, ""
-
-
-def emit(obj: Any, ok_exit: int = 0) -> int:
-    print(json.dumps(obj, indent=2, ensure_ascii=False))
-    return ok_exit
-
-
-def complete(ok: bool, phase: str, reason: str, **extra: Any) -> int:
-    payload = {"ok": ok, "phase": phase, "reason": reason}
-    payload.update(extra)
-    print(json.dumps(payload, indent=2, ensure_ascii=False))
-    return 0 if ok else 1
-
-
-def run(cmd: list[str], cwd: Path, timeout: int | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, cwd=str(cwd), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
-
-
-def run_checked(cmd: list[str], cwd: Path, timeout: int | None = None) -> dict[str, Any]:
-    result = run(cmd, cwd, timeout)
-    if result.stdout:
-        print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
-    if result.stderr:
-        print(result.stderr, file=sys.stderr, end="" if result.stderr.endswith("\n") else "\n")
-    return {
-        "command": " ".join(cmd),
-        "exit_code": result.returncode,
-        "ok": result.returncode == 0,
-    }
 
 
 def sha256_file(path: Path) -> str:
@@ -1101,25 +944,6 @@ def command_test_auto_loop_trials(ctx: Context, args: dict[str, Any]) -> int:
 
 def command_run_agent_usability_trials(ctx: Context, args: dict[str, Any]) -> int:
     raise ScriptError("run-agent-usability-trials.sh must be invoked directly with --execute and an explicit output directory")
-
-
-def command_validate_agent_usability_receipt(ctx: Context, args: dict[str, Any]) -> int:
-    from agent_usability import validate_trial_receipt, validate_trial_set
-
-    root = project_root_for(ctx, args)
-    receipt_path = arg_value(args, "ReceiptPath")
-    receipt_dir = arg_value(args, "ReceiptDir")
-    if bool(receipt_path) == bool(receipt_dir):
-        raise ScriptError("provide exactly one of ReceiptPath or ReceiptDir")
-    if receipt_path:
-        path = project_path_for(root, str(receipt_path), "ReceiptPath")
-        receipt = json.loads(read_text(path))
-        validate_trial_receipt(receipt, ctx.plugin_root or ctx.repo_root)
-        return emit({"ok": True, "phase": "agent-usability-receipt", "receipt": normalize_rel(path, root)})
-    directory = project_path_for(root, str(receipt_dir), "ReceiptDir")
-    receipts = [json.loads(read_text(path)) for path in sorted(directory.glob("**/receipt.json"))]
-    metrics = validate_trial_set(receipts, ctx.plugin_root or ctx.repo_root)
-    return emit({"ok": True, "phase": "agent-usability-receipt", "receipt_count": len(receipts), "metrics": metrics})
 
 
 def command_test_workflow_runtime(ctx: Context, args: dict[str, Any]) -> int:
@@ -2022,80 +1846,6 @@ def command_generate_outcome_workflow_summary(ctx: Context, args: dict[str, Any]
     return emit({"ok": True, "phase": "generate-outcome-workflow-summary", "output_path": normalize_rel(output, root), "route_index_path": normalize_rel(index_output, root), "workflow_skill_count": len(graph.routes)})
 
 
-def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:
-    from workflow_runtime import execute_workflow_action
-
-    root = project_root_for(ctx, args)
-    run_root_value = arg_value(args, "RunRoot")
-    authorization_value = arg_value(args, "AuthorizationPath")
-    action = str(arg_value(args, "Action", default=""))
-    if not run_root_value or not authorization_value or not action:
-        raise ScriptError("RunRoot, AuthorizationPath, and Action are required")
-    run_root = project_path_for(root, str(run_root_value), "RunRoot")
-    authorization_path = project_path_for(root, str(authorization_value), "AuthorizationPath")
-    receipt = execute_workflow_action(
-        ctx.plugin_root or ctx.repo_root,
-        root,
-        run_root,
-        authorization_path,
-        action,
-        run_id=str(arg_value(args, "RunId", default="")),
-        mode=str(arg_value(args, "Mode", default="")),
-        candidate=str(arg_value(args, "Candidate", default="")),
-        claim=str(arg_value(args, "Claim", default="")),
-        reason=str(arg_value(args, "Reason", default="")),
-    )
-    return emit(receipt)
-
-
-def command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
-    root = project_root_for(ctx, args)
-    manifest_path = root / ".codex-plugin" / "plugin.json"
-    changelog_path = root / "CHANGELOG.md"
-    manifest = json.loads(read_text(manifest_path))
-    version = str(arg_value(args, "Version", default=manifest.get("version", ""))).lstrip("v")
-    base = version.split("+", 1)[0]
-    changelog = read_text(changelog_path)
-    has_unreleased = bool(re.search(r"(?m)^##\s+Unreleased\s*$", changelog))
-    has_version = bool(re.search(rf"(?m)^##\s+v?{re.escape(base)}(\s|$)", changelog))
-    head = run(["git", "rev-parse", "HEAD"], root)
-    status = run(["git", "status", "--short"], root)
-    branch = run(["git", "branch", "--show-current"], root)
-    dirty = bool(status.stdout.strip())
-    check_only = has_switch(args, "CheckOnly")
-    checks = [
-        {"name": "manifest name", "ok": manifest.get("name") == "superpowers-project", "reason": "passed" if manifest.get("name") == "superpowers-project" else "manifest name must be superpowers-project"},
-        {"name": "manifest version present", "ok": bool(manifest.get("version")), "reason": "passed" if manifest.get("version") else "manifest version is empty"},
-        {"name": "changelog has release evidence", "ok": has_unreleased or has_version, "reason": "passed" if (has_unreleased or has_version) else f"CHANGELOG.md needs Unreleased or {base} entry"},
-        {"name": "git head available", "ok": head.returncode == 0, "reason": "passed" if head.returncode == 0 else head.stderr.strip()},
-    ]
-    if not check_only:
-        checks.append({"name": "worktree clean", "ok": not dirty, "reason": "passed" if not dirty else "release publishing requires a clean worktree"})
-        checks.append({"name": "version entry exists", "ok": has_version, "reason": "passed" if has_version else "release publishing requires a versioned changelog entry"})
-    ok = all(item["ok"] for item in checks)
-    receipt = {
-        "ok": ok,
-        "phase": "prepare-release",
-        "check_only": check_only,
-        "manifest_name": manifest.get("name", ""),
-        "manifest_version": manifest.get("version", ""),
-        "release_version": version,
-        "release_base_version": base,
-        "branch": branch.stdout.strip(),
-        "commit": head.stdout.strip() if head.returncode == 0 else "",
-        "dirty": dirty,
-        "dirty_status": status.stdout.strip(),
-        "changelog": {"has_unreleased": has_unreleased, "has_version_entry": has_version, "path": "CHANGELOG.md"},
-        "required_gates": ["scripts/validate.sh", "scripts/sync-live.sh --validate", "git status --short"],
-        "publish_ready": (not dirty) and has_version and ok,
-        "checks": checks,
-    }
-    output = arg_value(args, "OutputPath")
-    if output:
-        write_text(resolve_under(root, str(output), "OutputPath"), json.dumps(receipt, indent=2))
-    return emit(receipt, 0 if ok else 1)
-
-
 def runtime_contract_hash(root: Path) -> str:
     return package_contract_hash(root)
 
@@ -2516,17 +2266,6 @@ def command_align_project(ctx: Context, args: dict[str, Any]) -> int:
     return emit({"ok": len(findings) == 0, "phase": "align-project", "mode": mode, "findings": findings}, 0 if not findings else 1)
 
 
-def command_select_candidate(ctx: Context, args: dict[str, Any]) -> int:
-    root = project_root_for(ctx, args)
-    inventory_arg = arg_value(args, "InventoryPath")
-    candidates = []
-    if inventory_arg:
-        inventory = json.loads(read_text(resolve_under(root, str(inventory_arg), "InventoryPath")))
-        candidates = inventory.get("candidates", inventory if isinstance(inventory, list) else [])
-    selected = next((c for c in candidates if c.get("ready") is True), None) if isinstance(candidates, list) else None
-    return emit({"ok": selected is not None, "phase": "select-candidate", "selected_candidate": selected, "reason": "candidate selected" if selected else "no ready candidates"}, 0 if selected else 1)
-
-
 def command_collect_premerge(ctx: Context, args: dict[str, Any]) -> int:
     return collect_simple_ledger(ctx, args, "collect-premerge-ledger", "premerge-ledger.json")
 
@@ -2590,8 +2329,15 @@ def command_validate_skill_scenario(ctx: Context, args: dict[str, Any]) -> int:
     return emit({"ok": ok, "phase": "skill-scenarios", "skill": skill, "findings": findings}, 0 if ok else 1)
 
 
+FOCUSED_HANDLERS = load_handlers()
+
+
+def resolve_handler(command_name: str):
+    return FOCUSED_HANDLERS.get(command_name) or globals().get(command_name)
+
+
 def dispatch_command(ctx: Context, command_name: str, args: dict[str, Any]) -> int:
-    handler = globals().get(command_name)
+    handler = resolve_handler(command_name)
     if not callable(handler):
         raise ScriptError(f"unregistered command handler: {command_name}")
     return handler(ctx, args)

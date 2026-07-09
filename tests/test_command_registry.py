@@ -5,8 +5,7 @@ import unittest
 from shutil import copytree
 from pathlib import Path
 
-from scripts.lib.superpowers_project_command_registry import ScriptError, _COMMANDS, build_command_registry, resolve_command
-from scripts.lib.command_catalog import CommandSpec, load_command_catalog
+from scripts.lib.command_catalog import CommandSpec, ScriptError, _COMMANDS, build_command_registry, load_command_catalog, resolve_command
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,7 +36,7 @@ class CommandRegistryTests(unittest.TestCase):
 
     def test_unknown_path_fails_closed(self):
         with self.assertRaisesRegex(Exception, "unregistered script path"):
-            resolve_command("scripts/test-unknown.sh")
+            resolve_command("scripts/test-unknown.sh", ROOT)
 
     def test_registry_has_no_generic_failure_handlers(self):
         incomplete = {
@@ -54,7 +53,7 @@ class CommandRegistryTests(unittest.TestCase):
         finally:
             sys.path.pop(0)
         missing = sorted(
-            {handler for handler in _COMMANDS.values() if not callable(getattr(cli, handler, None))}
+            {handler for handler in _COMMANDS.values() if not callable(cli.resolve_handler(handler))}
         )
         self.assertEqual([], missing)
 

@@ -206,7 +206,7 @@ GitHub Actions runs the same validation command used locally:
 ./scripts/validate.sh
 ```
 
-Release gates and tag rules are documented in `docs/superpowers/RELEASE_POLICY.md`. The first release after this migration is `v0.2.0`.
+Release gates and tag rules are documented in `docs/superpowers/RELEASE_POLICY.md`. The current capability release is `v0.3.0`; local tag creation and remote publication are separate authority boundaries.
 
 The installable surface is declared in `.codex-plugin/runtime-package.yml`; historical specs and plans remain source history but do not churn the installed package hash. Validate inclusion and runtime reads with `./scripts/validate-runtime-package.py`.
 
