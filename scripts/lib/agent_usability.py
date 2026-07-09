@@ -38,8 +38,14 @@ def validate_trial_receipt(receipt: dict[str, Any], plugin_root: Path) -> None:
         raise TrialReceiptError("worker and verifier must be independent agents")
     if receipt.get("package_hash") != runtime_contract_hash(plugin_root):
         raise TrialReceiptError("trial receipt package hash is stale")
-    trial_root = Path(str(receipt.get("trial_root"))).resolve()
-    project_root = Path(str(receipt.get("project_root"))).resolve()
+    trial_root = Path(str(receipt.get("trial_root")))
+    project_root = Path(str(receipt.get("project_root")))
+    if not trial_root.is_absolute():
+        trial_root = plugin_root / trial_root
+    if not project_root.is_absolute():
+        project_root = plugin_root / project_root
+    trial_root = trial_root.resolve()
+    project_root = project_root.resolve()
     try:
         project_root.relative_to(trial_root)
     except ValueError as exc:
@@ -65,8 +71,8 @@ def validate_trial_receipt(receipt: dict[str, Any], plugin_root: Path) -> None:
     last = json.loads(lines[-1])
     if last.get("hash") != ledger.get("last_hash"):
         raise TrialReceiptError("event ledger hash does not match receipt")
-    if receipt.get("verifier_decision") not in {"pass", "blocked"}:
-        raise TrialReceiptError("independent verifier did not accept the expected outcome")
+    if receipt.get("verifier_decision") != receipt.get("expected_outcome"):
+        raise TrialReceiptError("independent verifier did not confirm the expected outcome")
 
 
 def validate_trial_set(receipts: list[dict[str, Any]], plugin_root: Path) -> dict[str, Any]:

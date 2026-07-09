@@ -94,13 +94,15 @@ def main() -> int:
         last = json.loads(ledger_path.read_text().splitlines()[-1])
         result_file = project / "result.txt"
         expected = "pass" if scenario == "auto-golden" else "blocked"
+        trial_rel = trial_root.relative_to(plugin_root).as_posix()
+        project_rel = project.relative_to(plugin_root).as_posix()
         receipt = {
             "schema_version": 1, "trial_id": f"{scenario}-{repetition}", "scenario": scenario, "repetition": repetition,
             "worker": {"id": worker_id}, "verifier": {"id": verifier_id}, "package_hash": runtime_contract_hash(plugin_root),
-            "trial_root": str(trial_root), "project_root": str(project), "expected_outcome": expected,
+            "trial_root": trial_rel, "project_root": project_rel, "expected_outcome": expected,
             "observed_outcome": worker["observed_outcome"], "friction": worker["friction"], "user_input_calls": 0,
             "external_mutations": 0, "repository_evidence": [{"path": "result.txt", "sha256": hashlib.sha256(result_file.read_bytes()).hexdigest()}],
-            "event_ledger": {"path": str(ledger_path), "last_hash": last["hash"]}, "worker_claim": worker["claim"],
+            "event_ledger": {"path": ledger_path.relative_to(project).as_posix(), "last_hash": last["hash"]}, "worker_claim": worker["claim"],
             "verifier_decision": verifier["decision"], "verifier_reason": verifier["reason"],
         }
         receipt_path = trial_root / "receipt.json"
