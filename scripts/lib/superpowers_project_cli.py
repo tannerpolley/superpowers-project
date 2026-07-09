@@ -1105,6 +1105,18 @@ def command_test_workflow_runtime(ctx: Context, args: dict[str, Any]) -> int:
     return result.returncode
 
 
+def command_test_e2e_project_workflow(ctx: Context, args: dict[str, Any]) -> int:
+    """Run the disposable workflow runtime plus active-backlog proof as one path."""
+    runtime = run(["bash", str(ctx.plugin_root / "scripts" / "test-workflow-runtime.sh")], ctx.repo_root)
+    backlog = run(["bash", str(ctx.plugin_root / "scripts" / "validate-active-backlog.sh"), "-RepoRoot", str(ctx.repo_root)], ctx.repo_root)
+    checks = [
+        {"name": "workflow runtime", "ok": runtime.returncode == 0, "reason": runtime.stderr[-300:] or runtime.stdout[-300:]},
+        {"name": "active backlog", "ok": backlog.returncode == 0, "reason": backlog.stderr[-300:] or backlog.stdout[-300:]},
+    ]
+    ok = all(check["ok"] for check in checks)
+    return emit({"ok": ok, "phase": "e2e-project-workflow", "checks": checks}, 0 if ok else 1)
+
+
 def command_validate_skill_metadata_contract(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     findings = []
