@@ -24,6 +24,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Set up Node and Codex CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Codex CLI
+        shell: bash
+        run: npm install --global @openai/codex@0.144.0
+
       - name: Install validation dependencies
         shell: bash
         run: |
