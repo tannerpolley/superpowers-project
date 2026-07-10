@@ -1,0 +1,1 @@
+{"decision":"blocked","reason":"Oracle expects blocked. Repository result remains pending, and the ledger replays successfully with valid authorization and projection matches, exactly one mutation, candidate one selected, no candidate two selection, and a stopped status caused by missing continuation proof."}

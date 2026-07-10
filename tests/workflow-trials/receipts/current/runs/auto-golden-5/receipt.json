@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "trial_id": "auto-golden-5",
+  "scenario": "auto-golden",
+  "repetition": 5,
+  "worker": {
+    "id": "019f49f2-a3f0-7223-9567-7f4eff4ad24e"
+  },
+  "verifier": {
+    "id": "019f49f3-94ff-7400-8ed0-e19057fa7570"
+  },
+  "package_hash": "2b46f68648fc0bd598760b4eada859c6013b18aa7ac3505227ed299ca626e3bd",
+  "trial_root": "tests/workflow-trials/receipts/current/runs/auto-golden-5",
+  "project_root": "tests/workflow-trials/receipts/current/runs/auto-golden-5/project",
+  "expected_outcome": "pass",
+  "observed_outcome": "pass",
+  "friction": 5,
+  "user_input_calls": 0,
+  "external_mutations": 0,
+  "repository_evidence": [
+    {
+      "path": "result.txt",
+      "sha256": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1"
+    }
+  ],
+  "event_ledger": {
+    "path": ".superpowers/runs/auto-golden-5/events.jsonl",
+    "last_hash": "8117faf978ca4d18b208e67ffe0895a82e1d98a8ea6fc98ae1770ad0985fd51c"
+  },
+  "worker_claim": {
+    "summary": "Authorized candidate one completed: result.txt is complete, with mutation, acceptance, verifier, and route-completion proof recorded."
+  },
+  "verifier_decision": "pass",
+  "verifier_reason": "Repository result is complete, and the replayable hash-chained ledger matches the oracle: one authorized candidate was selected, exactly one mutation was applied, the candidate was accepted and verified, no user-input or external-mutation events occurred, and the run completed."
+}

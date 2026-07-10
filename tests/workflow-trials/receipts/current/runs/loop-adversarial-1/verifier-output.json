@@ -1,0 +1,1 @@
+{"decision":"blocked","reason":"The ledger replays successfully with intact sequence and hashes, matches run.json and the authorization hash, records exactly one mutation of candidate one, and contains no second-candidate selection or further mutation. result.txt remains pending, with no user-input or external-mutation evidence, matching the oracle's blocked outcome."}

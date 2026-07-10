@@ -1,0 +1,1 @@
+{"decision":"pass","reason":"Repository result is complete, matching the oracle; the event ledger is replayable with valid sequence, hash chain, and authorization hash; it records one mutation, zero user-input calls, zero external mutations, verifier_passed, and run_completed."}

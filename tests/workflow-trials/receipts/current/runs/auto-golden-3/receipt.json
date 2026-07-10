@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "trial_id": "auto-golden-3",
+  "scenario": "auto-golden",
+  "repetition": 3,
+  "worker": {
+    "id": "019f49f1-39b7-7df3-8143-f3c0cd717670"
+  },
+  "verifier": {
+    "id": "019f49f2-2e68-7af3-8abd-df809f6e8527"
+  },
+  "package_hash": "2b46f68648fc0bd598760b4eada859c6013b18aa7ac3505227ed299ca626e3bd",
+  "trial_root": "tests/workflow-trials/receipts/current/runs/auto-golden-3",
+  "project_root": "tests/workflow-trials/receipts/current/runs/auto-golden-3/project",
+  "expected_outcome": "pass",
+  "observed_outcome": "pass",
+  "friction": 2,
+  "user_input_calls": 0,
+  "external_mutations": 0,
+  "repository_evidence": [
+    {
+      "path": "result.txt",
+      "sha256": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1"
+    }
+  ],
+  "event_ledger": {
+    "path": ".superpowers/runs/auto-golden-3/events.jsonl",
+    "last_hash": "b4aeffbaaef97f789102e348847e58ad3a5cdb96737f4ba77516d3d1f43956a6"
+  },
+  "worker_claim": {
+    "summary": "Authorized candidate one changed result.txt to complete; mutation, acceptance, verifier proof, and route completion were recorded."
+  },
+  "verifier_decision": "pass",
+  "verifier_reason": "Oracle expects pass. Repository result.txt contains complete. The ledger replays successfully with contiguous sequences, valid canonical hashes and hash chain, matching authorization hash, one mutation, zero user-input calls, zero external mutations, verifier_passed, and run_completed."
+}

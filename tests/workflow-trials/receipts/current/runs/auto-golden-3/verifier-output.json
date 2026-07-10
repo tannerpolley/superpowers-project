@@ -1,0 +1,1 @@
+{"decision":"pass","reason":"Oracle expects pass. Repository result.txt contains complete. The ledger replays successfully with contiguous sequences, valid canonical hashes and hash chain, matching authorization hash, one mutation, zero user-input calls, zero external mutations, verifier_passed, and run_completed."}

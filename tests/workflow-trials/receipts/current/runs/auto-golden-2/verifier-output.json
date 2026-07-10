@@ -1,0 +1,1 @@
+{"decision":"pass","reason":"Oracle expects pass; result.txt is exactly \"complete\\n\", the canonical event ledger replays successfully with an intact hash chain, one authorized candidate and one mutation, and run.json matches the replayed completed state with acceptance and verification evidence."}

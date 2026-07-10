@@ -1,0 +1,9 @@
+{
+  "source": "trial-fixture",
+  "mode": "looping",
+  "repo_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation/tests/workflow-trials/receipts/current/runs/loop-adversarial-2/project",
+  "candidate_scope": [
+    "one",
+    "two"
+  ]
+}
