@@ -35,6 +35,11 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
         for path in schemas:
             assert_strict_objects(json.loads(path.read_text(encoding="utf-8")))
 
+    def test_verifier_prompt_distinguishes_route_outcome_from_verdict(self):
+        runner = (ROOT / "scripts" / "run-agent-usability-trials.py").read_text(encoding="utf-8")
+        self.assertIn("decision` field names the observed route outcome", runner)
+        self.assertIn("otherwise use `reject`", runner)
+
     def fixture(self, root: Path):
         project = root / "project"
         run = project / ".superpowers" / "runs" / "trial"

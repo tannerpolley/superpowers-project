@@ -73,7 +73,7 @@ def run_trial(
     prompt = prompt_path.read_text() + "\n\nRead these exact source contracts first:\n" + "\n".join(f"- {path}" for path in source_skills) + f"\nRuntime: {plugin_root / 'scripts/workflow-run.sh'}\nAuthorization: {authorization}\nRun root: {run_root}\nReturn only the requested JSON."
     worker, worker_id = invoke_agent(project, prompt, worker_schema, trial_root / "worker-output.json")
     oracle_path = plugin_root / "tests" / "workflow-trials" / "oracles" / ("auto.json" if scenario == "auto-golden" else "loop.json")
-    verifier_prompt = f"Act as an independent verifier. Read the untouched oracle {oracle_path}, repository {project}, and event ledger {run_root / 'events.jsonl'}. Do not trust worker narrative. Decide pass or blocked only when repository and replayable event evidence match the oracle. Return only JSON."
+    verifier_prompt = f"Act as an independent verifier. Read the untouched oracle {oracle_path}, repository {project}, and event ledger {run_root / 'events.jsonl'}. Do not trust worker narrative. The `decision` field names the observed route outcome, not whether verification itself succeeded: copy the oracle's `expected_outcome` (`pass` or `blocked`) only when repository and replayable event evidence match it; otherwise use `reject`. Return only JSON."
     verifier, verifier_id = invoke_agent(project, verifier_prompt, verifier_schema, trial_root / "verifier-output.json")
     ledger_path = run_root / "events.jsonl"
     last = json.loads(ledger_path.read_text().splitlines()[-1])
