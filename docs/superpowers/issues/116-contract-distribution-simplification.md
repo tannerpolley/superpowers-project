@@ -1,8 +1,8 @@
 # Simplify Workflow Contracts And Plugin Distribution
 
-Pre-Publication: true
+Pre-Publication: false
 
-GitHub Issue: Pending publication
+GitHub Issue: https://github.com/tannerpolley/superpowers-project/issues/116
 Source Spec: docs/superpowers/specs/2026-07-10-contract-distribution-simplification-design.md
 Source Plan: docs/superpowers/plans/2026-07-10-contract-distribution-simplification-plan.md
 Milestone: M2 - Distribution

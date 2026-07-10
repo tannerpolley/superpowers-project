@@ -1,7 +1,7 @@
 # Make execution and release gates fail closed
 
-**Pre-Publication:** true
-**GitHub Issue:** pending-publication
+**Pre-Publication:** false
+**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/113
 **Source Artifact:** `docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md`
 **Source Plan:** `docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md`
 **Milestone:** M1

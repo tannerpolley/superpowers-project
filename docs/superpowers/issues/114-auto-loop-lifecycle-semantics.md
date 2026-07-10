@@ -1,8 +1,8 @@
 # Make Auto And Looping Complete Outcome Lifecycles
 
-Pre-Publication: true
+Pre-Publication: false
 
-GitHub Issue: Pending publication
+GitHub Issue: https://github.com/tannerpolley/superpowers-project/issues/114
 Source Spec: docs/superpowers/specs/2026-07-10-auto-loop-lifecycle-semantics-design.md
 Source Plan: docs/superpowers/plans/2026-07-10-auto-loop-lifecycle-semantics-plan.md
 Milestone: M0 - Governance

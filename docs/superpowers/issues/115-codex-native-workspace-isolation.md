@@ -1,7 +1,7 @@
 # Add Codex-Native Workspace Isolation
 
-**Pre-Publication:** true
-**GitHub Issue:** pre-publication
+**Pre-Publication:** false
+**GitHub Issue:** https://github.com/tannerpolley/superpowers-project/issues/115
 **Source Artifact:** `docs/superpowers/specs/2026-07-10-codex-native-workspace-isolation-design.md`
 **Source Plan:** `docs/superpowers/plans/2026-07-10-codex-native-workspace-isolation-plan.md`
 **Milestone:** M1
