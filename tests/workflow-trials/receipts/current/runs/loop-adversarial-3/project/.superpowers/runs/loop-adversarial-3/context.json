@@ -1,8 +1,8 @@
 {
-  "authorization_hash": "c237cb4ec1fd6f54f03f5da186438ca170c6aef9d9be879d34b4c2e586df00cb",
-  "authorization_path": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation/tests/workflow-trials/receipts/current/runs/loop-adversarial-3/project/authorization.json",
+  "authorization_hash": "ca38ceac798feaf1fc23be9602588bcc53e3693165c4ebba5072f01837313976",
+  "authorization_path": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/tests/workflow-trials/receipts/current/runs/loop-adversarial-3/project/authorization.json",
   "mode": "looping",
-  "plugin_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation",
-  "project_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation/tests/workflow-trials/receipts/current/runs/loop-adversarial-3/project",
+  "plugin_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project",
+  "project_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/tests/workflow-trials/receipts/current/runs/loop-adversarial-3/project",
   "run_id": "loop-adversarial-3"
 }

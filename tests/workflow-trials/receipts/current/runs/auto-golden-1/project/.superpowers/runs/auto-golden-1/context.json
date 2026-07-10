@@ -1,8 +1,8 @@
 {
-  "authorization_hash": "bf7778d2f999fe4a1016ce1111643acc0a3945fb528ff4d3c921141cc6b96edd",
-  "authorization_path": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation/tests/workflow-trials/receipts/current/runs/auto-golden-1/project/authorization.json",
+  "authorization_hash": "5a0707d2704336e145c0d3a6f0d9b33addfa1013f079e3e71c8c909015f4e52b",
+  "authorization_path": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/tests/workflow-trials/receipts/current/runs/auto-golden-1/project/authorization.json",
   "mode": "auto",
-  "plugin_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation",
-  "project_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation/tests/workflow-trials/receipts/current/runs/auto-golden-1/project",
+  "plugin_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project",
+  "project_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/tests/workflow-trials/receipts/current/runs/auto-golden-1/project",
   "run_id": "auto-golden-1"
 }

@@ -1,1 +1,1 @@
-{"observed_outcome":"pass","friction":5,"claim":{"summary":"Authorized candidate one completed: result.txt is complete, with mutation, acceptance, verifier, and route-completion proof recorded."}}
+{"observed_outcome":"pass","friction":1,"claim":{"summary":"Authorized candidate one completed; result.txt is complete, with mutation, acceptance, verifier proof, and route completion recorded."}}

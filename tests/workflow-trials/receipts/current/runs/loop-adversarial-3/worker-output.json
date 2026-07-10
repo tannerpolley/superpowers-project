@@ -1,1 +1,1 @@
-{"observed_outcome":"blocked","friction":1,"claim":{"summary":"Candidate two was rejected because candidate one lacked acceptance, verifier, budget-recheck, and continuation evidence. The run stopped with one mutation and candidate one still selected."}}
+{"observed_outcome":"blocked","friction":1,"claim":{"summary":"Candidate two was blocked because acceptance, verifier, budget-recheck, and continuation proof were absent; the event count remained 3 and mutation count remained 1."}}

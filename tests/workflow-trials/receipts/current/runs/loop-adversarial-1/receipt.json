@@ -4,12 +4,12 @@
   "scenario": "loop-adversarial",
   "repetition": 1,
   "worker": {
-    "id": "019f49f2-f20d-74e3-94a2-af455fb4b727"
+    "id": "019f49fc-2cb4-7c70-9035-5b648f48d4da"
   },
   "verifier": {
-    "id": "019f49f3-da42-7091-8d5c-88d3a40c7fc5"
+    "id": "019f49fc-acd5-7e40-b898-086da64361af"
   },
-  "package_hash": "2b46f68648fc0bd598760b4eada859c6013b18aa7ac3505227ed299ca626e3bd",
+  "package_hash": "8aa4c73339717a238242a8475fef6c1cefed91c4032db81e5476713aedb26bc3",
   "trial_root": "tests/workflow-trials/receipts/current/runs/loop-adversarial-1",
   "project_root": "tests/workflow-trials/receipts/current/runs/loop-adversarial-1/project",
   "expected_outcome": "blocked",
@@ -25,11 +25,11 @@
   ],
   "event_ledger": {
     "path": ".superpowers/runs/loop-adversarial-1/events.jsonl",
-    "last_hash": "b2399e0454a3c0669951be94c319495c313a351a57be61a048f719759bf92f84"
+    "last_hash": "5c77b39b6c69ec32c07134c608fdaa6a577433f5957fb0583892f016eb6f06c7"
   },
   "worker_claim": {
-    "summary": "Candidate two was blocked because candidate one lacks acceptance, verifier, budget-recheck, and continuation proof; the ledger remained at one mutation and three events."
+    "summary": "Candidate two was blocked because acceptance, verifier, budget-recheck, and continuation evidence were absent; the ledger remains at three events with candidate one selected and exactly one mutation."
   },
   "verifier_decision": "blocked",
-  "verifier_reason": "The ledger replays successfully with intact sequence and hashes, matches run.json and the authorization hash, records exactly one mutation of candidate one, and contains no second-candidate selection or further mutation. result.txt remains pending, with no user-input or external-mutation evidence, matching the oracle's blocked outcome."
+  "verifier_reason": "Replayable hash-chained evidence matches the oracle: exactly one mutation was applied to candidate one; candidate two was never selected; no acceptance, verification, budget-recheck, continuation, user-input, or external-mutation evidence exists. Authorization, project scope, and the derived run projection also match."
 }

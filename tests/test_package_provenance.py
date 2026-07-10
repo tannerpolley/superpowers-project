@@ -64,6 +64,23 @@ class PackageProvenanceTests(unittest.TestCase):
             shutil.copytree(root, copy)
             self.assertEqual(runtime_contract_hash(root), runtime_contract_hash(copy))
 
+    def test_ambient_write_permissions_do_not_change_hash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_manifest(root)
+            (root / "scripts").mkdir()
+            script = root / "scripts" / "run.sh"
+            script.write_text("#!/usr/bin/env bash\n")
+            script.chmod(0o755)
+            executable_hash = runtime_contract_hash(root)
+            script.chmod(0o775)
+            self.assertEqual(executable_hash, runtime_contract_hash(root))
+            script.chmod(0o644)
+            regular_hash = runtime_contract_hash(root)
+            self.assertNotEqual(executable_hash, regular_hash)
+            script.chmod(0o664)
+            self.assertEqual(regular_hash, runtime_contract_hash(root))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -60,9 +60,10 @@ def runtime_manifest(plugin_root: Path) -> list[PackageEntry]:
     entries: list[PackageEntry] = []
     for path in sorted(_files(root, package), key=lambda p: p.relative_to(root).as_posix()):
         data = path.read_bytes()
+        mode = 0o755 if path.stat().st_mode & 0o111 else 0o644
         entries.append(PackageEntry(
             path=path.relative_to(root).as_posix(),
-            mode=path.stat().st_mode & 0o777,
+            mode=mode,
             length=len(data),
             sha256=hashlib.sha256(data).hexdigest(),
         ))

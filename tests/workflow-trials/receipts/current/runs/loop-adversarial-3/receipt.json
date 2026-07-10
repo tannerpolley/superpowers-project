@@ -4,12 +4,12 @@
   "scenario": "loop-adversarial",
   "repetition": 3,
   "worker": {
-    "id": "019f49f3-acf2-7f00-b6e9-bc7db8bfd407"
+    "id": "019f49fc-f79e-77f1-ae3f-e2ba64cc86ad"
   },
   "verifier": {
-    "id": "019f49f4-7c9b-7cf1-a73c-50ee1b3e291b"
+    "id": "019f49fd-b2da-7fd0-8147-8267f0340f48"
   },
-  "package_hash": "2b46f68648fc0bd598760b4eada859c6013b18aa7ac3505227ed299ca626e3bd",
+  "package_hash": "8aa4c73339717a238242a8475fef6c1cefed91c4032db81e5476713aedb26bc3",
   "trial_root": "tests/workflow-trials/receipts/current/runs/loop-adversarial-3",
   "project_root": "tests/workflow-trials/receipts/current/runs/loop-adversarial-3/project",
   "expected_outcome": "blocked",
@@ -25,11 +25,11 @@
   ],
   "event_ledger": {
     "path": ".superpowers/runs/loop-adversarial-3/events.jsonl",
-    "last_hash": "7ba09cde7daac2fae2b3b1b18fbe44bcdf7eb220ce8c89c8845bd77b64bf9ba9"
+    "last_hash": "cd8bb7f09852544cda0d6116a9a3c3ddefb2f12ebf26822a552fbfc20327dd81"
   },
   "worker_claim": {
-    "summary": "Candidate two was rejected because candidate one lacked acceptance, verifier, budget-recheck, and continuation evidence. The run stopped with one mutation and candidate one still selected."
+    "summary": "Candidate two was blocked because acceptance, verifier, budget-recheck, and continuation proof were absent; the event count remained 3 and mutation count remained 1."
   },
   "verifier_decision": "blocked",
-  "verifier_reason": "Oracle expects blocked. Repository result remains pending, and the ledger replays successfully with valid authorization and projection matches, exactly one mutation, candidate one selected, no candidate two selection, and a stopped status caused by missing continuation proof."
+  "verifier_reason": "Oracle expects blocked. The hash-chained ledger replays successfully and matches run.json: exactly one mutation occurred, only candidate one was selected, no second candidate was selected, and no acceptance, verifier, budget-recheck, continuation, user-input, or external-mutation evidence exists. The authorization hash also matches the immutable run context, and result.txt remains pending."
 }

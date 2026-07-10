@@ -4,17 +4,17 @@
   "scenario": "auto-golden",
   "repetition": 3,
   "worker": {
-    "id": "019f49f1-39b7-7df3-8143-f3c0cd717670"
+    "id": "019f49fa-c5e6-7263-b2ce-50b17c884388"
   },
   "verifier": {
-    "id": "019f49f2-2e68-7af3-8abd-df809f6e8527"
+    "id": "019f49fb-9f68-74c0-9ac6-113eec73c8ba"
   },
-  "package_hash": "2b46f68648fc0bd598760b4eada859c6013b18aa7ac3505227ed299ca626e3bd",
+  "package_hash": "8aa4c73339717a238242a8475fef6c1cefed91c4032db81e5476713aedb26bc3",
   "trial_root": "tests/workflow-trials/receipts/current/runs/auto-golden-3",
   "project_root": "tests/workflow-trials/receipts/current/runs/auto-golden-3/project",
   "expected_outcome": "pass",
   "observed_outcome": "pass",
-  "friction": 2,
+  "friction": 5,
   "user_input_calls": 0,
   "external_mutations": 0,
   "repository_evidence": [
@@ -25,11 +25,11 @@
   ],
   "event_ledger": {
     "path": ".superpowers/runs/auto-golden-3/events.jsonl",
-    "last_hash": "b4aeffbaaef97f789102e348847e58ad3a5cdb96737f4ba77516d3d1f43956a6"
+    "last_hash": "73e2e9194212455e54870064dd26dc22689b5965814402142bb3aa8ff4573212"
   },
   "worker_claim": {
-    "summary": "Authorized candidate one changed result.txt to complete; mutation, acceptance, verifier proof, and route completion were recorded."
+    "summary": "Authorized candidate one completed: result.txt is complete, with mutation, acceptance, verifier, and route-completion proof recorded."
   },
   "verifier_decision": "pass",
-  "verifier_reason": "Oracle expects pass. Repository result.txt contains complete. The ledger replays successfully with contiguous sequences, valid canonical hashes and hash chain, matching authorization hash, one mutation, zero user-input calls, zero external mutations, verifier_passed, and run_completed."
+  "verifier_reason": "Oracle expects pass. Repository contains result.txt with exactly \"complete\"; the ledger is a valid replayable six-event SHA-256 hash chain, records exactly one mutation, no user-input calls or external mutations, candidate acceptance and verification, and completed status. run.json agrees with the ledger."
 }
