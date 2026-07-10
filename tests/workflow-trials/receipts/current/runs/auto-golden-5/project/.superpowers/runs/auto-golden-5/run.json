@@ -1,0 +1,17 @@
+{
+  "accepted_candidates": [
+    "one"
+  ],
+  "budget_rechecks": [],
+  "continuation_grants": [],
+  "events": 6,
+  "last_hash": "8117faf978ca4d18b208e67ffe0895a82e1d98a8ea6fc98ae1770ad0985fd51c",
+  "mutation_count": 1,
+  "project_health_verified": false,
+  "run_id": "auto-golden-5",
+  "selected_candidate": "one",
+  "status": "completed",
+  "verified_candidates": [
+    "one"
+  ]
+}

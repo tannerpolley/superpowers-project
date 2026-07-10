@@ -1,0 +1,13 @@
+{
+  "accepted_candidates": [],
+  "budget_rechecks": [],
+  "continuation_grants": [],
+  "events": 4,
+  "last_hash": "7ba09cde7daac2fae2b3b1b18fbe44bcdf7eb220ce8c89c8845bd77b64bf9ba9",
+  "mutation_count": 1,
+  "project_health_verified": false,
+  "run_id": "loop-adversarial-3",
+  "selected_candidate": "one",
+  "status": "stopped",
+  "verified_candidates": []
+}

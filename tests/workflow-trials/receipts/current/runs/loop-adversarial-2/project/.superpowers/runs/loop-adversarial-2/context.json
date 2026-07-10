@@ -1,0 +1,8 @@
+{
+  "authorization_hash": "84ecd3314ca736c367056af6c6edfd3bc801dcb7307c3ffc48a77850e4b6c6ad",
+  "authorization_path": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation/tests/workflow-trials/receipts/current/runs/loop-adversarial-2/project/authorization.json",
+  "mode": "looping",
+  "plugin_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation",
+  "project_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/.worktrees/complete-plugin-remediation/tests/workflow-trials/receipts/current/runs/loop-adversarial-2/project",
+  "run_id": "loop-adversarial-2"
+}
