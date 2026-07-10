@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 import re
 import subprocess
 from pathlib import Path
@@ -25,7 +26,28 @@ class EvidenceError(ValueError):
 
 
 def canonical_json(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    _validate_json_value(value, "$")
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+
+
+def _validate_json_value(value: object, path: str) -> None:
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise EvidenceError("schema_invalid", f"non-finite number at {path}")
+        return
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _validate_json_value(item, f"{path}[{index}]")
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise EvidenceError("schema_invalid", f"non-string object key at {path}")
+            _validate_json_value(item, f"{path}.{key}")
+        return
+    raise EvidenceError("schema_invalid", f"unsupported JSON value at {path}")
 
 
 def hash_ref(value: object) -> HashRef:
@@ -200,7 +222,11 @@ def register_evidence_kind(registration: EvidenceKindRegistration) -> None:
     if not registration.kind or not registration.version:
         raise EvidenceError("schema_invalid", "evidence registration requires kind and version")
     key = (registration.kind, registration.version)
-    if key in _REGISTRATIONS:
+    existing = _REGISTRATIONS.get(key)
+    if existing is not None:
+        if existing.validator is None and registration.validator is not None:
+            _REGISTRATIONS[key] = registration
+            return
         raise EvidenceError("schema_invalid", f"duplicate_evidence_kind:{registration.kind}@{registration.version}")
     _REGISTRATIONS[key] = registration
 

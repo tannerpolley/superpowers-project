@@ -17,6 +17,10 @@ class RuntimePackageTests(unittest.TestCase):
         paths = {entry.path for entry in runtime_manifest(ROOT)}
         self.assertIn("docs/superpowers/workflow-contract.yml", paths)
         self.assertIn("docs/superpowers/capabilities.yml", paths)
+        # The manifest already includes scripts/**, so kernel modules need no per-file manifest edits.
+        self.assertIn("scripts/lib/evidence_schema.py", paths)
+        self.assertIn("scripts/lib/evidence_collectors.py", paths)
+        self.assertIn("scripts/lib/commands/gates.py", paths)
         self.assertNotIn("docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md", paths)
         self.assertEqual([], validate_runtime_reads(ROOT, package))
 

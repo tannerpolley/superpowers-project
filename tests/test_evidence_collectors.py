@@ -7,14 +7,16 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+import scripts.lib.evidence_collectors as collectors
 from scripts.lib.evidence_collectors import (
     CollectionRequest,
     build_evidence_envelope,
     collect_command_result,
     collect_git_state,
 )
-from scripts.lib.evidence_schema import hash_ref, parse_envelope
+from scripts.lib.evidence_schema import EvidenceError, hash_ref, parse_envelope
 
 
 def git(root: Path, *args: str) -> str:
@@ -46,11 +48,37 @@ class EvidenceCollectorTests(unittest.TestCase):
         self.assertEqual(0, result.payload["status_exit_code"])
 
     def test_failed_command_is_observed_not_promoted(self):
-        result = collect_command_result(self.repo, ["git", "rev-parse", "missing-ref"])
+        result = collect_command_result(self.repo, "git_missing_ref")
         self.assertNotEqual(0, result.payload["exit_code"])
         self.assertIn("stdout_hash", result.payload)
         self.assertIn("stderr_hash", result.payload)
         self.assertNotIn("ok", result.payload)
+
+    def test_unregistered_commands_cannot_execute_or_mutate(self):
+        marker = self.repo / "mutated.txt"
+        for command in (
+            ["sh", "-c", f"touch {marker}"],
+            ["python3", "-c", f"open({str(marker)!r}, 'w').close()"],
+            ["git", "commit", "--allow-empty", "-m", "forged"],
+        ):
+            with self.subTest(command=command):
+                with self.assertRaisesRegex(EvidenceError, "collector_untrusted"):
+                    collect_command_result(self.repo, command)  # type: ignore[arg-type]
+        self.assertFalse(marker.exists())
+
+    def test_git_observations_invoke_each_read_only_field_once(self):
+        with patch.object(collectors, "_observe_process", wraps=collectors._observe_process) as observed:
+            collect_git_state(self.repo)
+        self.assertEqual(
+            [call.args[1] for call in observed.call_args_list],
+            [
+                collectors.READ_ONLY_COMMANDS["git_status"],
+                collectors.READ_ONLY_COMMANDS["git_head"],
+                collectors.READ_ONLY_COMMANDS["git_branch"],
+                collectors.READ_ONLY_COMMANDS["git_common_dir"],
+                collectors.READ_ONLY_COMMANDS["git_remote_origin"],
+            ],
+        )
 
     def test_envelope_builder_binds_collected_evidence(self):
         request = CollectionRequest(
@@ -64,7 +92,7 @@ class EvidenceCollectorTests(unittest.TestCase):
             },
             source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
             target={"task_id": None, "workspace_id": "local", "branch": "main"},
-            commands=(("git", "status", "--short"),),
+            commands=("git_status",),
             provider_inputs={
                 "reviews": [{"approved": True, "blocking": False}],
                 "authorization": {"authorized": True},
@@ -78,15 +106,17 @@ class EvidenceCollectorTests(unittest.TestCase):
         self.assertEqual("main", parsed.target["branch"])
 
     def test_public_collection_without_request_fails_with_structured_error(self):
-        process = subprocess.run(
-            ["bash", str(Path(__file__).parents[1] / "skills/resolve-issue/scripts/collect-pr-ready-ledger.sh")],
-            cwd=Path(__file__).parents[1],
-            text=True,
-            capture_output=True,
-        )
-        self.assertNotEqual(0, process.returncode)
-        payload = json.loads(process.stdout)
-        self.assertEqual("evidence_missing", payload["error"]["code"])
+        root = Path(__file__).parents[1]
+        for launcher in (
+            "skills/resolve-issue/scripts/collect-pr-ready-ledger.sh",
+            "skills/merge-changes/scripts/collect-premerge-ledger.sh",
+            "skills/merge-changes/scripts/collect-closeout-ledger.sh",
+        ):
+            with self.subTest(launcher=launcher):
+                process = subprocess.run(["bash", str(root / launcher)], cwd=root, text=True, capture_output=True)
+                self.assertNotEqual(0, process.returncode)
+                payload = json.loads(process.stdout)
+                self.assertEqual("evidence_missing", payload["error"]["code"])
 
 
 if __name__ == "__main__":

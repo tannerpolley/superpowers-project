@@ -3,11 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import hashlib
-import json
 from pathlib import Path
 import subprocess
-from typing import Any, Mapping, Sequence
+from typing import Mapping, Sequence
 
 try:
     from .command_support import resolve_under
@@ -19,6 +17,16 @@ except ImportError:  # pragma: no cover - CLI loads scripts/lib as a top-level p
 
 def _observed_at() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+READ_ONLY_COMMANDS: dict[str, tuple[str, ...]] = {
+    "git_status": ("git", "status", "--short"),
+    "git_head": ("git", "rev-parse", "HEAD"),
+    "git_branch": ("git", "branch", "--show-current"),
+    "git_common_dir": ("git", "rev-parse", "--git-common-dir"),
+    "git_remote_origin": ("git", "remote", "get-url", "origin"),
+    "git_missing_ref": ("git", "rev-parse", "missing-ref"),
+}
 
 
 def _observe_process(root: Path, argv: Sequence[str], timeout: int = 15) -> dict[str, object]:
@@ -41,6 +49,8 @@ def _observe_process(root: Path, argv: Sequence[str], timeout: int = 15) -> dict
             "stdout_hash": hash_bytes_ref(stdout),
             "stderr_hash": hash_bytes_ref(stderr),
             "timed_out": False,
+            "_stdout_text": result.stdout,
+            "_stderr_text": result.stderr,
         }
     except subprocess.TimeoutExpired as exc:
         stdout = (exc.stdout or b"") if isinstance(exc.stdout, bytes) else str(exc.stdout or "").encode()
@@ -51,6 +61,8 @@ def _observe_process(root: Path, argv: Sequence[str], timeout: int = 15) -> dict
             "stdout_hash": hash_bytes_ref(stdout),
             "stderr_hash": hash_bytes_ref(stderr),
             "timed_out": True,
+            "_stdout_text": stdout.decode("utf-8", errors="replace"),
+            "_stderr_text": stderr.decode("utf-8", errors="replace"),
         }
     except OSError as exc:
         return {
@@ -59,6 +71,8 @@ def _observe_process(root: Path, argv: Sequence[str], timeout: int = 15) -> dict
             "stdout_hash": hash_bytes_ref(b""),
             "stderr_hash": hash_ref({"error": type(exc).__name__, "message": str(exc)}),
             "timed_out": False,
+            "_stdout_text": "",
+            "_stderr_text": str(exc),
         }
 
 
@@ -86,7 +100,7 @@ class CollectionRequest:
     workflow: Mapping[str, object]
     source: Mapping[str, object]
     target: Mapping[str, object]
-    commands: Sequence[Sequence[str]]
+    commands: Sequence[str]
     provider_inputs: Mapping[str, object]
     prior_event_hash: str | None = None
 
@@ -106,11 +120,11 @@ class CollectionRequest:
             raise EvidenceError("schema_invalid", "collection request nested fields must be objects")
         if not isinstance(data["commands"], list):
             raise EvidenceError("schema_invalid", "collection request commands must be an array")
-        commands: list[tuple[str, ...]] = []
+        commands: list[str] = []
         for command in data["commands"]:
-            if not isinstance(command, list) or not command or not all(isinstance(part, str) and part for part in command):
-                raise EvidenceError("schema_invalid", "collection request command must be a non-empty argv array")
-            commands.append(tuple(command))
+            if not isinstance(command, str) or command not in READ_ONLY_COMMANDS:
+                raise EvidenceError("collector_untrusted", f"unsupported read-only command:{command}")
+            commands.append(command)
         return cls(
             gate=str(data["gate"]),
             repository_root=repository_root,
@@ -125,25 +139,20 @@ class CollectionRequest:
 
 def collect_git_state(root: Path) -> CollectorResult:
     root = Path(root).resolve()
-    status = _observe_process(root, ["git", "status", "--short"])
-    head = _observe_process(root, ["git", "rev-parse", "HEAD"])
-    branch = _observe_process(root, ["git", "branch", "--show-current"])
-    common = _observe_process(root, ["git", "rev-parse", "--git-common-dir"])
-    remote = _observe_process(root, ["git", "remote", "get-url", "origin"])
+    status = _observe_process(root, READ_ONLY_COMMANDS["git_status"])
+    head = _observe_process(root, READ_ONLY_COMMANDS["git_head"])
+    branch = _observe_process(root, READ_ONLY_COMMANDS["git_branch"])
+    common = _observe_process(root, READ_ONLY_COMMANDS["git_common_dir"])
+    remote = _observe_process(root, READ_ONLY_COMMANDS["git_remote_origin"])
     payload = {
         "status_exit_code": status["exit_code"],
         "status_stdout_hash": status["stdout_hash"],
-        "head": _read_git_value(root, ["git", "rev-parse", "HEAD"], head),
-        "branch": _read_git_value(root, ["git", "branch", "--show-current"], branch),
-        "git_common_dir": _canonical_process_path(root, _read_git_value(root, ["git", "rev-parse", "--git-common-dir"], common)),
-        "remote_identity": _normalize_remote(_read_git_value(root, ["git", "remote", "get-url", "origin"], remote)),
+        "head": str(head["_stdout_text"]).strip() if head["exit_code"] == 0 else "",
+        "branch": str(branch["_stdout_text"]).strip() if branch["exit_code"] == 0 else "",
+        "git_common_dir": _canonical_process_path(root, str(common["_stdout_text"]).strip() if common["exit_code"] == 0 else ""),
+        "remote_identity": _normalize_remote(str(remote["_stdout_text"]).strip() if remote["exit_code"] == 0 else ""),
     }
     return CollectorResult("git_state", "git-state@1", _observed_at(), payload)
-
-
-def _read_git_value(root: Path, argv: Sequence[str], observation: Mapping[str, object]) -> str:
-    result = subprocess.run(argv, cwd=root, stdin=subprocess.DEVNULL, text=True, capture_output=True, check=False, timeout=15)
-    return result.stdout.strip() if result.returncode == 0 else ""
 
 
 def _canonical_process_path(root: Path, value: str) -> str:
@@ -176,9 +185,13 @@ def collect_artifact_hashes(root: Path, paths: Sequence[str]) -> CollectorResult
     return CollectorResult("artifact_hashes", "artifact-hashes@1", _observed_at(), {"paths": hashes, "count": len(hashes)})
 
 
-def collect_command_result(root: Path, argv: Sequence[str]) -> CollectorResult:
-    observation = _observe_process(Path(root).resolve(), argv)
-    return CollectorResult("command_result", "command-result@1", _observed_at(), observation)
+def collect_command_result(root: Path, command_id: str) -> CollectorResult:
+    if not isinstance(command_id, str) or command_id not in READ_ONLY_COMMANDS:
+        raise EvidenceError("collector_untrusted", f"unsupported read-only command:{command_id}")
+    observation = _observe_process(Path(root).resolve(), READ_ONLY_COMMANDS[command_id])
+    payload = {key: value for key, value in observation.items() if not key.startswith("_")}
+    payload["command_id"] = command_id
+    return CollectorResult("command_result", "command-result@1", _observed_at(), payload)
 
 
 def collect_review_result(review: Mapping[str, object]) -> CollectorResult:
@@ -243,8 +256,8 @@ def build_evidence_envelope(request: CollectionRequest) -> dict[str, object]:
     results: list[CollectorResult] = [git_result]
     artifact_paths = [plan_path] + ([source["spec_path"]] if source["spec_path"] else [])
     results.append(collect_artifact_hashes(root, artifact_paths))
-    for argv in request.commands:
-        results.append(collect_command_result(root, argv))
+    for command_id in request.commands:
+        results.append(collect_command_result(root, command_id))
     provider_inputs = request.provider_inputs
     reviews = provider_inputs.get("reviews")
     if reviews is not None:

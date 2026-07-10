@@ -14,6 +14,7 @@ from scripts.lib.evidence_schema import (
     EvidenceKindRegistration,
     RuleResult,
     build_envelope_hash,
+    canonical_json,
     hash_ref,
     parse_envelope_json,
     register_evidence_kind,
@@ -123,6 +124,14 @@ class EvidenceSchemaTests(unittest.TestCase):
         envelope["workflow"]["authorization_hash"] = "a" * 64  # type: ignore[index]
         with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
             parse_envelope_json(json.dumps(envelope), self.repo)
+
+    def test_canonical_json_rejects_non_finite_and_non_json_values(self):
+        for value in (float("nan"), float("inf"), float("-inf"), {"nested": [float("nan")]}):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
+                    canonical_json(value)
+        with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
+            canonical_json({"unsupported": {"a", "b"}})
         envelope = make_envelope(self.repo)
         envelope["workflow"]["untrusted_success"] = True  # type: ignore[index]
         with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
@@ -139,12 +148,19 @@ class EvidenceSchemaTests(unittest.TestCase):
             parse_envelope_json(json.dumps(envelope), self.repo)
 
     def test_registered_evidence_kind_round_trips_and_receipt_is_bound(self):
-        register_evidence_kind(EvidenceKindRegistration("fixture_workspace_receipt", "1"))
+        seen: list[dict[str, object]] = []
+
+        def validate_workspace(payload):
+            seen.append(dict(payload))
+            if payload.get("provider") != "fixture":
+                raise EvidenceError("schema_invalid", "workspace provider is invalid")
+
+        register_evidence_kind(EvidenceKindRegistration("workspace_receipt", "1", validate_workspace))
         envelope = make_envelope(self.repo)
         envelope["evidence"].append(  # type: ignore[union-attr]
             {
-                "kind": "fixture_workspace_receipt",
-                "collector": "fixture-workspace-receipt@1",
+                "kind": "workspace_receipt",
+                "collector": "registered-evidence@1",
                 "observed_at": "2026-07-10T12:00:01Z",
                 "payload": {"provider": "fixture", "workspace_id": "local-checkout"},
             }
@@ -152,11 +168,14 @@ class EvidenceSchemaTests(unittest.TestCase):
         envelope["evidence"][-1]["payload_hash"] = hash_ref(envelope["evidence"][-1]["payload"])  # type: ignore[index]
         envelope["envelope_hash"] = build_envelope_hash(envelope)
         parsed = parse_envelope_json(json.dumps(envelope), self.repo)
+        self.assertEqual([{"provider": "fixture", "workspace_id": "local-checkout"}], seen)
         receipt = build_receipt(parsed, "test-validator@1", {"head": parsed.target["branch"]}, [RuleResult("identity", True, "passed")])
         verify_receipt(receipt, parsed, "pr_ready")
         tampered = replace(receipt, receipt_hash=hash_ref({"forged": True}))
         with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
             verify_receipt(tampered, parsed, "pr_ready")
+        with self.assertRaisesRegex(EvidenceError, "duplicate_evidence_kind"):
+            register_evidence_kind(EvidenceKindRegistration("workspace_receipt", "1", validate_workspace))
 
 
 if __name__ == "__main__":
