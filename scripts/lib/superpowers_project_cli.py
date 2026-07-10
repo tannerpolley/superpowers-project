@@ -1723,14 +1723,17 @@ def command_resolve_preflight(ctx: Context, args: dict[str, Any]) -> int:
     if not mirror.is_file():
         raise ScriptError("issue mirror is missing")
     text_value = read_text(mirror)
-    source_match = re.search(r"(?im)^Source Plan:\s*`?([^`\n]+)`?\s*$", text_value)
-    if not source_match:
+    source_value = field_value(text_value, "Source Plan")
+    if not source_value:
         raise ScriptError("issue mirror must link a source plan")
-    source_plan = project_path_for(root, source_match.group(1).strip(), "Source Plan")
+    source_plan_value = source_value.strip()
+    if source_plan_value.startswith("`") and source_plan_value.endswith("`"):
+        source_plan_value = source_plan_value[1:-1].strip()
+    source_plan = project_path_for(root, source_plan_value, "Source Plan")
     if not source_plan.is_file():
         raise ScriptError("linked source plan is missing")
-    executable = re.search(r"(?im)^Executable:\s*true\s*$", text_value) is not None
-    role = re.search(r"(?im)^Sub-Issue Role:\s*leaf\s*$", text_value) is not None
+    executable = (field_value(text_value, "Executable") or "").strip().lower() == "true"
+    role = (field_value(text_value, "Sub-Issue Role") or "").strip().lower() == "leaf"
     if not executable or not role:
         raise ScriptError("direct resolution requires an executable leaf issue mirror")
     return emit({"ok": True, "phase": "resolve-preflight", "issue_mirror": normalize_rel(mirror, root), "source_plan": normalize_rel(source_plan, root)})

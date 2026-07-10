@@ -10,7 +10,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
-from superpowers_project_cli import Context, command_apply_local_branch_closeout, command_prepare_local_branch_closeout
+from superpowers_project_cli import (
+    Context,
+    command_apply_local_branch_closeout,
+    command_prepare_local_branch_closeout,
+    command_resolve_preflight,
+)
 
 
 def git(root: Path, *args: str):
@@ -51,6 +56,47 @@ class LocalMergeContractTests(unittest.TestCase):
                 status = command_apply_local_branch_closeout(ctx, {"RepoRoot": str(repo), "SetupLedgerJson": json.dumps(setup), "PremergeResultJson": json.dumps({"ok": True}), "MergeDecisionJson": json.dumps({"selected_action": "merge"}), "DryRun": True})
             self.assertEqual(0, status)
             self.assertFalse(json.loads(output.getvalue())["evidence"]["remote_publication"])
+
+
+class ResolvePreflightTests(unittest.TestCase):
+    def test_preflight_accepts_bold_source_plan_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            mirror = repo / "docs" / "superpowers" / "issues" / "113-trust.md"
+            plan = repo / "docs" / "superpowers" / "plans" / "trust-plan.md"
+            plan.parent.mkdir(parents=True)
+            mirror.parent.mkdir(parents=True)
+            plan.write_text("# Plan\n", encoding="utf-8")
+            mirror.write_text(
+                "# Issue\n\n"
+                "**Source Plan:** `docs/superpowers/plans/trust-plan.md`\n"
+                "**Sub-Issue Role:** leaf\n"
+                "**Executable:** true\n",
+                encoding="utf-8",
+            )
+            ctx = Context(
+                ROOT / "skills/resolve-issue/scripts/preflight.sh",
+                repo,
+                "skills/resolve-issue/scripts/preflight.sh",
+                "preflight.sh",
+                [],
+                ROOT,
+                repo,
+            )
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                status = command_resolve_preflight(
+                    ctx,
+                    {
+                        "RepoRoot": str(repo),
+                        "IssueMirrorPath": "docs/superpowers/issues/113-trust.md",
+                    },
+                )
+            self.assertEqual(0, status, output.getvalue())
+            self.assertEqual(
+                "docs/superpowers/plans/trust-plan.md",
+                json.loads(output.getvalue())["source_plan"],
+            )
 
 
 if __name__ == "__main__":
