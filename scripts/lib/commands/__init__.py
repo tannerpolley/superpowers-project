@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from . import distribution, project, validation, workflow
+from . import distribution, gates, project, validation, workflow
 
 
 def load_handlers() -> dict[str, Callable]:
     handlers: dict[str, Callable] = {}
-    for module in (validation, workflow, project, distribution):
+    for module in (gates, validation, workflow, project, distribution):
         overlap = set(handlers) & set(module.HANDLERS)
         if overlap:
             raise ValueError("duplicate focused command handlers: " + ", ".join(sorted(overlap)))
