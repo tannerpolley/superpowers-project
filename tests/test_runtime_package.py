@@ -17,7 +17,7 @@ class RuntimePackageTests(unittest.TestCase):
         paths = {entry.path for entry in runtime_manifest(ROOT)}
         self.assertIn("docs/superpowers/workflow-contract.yml", paths)
         self.assertIn("docs/superpowers/capabilities.yml", paths)
-        self.assertNotIn("docs/superpowers/plans/2026-07-09-command-runtime-completion-plan.md", paths)
+        self.assertNotIn("docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md", paths)
         self.assertEqual([], validate_runtime_reads(ROOT, package))
 
     def test_included_content_and_mode_change_hash_but_excluded_history_does_not(self):

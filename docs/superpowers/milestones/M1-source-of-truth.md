@@ -13,22 +13,21 @@ Canonical specs, plans, and issues for M1 stay in the flat Superpowers Project r
 ## Related Specs
 
 - `docs/superpowers/specs/2026-06-02-superpowers-project-extension-design.md`
-- `docs/superpowers/specs/2026-06-03-setup-orchestration-design.md`
 - `docs/superpowers/specs/2026-06-03-project-plugin-namespace-skill-naming-design.md`
 - `docs/superpowers/specs/2026-06-03-public-release-readiness-design.md`
 - `docs/superpowers/specs/2026-06-11-plugin-operational-maturity-design.md`
 - `docs/superpowers/specs/2026-06-21-workflow-contract-normalization-design.md`
 - `docs/superpowers/specs/2026-06-29-github-sub-issues-workflow-design.md`
-- `docs/superpowers/specs/2026-07-01-post-issue-resolution-project-audit-findings.md`
+- `docs/superpowers/specs/2026-07-10-autonomous-workflow-and-codex-worktree-audit-findings.md`
+- `docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md`
+- `docs/superpowers/specs/2026-07-10-codex-native-workspace-isolation-design.md`
+- `docs/superpowers/specs/2026-07-10-contract-distribution-simplification-design.md`
 
 ## Related Plans
 
 - `docs/superpowers/plans/2026-06-02-superpowers-project-extension-plan.md`
-- `docs/superpowers/plans/2026-06-03-setup-orchestration-plan.md`
-- `docs/superpowers/plans/2026-06-03-project-namespace-and-implementation-expansion-plan.md`
 - `docs/superpowers/plans/2026-06-21-m0-m1-workflow-contract-normalization-plan.md`
 - `docs/superpowers/plans/2026-06-29-github-sub-issues-workflow-plan.md`
-- `docs/superpowers/plans/2026-07-01-post-issue-resolution-audit-finding-repairs-plan.md`
 
 ## Related Issues
 
