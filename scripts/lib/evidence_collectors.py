@@ -26,6 +26,12 @@ READ_ONLY_COMMANDS: dict[str, tuple[str, ...]] = {
     "git_common_dir": ("git", "rev-parse", "--git-common-dir"),
     "git_remote_origin": ("git", "remote", "get-url", "origin"),
     "git_missing_ref": ("git", "rev-parse", "missing-ref"),
+    "unit_command_registry": ("python3", "-m", "unittest", "tests.test_command_registry"),
+    "runtime_package_validation": ("python3", "scripts/validate-runtime-package.py", "--repo-root", "."),
+}
+READ_ONLY_COMMAND_TIMEOUTS: dict[str, int] = {
+    "unit_command_registry": 60,
+    "runtime_package_validation": 60,
 }
 
 
@@ -188,7 +194,7 @@ def collect_artifact_hashes(root: Path, paths: Sequence[str]) -> CollectorResult
 def collect_command_result(root: Path, command_id: str) -> CollectorResult:
     if not isinstance(command_id, str) or command_id not in READ_ONLY_COMMANDS:
         raise EvidenceError("collector_untrusted", f"unsupported read-only command:{command_id}")
-    observation = _observe_process(Path(root).resolve(), READ_ONLY_COMMANDS[command_id])
+    observation = _observe_process(Path(root).resolve(), READ_ONLY_COMMANDS[command_id], READ_ONLY_COMMAND_TIMEOUTS.get(command_id, 15))
     payload = {key: value for key, value in observation.items() if not key.startswith("_")}
     payload["command_id"] = command_id
     return CollectorResult("command_result", "command-result@1", _observed_at(), payload)

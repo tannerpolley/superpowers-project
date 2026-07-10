@@ -54,6 +54,12 @@ class EvidenceCollectorTests(unittest.TestCase):
         self.assertIn("stderr_hash", result.payload)
         self.assertNotIn("ok", result.payload)
 
+    def test_repository_owned_validation_command_is_observed(self):
+        result = collect_command_result(Path(__file__).parents[1], "unit_command_registry")
+        self.assertEqual(0, result.payload["exit_code"])
+        self.assertEqual("unit_command_registry", result.payload["command_id"])
+        self.assertIn("stdout_hash", result.payload)
+
     def test_unregistered_commands_cannot_execute_or_mutate(self):
         marker = self.repo / "mutated.txt"
         for command in (
