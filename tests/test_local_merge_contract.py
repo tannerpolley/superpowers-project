@@ -16,6 +16,10 @@ from superpowers_project_cli import (
     command_prepare_local_branch_closeout,
     command_resolve_preflight,
 )
+from scripts.lib.evidence_collectors import CollectionRequest, build_evidence_envelope
+from scripts.lib.evidence_schema import hash_ref, parse_envelope
+from scripts.lib.gate_merge_decision import validate_merge_decision
+from scripts.lib.gate_premerge import validate_premerge
 
 
 def git(root: Path, *args: str):
@@ -50,12 +54,34 @@ class LocalMergeContractTests(unittest.TestCase):
             receipt = json.loads(output.getvalue())
             self.assertFalse(receipt["evidence"]["remote_publication_required"])
             self.assertNotIn("push", json.dumps(receipt).lower())
+            head = git(repo, "rev-parse", "HEAD").stdout.strip()
+
+            def collected(gate, prior=None):
+                return build_evidence_envelope(CollectionRequest(
+                    gate=gate,
+                    repository_root=repo,
+                    workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
+                    source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
+                    target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
+                    commands=("git_status",),
+                    provider_inputs={
+                        "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
+                        "authorization": {"authorized": True},
+                        "github": {"provider_available": True, "pr_id": 113, "repository": "fixture/repo", "base_ref": "main", "head_ref": "main", "head_sha": head, "checks": [{"name": "ci", "conclusion": "success"}], "strategy": "ff-only"},
+                    },
+                    prior_event_hash=prior,
+                ))
+
+            premerge_receipt = validate_premerge(parse_envelope(collected("premerge"), repo), repo)
+            merge_decision_receipt = validate_merge_decision(parse_envelope(collected("merge_decision", premerge_receipt.receipt_hash), repo), repo, premerge_receipt)
             ctx.script_rel = "skills/merge-changes/scripts/apply-local-branch-closeout.sh"
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
-                status = command_apply_local_branch_closeout(ctx, {"RepoRoot": str(repo), "SetupLedgerJson": json.dumps(setup), "PremergeResultJson": json.dumps({"ok": True}), "MergeDecisionJson": json.dumps({"selected_action": "merge"}), "DryRun": True})
+                status = command_apply_local_branch_closeout(ctx, {"RepoRoot": str(repo), "SetupLedgerJson": json.dumps(setup), "MergeDecisionReceiptJson": json.dumps(merge_decision_receipt.to_dict()), "DryRun": True})
             self.assertEqual(0, status)
-            self.assertFalse(json.loads(output.getvalue())["evidence"]["remote_publication"])
+            result = json.loads(output.getvalue())
+            self.assertFalse(result["evidence"]["remote_publication"])
+            self.assertEqual(merge_decision_receipt.receipt_hash, result["evidence"]["consumed_receipt_hash"])
 
 
 class ResolvePreflightTests(unittest.TestCase):

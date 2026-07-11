@@ -17,6 +17,8 @@ from package_provenance import runtime_contract_hash as package_contract_hash, r
 from command_catalog import load_command_catalog
 from command_support import *
 from commands import load_handlers
+from evidence_schema import EvidenceError
+from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
 
 try:
     import yaml
@@ -1814,21 +1816,31 @@ def command_apply_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> i
     root = project_root_for(ctx, args)
     setup = _load_local_branch_setup(root, args)
     branch = str(setup["branch"])
-    premerge, _ = read_json_arg(root, args, "PremergeResultJson", "PremergeResultPath")
-    decision, _ = read_json_arg(root, args, "MergeDecisionJson", "MergeDecisionPath")
-    if premerge.get("ok") is not True:
-        raise ScriptError("premerge result must be ok")
-    if decision.get("selected_action") != "merge":
-        raise ScriptError("merge decision must select merge")
+    if any(arg_value(args, name) is not None for name in ("PremergeResultJson", "PremergeResultPath", "MergeDecisionJson", "MergeDecisionPath")):
+        raise EvidenceError("legacy_evidence_unsupported", "local integration requires a merge-decision receipt")
+    decision_data, _ = read_json_arg(root, args, "MergeDecisionReceiptJson", "MergeDecisionReceiptPath", required=False)
+    if decision_data is None:
+        raise EvidenceError("evidence_missing", "MergeDecisionReceiptJson or MergeDecisionReceiptPath is required")
+    decision = verify_receipt_hash(decision_data)
+    if decision.gate != "merge_decision" or decision.validator_id != EXPECTED_VALIDATORS["merge_decision"]:
+        raise EvidenceError("receipt_stale", "local integration requires a merge-decision receipt")
+    if decision.disposition != "passed":
+        raise EvidenceError("required_rule_failed", "merge-decision receipt is not passing")
+    target = decision.bindings.get("target") if isinstance(decision.bindings, dict) else None
+    if not isinstance(target, dict) or target.get("branch") != "main":
+        raise EvidenceError("target_state_changed", "merge-decision target is not main")
     current = run(["git", "branch", "--show-current"], root)
     if current.returncode != 0 or current.stdout.strip() != "main":
         raise ScriptError("apply local branch closeout must run from main")
+    current_head = run(["git", "rev-parse", "HEAD"], root)
+    if current_head.returncode != 0 or decision.observations.get("head") != current_head.stdout.strip():
+        raise EvidenceError("receipt_stale", "merge-decision receipt head is stale")
     if has_switch(args, "DryRun"):
-        return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch closeout dry run passed", "evidence": {"branch": branch, "would_merge": True, "remote_publication": False}})
+        return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch closeout dry run passed", "evidence": {"branch": branch, "would_merge": True, "remote_publication": False, "consumed_receipt_hash": decision.receipt_hash}})
     merge = run(["git", "merge", "--ff-only", branch], root)
     if merge.returncode != 0:
         raise ScriptError(f"git merge --ff-only failed: {merge.stderr.strip() or merge.stdout.strip()}")
-    return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch merged without remote publication", "evidence": {"branch": branch, "commit": run(["git", "rev-parse", "HEAD"], root).stdout.strip(), "remote_publication": False}})
+    return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch merged without remote publication", "evidence": {"branch": branch, "commit": run(["git", "rev-parse", "HEAD"], root).stdout.strip(), "remote_publication": False, "consumed_receipt_hash": decision.receipt_hash}})
 
 
 def command_generate_outcome_workflow_summary(ctx: Context, args: dict[str, Any]) -> int:

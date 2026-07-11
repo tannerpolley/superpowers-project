@@ -157,3 +157,11 @@ def verify_receipt(receipt: GateReceipt | Mapping[str, object], envelope: Eviden
         raise EvidenceError("receipt_stale", "receipt bindings do not match current envelope")
     if receipt.disposition != "passed" or not receipt.rules or not all(rule.ok for rule in receipt.rules):
         raise EvidenceError("required_rule_failed", "receipt is not a passing receipt")
+
+
+def verify_receipt_hash(receipt: GateReceipt | Mapping[str, object]) -> GateReceipt:
+    """Authenticate a receipt when its consuming boundary has no envelope."""
+    parsed = parse_receipt(receipt) if isinstance(receipt, Mapping) else receipt
+    if not isinstance(parsed, GateReceipt) or not is_hash_ref(parsed.receipt_hash) or _receipt_hash(parsed) != parsed.receipt_hash:
+        raise EvidenceError("schema_invalid", "receipt_hash mismatch")
+    return parsed

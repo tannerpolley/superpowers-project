@@ -9,14 +9,18 @@ try:
     from ..evidence_collectors import CollectionRequest, build_evidence_envelope
     from ..evidence_schema import EvidenceError, parse_envelope
     from ..gate_closeout import validate_closeout, validate_terminal_decision
+    from ..gate_merge_decision import validate_merge_decision
     from ..gate_pr_ready import validate_pr_ready
+    from ..gate_premerge import validate_premerge
     from ..gate_receipts import parse_receipt
 except ImportError:  # pragma: no cover - direct module execution fallback
     from command_support import Context, ScriptError, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
     from evidence_collectors import CollectionRequest, build_evidence_envelope
     from evidence_schema import EvidenceError, parse_envelope
     from gate_closeout import validate_closeout, validate_terminal_decision
+    from gate_merge_decision import validate_merge_decision
     from gate_pr_ready import validate_pr_ready
+    from gate_premerge import validate_premerge
     from gate_receipts import parse_receipt
 
 
@@ -79,6 +83,16 @@ def command_validate_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
         return _error(phase, _normalize_error(exc))
 
 
+def command_premerge(ctx: Context, args: dict[str, Any]) -> int:
+    phase = "premerge"
+    try:
+        root, envelope = _load_envelope(ctx, args, phase)
+        receipt = validate_premerge(envelope, root)
+        return emit({"ok": True, "phase": phase, "receipt": receipt.to_dict(), "receipt_hash": receipt.receipt_hash})
+    except Exception as exc:
+        return _error(phase, _normalize_error(exc))
+
+
 def _load_prior_receipt(root, args: dict[str, Any]):
     data, _ = read_json_arg(root, args, "PriorReceiptJson", "PriorReceiptPath", required=False)
     if data is None:
@@ -92,6 +106,17 @@ def command_closeout(ctx: Context, args: dict[str, Any]) -> int:
         root, envelope = _load_envelope(ctx, args, phase)
         prior = _load_prior_receipt(root, args)
         receipt = validate_closeout(envelope, root, prior)
+        return emit({"ok": True, "phase": phase, "receipt": receipt.to_dict(), "receipt_hash": receipt.receipt_hash})
+    except Exception as exc:
+        return _error(phase, _normalize_error(exc))
+
+
+def command_validate_merge_decision(ctx: Context, args: dict[str, Any]) -> int:
+    phase = "validate-merge-decision"
+    try:
+        root, envelope = _load_envelope(ctx, args, phase)
+        prior = _load_prior_receipt(root, args)
+        receipt = validate_merge_decision(envelope, root, prior)
         return emit({"ok": True, "phase": phase, "receipt": receipt.to_dict(), "receipt_hash": receipt.receipt_hash})
     except Exception as exc:
         return _error(phase, _normalize_error(exc))
@@ -129,6 +154,8 @@ HANDLERS = {
     "command_collect_premerge": command_collect_premerge,
     "command_collect_closeout": command_collect_closeout,
     "command_validate_pr_ready": command_validate_pr_ready,
+    "command_premerge": command_premerge,
     "command_closeout": command_closeout,
+    "command_validate_merge_decision": command_validate_merge_decision,
     "command_validate_resolve_terminal_closeout": command_validate_resolve_terminal_closeout,
 }
