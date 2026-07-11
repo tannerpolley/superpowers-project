@@ -14,6 +14,7 @@ from scripts.lib.evidence_collectors import (
     CollectionRequest,
     build_evidence_envelope,
     collect_command_result,
+    collect_github_state,
     collect_git_state,
 )
 from scripts.lib.evidence_schema import EvidenceError, hash_ref, parse_envelope
@@ -71,6 +72,29 @@ class EvidenceCollectorTests(unittest.TestCase):
                 with self.assertRaisesRegex(EvidenceError, "collector_untrusted"):
                     collect_command_result(self.repo, command)  # type: ignore[arg-type]
         self.assertFalse(marker.exists())
+
+    def test_caller_wrapped_provider_json_is_rejected(self):
+        request = CollectionRequest(
+            gate="premerge",
+            repository_root=self.repo,
+            workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
+            source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
+            target={"task_id": None, "workspace_id": "local", "branch": "main"},
+            commands=("git_status",),
+            provider_inputs={"authorization": {"authorized": True}, "github": {"provider_available": True}},
+        )
+        with self.assertRaisesRegex(EvidenceError, "collector_untrusted"):
+            build_evidence_envelope(request)
+
+    def test_github_provider_observation_uses_closed_command_and_hash(self):
+        stdout = json.dumps({"number": 113, "repository": {"nameWithOwner": "fixture/repo", "id": "repo-id"}, "baseRefName": "main", "baseRefOid": "base", "headRefName": "codex/fixture", "headRefOid": "head", "mergeable": "MERGEABLE", "reviews": [], "statusCheckRollup": [{"name": "ci", "conclusion": "SUCCESS"}]})
+        fake = {"argv": list(collectors.TRUSTED_PROVIDER_COMMANDS["github_pr_state"]), "exit_code": 0, "stdout_hash": hash_ref({"stdout": stdout}), "stderr_hash": hash_ref({"stderr": ""}), "timed_out": False, "_stdout_text": stdout, "_stderr_text": ""}
+        with patch.object(collectors, "_observe_process", return_value=fake) as observed:
+            result = collect_github_state(self.repo)
+        self.assertEqual(collectors.TRUSTED_PROVIDER_COMMANDS["github_pr_state"], tuple(observed.call_args.args[1]))
+        self.assertTrue(result.payload["provider_available"])
+        self.assertEqual("github_pr_state", result.payload["observation_id"])
+        self.assertEqual(fake["stdout_hash"], result.payload["observation_hash"])
 
     def test_git_observations_invoke_each_read_only_field_once(self):
         with patch.object(collectors, "_observe_process", wraps=collectors._observe_process) as observed:

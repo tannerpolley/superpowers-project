@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 from scripts.lib.command_support import Context
-from scripts.lib.evidence_collectors import CollectionRequest, build_evidence_envelope
+from scripts.lib.evidence_collectors import CollectionRequest, CollectorResult, build_evidence_envelope
 from scripts.lib.evidence_schema import EvidenceError, RuleResult, hash_ref, parse_envelope
 from scripts.lib.gate_merge_decision import validate_merge_decision
 from scripts.lib.gate_premerge import validate_premerge
@@ -24,6 +24,12 @@ def git(root: Path, *args: str) -> str:
     return subprocess.run(["git", *args], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
 
 
+def github_observation(payload: dict[str, object]) -> CollectorResult:
+    observed = {"observation_id": "fixture_github_pr_state", **payload}
+    observed["observation_hash"] = hash_ref(observed)
+    return CollectorResult("github_state", "github-state@1", "2026-07-10T12:00:00Z", observed)
+
+
 def make_repo() -> Path:
     root = Path(tempfile.mkdtemp())
     git(root, "init", "-q", "-b", "main")
@@ -34,11 +40,16 @@ def make_repo() -> Path:
     plan.write_text("# Plan\n", encoding="utf-8")
     git(root, "add", ".")
     git(root, "commit", "-qm", "base")
+    git(root, "switch", "-qc", "codex/fixture")
+    (root / "feature.txt").write_text("feature\n", encoding="utf-8")
+    git(root, "add", "feature.txt")
+    git(root, "commit", "-qm", "feature")
     return root
 
 
 def envelope(root: Path, gate: str, prior: str | None = None) -> dict[str, object]:
     head = git(root, "rev-parse", "HEAD")
+    base = git(root, "rev-parse", "main")
     return build_evidence_envelope(CollectionRequest(
         gate=gate,
         repository_root=root,
@@ -49,7 +60,7 @@ def envelope(root: Path, gate: str, prior: str | None = None) -> dict[str, objec
         provider_inputs={
             "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
             "authorization": {"authorized": True},
-            "github": {"provider_available": True, "pr_id": 113, "repository": "fixture/repo", "base_ref": "main", "head_ref": "main", "head_sha": head, "checks": [{"name": "ci", "conclusion": "success"}], "strategy": "ff-only"},
+            "github_observation": github_observation({"provider_available": True, "pr_id": 113, "repository": "fixture/repo", "repository_id": "fixture/repository-id", "base_ref": "main", "base_sha": base, "head_ref": "codex/fixture", "head_sha": head, "source_branch": "codex/fixture", "source_sha": head, "mergeable": True, "reviews": [], "checks": [{"name": "ci", "conclusion": "success"}], "strategy": "ff-only"}),
         },
         prior_event_hash=prior,
     ))
@@ -77,6 +88,14 @@ class MergeDecisionTests(unittest.TestCase):
         receipt = validate_merge_decision(decision, self.repo, premerge)
         self.assertEqual("merge_decision", receipt.gate)
         self.assertEqual("passed", receipt.disposition)
+
+    def test_merge_decision_rejects_stale_premerge_head(self):
+        premerge = validate_premerge(parse_envelope(envelope(self.repo, "premerge"), self.repo), self.repo)
+        (self.repo / "changed-after-premerge.txt").write_text("changed\n", encoding="utf-8")
+        git(self.repo, "add", ".")
+        git(self.repo, "commit", "-qm", "changed after premerge")
+        with self.assertRaisesRegex(EvidenceError, "stale"):
+            validate_merge_decision(parse_envelope(envelope(self.repo, "merge_decision", premerge.receipt_hash), self.repo), self.repo, premerge)
 
     def test_local_merge_rejects_bare_success_object(self):
         ctx = Context(Path(__file__).parents[1] / "skills/merge-changes/scripts/apply-local-branch-closeout.sh", self.repo, "skills/merge-changes/scripts/apply-local-branch-closeout.sh", "apply-local-branch-closeout.sh", [], Path(__file__).parents[1], self.repo)

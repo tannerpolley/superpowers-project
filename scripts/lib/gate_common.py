@@ -73,19 +73,21 @@ def require_evidence(envelope: EvidenceEnvelope, required: set[str]) -> dict[str
     return grouped
 
 
-def identity_rules(envelope: EvidenceEnvelope, repo_root: Path) -> list[RuleResult]:
+def identity_rules(envelope: EvidenceEnvelope, repo_root: Path, *, check_target_branch: bool = True) -> list[RuleResult]:
     current = current_git_state(repo_root)
-    return evaluate_rules([
+    checks: list[tuple[str, Callable[[], tuple[bool, str]]]] = [
         ("repository_identity", lambda: (
             str(Path(str(envelope.repository["root"])).resolve()) == str(repo_root.resolve())
             and str(Path(str(envelope.repository["git_common_dir"])).resolve()) == str(current["git_common_dir"]),
             "repository identity matches active checkout" if str(Path(str(envelope.repository["root"])).resolve()) == str(repo_root.resolve()) and str(Path(str(envelope.repository["git_common_dir"])).resolve()) == str(current["git_common_dir"]) else "repository identity changed",
         )),
-        ("target_identity", lambda: (
+    ]
+    if check_target_branch:
+        checks.append(("target_identity", lambda: (
             str(envelope.target["branch"]) == str(current["branch"]),
             "target branch matches active checkout" if str(envelope.target["branch"]) == str(current["branch"]) else "target branch changed",
-        )),
-    ])
+        )))
+    return evaluate_rules(checks)
 
 
 def git_state_rule(grouped: Mapping[str, list[object]], repo_root: Path) -> RuleResult:
@@ -112,7 +114,10 @@ def workflow_binding_rule(grouped: Mapping[str, list[object]], envelope: Evidenc
 def authorization_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope) -> RuleResult:
     payload = grouped.get("authorization_event", [None])[0]
     actual = payload.get("event_hash") if isinstance(payload, Mapping) else None
-    return RuleResult("authorization_binding", actual == envelope.workflow["authorization_hash"], "authorization matches workflow" if actual == envelope.workflow["authorization_hash"] else "authorization does not match workflow")
+    event = payload.get("event") if isinstance(payload, Mapping) else None
+    authorized = isinstance(event, Mapping) and event.get("authorized") is True
+    ok = actual == envelope.workflow["authorization_hash"] and authorized
+    return RuleResult("authorization_binding", ok, "authorization matches workflow and is approved" if ok else "authorization is missing, unapproved, or does not match workflow")
 
 
 def source_artifact_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope) -> RuleResult:

@@ -11,13 +11,14 @@ import re
 import shutil
 import sys
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 from package_provenance import runtime_contract_hash as package_contract_hash, runtime_manifest, verify_runtime_provenance
 from command_catalog import load_command_catalog
 from command_support import *
 from commands import load_handlers
-from evidence_schema import EvidenceError
+from evidence_schema import EvidenceError, hash_bytes_ref
 from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
 
 try:
@@ -1431,26 +1432,6 @@ def command_collect_continuation(ctx: Context, args: dict[str, Any], phase: str)
     return emit({"ok": True, "phase": phase, "reason": "continuation ledger collected", "ledger": ledger, "ledger_path": ledger_path})
 
 
-def command_validate_terminal_closeout(ctx: Context, args: dict[str, Any], phase: str) -> int:
-    root = project_root_for(ctx, args)
-    result_json_name = "PrReadyResultJson" if "resolve-issue" in ctx.script_rel else "CloseoutResultJson"
-    result_path_name = "PrReadyResultPath" if "resolve-issue" in ctx.script_rel else "CloseoutResultPath"
-    result, _ = read_json_arg(root, args, result_json_name, result_path_name, required=False)
-    if result is None:
-        alt_json = arg_value(args, "CloseoutResultJson") or arg_value(args, "PrReadyResultJson")
-        if alt_json:
-            result = json.loads(str(alt_json))
-    decision, _ = read_json_arg(root, args, "ContinuationDecisionJson", "ContinuationDecisionPath", required=False)
-    if result is None or decision is None:
-        raise ScriptError("result and continuation decision are required")
-    if result.get("ok") is not True:
-        raise ScriptError("result gate must be ok")
-    terminal = decision.get("terminal_state")
-    if terminal not in {"stop", "done"}:
-        raise ScriptError("terminal decision must be stop or done")
-    return complete(True, phase, "terminal closeout passed")
-
-
 def command_collect_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     setup_path = arg_value(args, "SetupLedgerPath")
@@ -1467,15 +1448,6 @@ def command_collect_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
         write_text(target, json.dumps(ledger, indent=2))
         ledger_path = normalize_rel(target, root)
     return emit({"ok": True, "phase": "collect-pr-ready-ledger", "reason": "PR-ready ledger collected", "ledger": ledger, "ledger_path": ledger_path})
-
-
-def command_validate_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
-    data, _ = read_json_arg(ctx.repo_root, args, "PrReadyLedgerJson", "PrReadyLedgerPath", required=False)
-    if data is None:
-        return complete(True, "validate-pr-ready", "PR-ready gate passed")
-    if data.get("ok") is False:
-        raise ScriptError("PR-ready ledger is not ok")
-    return complete(True, "validate-pr-ready", "PR-ready gate passed")
 
 
 def _as_list(value: Any) -> list[str]:
@@ -1767,14 +1739,6 @@ def command_collect_resolve_continuation(ctx: Context, args: dict[str, Any]) -> 
     return command_collect_continuation(ctx, args, "collect-resolve-continuation-ledger")
 
 
-def command_validate_merge_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return command_validate_terminal_closeout(ctx, args, "validate-merge-terminal-closeout")
-
-
-def command_validate_resolve_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return command_validate_terminal_closeout(ctx, args, "validate-resolve-terminal-closeout")
-
-
 def _load_local_branch_setup(root: Path, args: dict[str, Any]) -> dict[str, Any]:
     setup, _ = read_json_arg(root, args, "SetupLedgerJson", "SetupLedgerPath", required=False)
     if setup is None:
@@ -1826,15 +1790,40 @@ def command_apply_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> i
         raise EvidenceError("receipt_stale", "local integration requires a merge-decision receipt")
     if decision.disposition != "passed":
         raise EvidenceError("required_rule_failed", "merge-decision receipt is not passing")
-    target = decision.bindings.get("target") if isinstance(decision.bindings, dict) else None
-    if not isinstance(target, dict) or target.get("branch") != "main":
+    required_setup = {"repository_root", "run_id", "candidate_id", "authorization_hash", "strategy", "source_head", "target_head"}
+    if not required_setup <= set(setup):
+        raise EvidenceError("receipt_stale", "local integration setup is missing receipt identity bindings")
+    bindings = decision.bindings
+    repository = bindings.get("repository") if isinstance(bindings, Mapping) else None
+    workflow = bindings.get("workflow") if isinstance(bindings, Mapping) else None
+    source = bindings.get("source") if isinstance(bindings, Mapping) else None
+    target = bindings.get("target") if isinstance(bindings, Mapping) else None
+    if not all(isinstance(item, Mapping) for item in (repository, workflow, source, target)):
+        raise EvidenceError("receipt_stale", "merge-decision receipt bindings are incomplete")
+    if str(Path(str(repository["root"])).resolve()) != str(root.resolve()) or str(Path(str(setup["repository_root"])).resolve()) != str(root.resolve()):
+        raise EvidenceError("repository_mismatch", "local integration repository binding changed")
+    if target.get("branch") != "main":
         raise EvidenceError("target_state_changed", "merge-decision target is not main")
+    if workflow.get("run_id") != setup["run_id"] or workflow.get("candidate_id") != setup["candidate_id"] or workflow.get("authorization_hash") != setup["authorization_hash"]:
+        raise EvidenceError("receipt_stale", "local integration workflow or authorization binding changed")
+    if source.get("plan_path") != setup["source_plan"] or source.get("plan_hash") != hash_bytes_ref(project_path_for(root, str(setup["source_plan"]), "source_plan").read_bytes()):
+        raise EvidenceError("artifact_hash_mismatch", "local integration source plan changed")
+    observations = decision.observations
+    if observations.get("source_branch") != branch or observations.get("source_head") != setup["source_head"] or observations.get("strategy") != setup["strategy"] or observations.get("strategy") != "ff-only":
+        raise EvidenceError("receipt_stale", "local integration source or merge strategy binding changed")
     current = run(["git", "branch", "--show-current"], root)
     if current.returncode != 0 or current.stdout.strip() != "main":
         raise ScriptError("apply local branch closeout must run from main")
+    status = run(["git", "status", "--short"], root)
+    if status.returncode != 0 or status.stdout.strip():
+        raise EvidenceError("target_state_changed", "main must be clean before local integration")
+    target_current = run(["git", "rev-parse", "HEAD"], root)
+    if target_current.returncode != 0 or target_current.stdout.strip() != setup["target_head"] or observations.get("base_sha") != target_current.stdout.strip():
+        raise EvidenceError("target_state_changed", "main HEAD changed after merge authorization")
+    source_current = run(["git", "rev-parse", branch], root)
+    if source_current.returncode != 0 or source_current.stdout.strip() != setup["source_head"]:
+        raise EvidenceError("receipt_stale", "source branch HEAD changed after merge authorization")
     current_head = run(["git", "rev-parse", "HEAD"], root)
-    if current_head.returncode != 0 or decision.observations.get("head") != current_head.stdout.strip():
-        raise EvidenceError("receipt_stale", "merge-decision receipt head is stale")
     if has_switch(args, "DryRun"):
         return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch closeout dry run passed", "evidence": {"branch": branch, "would_merge": True, "remote_publication": False, "consumed_receipt_hash": decision.receipt_hash}})
     merge = run(["git", "merge", "--ff-only", branch], root)
@@ -2314,21 +2303,6 @@ def collect_simple_ledger(ctx: Context, args: dict[str, Any], phase: str, filena
         write_text(target, json.dumps(ledger, indent=2))
         ledger_path = normalize_rel(target, root)
     return emit({"ok": True, "phase": phase, "reason": f"{phase} collected", "ledger": ledger, "ledger_path": ledger_path})
-
-
-def command_premerge(ctx: Context, args: dict[str, Any]) -> int:
-    return complete(True, "premerge", "premerge gate passed")
-
-
-def command_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return complete(True, "closeout", "closeout gate passed")
-
-
-def command_validate_merge_decision(ctx: Context, args: dict[str, Any]) -> int:
-    decision, _ = read_json_arg(ctx.repo_root, args, "MergeDecisionJson", "MergeDecisionPath", required=False)
-    if decision and decision.get("selected_action") == "decline":
-        raise ScriptError("merge decision declined")
-    return complete(True, "validate-merge-decision", "merge decision approved")
 
 
 def command_prepare_execution(ctx: Context, args: dict[str, Any]) -> int:

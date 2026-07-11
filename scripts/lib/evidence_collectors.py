@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 import subprocess
 from typing import Mapping, Sequence
@@ -32,6 +33,9 @@ READ_ONLY_COMMANDS: dict[str, tuple[str, ...]] = {
 READ_ONLY_COMMAND_TIMEOUTS: dict[str, int] = {
     "unit_command_registry": 60,
     "runtime_package_validation": 60,
+}
+TRUSTED_PROVIDER_COMMANDS: dict[str, tuple[str, ...]] = {
+    "github_pr_state": ("gh", "pr", "view", "--json", "number,repository,baseRefName,baseRefOid,headRefName,headRefOid,mergeable,reviews,statusCheckRollup"),
 }
 
 
@@ -204,8 +208,74 @@ def collect_review_result(review: Mapping[str, object]) -> CollectorResult:
     return CollectorResult("review_result", "review-result@1", _observed_at(), dict(review))
 
 
-def collect_github_state(raw_json: Mapping[str, object]) -> CollectorResult:
-    return CollectorResult("github_state", "github-state@1", _observed_at(), dict(raw_json))
+def _strict_json_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise EvidenceError("provider_state_unavailable", f"duplicate provider observation key:{key}")
+        result[key] = value
+    return result
+
+
+def _normalize_github_state(raw: Mapping[str, object]) -> dict[str, object]:
+    repository = raw.get("repository")
+    if isinstance(repository, Mapping):
+        repository_name = repository.get("nameWithOwner") or repository.get("name")
+        repository_id = repository.get("id")
+    else:
+        repository_name = repository
+        repository_id = raw.get("repository_id")
+    checks = raw.get("checks")
+    if not isinstance(checks, list):
+        checks = raw.get("statusCheckRollup", [])
+    normalized_checks = []
+    if isinstance(checks, list):
+        for item in checks:
+            if isinstance(item, Mapping):
+                conclusion = item.get("conclusion") or item.get("state")
+                normalized_checks.append({"name": item.get("name") or item.get("context"), "conclusion": conclusion.lower() if isinstance(conclusion, str) else conclusion})
+    mergeable = raw.get("mergeable") is True or raw.get("mergeable") == "MERGEABLE"
+    return {
+        "provider_available": True,
+        "pr_id": raw.get("pr_id", raw.get("number")),
+        "repository": repository_name,
+        "repository_id": repository_id,
+        "base_ref": raw.get("base_ref", raw.get("baseRefName")),
+        "base_sha": raw.get("base_sha", raw.get("baseRefOid")),
+        "head_ref": raw.get("head_ref", raw.get("headRefName")),
+        "head_sha": raw.get("head_sha", raw.get("headRefOid")),
+        "source_branch": raw.get("source_branch", raw.get("headRefName")),
+        "source_sha": raw.get("source_sha", raw.get("headRefOid")),
+        "mergeable": mergeable,
+        "reviews": raw.get("reviews", []),
+        "checks": normalized_checks,
+        "strategy": raw.get("strategy", "ff-only"),
+    }
+
+
+def collect_github_state(root: Path, observation_id: str = "github_pr_state") -> CollectorResult:
+    command = TRUSTED_PROVIDER_COMMANDS.get(observation_id)
+    if command is None:
+        raise EvidenceError("collector_untrusted", f"unsupported provider observation:{observation_id}")
+    observation = _observe_process(Path(root).resolve(), command, 30)
+    if observation["exit_code"] != 0 or observation["timed_out"] is not False:
+        payload = {
+            "provider_available": False,
+            "observation_id": observation_id,
+            "observation_hash": observation["stdout_hash"],
+            "error_hash": observation["stderr_hash"],
+        }
+        return CollectorResult("github_state", "github-state@1", _observed_at(), payload)
+    try:
+        raw = json.loads(str(observation["_stdout_text"]), object_pairs_hook=_strict_json_pairs)
+        if not isinstance(raw, Mapping):
+            raise ValueError("provider observation must be an object")
+        payload = _normalize_github_state(raw)
+    except (ValueError, json.JSONDecodeError, TypeError) as exc:
+        return CollectorResult("github_state", "github-state@1", _observed_at(), {"provider_available": False, "observation_id": observation_id, "observation_hash": observation["stdout_hash"], "error": str(exc)})
+    payload["observation_id"] = observation_id
+    payload["observation_hash"] = observation["stdout_hash"]
+    return CollectorResult("github_state", "github-state@1", _observed_at(), payload)
 
 
 def collect_authorization_event(event: Mapping[str, object]) -> CollectorResult:
@@ -271,8 +341,15 @@ def build_evidence_envelope(request: CollectionRequest) -> dict[str, object]:
     reviews = provider_inputs.get("reviews")
     if reviews is not None:
         results.append(collect_review_result({"reviews": reviews}))
-    if isinstance(provider_inputs.get("github"), Mapping):
-        results.append(collect_github_state(provider_inputs["github"]))
+    github_observation = provider_inputs.get("github_observation")
+    if github_observation is not None:
+        if not isinstance(github_observation, CollectorResult) or github_observation.kind != "github_state" or github_observation.collector != "github-state@1":
+            raise EvidenceError("collector_untrusted", "GitHub state must come from the trusted provider collector")
+        results.append(github_observation)
+    elif isinstance(provider_inputs.get("github_observation_id"), str):
+        results.append(collect_github_state(root, str(provider_inputs["github_observation_id"])))
+    elif "github" in provider_inputs:
+        raise EvidenceError("collector_untrusted", "caller-wrapped GitHub JSON is unsupported")
     authorization = provider_inputs.get("authorization")
     if not isinstance(authorization, Mapping):
         raise EvidenceError("evidence_missing", "authorization observation is required")

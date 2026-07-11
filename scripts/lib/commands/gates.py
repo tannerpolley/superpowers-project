@@ -122,8 +122,7 @@ def command_validate_merge_decision(ctx: Context, args: dict[str, Any]) -> int:
         return _error(phase, _normalize_error(exc))
 
 
-def command_validate_resolve_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    phase = "validate-resolve-terminal-closeout"
+def _validate_terminal_closeout(ctx: Context, args: dict[str, Any], phase: str) -> int:
     try:
         root, envelope = _load_envelope(ctx, args, phase)
         decision, _ = read_json_arg(root, args, "ContinuationDecisionJson", "ContinuationDecisionPath", required=False)
@@ -135,6 +134,14 @@ def command_validate_resolve_terminal_closeout(ctx: Context, args: dict[str, Any
         return emit({"ok": True, "phase": phase, "receipt": receipt.to_dict(), "receipt_hash": receipt.receipt_hash})
     except Exception as exc:
         return _error(phase, _normalize_error(exc))
+
+
+def command_validate_resolve_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
+    return _validate_terminal_closeout(ctx, args, "validate-resolve-terminal-closeout")
+
+
+def command_validate_merge_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
+    return _validate_terminal_closeout(ctx, args, "validate-merge-terminal-closeout")
 
 
 def command_collect_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
@@ -158,4 +165,5 @@ HANDLERS = {
     "command_closeout": command_closeout,
     "command_validate_merge_decision": command_validate_merge_decision,
     "command_validate_resolve_terminal_closeout": command_validate_resolve_terminal_closeout,
+    "command_validate_merge_terminal_closeout": command_validate_merge_terminal_closeout,
 }
