@@ -162,10 +162,11 @@ def review_rules(grouped: Mapping[str, list[object]]) -> tuple[RuleResult, RuleR
     )
 
 
-def cleanup_rule(grouped: Mapping[str, list[object]], repo_root: Path) -> RuleResult:
+def cleanup_rule(grouped: Mapping[str, list[object]], repo_root: Path, expected_actor: object = None) -> RuleResult:
     payload = grouped.get("cleanup_state", [None])[0]
     current = current_git_state(repo_root)
-    ok = isinstance(payload, Mapping) and current["status_exit_code"] == 0 and payload.get("status_exit_code") == 0 and payload.get("status_hash") == current["status_hash"] and current["dirty"] is False and payload.get("task_owned_paths", []) == []
+    actor_ok = expected_actor is None or (isinstance(payload, Mapping) and payload.get("cleanup_actor") == expected_actor)
+    ok = isinstance(payload, Mapping) and current["status_exit_code"] == 0 and payload.get("status_exit_code") == 0 and payload.get("status_hash") == current["status_hash"] and current["dirty"] is False and payload.get("task_owned_paths", []) == [] and actor_ok
     return RuleResult("cleanup_state", ok, "cleanup state is clean" if ok else "cleanup state is incomplete or dirty")
 
 
@@ -179,13 +180,15 @@ def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelo
     ok = isinstance(payload, Mapping) and required <= set(payload)
     if ok:
         ok = (
-            payload["workspace_id"] == envelope.target["workspace_id"]
+            payload["provider"] == envelope.target["workspace_provider"]
+            and payload["workspace_id"] == envelope.target["workspace_id"]
             and payload["repository_root"] == envelope.repository["root"]
             and payload["run_id"] == envelope.workflow["run_id"]
             and payload["candidate_id"] == envelope.workflow["candidate_id"]
             and payload["task_id"] == envelope.target.get("task_id")
+            and payload["thread_id"] == envelope.target["workspace_thread_id"]
             and payload["observed_head"] == current["head"]
-            and payload["owner"] in {"plugin", "codex", "app"}
+            and payload["owner"] == envelope.target["workspace_owner"]
             and payload["disposition"] in {"owned", "active"}
         )
     return RuleResult("workspace_receipt", bool(ok), "workspace receipt matches provider, task, thread, repository, candidate, head, and owner" if ok else "workspace receipt is missing, duplicated, stale, or mismatched")

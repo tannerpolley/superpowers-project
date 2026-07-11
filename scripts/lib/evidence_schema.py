@@ -330,13 +330,22 @@ def _parse_envelope(data: Mapping[str, object], repo_root: Path) -> EvidenceEnve
 
     target = _mapping(data["target"], "target")
     target_keys = set(target)
-    if target_keys not in ({"task_id", "workspace_id", "branch"}, {"task_id", "workspace_id", "branch", "isolation_required"}):
+    base_target_keys = {"task_id", "workspace_id", "branch"}
+    isolation_target_keys = base_target_keys | {"isolation_required", "workspace_provider", "workspace_thread_id", "workspace_owner", "cleanup_actor"}
+    if target_keys not in (base_target_keys, base_target_keys | {"isolation_required"}, isolation_target_keys):
         raise EvidenceError("schema_invalid", "target keys are invalid")
     _string(target["task_id"], "target.task_id", allow_none=True)
     _string(target["workspace_id"], "target.workspace_id")
     _string(target["branch"], "target.branch")
     if "isolation_required" in target and not isinstance(target["isolation_required"], bool):
         raise EvidenceError("schema_invalid", "target.isolation_required must be boolean")
+    if target.get("isolation_required") is True:
+        if target_keys != isolation_target_keys:
+            raise EvidenceError("schema_invalid", "isolated target must bind provider, thread, owner, and cleanup actor")
+        for field in ("workspace_provider", "workspace_thread_id", "workspace_owner", "cleanup_actor"):
+            _string(target[field], f"target.{field}")
+    elif target_keys == isolation_target_keys:
+        raise EvidenceError("schema_invalid", "workspace isolation bindings require isolation_required")
 
     raw_evidence = data["evidence"]
     if not isinstance(raw_evidence, list):

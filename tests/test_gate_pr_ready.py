@@ -44,7 +44,13 @@ def valid_pr_ready_envelope(repo: Path, *, isolation: bool = False, workspace: d
             "authorization_hash": hash_ref({"authorized": True}),
         },
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
-        target={"task_id": "task-1" if isolation else None, "workspace_id": "workspace-1" if isolation else "local", "branch": "main", "isolation_required": isolation},
+        target={
+            "task_id": "task-1" if isolation else None,
+            "workspace_id": "workspace-1" if isolation else "local",
+            "branch": "main",
+            "isolation_required": isolation,
+            **({"workspace_provider": "codex", "workspace_thread_id": "thread-1", "workspace_owner": "plugin", "cleanup_actor": "plugin"} if isolation else {}),
+        },
         commands=("git_status",),
         provider_inputs={
             "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
@@ -135,19 +141,31 @@ class PrReadyGateTests(unittest.TestCase):
         receipt = validate_pr_ready(parse_envelope(valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace), self.repo), self.repo)
         self.assertEqual("passed", receipt.disposition)
 
-    def test_isolation_workspace_receipt_rejects_missing_duplicate_or_stale_owner(self):
+    def test_isolation_workspace_receipt_rejects_missing_duplicate_or_mismatched_bindings(self):
         head = git(self.repo, "rev-parse", "HEAD")
         workspace = {"provider": "codex", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "owner": "plugin", "disposition": "owned"}
-        for mutation in ("missing", "duplicate", "candidate", "head", "owner"):
+        for mutation in ("missing", "duplicate", "provider", "thread", "task", "candidate", "head", "owner", "cleanup"):
             with self.subTest(mutation=mutation):
                 envelope = valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace)
                 if mutation == "missing":
                     envelope["evidence"] = [item for item in envelope["evidence"] if item["kind"] != "workspace_receipt"]
                 elif mutation == "duplicate":
                     envelope["evidence"].append(dict(next(item for item in envelope["evidence"] if item["kind"] == "workspace_receipt")))
+                elif mutation == "cleanup":
+                    item = next(item for item in envelope["evidence"] if item["kind"] == "cleanup_state")
+                    item["payload"]["cleanup_actor"] = "untrusted"
+                    item["payload_hash"] = hash_ref(item["payload"])
                 else:
                     item = next(item for item in envelope["evidence"] if item["kind"] == "workspace_receipt")
-                    item["payload"]["candidate_id" if mutation == "candidate" else "observed_head" if mutation == "head" else "owner"] = "forged"
+                    key = {
+                        "provider": "provider",
+                        "thread": "thread_id",
+                        "task": "task_id",
+                        "candidate": "candidate_id",
+                        "head": "observed_head",
+                        "owner": "owner",
+                    }[mutation]
+                    item["payload"][key] = "fixture" if mutation == "provider" else "forged"
                     item["payload_hash"] = hash_ref(item["payload"])
                 envelope["envelope_hash"] = build_envelope_hash(envelope)
                 with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):

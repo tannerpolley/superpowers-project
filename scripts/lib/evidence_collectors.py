@@ -213,17 +213,20 @@ def collect_authorization_event(event: Mapping[str, object]) -> CollectorResult:
     return CollectorResult("authorization_event", "authorization-event@1", _observed_at(), payload)
 
 
-def collect_cleanup_state(root: Path) -> CollectorResult:
+def collect_cleanup_state(root: Path, cleanup_actor: str | None = None) -> CollectorResult:
     observation = _observe_process(Path(root).resolve(), ["git", "status", "--short"])
+    payload: dict[str, object] = {
+        "status_exit_code": observation["exit_code"],
+        "status_hash": observation["stdout_hash"],
+        "task_owned_paths": [],
+    }
+    if cleanup_actor is not None:
+        payload["cleanup_actor"] = cleanup_actor
     return CollectorResult(
         "cleanup_state",
         "cleanup-state@1",
         _observed_at(),
-        {
-            "status_exit_code": observation["exit_code"],
-            "status_hash": observation["stdout_hash"],
-            "task_owned_paths": [],
-        },
+        payload,
     )
 
 
@@ -274,7 +277,8 @@ def build_evidence_envelope(request: CollectionRequest) -> dict[str, object]:
     if not isinstance(authorization, Mapping):
         raise EvidenceError("evidence_missing", "authorization observation is required")
     results.append(collect_authorization_event(authorization))
-    results.append(collect_cleanup_state(root))
+    cleanup_actor = request.target.get("cleanup_actor")
+    results.append(collect_cleanup_state(root, cleanup_actor if isinstance(cleanup_actor, str) else None))
     for key, kind in (("integration", "integration_state"), ("package", "package_provenance"), ("installation", "installation_state"), ("agent_trial", "agent_trial")):
         if isinstance(provider_inputs.get(key), Mapping):
             registration = evidence_registration(kind, "1")

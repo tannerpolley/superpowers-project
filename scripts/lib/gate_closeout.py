@@ -65,7 +65,7 @@ def validate_closeout(envelope: EvidenceEnvelope, repo_root: Path, prior_receipt
         command_rule(grouped),
         *_integration_rules(grouped, current["head"]),
         replace(workspace_rule(grouped, envelope), rule_id="workspace_disposition"),
-        cleanup_rule(grouped, Path(repo_root).resolve()),
+        cleanup_rule(grouped, Path(repo_root).resolve(), envelope.target.get("cleanup_actor")),
     ])
     require_all_rules(rules)
     return build_receipt(envelope, "closeout-validator@1", {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"]}, rules)
