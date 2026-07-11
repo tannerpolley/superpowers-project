@@ -34,6 +34,10 @@ Read `skills/advanced-user-input/SKILL.md` for global continuation, artifact dis
 5. Integrate using the selected mode. Never push during local-only closeout.
 6. Re-run validation, remove only goal-owned branch/worktree state, run cleanup, replay workflow events, and prove clean repository state.
 
+## Evidence Gate Contract
+
+Premerge, merge-decision, and closeout launchers consume version-1 repository-bound envelopes and exact current receipts. Missing, stale, cross-candidate, legacy, or bare boolean evidence fails nonzero with a stable error; validators never collect replacement evidence. Local integration may mutate Git only after consuming a current passing `merge_decision` receipt.
+
 ## Stop Conditions And Final Health
 
 Stop on missing approval, failed checks/validation, stale evidence, conflicts, dirty main, ambiguous cleanup ownership, or mismatched source plan. Use `project_merge_next_step` for repair/review routes. `Done` is a verified final state only at `project_merge_final_health_gate` after merge, validation, cleanup, closeout receipt, workflow completion, and a clean worktree; otherwise retain `Stop` as the terminal choice.

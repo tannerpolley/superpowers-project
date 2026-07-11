@@ -18,6 +18,7 @@ from scripts.lib.evidence_schema import (
     hash_ref,
     parse_envelope_json,
     register_evidence_kind,
+    register_provider_evidence_kind,
 )
 from scripts.lib.gate_receipts import build_receipt, verify_receipt
 
@@ -142,6 +143,13 @@ class EvidenceSchemaTests(unittest.TestCase):
         envelope["evidence"][0]["payload"]["head"] = "forged"  # type: ignore[index]
         with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
             parse_envelope_json(json.dumps(envelope), self.repo)
+
+    def test_impossible_observation_timestamp_fails_closed(self):
+        envelope = make_envelope(self.repo)
+        envelope["evidence"][0]["observed_at"] = "9999-99-99T99:99:99Z"  # type: ignore[index]
+        envelope["envelope_hash"] = build_envelope_hash(envelope)
+        with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
+            parse_envelope_json(json.dumps(envelope), self.repo)
         envelope = make_envelope(self.repo)
         envelope["envelope_hash"] = hash_ref({"forged": True})
         with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
@@ -155,7 +163,7 @@ class EvidenceSchemaTests(unittest.TestCase):
             if payload.get("provider") != "fixture":
                 raise EvidenceError("schema_invalid", "workspace provider is invalid")
 
-        register_evidence_kind(EvidenceKindRegistration("workspace_receipt", "1", validate_workspace))
+        register_provider_evidence_kind(EvidenceKindRegistration("workspace_receipt", "1", validate_workspace))
         envelope = make_envelope(self.repo)
         envelope["evidence"].append(  # type: ignore[union-attr]
             {
@@ -169,13 +177,16 @@ class EvidenceSchemaTests(unittest.TestCase):
         envelope["envelope_hash"] = build_envelope_hash(envelope)
         parsed = parse_envelope_json(json.dumps(envelope), self.repo)
         self.assertEqual([{"provider": "fixture", "workspace_id": "local-checkout"}], seen)
-        receipt = build_receipt(parsed, "test-validator@1", {"head": parsed.target["branch"]}, [RuleResult("identity", True, "passed")])
+        receipt = build_receipt(parsed, "pr-ready-validator@1", {"head": parsed.target["branch"]}, [RuleResult("identity", True, "passed")])
         verify_receipt(receipt, parsed, "pr_ready")
+        forged_validator = build_receipt(parsed, "arbitrary-validator@999", {"head": parsed.target["branch"]}, [RuleResult("identity", True, "passed")])
+        with self.assertRaisesRegex(EvidenceError, "validator"):
+            verify_receipt(forged_validator, parsed, "pr_ready")
         tampered = replace(receipt, receipt_hash=hash_ref({"forged": True}))
         with self.assertRaisesRegex(EvidenceError, "schema_invalid"):
             verify_receipt(tampered, parsed, "pr_ready")
         with self.assertRaisesRegex(EvidenceError, "duplicate_evidence_kind"):
-            register_evidence_kind(EvidenceKindRegistration("workspace_receipt", "1", validate_workspace))
+            register_provider_evidence_kind(EvidenceKindRegistration("workspace_receipt", "1", validate_workspace))
 
 
 if __name__ == "__main__":

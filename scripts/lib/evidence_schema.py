@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 import hashlib
 import json
 import math
@@ -222,11 +223,21 @@ def register_evidence_kind(registration: EvidenceKindRegistration) -> None:
     if not registration.kind or not registration.version:
         raise EvidenceError("schema_invalid", "evidence registration requires kind and version")
     key = (registration.kind, registration.version)
+    if key in _REGISTRATIONS:
+        raise EvidenceError("schema_invalid", f"duplicate_evidence_kind:{registration.kind}@{registration.version}")
+    _REGISTRATIONS[key] = registration
+
+
+def register_provider_evidence_kind(registration: EvidenceKindRegistration) -> None:
+    """Bind a provider validator to a reserved extension slot exactly once."""
+    if not registration.kind or not registration.version or registration.validator is None:
+        raise EvidenceError("schema_invalid", "provider evidence registration requires a validator")
+    key = (registration.kind, registration.version)
     existing = _REGISTRATIONS.get(key)
-    if existing is not None:
-        if existing.validator is None and registration.validator is not None:
-            _REGISTRATIONS[key] = registration
-            return
+    if existing is None:
+        _REGISTRATIONS[key] = registration
+        return
+    if existing.validator is not None:
         raise EvidenceError("schema_invalid", f"duplicate_evidence_kind:{registration.kind}@{registration.version}")
     _REGISTRATIONS[key] = registration
 
@@ -318,10 +329,14 @@ def _parse_envelope(data: Mapping[str, object], repo_root: Path) -> EvidenceEnve
             raise EvidenceError("artifact_hash_mismatch", "source.spec_hash does not match active spec")
 
     target = _mapping(data["target"], "target")
-    _keys(target, {"task_id", "workspace_id", "branch"}, "target")
+    target_keys = set(target)
+    if target_keys not in ({"task_id", "workspace_id", "branch"}, {"task_id", "workspace_id", "branch", "isolation_required"}):
+        raise EvidenceError("schema_invalid", "target keys are invalid")
     _string(target["task_id"], "target.task_id", allow_none=True)
     _string(target["workspace_id"], "target.workspace_id")
     _string(target["branch"], "target.branch")
+    if "isolation_required" in target and not isinstance(target["isolation_required"], bool):
+        raise EvidenceError("schema_invalid", "target.isolation_required must be boolean")
 
     raw_evidence = data["evidence"]
     if not isinstance(raw_evidence, list):
@@ -336,6 +351,10 @@ def _parse_envelope(data: Mapping[str, object], repo_root: Path) -> EvidenceEnve
         assert kind is not None and collector is not None and observed_at is not None
         if not TIMESTAMP_PATTERN.fullmatch(observed_at):
             raise EvidenceError("schema_invalid", f"evidence[{index}].observed_at is not RFC3339")
+        try:
+            datetime.fromisoformat(observed_at[:-1] + "+00:00")
+        except ValueError as exc:
+            raise EvidenceError("schema_invalid", f"evidence[{index}].observed_at is not a real timestamp") from exc
         registration = evidence_registration(kind, collector.rsplit("@", 1)[-1] if "@" in collector else "")
         expected_collector = f"{registration.kind.replace('_', '-') if registration.kind != 'workspace_receipt' else 'registered-evidence'}@{registration.version}"
         if collector != expected_collector:

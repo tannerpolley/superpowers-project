@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Safety scenario contract: public PR-ready and terminal-closeout launchers
+# require version-1 evidence envelopes and must fail closed without them.
+
 search_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 while [[ "$search_dir" != "/" ]]; do
   if [[ -x "$search_dir/scripts/lib/run-script.sh" ]]; then

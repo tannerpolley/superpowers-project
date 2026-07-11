@@ -4,7 +4,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from .evidence_schema import EvidenceEnvelope, EvidenceError, HashRef, RuleResult, canonical_json, hash_ref, is_hash_ref
+try:
+    from .evidence_schema import EvidenceEnvelope, EvidenceError, HashRef, RuleResult, canonical_json, hash_ref, is_hash_ref
+except ImportError:  # pragma: no cover - CLI top-level import fallback
+    from evidence_schema import EvidenceEnvelope, EvidenceError, HashRef, RuleResult, canonical_json, hash_ref, is_hash_ref
+
+
+EXPECTED_VALIDATORS = {
+    "pr_ready": "pr-ready-validator@1",
+    "premerge": "premerge-validator@1",
+    "merge_decision": "merge-decision-validator@1",
+    "closeout": "closeout-validator@1",
+    "publish_ready": "publish-ready-validator@1",
+}
 
 
 @dataclass(frozen=True)
@@ -88,7 +100,7 @@ def parse_receipt(value: Mapping[str, object]) -> GateReceipt:
     expected = {"schema_version", "gate", "validator_id", "envelope_hash", "bindings", "observations", "rules", "disposition", "receipt_hash"}
     if set(value) != expected:
         raise EvidenceError("schema_invalid", "receipt keys are invalid")
-    if value["schema_version"] != 1 or not isinstance(value["schema_version"], int):
+    if value["schema_version"] != 1 or isinstance(value["schema_version"], bool) or not isinstance(value["schema_version"], int):
         raise EvidenceError("schema_invalid", "unsupported receipt version")
     fields = ("gate", "validator_id", "disposition")
     for field in fields:
@@ -127,6 +139,9 @@ def verify_receipt(receipt: GateReceipt | Mapping[str, object], envelope: Eviden
         raise EvidenceError("legacy_evidence_unsupported", "unsupported receipt object")
     if receipt.schema_version != 1 or receipt.gate != expected_gate:
         raise EvidenceError("receipt_stale", "receipt gate or version does not match")
+    expected_validator = EXPECTED_VALIDATORS.get(expected_gate)
+    if expected_validator is None or receipt.validator_id != expected_validator:
+        raise EvidenceError("receipt_stale", "receipt validator identity does not match gate")
     if receipt.envelope_hash != envelope.envelope_hash:
         raise EvidenceError("receipt_stale", "receipt envelope hash does not match")
     if not is_hash_ref(receipt.receipt_hash) or _receipt_hash(receipt) != receipt.receipt_hash:

@@ -32,6 +32,12 @@ Require `docs/superpowers/issues/<number>-<slug>.md` with `Sub-Issue Role: leaf`
 5. Show full branch and verification evidence, then ask `project_resolve_push_permission`. Push/open PR only after explicit permission or valid preauthorization that includes remote publication.
 6. Collect and validate the PR-ready ledger, then hand off to `$superpowers-project:merge-changes`.
 
+## Evidence Gate Contract
+
+Collection and validation are separate operations. `collect-pr-ready-ledger.sh` must receive a complete `CollectionRequestJson` or `CollectionRequestPath` and emits a version-1 repository-bound evidence envelope only when `OutputPath` is explicit. `validate-pr-ready.sh` requires exactly one `EvidenceEnvelopeJson` or `EvidenceEnvelopePath`; it returns a hash-bound `pr_ready` receipt or a structured nonzero error. Missing evidence is `evidence_missing`, and legacy ledgers or bare `ok: true` objects are `legacy_evidence_unsupported` rather than compatibility passes.
+
+Resolve terminal closeout consumes the current `pr_ready` receipt, a matching closeout envelope, and an explicit terminal decision. It never treats a result boolean as proof and never collects missing evidence during validation.
+
 ## Stop Conditions And Closeout
 
 Stop on invalid setup, non-leaf issue, missing goal, failed proof, scope drift, missing push authority, CI failure, or stale PR evidence. Record the graph-owned continuation decision. `Stop` requires terminal closeout validation; PR readiness is not verified final `Done`.
