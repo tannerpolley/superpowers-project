@@ -8,12 +8,25 @@ from pathlib import Path
 from scripts.lib.agent_usability import TrialReceiptError, validate_trial_receipt
 from scripts.lib.package_provenance import runtime_contract_hash
 from scripts.lib.workflow_state import append_event
+from scripts.run_agent_usability_trials_support import summarize_observed_events
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class AgentUsabilityReceiptTests(unittest.TestCase):
+    def test_trial_metrics_are_derived_from_observed_events(self):
+        events = [
+            {"kind": "tool_call", "name": "worker"},
+            {"kind": "tool_call", "name": "verifier"},
+            {"kind": "external_mutation", "name": "provider-write"},
+            {"kind": "receipt", "receipt_hash": "sha256:" + "a" * 64},
+        ]
+        self.assertEqual(
+            {"tool_calls": 2, "external_mutations": 1, "receipt_identities": ["sha256:" + "a" * 64]},
+            summarize_observed_events(events),
+        )
+
     def test_codex_output_schemas_are_strict_objects(self):
         schemas = [
             ROOT / "tests" / "workflow-trials" / "worker-output.schema.json",

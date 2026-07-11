@@ -177,7 +177,9 @@ class EvidenceSchemaTests(unittest.TestCase):
         envelope["envelope_hash"] = build_envelope_hash(envelope)
         parsed = parse_envelope_json(json.dumps(envelope), self.repo)
         self.assertEqual([{"provider": "fixture", "workspace_id": "local-checkout"}], seen)
-        receipt = build_receipt(parsed, "pr-ready-validator@1", {"head": parsed.target["branch"]}, [RuleResult("identity", True, "passed")])
+        from scripts.lib.gate_receipts import REQUIRED_RECEIPT_RULES
+        complete_rules = [RuleResult(rule_id, True, "passed") for rule_id in sorted(REQUIRED_RECEIPT_RULES["pr_ready"])]
+        receipt = build_receipt(parsed, "pr-ready-validator@1", {"head": parsed.target["branch"]}, complete_rules)
         verify_receipt(receipt, parsed, "pr_ready")
         forged_validator = build_receipt(parsed, "arbitrary-validator@999", {"head": parsed.target["branch"]}, [RuleResult("identity", True, "passed")])
         with self.assertRaisesRegex(EvidenceError, "validator"):

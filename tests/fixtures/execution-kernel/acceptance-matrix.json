@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "rows": [
+    {"id":"missing-pr-ready","gate":"pr_ready","mutation":"missing evidence","expected_error":"evidence_missing","expected_rule":"input","test_module":"test_gate_pr_ready","test_name":"test_public_pr_ready_launcher_fails_without_evidence"},
+    {"id":"forged-success","gate":"pr_ready","mutation":"forged ok boolean","expected_error":"collector_untrusted","expected_rule":"collector_trust","test_module":"test_gate_pr_ready","test_name":"test_pr_ready_rejects_forged_success_and_stale_source"},
+    {"id":"stale-source","gate":"pr_ready","mutation":"changed plan","expected_error":"artifact_hash_mismatch","expected_rule":"source_artifacts","test_module":"test_gate_pr_ready","test_name":"test_pr_ready_rejects_forged_success_and_stale_source"},
+    {"id":"dirty-state","gate":"pr_ready","mutation":"changed worktree","expected_error":"required_rule_failed","expected_rule":"target_state","test_module":"test_gate_pr_ready","test_name":"test_pr_ready_rejects_dirty_state_created_after_collection"},
+    {"id":"tampered-cleanup","gate":"pr_ready","mutation":"forged cleanup hash","expected_error":"required_rule_failed","expected_rule":"cleanup_state","test_module":"test_gate_pr_ready","test_name":"test_pr_ready_rejects_tampered_cleanup_observation"},
+    {"id":"missing-command-fields","gate":"pr_ready","mutation":"incomplete command","expected_error":"required_rule_failed","expected_rule":"implementation_verification","test_module":"test_gate_pr_ready","test_name":"test_pr_ready_rejects_incomplete_command_observation"},
+    {"id":"missing-premerge","gate":"premerge","mutation":"missing evidence","expected_error":"evidence_missing","expected_rule":"input","test_module":"test_gate_premerge","test_name":"test_public_premerge_launcher_fails_without_evidence"},
+    {"id":"provider-blocked","gate":"premerge","mutation":"nonpassing provider check","expected_error":"required_rule_failed","expected_rule":"required_checks","test_module":"test_gate_premerge","test_name":"test_premerge_rejects_nonpassing_or_unavailable_provider"},
+    {"id":"provider-unavailable","gate":"premerge","mutation":"provider unavailable","expected_error":"provider_unavailable","expected_rule":"provider_state","test_module":"test_gate_premerge","test_name":"test_premerge_rejects_nonpassing_or_unavailable_provider"},
+    {"id":"stale-provider","gate":"premerge","mutation":"provider observation mismatch","expected_error":"required_rule_failed","expected_rule":"provider_state","test_module":"test_gate_premerge","test_name":"test_premerge_rejects_stale_provider_observation_hash"},
+    {"id":"stale-merge-receipt","gate":"merge_decision","mutation":"changed receipt binding","expected_error":"receipt_stale","expected_rule":"event_chain","test_module":"test_gate_merge_decision","test_name":"test_merge_decision_rejects_stale_premerge_head"},
+    {"id":"missing-closeout","gate":"closeout","mutation":"missing evidence","expected_error":"evidence_missing","expected_rule":"input","test_module":"test_gate_closeout","test_name":"test_public_closeout_launcher_fails_without_evidence"},
+    {"id":"stale-integration","gate":"closeout","mutation":"wrong integration head","expected_error":"required_rule_failed","expected_rule":"integration_proof","test_module":"test_gate_closeout","test_name":"test_closeout_rejects_stale_integration_head"},
+    {"id":"missing-publish","gate":"publish_ready","mutation":"missing evidence","expected_error":"evidence_missing","expected_rule":"input","test_module":"test_gate_publish_ready","test_name":"test_prepare_release_requires_a_publish_ready_receipt_with_structured_error"}
+  ]
+}

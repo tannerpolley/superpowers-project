@@ -18,6 +18,15 @@ EXPECTED_VALIDATORS = {
     "publish_ready": "publish-ready-validator@1",
 }
 
+REQUIRED_RECEIPT_RULES = {
+    "pr_ready": frozenset({
+        "repository_identity", "target_identity", "event_chain", "workflow_binding",
+        "target_state", "authorization_binding", "source_artifacts",
+        "implementation_verification", "review_disposition", "plan_conformance",
+        "workspace_receipt", "cleanup_state",
+    }),
+}
+
 
 @dataclass(frozen=True)
 class GateReceipt:
@@ -157,6 +166,11 @@ def verify_receipt(receipt: GateReceipt | Mapping[str, object], envelope: Eviden
         raise EvidenceError("receipt_stale", "receipt bindings do not match current envelope")
     if receipt.disposition != "passed" or not receipt.rules or not all(rule.ok for rule in receipt.rules):
         raise EvidenceError("required_rule_failed", "receipt is not a passing receipt")
+    required_rules = REQUIRED_RECEIPT_RULES.get(expected_gate, frozenset())
+    observed_rules = {rule.rule_id for rule in receipt.rules}
+    missing_rules = sorted(required_rules - observed_rules)
+    if missing_rules:
+        raise EvidenceError("required_rule_failed", "receipt omits required rules: " + ", ".join(missing_rules))
 
 
 def verify_receipt_hash(receipt: GateReceipt | Mapping[str, object]) -> GateReceipt:
