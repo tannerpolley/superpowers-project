@@ -43,20 +43,20 @@ def _observe_process(root: Path, argv: Sequence[str], timeout: int = 15) -> dict
             cwd=root,
             stdin=subprocess.DEVNULL,
             capture_output=True,
-            text=True,
+            text=False,
             timeout=timeout,
             check=False,
         )
-        stdout = result.stdout.encode("utf-8", errors="replace")
-        stderr = result.stderr.encode("utf-8", errors="replace")
+        stdout = result.stdout or b""
+        stderr = result.stderr or b""
         return {
             "argv": command,
             "exit_code": result.returncode,
             "stdout_hash": hash_bytes_ref(stdout),
             "stderr_hash": hash_bytes_ref(stderr),
             "timed_out": False,
-            "_stdout_text": result.stdout,
-            "_stderr_text": result.stderr,
+            "_stdout_text": stdout.decode("utf-8", errors="replace"),
+            "_stderr_text": stderr.decode("utf-8", errors="replace"),
         }
     except subprocess.TimeoutExpired as exc:
         stdout = (exc.stdout or b"") if isinstance(exc.stdout, bytes) else str(exc.stdout or "").encode()

@@ -160,7 +160,7 @@ class EvidenceSchemaTests(unittest.TestCase):
 
         def validate_workspace(payload):
             seen.append(dict(payload))
-            if payload.get("provider") != "fixture":
+            if payload.get("provider") not in {"fixture", "codex"}:
                 raise EvidenceError("schema_invalid", "workspace provider is invalid")
 
         register_provider_evidence_kind(EvidenceKindRegistration("workspace_receipt", "1", validate_workspace))

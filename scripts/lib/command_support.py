@@ -124,18 +124,27 @@ def write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _strict_json_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ScriptError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def read_json_arg(root: Path, args: dict[str, Any], json_name: str, path_name: str, required: bool = True) -> tuple[Any, str]:
     inline = arg_value(args, json_name)
     path_value = arg_value(args, path_name)
     if inline and path_value:
         raise ScriptError(f"provide exactly one of {json_name} or {path_name}")
     if inline:
-        return json.loads(str(inline)), ""
+        return json.loads(str(inline), object_pairs_hook=_strict_json_pairs), ""
     if path_value:
         path = project_path_for(root, str(path_value), path_name)
         if not path.is_file():
             raise ScriptError(f"{path_name} is missing: {path_value}")
-        return json.loads(read_text(path)), normalize_rel(path, root)
+        return json.loads(read_text(path), object_pairs_hook=_strict_json_pairs), normalize_rel(path, root)
     if required:
         raise ScriptError(f"{json_name} or {path_name} is required")
     return None, ""

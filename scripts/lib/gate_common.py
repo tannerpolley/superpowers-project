@@ -7,9 +7,11 @@ from pathlib import Path
 from typing import Mapping
 
 try:
-    from .evidence_schema import EvidenceError, EvidenceEnvelope, RuleResult
+    from .evidence_collectors import READ_ONLY_COMMANDS
+    from .evidence_schema import EvidenceError, EvidenceEnvelope, RuleResult, hash_bytes_ref, is_hash_ref
 except ImportError:  # pragma: no cover - CLI top-level import fallback
-    from evidence_schema import EvidenceError, EvidenceEnvelope, RuleResult
+    from evidence_collectors import READ_ONLY_COMMANDS
+    from evidence_schema import EvidenceError, EvidenceEnvelope, RuleResult, hash_bytes_ref, is_hash_ref
 
 
 def evaluate_rules(checks: list[tuple[str, Callable[[], tuple[bool, str]]]]) -> list[RuleResult]:
@@ -36,19 +38,21 @@ def evidence_by_kind(envelope: EvidenceEnvelope) -> dict[str, list[object]]:
 
 
 def current_git_state(repo_root: Path) -> dict[str, str | int]:
-    def read(argv: list[str]) -> tuple[int, str]:
-        result = subprocess.run(argv, cwd=repo_root, stdin=subprocess.DEVNULL, text=True, capture_output=True, check=False, timeout=10)
-        return result.returncode, result.stdout.strip()
+    def read(argv: list[str]) -> tuple[int, str, str]:
+        result = subprocess.run(argv, cwd=repo_root, stdin=subprocess.DEVNULL, text=False, capture_output=True, check=False, timeout=10)
+        stdout = result.stdout or b""
+        return result.returncode, stdout.decode("utf-8", errors="replace").strip(), str(hash_bytes_ref(stdout))
 
-    status_code, status = read(["git", "status", "--short"])
-    _, head = read(["git", "rev-parse", "HEAD"])
-    _, branch = read(["git", "branch", "--show-current"])
-    _, common = read(["git", "rev-parse", "--git-common-dir"])
+    status_code, status, status_hash = read(["git", "status", "--short"])
+    _, head, _ = read(["git", "rev-parse", "HEAD"])
+    _, branch, _ = read(["git", "branch", "--show-current"])
+    _, common, _ = read(["git", "rev-parse", "--git-common-dir"])
     common_path = Path(common)
     if not common_path.is_absolute():
         common_path = repo_root / common_path
     return {
         "status_exit_code": status_code,
+        "status_hash": status_hash,
         "dirty": bool(status),
         "head": head,
         "branch": branch,
@@ -87,7 +91,7 @@ def identity_rules(envelope: EvidenceEnvelope, repo_root: Path) -> list[RuleResu
 def git_state_rule(grouped: Mapping[str, list[object]], repo_root: Path) -> RuleResult:
     payload = grouped.get("git_state", [None])[0]
     current = current_git_state(repo_root)
-    ok = isinstance(payload, Mapping) and payload.get("status_exit_code") == 0 and payload.get("head") == current["head"] and payload.get("branch", "detached-head") == (current["branch"] or "detached-head") and payload.get("git_common_dir") == current["git_common_dir"]
+    ok = isinstance(payload, Mapping) and current["status_exit_code"] == 0 and payload.get("status_exit_code") == 0 and payload.get("status_stdout_hash") == current["status_hash"] and current["dirty"] is False and payload.get("head") == current["head"] and payload.get("branch", "detached-head") == (current["branch"] or "detached-head") and payload.get("git_common_dir") == current["git_common_dir"]
     return RuleResult("target_state", ok, "observed Git state matches current checkout" if ok else "observed Git state is stale or unavailable")
 
 
@@ -122,7 +126,26 @@ def source_artifact_rule(grouped: Mapping[str, list[object]], envelope: Evidence
 
 def command_rule(grouped: Mapping[str, list[object]]) -> RuleResult:
     payloads = grouped.get("command_result", [])
-    ok = bool(payloads) and all(isinstance(payload, Mapping) and payload.get("exit_code") == 0 and payload.get("timed_out") is False for payload in payloads)
+    required = {"command_id", "argv", "exit_code", "stdout_hash", "stderr_hash", "timed_out"}
+
+    def valid(payload: object) -> bool:
+        if not isinstance(payload, Mapping) or not required <= set(payload):
+            return False
+        command_id = payload["command_id"]
+        return (
+            isinstance(command_id, str)
+            and command_id in READ_ONLY_COMMANDS
+            and payload["argv"] == list(READ_ONLY_COMMANDS[command_id])
+            and isinstance(payload["exit_code"], int)
+            and not isinstance(payload["exit_code"], bool)
+            and payload["exit_code"] == 0
+            and is_hash_ref(payload["stdout_hash"])
+            and is_hash_ref(payload["stderr_hash"])
+            and isinstance(payload["timed_out"], bool)
+            and payload["timed_out"] is False
+        )
+
+    ok = bool(payloads) and all(valid(payload) for payload in payloads)
     return RuleResult("implementation_verification", ok, "all observed commands passed" if ok else "a required command failed or was incomplete")
 
 
@@ -139,15 +162,30 @@ def review_rules(grouped: Mapping[str, list[object]]) -> tuple[RuleResult, RuleR
     )
 
 
-def cleanup_rule(grouped: Mapping[str, list[object]]) -> RuleResult:
+def cleanup_rule(grouped: Mapping[str, list[object]], repo_root: Path) -> RuleResult:
     payload = grouped.get("cleanup_state", [None])[0]
-    ok = isinstance(payload, Mapping) and payload.get("status_exit_code") == 0 and payload.get("dirty", False) is False and payload.get("task_owned_paths", []) == []
+    current = current_git_state(repo_root)
+    ok = isinstance(payload, Mapping) and current["status_exit_code"] == 0 and payload.get("status_exit_code") == 0 and payload.get("status_hash") == current["status_hash"] and current["dirty"] is False and payload.get("task_owned_paths", []) == []
     return RuleResult("cleanup_state", ok, "cleanup state is clean" if ok else "cleanup state is incomplete or dirty")
 
 
 def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope) -> RuleResult:
     if not envelope.target.get("isolation_required", False):
         return RuleResult("workspace_receipt", True, "workspace receipt not required")
-    payload = grouped.get("workspace_receipt", [None])[0]
-    ok = isinstance(payload, Mapping) and payload.get("workspace_id") == envelope.target["workspace_id"]
-    return RuleResult("workspace_receipt", ok, "workspace receipt matches target" if ok else "workspace receipt is missing or mismatched")
+    payloads = grouped.get("workspace_receipt", [])
+    payload = payloads[0] if len(payloads) == 1 else None
+    current = current_git_state(Path(str(envelope.repository["root"])))
+    required = {"provider", "workspace_id", "repository_root", "run_id", "candidate_id", "task_id", "thread_id", "observed_head", "owner", "disposition"}
+    ok = isinstance(payload, Mapping) and required <= set(payload)
+    if ok:
+        ok = (
+            payload["workspace_id"] == envelope.target["workspace_id"]
+            and payload["repository_root"] == envelope.repository["root"]
+            and payload["run_id"] == envelope.workflow["run_id"]
+            and payload["candidate_id"] == envelope.workflow["candidate_id"]
+            and payload["task_id"] == envelope.target.get("task_id")
+            and payload["observed_head"] == current["head"]
+            and payload["owner"] in {"plugin", "codex", "app"}
+            and payload["disposition"] in {"owned", "active"}
+        )
+    return RuleResult("workspace_receipt", bool(ok), "workspace receipt matches provider, task, thread, repository, candidate, head, and owner" if ok else "workspace receipt is missing, duplicated, stale, or mismatched")

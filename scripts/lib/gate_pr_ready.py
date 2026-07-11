@@ -30,7 +30,7 @@ def validate_pr_ready(envelope: EvidenceEnvelope, repo_root: Path) -> GateReceip
         command_rule(grouped),
         *review_rules(grouped),
         workspace_rule(grouped, envelope),
-        cleanup_rule(grouped),
+        cleanup_rule(grouped, Path(repo_root).resolve()),
     ])
     require_all_rules(rules)
     return build_receipt(envelope, "pr-ready-validator@1", {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"]}, rules)

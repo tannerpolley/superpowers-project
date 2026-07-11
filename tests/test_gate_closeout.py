@@ -5,12 +5,16 @@ import json
 import subprocess
 import tempfile
 import unittest
+import contextlib
+import io
 from pathlib import Path
 
 from scripts.lib.evidence_collectors import CollectionRequest, build_evidence_envelope
-from scripts.lib.evidence_schema import EvidenceError, hash_ref, parse_envelope
+from scripts.lib.evidence_schema import EvidenceError, build_envelope_hash, hash_ref, parse_envelope
 from scripts.lib.gate_closeout import validate_closeout
 from scripts.lib.gate_pr_ready import validate_pr_ready
+from scripts.lib.command_support import Context
+from scripts.lib.commands.gates import command_validate_resolve_terminal_closeout
 
 
 def git(root: Path, *args: str) -> str:
@@ -72,6 +76,37 @@ class CloseoutGateTests(unittest.TestCase):
         self.assertEqual("closeout", receipt.gate)
         self.assertEqual("passed", receipt.disposition)
         self.assertTrue({rule.rule_id for rule in receipt.rules} >= {"integration_proof", "completion_state", "workspace_disposition", "cleanup_state"})
+
+    def test_closeout_rejects_forged_prior_validator_and_bindings(self):
+        pr_request = request(self.repo, "pr_ready")
+        pr_envelope = parse_envelope(pr_request, self.repo)
+        pr_receipt = validate_pr_ready(pr_envelope, self.repo)
+        forged = __import__("dataclasses").replace(pr_receipt, validator_id="arbitrary-validator@999")
+        forged = __import__("dataclasses").replace(forged, receipt_hash=hash_ref(forged.unsigned_dict()))
+        closeout = parse_envelope(request(self.repo, "closeout", prior=forged.receipt_hash), self.repo)
+        with self.assertRaisesRegex(EvidenceError, "receipt"):
+            validate_closeout(closeout, self.repo, forged)
+
+    def test_closeout_rejects_stale_integration_head(self):
+        pr_receipt = validate_pr_ready(parse_envelope(request(self.repo, "pr_ready"), self.repo), self.repo)
+        envelope = request(self.repo, "closeout", prior=pr_receipt.receipt_hash)
+        integration = next(item for item in envelope["evidence"] if item["kind"] == "integration_state")
+        integration["payload"]["head"] = "stale-head"
+        integration["payload_hash"] = hash_ref(integration["payload"])
+        envelope["envelope_hash"] = build_envelope_hash(envelope)
+        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+            validate_closeout(parse_envelope(envelope, self.repo), self.repo, pr_receipt)
+
+    def test_terminal_decision_is_bound_to_run_candidate_and_authorization(self):
+        pr_receipt = validate_pr_ready(parse_envelope(request(self.repo, "pr_ready"), self.repo), self.repo)
+        closeout = request(self.repo, "closeout", prior=pr_receipt.receipt_hash)
+        root = Path(__file__).parents[1]
+        ctx = Context(root / "skills/resolve-issue/scripts/validate-terminal-closeout.sh", self.repo, "skills/resolve-issue/scripts/validate-terminal-closeout.sh", "validate-terminal-closeout.sh", [], root, self.repo)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            status = command_validate_resolve_terminal_closeout(ctx, {"RepoRoot": str(self.repo), "EvidenceEnvelopeJson": json.dumps(closeout), "PriorReceiptJson": json.dumps(pr_receipt.to_dict()), "ContinuationDecisionJson": json.dumps({"terminal_state": "done", "run_id": "run-1", "candidate_id": "wrong-candidate", "authorization_hash": hash_ref({"authorized": True})})})
+        self.assertNotEqual(0, status)
+        self.assertEqual("candidate_mismatch", json.loads(output.getvalue())["error"]["code"])
 
 
 if __name__ == "__main__":

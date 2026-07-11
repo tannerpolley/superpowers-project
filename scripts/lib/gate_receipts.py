@@ -132,7 +132,7 @@ def parse_receipt(value: Mapping[str, object]) -> GateReceipt:
     )
 
 
-def verify_receipt(receipt: GateReceipt | Mapping[str, object], envelope: EvidenceEnvelope, expected_gate: str) -> None:
+def verify_receipt(receipt: GateReceipt | Mapping[str, object], envelope: EvidenceEnvelope, expected_gate: str, *, allow_transition: bool = False) -> None:
     if isinstance(receipt, Mapping):
         receipt = parse_receipt(receipt)
     if not isinstance(receipt, GateReceipt):
@@ -142,12 +142,18 @@ def verify_receipt(receipt: GateReceipt | Mapping[str, object], envelope: Eviden
     expected_validator = EXPECTED_VALIDATORS.get(expected_gate)
     if expected_validator is None or receipt.validator_id != expected_validator:
         raise EvidenceError("receipt_stale", "receipt validator identity does not match gate")
-    if receipt.envelope_hash != envelope.envelope_hash:
+    if not allow_transition and receipt.envelope_hash != envelope.envelope_hash:
         raise EvidenceError("receipt_stale", "receipt envelope hash does not match")
     if not is_hash_ref(receipt.receipt_hash) or _receipt_hash(receipt) != receipt.receipt_hash:
         raise EvidenceError("schema_invalid", "receipt_hash mismatch")
     expected_bindings = build_receipt(envelope, receipt.validator_id, receipt.observations, list(receipt.rules)).bindings
-    if canonical_json(receipt.bindings) != canonical_json(expected_bindings):
+    if allow_transition:
+        for key in ("repository", "workflow", "source", "target"):
+            if canonical_json(receipt.bindings.get(key)) != canonical_json(expected_bindings.get(key)):
+                raise EvidenceError("receipt_stale", f"receipt {key} binding does not match transition envelope")
+        if envelope.prior_event_hash != receipt.receipt_hash:
+            raise EvidenceError("receipt_stale", "transition envelope does not name the consumed receipt")
+    elif canonical_json(receipt.bindings) != canonical_json(expected_bindings):
         raise EvidenceError("receipt_stale", "receipt bindings do not match current envelope")
     if receipt.disposition != "passed" or not receipt.rules or not all(rule.ok for rule in receipt.rules):
         raise EvidenceError("required_rule_failed", "receipt is not a passing receipt")

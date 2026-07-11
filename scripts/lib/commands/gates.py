@@ -8,14 +8,14 @@ try:
     from ..command_support import Context, ScriptError, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
     from ..evidence_collectors import CollectionRequest, build_evidence_envelope
     from ..evidence_schema import EvidenceError, parse_envelope
-    from ..gate_closeout import validate_closeout
+    from ..gate_closeout import validate_closeout, validate_terminal_decision
     from ..gate_pr_ready import validate_pr_ready
     from ..gate_receipts import parse_receipt
 except ImportError:  # pragma: no cover - direct module execution fallback
     from command_support import Context, ScriptError, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
     from evidence_collectors import CollectionRequest, build_evidence_envelope
     from evidence_schema import EvidenceError, parse_envelope
-    from gate_closeout import validate_closeout
+    from gate_closeout import validate_closeout, validate_terminal_decision
     from gate_pr_ready import validate_pr_ready
     from gate_receipts import parse_receipt
 
@@ -104,8 +104,7 @@ def command_validate_resolve_terminal_closeout(ctx: Context, args: dict[str, Any
         decision, _ = read_json_arg(root, args, "ContinuationDecisionJson", "ContinuationDecisionPath", required=False)
         if decision is None:
             raise EvidenceError("evidence_missing", "ContinuationDecisionJson or ContinuationDecisionPath is required")
-        if decision.get("terminal_state") not in {"stop", "done"}:
-            raise EvidenceError("schema_invalid", "terminal decision must be stop or done")
+        validate_terminal_decision(decision, envelope)
         prior = _load_prior_receipt(root, args)
         receipt = validate_closeout(envelope, root, prior)
         return emit({"ok": True, "phase": phase, "receipt": receipt.to_dict(), "receipt_hash": receipt.receipt_hash})
