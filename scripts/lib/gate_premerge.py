@@ -2,16 +2,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 from typing import Mapping
 
 try:
     from .evidence_collectors import collect_github_state
-    from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, hash_ref, is_hash_ref
+    from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, is_hash_ref
     from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
     from .gate_receipts import build_receipt
 except ImportError:  # pragma: no cover
     from evidence_collectors import collect_github_state
-    from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, hash_ref, is_hash_ref
+    from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, is_hash_ref
     from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
     from gate_receipts import build_receipt
 
@@ -28,11 +29,8 @@ def _provider_rules(grouped: Mapping[str, list[object]], envelope: EvidenceEnvel
         raise EvidenceError("provider_state_unavailable", "GitHub provider state is unavailable", "provider_state")
     observation_id = payload.get("observation_id")
     observation_hash = payload.get("observation_hash")
-    observation_ok = isinstance(observation_id, str) and observation_id in {"github_pr_state", "fixture_github_pr_state"} and is_hash_ref(observation_hash)
-    if observation_ok and observation_id == "fixture_github_pr_state":
-        unsigned = {key: value for key, value in payload.items() if key != "observation_hash"}
-        observation_ok = observation_hash == hash_ref(unsigned)
-    elif observation_ok:
+    observation_ok = isinstance(observation_id, str) and observation_id == "github_pr_state" and is_hash_ref(observation_hash)
+    if observation_ok:
         fresh = collect_github_state(repo_root, observation_id)
         if fresh.payload.get("provider_available") is not True:
             raise EvidenceError("provider_state_unavailable", "GitHub provider state is unavailable", "provider_state")
@@ -49,11 +47,14 @@ def _provider_rules(grouped: Mapping[str, list[object]], envelope: EvidenceEnvel
     remote_identity = envelope.repository.get("remote_identity")
     repository_ok = isinstance(payload.get("repository"), str) and bool(payload.get("repository")) and isinstance(payload.get("repository_id"), str) and bool(payload.get("repository_id")) and (not remote_identity or payload.get("repository") == remote_identity)
     pr_ok = isinstance(payload.get("pr_id"), int) and not isinstance(payload.get("pr_id"), bool) and payload.get("pr_id") > 0 and repository_ok
-    base_ok = payload.get("base_ref") == envelope.target["branch"] and isinstance(payload.get("base_sha"), str) and bool(payload.get("base_sha"))
+    base_ref = payload.get("base_ref")
+    base_observation = subprocess.run(["git", "rev-parse", str(base_ref)], cwd=repo_root, stdin=subprocess.DEVNULL, text=True, capture_output=True, check=False, timeout=10) if isinstance(base_ref, str) and base_ref else None
+    base_ok = payload.get("base_ref") == envelope.target["branch"] and isinstance(payload.get("base_sha"), str) and bool(payload.get("base_sha")) and base_observation is not None and base_observation.returncode == 0 and payload.get("base_sha") == base_observation.stdout.strip()
     head_ok = isinstance(payload.get("head_ref"), str) and bool(payload.get("head_ref")) and payload.get("head_ref") == current_branch and payload.get("head_ref") != payload.get("base_ref") and payload.get("head_sha") == current_head and payload.get("source_branch") == payload.get("head_ref") and payload.get("source_sha") == payload.get("head_sha")
     mergeability_ok = payload.get("mergeable") is True
     provider_reviews = payload.get("reviews")
-    reviews_ok = isinstance(provider_reviews, list) and not any(isinstance(review, Mapping) and review.get("blocking") is True for review in provider_reviews)
+    blocking_states = {"CHANGES_REQUESTED", "REQUEST_CHANGES", "REQUESTED", "BLOCKED"}
+    reviews_ok = payload.get("review_decision") not in blocking_states and isinstance(provider_reviews, list) and not any(isinstance(review, Mapping) and (review.get("blocking") is True or str(review.get("state", "")).upper() in blocking_states) for review in provider_reviews)
     strategy_ok = payload.get("strategy") in {"ff-only", "squash", "merge"}
     return [
         RuleResult("provider_state", True, "provider state is available"),

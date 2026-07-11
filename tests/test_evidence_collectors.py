@@ -87,14 +87,22 @@ class EvidenceCollectorTests(unittest.TestCase):
             build_evidence_envelope(request)
 
     def test_github_provider_observation_uses_closed_command_and_hash(self):
-        stdout = json.dumps({"number": 113, "repository": {"nameWithOwner": "fixture/repo", "id": "repo-id"}, "baseRefName": "main", "baseRefOid": "base", "headRefName": "codex/fixture", "headRefOid": "head", "mergeable": "MERGEABLE", "reviews": [], "statusCheckRollup": [{"name": "ci", "conclusion": "SUCCESS"}]})
-        fake = {"argv": list(collectors.TRUSTED_PROVIDER_COMMANDS["github_pr_state"]), "exit_code": 0, "stdout_hash": hash_ref({"stdout": stdout}), "stderr_hash": hash_ref({"stderr": ""}), "timed_out": False, "_stdout_text": stdout, "_stderr_text": ""}
-        with patch.object(collectors, "_observe_process", return_value=fake) as observed:
+        pr_stdout = json.dumps({"number": 113, "baseRefName": "main", "baseRefOid": "base", "headRefName": "codex/fixture", "headRefOid": "head", "mergeable": "MERGEABLE", "reviews": [], "reviewDecision": "APPROVED", "statusCheckRollup": [{"name": "ci", "conclusion": "SUCCESS"}]})
+        repository_stdout = json.dumps({"nameWithOwner": "fixture/repo", "id": "repo-id"})
+        pr_fake = {"argv": list(collectors.TRUSTED_PROVIDER_COMMANDS["github_pr_state"]), "exit_code": 0, "stdout_hash": hash_ref({"stdout": pr_stdout}), "stderr_hash": hash_ref({"stderr": ""}), "timed_out": False, "_stdout_text": pr_stdout, "_stderr_text": ""}
+        repository_fake = {"argv": list(collectors.TRUSTED_PROVIDER_COMMANDS["github_repository"]), "exit_code": 0, "stdout_hash": hash_ref({"stdout": repository_stdout}), "stderr_hash": hash_ref({"stderr": ""}), "timed_out": False, "_stdout_text": repository_stdout, "_stderr_text": ""}
+        def observe(_root, argv, _timeout):
+            return pr_fake if tuple(argv) == collectors.TRUSTED_PROVIDER_COMMANDS["github_pr_state"] else repository_fake
+        with patch.object(collectors, "_observe_process", side_effect=observe) as observed:
             result = collect_github_state(self.repo)
-        self.assertEqual(collectors.TRUSTED_PROVIDER_COMMANDS["github_pr_state"], tuple(observed.call_args.args[1]))
+        self.assertEqual([collectors.TRUSTED_PROVIDER_COMMANDS["github_pr_state"], collectors.TRUSTED_PROVIDER_COMMANDS["github_repository"]], [tuple(call.args[1]) for call in observed.call_args_list])
         self.assertTrue(result.payload["provider_available"])
         self.assertEqual("github_pr_state", result.payload["observation_id"])
-        self.assertEqual(fake["stdout_hash"], result.payload["observation_hash"])
+        self.assertEqual(hash_ref({"pr": pr_fake["stdout_hash"], "repository": repository_fake["stdout_hash"]}), result.payload["observation_hash"])
+
+    def test_fixture_provider_observation_id_is_not_authoritative(self):
+        with self.assertRaisesRegex(EvidenceError, "collector_untrusted"):
+            collect_github_state(self.repo, "fixture_github_pr_state")
 
     def test_git_observations_invoke_each_read_only_field_once(self):
         with patch.object(collectors, "_observe_process", wraps=collectors._observe_process) as observed:

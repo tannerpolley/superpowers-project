@@ -6,7 +6,10 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+import scripts.lib.evidence_collectors as evidence_collectors
+import scripts.lib.gate_premerge as gate_premerge
 from scripts.lib.evidence_collectors import CollectionRequest, CollectorResult, build_evidence_envelope
 from scripts.lib.evidence_schema import EvidenceError, build_envelope_hash, hash_ref, parse_envelope
 from scripts.lib.gate_premerge import validate_premerge
@@ -17,8 +20,8 @@ def git(root: Path, *args: str) -> str:
 
 
 def github_observation(payload: dict[str, object]) -> CollectorResult:
-    observed = {"observation_id": "fixture_github_pr_state", **payload}
-    observed["observation_hash"] = hash_ref(observed)
+    observed = {"observation_id": "github_pr_state", **payload}
+    observed["observation_hash"] = hash_ref({"mock": observed})
     return CollectorResult("github_state", "github-state@1", "2026-07-10T12:00:00Z", observed)
 
 
@@ -42,7 +45,7 @@ def make_repo() -> Path:
 def envelope(root: Path, *, conclusion: str = "success", available: bool = True) -> dict[str, object]:
     head = git(root, "rev-parse", "HEAD")
     base = git(root, "rev-parse", "main")
-    return build_evidence_envelope(CollectionRequest(
+    request = CollectionRequest(
         gate="premerge",
         repository_root=root,
         workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
@@ -52,7 +55,8 @@ def envelope(root: Path, *, conclusion: str = "success", available: bool = True)
         provider_inputs={
             "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
             "authorization": {"authorized": True},
-            "github_observation": github_observation({
+            "github_observation_id": "github_pr_state",
+            "github_fixture_payload": {
                 "provider_available": available,
                 "pr_id": 113,
                 "repository": "fixture/repo",
@@ -67,15 +71,24 @@ def envelope(root: Path, *, conclusion: str = "success", available: bool = True)
                 "reviews": [],
                 "checks": [{"name": "ci", "conclusion": conclusion}],
                 "strategy": "ff-only",
-            }),
+            },
         },
-    ))
+    )
+    fixture = github_observation(request.provider_inputs["github_fixture_payload"])
+    with patch.object(evidence_collectors, "collect_github_state", return_value=fixture):
+        return build_evidence_envelope(request)
 
 
 class PremergeGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = make_repo()
         self.addCleanup(lambda: shutil.rmtree(self.repo, ignore_errors=True))
+
+    def validate(self, data, fresh_provider=None):
+        provider = fresh_provider or next(item for item in data["evidence"] if item["kind"] == "github_state")["payload"]
+        fixture = CollectorResult("github_state", "github-state@1", "2026-07-10T12:00:00Z", provider)
+        with patch.object(gate_premerge, "collect_github_state", return_value=fixture):
+            return validate_premerge(parse_envelope(data, self.repo), self.repo)
 
     def test_public_premerge_launcher_fails_without_evidence(self):
         root = Path(__file__).parents[1]
@@ -87,9 +100,9 @@ class PremergeGateTests(unittest.TestCase):
         for conclusion in ("queued", "pending", "in_progress", "failure", "cancelled", "timed_out"):
             with self.subTest(conclusion=conclusion):
                 with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-                    validate_premerge(parse_envelope(envelope(self.repo, conclusion=conclusion), self.repo), self.repo)
+                    self.validate(envelope(self.repo, conclusion=conclusion))
         with self.assertRaisesRegex(EvidenceError, "provider"):
-            validate_premerge(parse_envelope(envelope(self.repo, available=False), self.repo), self.repo)
+            self.validate(envelope(self.repo, available=False))
 
     def test_premerge_rejects_unapproved_authorization_snapshot(self):
         data = envelope(self.repo)
@@ -98,26 +111,45 @@ class PremergeGateTests(unittest.TestCase):
         authorization["payload_hash"] = hash_ref(authorization["payload"])
         data["envelope_hash"] = build_envelope_hash(data)
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_premerge(parse_envelope(data, self.repo), self.repo)
+            self.validate(data)
 
     def test_premerge_rejects_stale_provider_observation_hash(self):
         data = envelope(self.repo)
+        fresh_provider = dict(next(item for item in data["evidence"] if item["kind"] == "github_state")["payload"])
         provider = next(item for item in data["evidence"] if item["kind"] == "github_state")
         provider["payload"]["observation_hash"] = hash_ref({"forged": True})
         provider["payload_hash"] = hash_ref(provider["payload"])
         data["envelope_hash"] = build_envelope_hash(data)
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_premerge(parse_envelope(data, self.repo), self.repo)
+            self.validate(data, fresh_provider)
+
+    def test_premerge_rejects_base_sha_mismatch(self):
+        data = envelope(self.repo)
+        provider = next(item for item in data["evidence"] if item["kind"] == "github_state")
+        provider["payload"]["base_sha"] = "forged-base"
+        provider["payload_hash"] = hash_ref(provider["payload"])
+        data["envelope_hash"] = build_envelope_hash(data)
+        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+            self.validate(data)
+
+    def test_premerge_rejects_blocking_provider_review(self):
+        data = envelope(self.repo)
+        provider = next(item for item in data["evidence"] if item["kind"] == "github_state")
+        provider["payload"]["review_decision"] = "CHANGES_REQUESTED"
+        provider["payload_hash"] = hash_ref(provider["payload"])
+        data["envelope_hash"] = build_envelope_hash(data)
+        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+            self.validate(data)
 
     def test_premerge_rejects_changed_head_and_accepts_current_proof(self):
         collected = envelope(self.repo)
-        receipt = validate_premerge(parse_envelope(collected, self.repo), self.repo)
+        receipt = self.validate(collected)
         self.assertEqual("passed", receipt.disposition)
         (self.repo / "changed.txt").write_text("changed\n", encoding="utf-8")
         git(self.repo, "add", ".")
         git(self.repo, "commit", "-qm", "changed")
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_premerge(parse_envelope(collected, self.repo), self.repo)
+            self.validate(collected)
 
 
 if __name__ == "__main__":
