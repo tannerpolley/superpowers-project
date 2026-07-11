@@ -9,7 +9,7 @@
   "verifier": {
     "id": "019f49fd-b2da-7fd0-8147-8267f0340f48"
   },
-  "package_hash": "b3b5798d79a36d02cdc5956c967d52ecf51cf2ea0f0c52b12ddb76f2d31cd1b9",
+  "package_hash": "c63c210d6a1266d12f73612c43c18b2843fcc3b3ca07cc181c3ea13259eeab75",
   "trial_root": "tests/workflow-trials/receipts/current/runs/loop-adversarial-3",
   "project_root": "tests/workflow-trials/receipts/current/runs/loop-adversarial-3/project",
   "expected_outcome": "blocked",

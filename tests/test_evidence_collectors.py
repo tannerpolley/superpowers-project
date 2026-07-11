@@ -26,6 +26,12 @@ def git(root: Path, *args: str) -> str:
 
 
 class EvidenceCollectorTests(unittest.TestCase):
+    def test_sync_validation_timeout_covers_nested_source_validation(self):
+        self.assertGreaterEqual(
+            collectors.READ_ONLY_COMMAND_TIMEOUTS["sync_live_validation"],
+            collectors.READ_ONLY_COMMAND_TIMEOUTS["source_validation"],
+        )
+
     def setUp(self) -> None:
         self.repo = Path(tempfile.mkdtemp())
         self.addCleanup(lambda: shutil.rmtree(self.repo, ignore_errors=True))

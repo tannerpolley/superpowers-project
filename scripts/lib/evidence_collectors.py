@@ -42,7 +42,7 @@ READ_ONLY_COMMAND_TIMEOUTS: dict[str, int] = {
     "unit_command_registry": 60,
     "runtime_package_validation": 60,
     "source_validation": 180,
-    "sync_live_validation": 60,
+    "sync_live_validation": 300,
 }
 DEFAULT_INSTALLATION_ROOT = Path.home() / ".codex" / "plugins" / "superpowers-project"
 DEFAULT_TRIAL_ROOT_NAME = Path(".superpowers") / "runs"
