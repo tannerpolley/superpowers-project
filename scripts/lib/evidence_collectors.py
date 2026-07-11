@@ -4,17 +4,22 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+import os
 import re
 from pathlib import Path
 import subprocess
 from typing import Mapping, Sequence
 
 try:
+    from .agent_usability import validate_trial_set
     from .command_support import resolve_under
     from .evidence_schema import EvidenceError, evidence_registration, hash_bytes_ref, hash_ref, build_envelope_hash, parse_envelope
+    from .package_provenance import runtime_contract_hash, runtime_manifest
 except ImportError:  # pragma: no cover - CLI loads scripts/lib as a top-level path
+    from agent_usability import validate_trial_set
     from command_support import resolve_under
     from evidence_schema import EvidenceError, evidence_registration, hash_bytes_ref, hash_ref, build_envelope_hash, parse_envelope
+    from package_provenance import runtime_contract_hash, runtime_manifest
 
 
 def _observed_at() -> str:
@@ -30,11 +35,17 @@ READ_ONLY_COMMANDS: dict[str, tuple[str, ...]] = {
     "git_missing_ref": ("git", "rev-parse", "missing-ref"),
     "unit_command_registry": ("python3", "-m", "unittest", "tests.test_command_registry"),
     "runtime_package_validation": ("python3", "scripts/validate-runtime-package.py", "--repo-root", "."),
+    "source_validation": ("bash", "./scripts/validate.sh"),
+    "sync_live_validation": ("bash", "./scripts/sync-live.sh", "--validate"),
 }
 READ_ONLY_COMMAND_TIMEOUTS: dict[str, int] = {
     "unit_command_registry": 60,
     "runtime_package_validation": 60,
+    "source_validation": 180,
+    "sync_live_validation": 60,
 }
+DEFAULT_INSTALLATION_ROOT = Path.home() / ".codex" / "plugins" / "superpowers-project"
+DEFAULT_TRIAL_ROOT_NAME = Path(".superpowers") / "runs"
 TRUSTED_PROVIDER_COMMANDS: dict[str, tuple[str, ...]] = {
     "github_pr_state": ("gh", "pr", "view", "--json", "number,baseRefName,headRefName,headRefOid,mergeable,reviews,reviewDecision,statusCheckRollup"),
     "github_repository": ("gh", "repo", "view", "--json", "id,nameWithOwner"),
@@ -44,12 +55,16 @@ TRUSTED_PROVIDER_COMMANDS: dict[str, tuple[str, ...]] = {
 def _observe_process(root: Path, argv: Sequence[str], timeout: int = 15) -> dict[str, object]:
     command = [str(part) for part in argv]
     try:
+        environment = os.environ.copy()
+        if command == list(READ_ONLY_COMMANDS["sync_live_validation"]):
+            environment["SUPERPOWERS_READ_ONLY_COLLECTION"] = "1"
         result = subprocess.run(
             command,
             cwd=root,
             stdin=subprocess.DEVNULL,
             capture_output=True,
             text=False,
+            env=environment,
             timeout=timeout,
             check=False,
         )
@@ -311,6 +326,104 @@ def collect_cleanup_state(root: Path, cleanup_actor: str | None = None) -> Colle
     )
 
 
+def _package_observation(root: Path, observation_id: str) -> CollectorResult:
+    if observation_id != "package_current":
+        raise EvidenceError("collector_untrusted", f"unsupported package observation:{observation_id}")
+    manifest_path = Path(root) / ".codex-plugin" / "plugin.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    head = _observe_process(Path(root), READ_ONLY_COMMANDS["git_head"])
+    entries = [entry.to_dict() for entry in runtime_manifest(Path(root))]
+    payload = {
+        "observation_id": observation_id,
+        "package_hash": hash_ref(entries),
+        "contract_hash": runtime_contract_hash(Path(root)),
+        "manifest_version": manifest.get("version"),
+        "commit": str(head["_stdout_text"]).strip() if head["exit_code"] == 0 else "",
+        "revision_classification": "runtime",
+        "modes": {entry["path"]: entry["mode"] for entry in entries},
+    }
+    return CollectorResult("package_provenance", "package-provenance@1", _observed_at(), payload)
+
+
+def collect_package_provenance(root: Path, observation_id: str = "package_current") -> CollectorResult:
+    try:
+        return _package_observation(Path(root).resolve(), observation_id)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        raise EvidenceError("provider_state_unavailable", f"package observation is unavailable: {exc}") from exc
+
+
+def collect_installation_state(root: Path, observation_id: str = "installation_current", installation_root: Path | None = None) -> CollectorResult:
+    if observation_id != "installation_current":
+        raise EvidenceError("collector_untrusted", f"unsupported installation observation:{observation_id}")
+    live_root = Path(installation_root or DEFAULT_INSTALLATION_ROOT).expanduser().resolve()
+    try:
+        manifest = json.loads((live_root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        entries = [entry.to_dict() for entry in runtime_manifest(live_root)]
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        raise EvidenceError("provider_state_unavailable", f"installation observation is unavailable: {exc}") from exc
+    payload = {
+        "observation_id": observation_id,
+        "installation_root": str(live_root),
+        "installed_package_hash": hash_ref(entries),
+        "installed_contract_hash": runtime_contract_hash(live_root),
+        "manifest_version": manifest.get("version"),
+        "current_version": manifest.get("version"),
+        "modes": {entry["path"]: entry["mode"] for entry in entries},
+    }
+    return CollectorResult("installation_state", "installation-state@1", _observed_at(), payload)
+
+
+def collect_agent_trial(root: Path, observation_id: str = "agent_trials_current", receipt_root: Path | None = None) -> CollectorResult:
+    if observation_id != "agent_trials_current":
+        raise EvidenceError("collector_untrusted", f"unsupported agent trial observation:{observation_id}")
+    root = Path(root).resolve()
+    directory = (Path(receipt_root) if receipt_root is not None else root / DEFAULT_TRIAL_ROOT_NAME).resolve()
+    try:
+        directory.relative_to(root)
+    except ValueError as exc:
+        raise EvidenceError("repository_mismatch", "agent trial receipt root escapes the repository") from exc
+    receipt_paths = sorted(directory.glob("**/receipt.json")) if directory.is_dir() else []
+    if not receipt_paths:
+        raise EvidenceError("provider_state_unavailable", "agent trial receipts are unavailable")
+    try:
+        receipts = [json.loads(path.read_text(encoding="utf-8")) for path in receipt_paths]
+        metrics = validate_trial_set(receipts, root)
+    except Exception as exc:
+        raise EvidenceError("provider_state_unavailable", f"agent trial receipts are unauthenticated: {exc}") from exc
+    tool_calls: list[dict[str, object]] = []
+    external_mutations = 0
+    scenarios: list[str] = []
+    for path, receipt in zip(receipt_paths, receipts):
+        scenarios.append(str(receipt.get("scenario", "")))
+        external_mutations += int(receipt.get("external_mutations", 0))
+        project_value = receipt.get("project_root")
+        project_root = Path(str(project_value)) if isinstance(project_value, str) else root
+        if not project_root.is_absolute():
+            project_root = root / project_root
+        ledger_value = (receipt.get("event_ledger") or {}).get("path")
+        ledger_path = Path(str(ledger_value)) if isinstance(ledger_value, str) else Path("missing")
+        if not ledger_path.is_absolute():
+            ledger_path = project_root / ledger_path
+        if not ledger_path.is_file():
+            raise EvidenceError("provider_state_unavailable", f"agent trial event ledger is missing: {path}")
+        for line in ledger_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                event = json.loads(line)
+                if isinstance(event, Mapping):
+                    tool_calls.append({"receipt": path.relative_to(root).as_posix(), "type": event.get("type"), "hash": event.get("hash")})
+    payload = {
+        "observation_id": observation_id,
+        "receipt_root": str(directory),
+        "package_hash": hash_ref([entry.to_dict() for entry in runtime_manifest(root)]),
+        "tool_calls": tool_calls,
+        "external_mutations": external_mutations,
+        "receipt_hashes": [hash_bytes_ref(path.read_bytes()) for path in receipt_paths],
+        "scenarios": scenarios,
+        "metrics": metrics,
+    }
+    return CollectorResult("agent_trial", "agent-trial@1", _observed_at(), payload)
+
+
 def collect_registered_evidence(kind: str, provider_receipt: Mapping[str, object]) -> CollectorResult:
     registration = evidence_registration(kind, "1")
     if registration.validator is not None:
@@ -327,6 +440,9 @@ COLLECTORS = {
     "github_state": ("github-state@1", collect_github_state),
     "authorization_event": ("authorization-event@1", collect_authorization_event),
     "cleanup_state": ("cleanup-state@1", collect_cleanup_state),
+    "package_provenance": ("package-provenance@1", collect_package_provenance),
+    "installation_state": ("installation-state@1", collect_installation_state),
+    "agent_trial": ("agent-trial@1", collect_agent_trial),
     "workspace_receipt": ("registered-evidence@1", collect_registered_evidence),
 }
 
@@ -346,9 +462,20 @@ def build_evidence_envelope(request: CollectionRequest) -> dict[str, object]:
     results: list[CollectorResult] = [git_result]
     artifact_paths = [plan_path] + ([source["spec_path"]] if source["spec_path"] else [])
     results.append(collect_artifact_hashes(root, artifact_paths))
-    for command_id in request.commands:
-        results.append(collect_command_result(root, command_id))
     provider_inputs = request.provider_inputs
+    for command_id in request.commands:
+        if command_id == "sync_live_validation" and isinstance(provider_inputs.get("installation_root"), str):
+            previous_live_root = os.environ.get("SUPERPOWERS_LIVE_PLUGIN_ROOT")
+            os.environ["SUPERPOWERS_LIVE_PLUGIN_ROOT"] = str(provider_inputs["installation_root"])
+            try:
+                results.append(collect_command_result(root, command_id))
+            finally:
+                if previous_live_root is None:
+                    os.environ.pop("SUPERPOWERS_LIVE_PLUGIN_ROOT", None)
+                else:
+                    os.environ["SUPERPOWERS_LIVE_PLUGIN_ROOT"] = previous_live_root
+        else:
+            results.append(collect_command_result(root, command_id))
     reviews = provider_inputs.get("reviews")
     if reviews is not None:
         results.append(collect_review_result({"reviews": reviews}))
@@ -362,7 +489,21 @@ def build_evidence_envelope(request: CollectionRequest) -> dict[str, object]:
     results.append(collect_authorization_event(authorization))
     cleanup_actor = request.target.get("cleanup_actor")
     results.append(collect_cleanup_state(root, cleanup_actor if isinstance(cleanup_actor, str) else None))
-    for key, kind in (("integration", "integration_state"), ("package", "package_provenance"), ("installation", "installation_state"), ("agent_trial", "agent_trial")):
+    if request.gate == "publish_ready":
+        forbidden = {"package", "installation", "agent_trial"} & set(provider_inputs)
+        if forbidden:
+            raise EvidenceError("collector_untrusted", "caller-supplied package, installation, and trial payloads are unsupported")
+        package_id = provider_inputs.get("package_observation_id")
+        installation_id = provider_inputs.get("installation_observation_id")
+        trial_id = provider_inputs.get("agent_trial_observation_id")
+        if not all(isinstance(value, str) for value in (package_id, installation_id, trial_id)):
+            raise EvidenceError("evidence_missing", "trusted package, installation, and agent-trial observation IDs are required")
+        results.extend([
+            collect_package_provenance(root, str(package_id)),
+            collect_installation_state(root, str(installation_id), Path(str(provider_inputs["installation_root"])) if isinstance(provider_inputs.get("installation_root"), str) else None),
+            collect_agent_trial(root, str(trial_id), resolve_under(root, str(provider_inputs["agent_trial_receipt_dir"]), "agent_trial_receipt_dir") if isinstance(provider_inputs.get("agent_trial_receipt_dir"), str) else None),
+        ])
+    for key, kind in (("integration", "integration_state"),):
         if isinstance(provider_inputs.get(key), Mapping):
             registration = evidence_registration(kind, "1")
             results.append(CollectorResult(kind, registration.kind.replace("_", "-") + "@1", _observed_at(), dict(provider_inputs[key])))

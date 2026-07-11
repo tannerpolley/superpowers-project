@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from scripts.lib.evidence_collectors import CollectionRequest, build_evidence_envelope
-from scripts.lib.evidence_schema import EvidenceError, hash_ref, parse_envelope
+from scripts.lib.evidence_collectors import CollectionRequest, CollectorResult, build_evidence_envelope
+from scripts.lib.evidence_schema import EvidenceError, build_envelope_hash, hash_bytes_ref, hash_ref, parse_envelope
 from scripts.lib.gate_publish_ready import validate_publish_ready
 from scripts.lib.gate_receipts import GateReceipt
 from scripts.lib.package_provenance import runtime_contract_hash, runtime_manifest
+import scripts.lib.evidence_collectors as evidence_collectors
+import scripts.lib.gate_publish_ready as gate_publish_ready
 
 
 ROOT = Path(__file__).parents[1]
@@ -29,20 +33,44 @@ def release_envelope(root: Path) -> dict[str, object]:
     head = git(root, "rev-parse", "HEAD")
     manifest = json.loads((root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
     package = package_hash(root)
-    return build_evidence_envelope(CollectionRequest(
+    authorization = {
+        "authorized": True,
+        "scope": "publish_ready",
+        "run_id": "run-1",
+        "candidate_id": "candidate-1",
+        "source_plan_hash": hash_bytes_ref((root / "docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md").read_bytes()),
+        "package_hash": package,
+    }
+    request = CollectionRequest(
         gate="publish_ready",
         repository_root=root,
-        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
+        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref(authorization)},
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md"},
         target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
-        commands=("git_status",),
-        provider_inputs={
-            "authorization": {"authorized": True},
-            "package": {"package_hash": package, "contract_hash": runtime_contract_hash(root), "manifest_version": manifest["version"], "commit": head, "revision_classification": "runtime"},
-            "installation": {"package_hash": package, "manifest_version": manifest["version"], "commit": head, "source": "current"},
-            "agent_trial": {"package_hash": package, "tool_calls": [{"name": "validate-pr-ready"}], "external_mutations": 0, "receipt_hashes": [hash_ref({"trial": "receipt"})]},
-        },
-    ))
+        commands=("git_status", "source_validation", "sync_live_validation"),
+            provider_inputs={
+                "authorization": authorization,
+                "package_observation_id": "package_current",
+                "installation_observation_id": "installation_current",
+                "agent_trial_observation_id": "agent_trials_current",
+                "installation_root": str(root),
+                "agent_trial_receipt_dir": "tests/workflow-trials/receipts/current",
+            },
+    )
+
+    def trusted_command(_root: Path, command_id: str) -> CollectorResult:
+        payload = {
+            "argv": list(evidence_collectors.READ_ONLY_COMMANDS[command_id]),
+            "exit_code": 0,
+            "stdout_hash": hash_ref({"stdout": command_id}),
+            "stderr_hash": hash_ref({"stderr": command_id}),
+            "timed_out": False,
+            "command_id": command_id,
+        }
+        return CollectorResult("command_result", "command-result@1", "2026-07-10T12:00:00Z", payload)
+
+    with patch.object(evidence_collectors, "collect_command_result", side_effect=trusted_command):
+        return build_evidence_envelope(request)
 
 
 def write_receipt(root: Path, envelope: dict[str, object]) -> GateReceipt:
@@ -54,18 +82,26 @@ def write_receipt(root: Path, envelope: dict[str, object]) -> GateReceipt:
 
 
 def run_prepare(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    environment = os.environ.copy()
+    environment["SUPERPOWERS_VALIDATION_COLLECTION"] = "1"
     return subprocess.run(
         [str(ROOT / "scripts" / "prepare-release.sh"), "-RepoRoot", str(root), *args],
         cwd=ROOT,
         text=True,
         capture_output=True,
+        env=environment,
     )
 
 
+@unittest.skipIf(os.environ.get("SUPERPOWERS_VALIDATION_COLLECTION") == "1", "release-gate tests are skipped inside their trusted validation subprocess")
 class PublishReadyGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = Path(tempfile.mkdtemp()) / "repo"
         shutil.copytree(ROOT, self.repo, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
+        evidence_collectors.DEFAULT_INSTALLATION_ROOT = self.repo
+        gate_publish_ready.DEFAULT_INSTALLATION_ROOT = self.repo
+        evidence_collectors.DEFAULT_TRIAL_ROOT_NAME = Path("tests/workflow-trials/receipts/current")
+        gate_publish_ready.DEFAULT_TRIAL_ROOT_NAME = Path("tests/workflow-trials/receipts/current")
         for receipt_path in (self.repo / "tests" / "workflow-trials" / "receipts" / "current").glob("**/receipt.json"):
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
             receipt["package_hash"] = runtime_contract_hash(self.repo)
@@ -102,35 +138,33 @@ class PublishReadyGateTests(unittest.TestCase):
         self.assertFalse(payload["publish_ready"])
         self.assertIsNone(payload["publish_ready_receipt_hash"])
 
-    def test_prepare_release_collect_only_writes_a_publish_ready_envelope(self):
-        output = ".superpowers/runs/publish-ready-envelope.json"
-        result = run_prepare(
-            self.repo,
-            "-CollectOnly",
-            "-OutputPath",
-            output,
-            "-LivePluginRoot",
-            str(self.repo),
-            "-AuthorizationJson",
-            json.dumps({"authorized": True, "scope": "publish_ready"}),
-        )
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        payload = json.loads(result.stdout)
-        self.assertEqual("collect-publish-ready", payload["phase"])
-        envelope = json.loads((self.repo / output).read_text(encoding="utf-8"))
-        self.assertEqual("publish_ready", envelope["gate"])
-
     def test_prepare_release_consumes_current_receipt_and_reports_hash(self):
         receipt = write_receipt(self.repo, release_envelope(self.repo))
         result = run_prepare(
             self.repo,
             "-PublishReadyReceiptPath",
             ".superpowers/runs/publish-ready-receipt.json",
+            "-LivePluginRoot",
+            str(self.repo),
+            "-AgentReceiptDir",
+            "tests/workflow-trials/receipts/current",
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         payload = json.loads(result.stdout)
         self.assertTrue(payload["publish_ready"])
         self.assertEqual(receipt.receipt_hash, payload["publish_ready_receipt_hash"])
+
+    def test_prepare_release_rejects_a_self_hashed_receipt_with_forged_rules(self):
+        receipt = write_receipt(self.repo, release_envelope(self.repo)).to_dict()
+        receipt["rules"] = [{"rule_id": "forged", "ok": True, "reason": "forged"}]
+        receipt.pop("receipt_hash")
+        from scripts.lib.evidence_schema import hash_ref
+        receipt["receipt_hash"] = hash_ref({key: value for key, value in receipt.items()})
+        path = self.repo / ".superpowers" / "runs" / "forged-receipt.json"
+        path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/forged-receipt.json", "-LivePluginRoot", str(self.repo), "-AgentReceiptDir", "tests/workflow-trials/receipts/current")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn(json.loads(result.stdout)["error"]["code"], {"receipt_stale", "required_rule_failed"})
 
     def test_publish_ready_rejects_missing_installation_evidence(self):
         envelope = release_envelope(self.repo)
@@ -145,6 +179,22 @@ class PublishReadyGateTests(unittest.TestCase):
         command["payload"]["exit_code"] = 1
         command["payload_hash"] = hash_ref(command["payload"])
         envelope["envelope_hash"] = __import__("scripts.lib.evidence_schema", fromlist=["build_envelope_hash"]).build_envelope_hash(envelope)
+        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+
+    def test_publish_ready_rejects_failed_sync_command(self):
+        envelope = release_envelope(self.repo)
+        command = next(item for item in envelope["evidence"] if item.get("payload", {}).get("command_id") == "sync_live_validation")
+        command["payload"]["exit_code"] = 1
+        command["payload_hash"] = hash_ref(command["payload"])
+        envelope["envelope_hash"] = build_envelope_hash(envelope)
+        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+
+    def test_publish_ready_requires_trusted_validation_and_sync_commands(self):
+        envelope = release_envelope(self.repo)
+        envelope["evidence"] = [item for item in envelope["evidence"] if item.get("payload", {}).get("command_id") not in {"source_validation", "sync_live_validation"}]
+        envelope["envelope_hash"] = build_envelope_hash(envelope)
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
             validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
 
@@ -170,6 +220,63 @@ class PublishReadyGateTests(unittest.TestCase):
         envelope["envelope_hash"] = __import__("scripts.lib.evidence_schema", fromlist=["build_envelope_hash"]).build_envelope_hash(envelope)
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
             validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+
+    def test_publish_ready_rejects_wrong_manifest_version_or_installation_path(self):
+        for field, value in (("manifest_version", "forged"), ("current_version", "forged"), ("installation_root", "/tmp/forged-install")):
+            with self.subTest(field=field):
+                envelope = release_envelope(self.repo)
+                item = next(item for item in envelope["evidence"] if item["kind"] == "installation_state")
+                item["payload"][field] = value
+                item["payload_hash"] = hash_ref(item["payload"])
+                envelope["envelope_hash"] = build_envelope_hash(envelope)
+                with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+                    validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+
+    def test_publish_ready_rejects_hardcoded_trial_counters_or_forged_receipt_hash(self):
+        for field, value in (("tool_calls", [{"name": "forged"}]), ("external_mutations", 99), ("receipt_hashes", [hash_ref({"forged": True})])):
+            with self.subTest(field=field):
+                envelope = release_envelope(self.repo)
+                item = next(item for item in envelope["evidence"] if item["kind"] == "agent_trial")
+                item["payload"][field] = value
+                item["payload_hash"] = hash_ref(item["payload"])
+                envelope["envelope_hash"] = build_envelope_hash(envelope)
+                with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+                    validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+
+    def test_publish_ready_requires_explicit_publish_authorization_bindings(self):
+        envelope = release_envelope(self.repo)
+        item = next(item for item in envelope["evidence"] if item["kind"] == "authorization_event")
+        item["payload"]["event"].pop("scope")
+        item["payload_hash"] = hash_ref(item["payload"])
+        envelope["envelope_hash"] = build_envelope_hash(envelope)
+        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+
+    def test_prepare_release_rejects_uncommitted_package_change_after_receipt(self):
+        receipt = write_receipt(self.repo, release_envelope(self.repo))
+        script = self.repo / "scripts" / "workflow-run.sh"
+        script.write_text(script.read_text(encoding="utf-8") + "\n# stale after receipt\n", encoding="utf-8")
+        result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/publish-ready-receipt.json", "-LivePluginRoot", str(self.repo), "-AgentReceiptDir", "tests/workflow-trials/receipts/current")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn(json.loads(result.stdout)["error"]["code"], {"receipt_stale", "artifact_hash_mismatch"})
+
+    def test_publish_collection_rejects_caller_supplied_package_install_and_trial_payloads(self):
+        request = CollectionRequest(
+            gate="publish_ready",
+            repository_root=self.repo,
+            workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
+            source={"spec_path": None, "plan_path": "docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md"},
+            target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
+            commands=("git_status",),
+            provider_inputs={
+                "authorization": {"authorized": True},
+                "package": {"package_hash": "forged"},
+                "installation": {"package_hash": "forged"},
+                "agent_trial": {"tool_calls": [{"name": "forged"}], "receipt_hashes": []},
+            },
+        )
+        with self.assertRaisesRegex(EvidenceError, "collector_untrusted"):
+            build_evidence_envelope(request)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,8 @@ try:
     from ..agent_usability import validate_trial_set
     from ..command_support import Context, arg_value, emit, has_switch, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
     from ..evidence_collectors import CollectionRequest, build_evidence_envelope
-    from ..evidence_schema import EvidenceError, hash_bytes_ref, hash_ref
+    from ..evidence_collectors import DEFAULT_INSTALLATION_ROOT, DEFAULT_TRIAL_ROOT_NAME, collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
+    from ..evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
     from ..gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
     from ..package_provenance import runtime_contract_hash, runtime_manifest
     from ..release_evidence import base_release_tag, validate_dependency_pins
@@ -18,7 +19,8 @@ except ImportError:
     from agent_usability import validate_trial_set
     from command_support import Context, arg_value, emit, has_switch, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
     from evidence_collectors import CollectionRequest, build_evidence_envelope
-    from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref
+    from evidence_collectors import DEFAULT_INSTALLATION_ROOT, DEFAULT_TRIAL_ROOT_NAME, collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
+    from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
     from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
     from package_provenance import runtime_contract_hash, runtime_manifest
     from release_evidence import base_release_tag, validate_dependency_pins
@@ -79,6 +81,17 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
     }
     run_id = str(arg_value(args, "RunId", default=f"publish-ready-{head.stdout.strip()[:12]}"))
     candidate_id = str(arg_value(args, "CandidateId", default="source"))
+    plan_hash = hash_bytes_ref(resolve_under(root, str(source["plan_path"]), "PlanPath").read_bytes())
+    required_authorization = {
+        "authorized": True,
+        "scope": "publish_ready",
+        "run_id": run_id,
+        "candidate_id": candidate_id,
+        "source_plan_hash": plan_hash,
+        "package_hash": package,
+    }
+    if authorization != required_authorization:
+        raise EvidenceError("authorization_mismatch", "publish authorization must bind scope, run, candidate, source plan, and package")
     workflow = {
         "run_id": run_id,
         "candidate_id": candidate_id,
@@ -87,29 +100,11 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
     }
     provider_inputs = {
         "authorization": authorization,
-        "package": {
-            "package_hash": package,
-            "contract_hash": runtime_contract_hash(root),
-            "manifest_version": manifest.get("version"),
-            "commit": head.stdout.strip(),
-            "revision_classification": str(arg_value(args, "RevisionClassification", default="runtime")),
-        },
-        "installation": {
-            "package_hash": package,
-            "manifest_version": manifest.get("version"),
-            "commit": head.stdout.strip(),
-            "source": "current" if installed_package == package and installed_contract == runtime_contract_hash(root) else "stale",
-            "installed_root": str(live_root),
-            "installed_package_hash": installed_package,
-            "installed_contract_hash": installed_contract,
-        },
-        "agent_trial": {
-            "package_hash": package,
-            "tool_calls": tool_calls,
-            "external_mutations": external_mutations,
-            "receipt_hashes": [hash_bytes_ref(path.read_bytes()) for path in receipt_paths],
-            "metrics": trial_metrics,
-        },
+        "package_observation_id": "package_current",
+        "installation_observation_id": "installation_current",
+        "agent_trial_observation_id": "agent_trials_current",
+        "installation_root": str(live_root),
+        "agent_trial_receipt_dir": str(arg_value(args, "AgentReceiptDir", default=".superpowers/runs")),
     }
     request = CollectionRequest(
         gate="publish_ready",
@@ -117,7 +112,7 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
         workflow=workflow,
         source=source,
         target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False},
-        commands=("unit_command_registry", "runtime_package_validation"),
+        commands=("source_validation", "sync_live_validation"),
         provider_inputs=provider_inputs,
     )
     envelope = build_evidence_envelope(request)
@@ -148,6 +143,15 @@ def _load_publish_receipt(root, args):
     receipt = verify_receipt_hash(data)
     if receipt.gate != "publish_ready" or receipt.validator_id != EXPECTED_VALIDATORS["publish_ready"] or receipt.disposition != "passed":
         raise EvidenceError("receipt_stale", "a passing publish-ready receipt is required")
+    expected_rules = {
+        "repository_identity", "target_identity", "workflow_binding", "target_state", "authorization_binding",
+        "source_artifacts", "implementation_verification", "source_validation", "sync_validation",
+        "package_provenance", "installation_state", "agent_trial", "publish_authorization",
+        "package_observation_current", "installation_observation_current", "agent_trial_observation_current", "cleanup_state",
+    }
+    rule_ids = [rule.rule_id for rule in receipt.rules]
+    if len(rule_ids) != len(expected_rules) or set(rule_ids) != expected_rules or not all(rule.ok for rule in receipt.rules):
+        raise EvidenceError("receipt_stale", "publish-ready receipt does not contain the complete passing rule set")
     bindings = receipt.bindings
     repository = bindings.get("repository") if isinstance(bindings, dict) else None
     source = bindings.get("source") if isinstance(bindings, dict) else None
@@ -175,6 +179,32 @@ def _load_publish_receipt(root, args):
     manifest = json.loads(read_text(root / ".codex-plugin" / "plugin.json"))
     if receipt.observations.get("package_hash") != _package_hash(root) or receipt.observations.get("manifest_version") != manifest.get("version") or receipt.observations.get("contract_hash") != runtime_contract_hash(root):
         raise EvidenceError("receipt_stale", "publish-ready package identity is stale")
+    trusted = receipt.observations.get("trusted_evidence")
+    if not isinstance(trusted, dict):
+        raise EvidenceError("receipt_stale", "publish-ready trusted observation bindings are missing")
+    live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(DEFAULT_INSTALLATION_ROOT)))).expanduser().resolve()
+    trial_root = project_path_for(root, str(arg_value(args, "AgentReceiptDir", default=str(DEFAULT_TRIAL_ROOT_NAME))), "AgentReceiptDir")
+    try:
+        fresh = {
+            "package_provenance": collect_package_provenance(root),
+            "installation_state": collect_installation_state(root, "installation_current", live_root),
+            "agent_trial": collect_agent_trial(root, "agent_trials_current", trial_root),
+        }
+        for kind, observation in fresh.items():
+            expected = trusted.get(kind)
+            if not isinstance(expected, dict) or expected.get("observation_id") != observation.payload.get("observation_id") or expected.get("payload_hash") != hash_ref(observation.payload):
+                raise EvidenceError("receipt_stale", f"publish-ready {kind} observation is stale or forged")
+        command_hashes = trusted.get("commands")
+        if not isinstance(command_hashes, dict) or not all(command_id in command_hashes and is_hash_ref(command_hashes[command_id]) for command_id in ("source_validation", "sync_live_validation")):
+            raise EvidenceError("receipt_stale", "publish-ready command observation bindings are missing")
+    except EvidenceError:
+        raise
+    except Exception as exc:
+        raise EvidenceError("receipt_stale", f"publish-ready trusted observation is unavailable: {exc}") from exc
+    authorization = trusted.get("authorization")
+    workflow = bindings.get("workflow")
+    if not isinstance(authorization, dict) or not isinstance(workflow, dict) or hash_ref(authorization) != workflow.get("authorization_hash") or authorization.get("scope") != "publish_ready" or authorization.get("run_id") != workflow.get("run_id") or authorization.get("candidate_id") != workflow.get("candidate_id") or authorization.get("source_plan_hash") != source.get("plan_hash") or authorization.get("package_hash") != receipt.observations.get("package_hash"):
+        raise EvidenceError("authorization_mismatch", "publish authorization snapshot is stale or incomplete")
     return receipt
 
 

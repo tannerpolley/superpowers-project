@@ -61,6 +61,17 @@ class EvidenceCollectorTests(unittest.TestCase):
         self.assertEqual("unit_command_registry", result.payload["command_id"])
         self.assertIn("stdout_hash", result.payload)
 
+    def test_publish_validation_and_sync_ids_are_closed_and_structured(self):
+        observed = {"exit_code": 0, "stdout_hash": hash_ref({"stdout": "ok"}), "stderr_hash": hash_ref({"stderr": ""}), "timed_out": False}
+        def observe_process(_root, argv, _timeout):
+            return {**observed, "argv": list(argv)}
+        with patch.object(collectors, "_observe_process", side_effect=observe_process) as observe:
+            validation = collect_command_result(self.repo, "source_validation")
+            sync = collect_command_result(self.repo, "sync_live_validation")
+        self.assertEqual(["source_validation", "sync_live_validation"], [validation.payload["command_id"], sync.payload["command_id"]])
+        self.assertEqual([list(collectors.READ_ONLY_COMMANDS["source_validation"]), list(collectors.READ_ONLY_COMMANDS["sync_live_validation"])], [validation.payload["argv"], sync.payload["argv"]])
+        self.assertEqual(2, observe.call_count)
+
     def test_unregistered_commands_cannot_execute_or_mutate(self):
         marker = self.repo / "mutated.txt"
         for command in (

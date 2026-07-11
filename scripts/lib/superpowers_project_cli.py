@@ -2078,9 +2078,23 @@ def copy_runtime_package(source: Path, target: Path) -> None:
 def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     root = ctx.repo_root.resolve()
     home = Path.home()
-    live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(home / ".codex" / "plugins" / "superpowers-project")))).expanduser()
+    live_root = Path(str(arg_value(args, "LivePluginRoot", default=os.environ.get("SUPERPOWERS_LIVE_PLUGIN_ROOT", str(home / ".codex" / "plugins" / "superpowers-project"))))).expanduser()
     user_skills = Path(str(arg_value(args, "UserSkillsRoot", default=str(home / ".agents" / "skills")))).expanduser()
     marketplace = Path(str(arg_value(args, "MarketplacePath", default=str(home / ".agents" / "plugins" / "marketplace.json")))).expanduser()
+    if os.environ.get("SUPERPOWERS_READ_ONLY_COLLECTION") == "1":
+        if not has_switch(args, "Validate", "validate"):
+            raise ScriptError("read-only sync observation requires --validate")
+        validation = run(["bash", str(root / "scripts" / "validate.sh")], root)
+        if validation.returncode != 0:
+            raise ScriptError("validation failed before read-only sync observation")
+        source_manifest = [entry.to_dict() for entry in runtime_manifest(root)]
+        try:
+            live_manifest = [entry.to_dict() for entry in runtime_manifest(live_root)]
+        except (OSError, ValueError) as exc:
+            raise ScriptError(f"live installation is unavailable: {exc}") from exc
+        if source_manifest != live_manifest:
+            raise ScriptError("live install differs from the runtime package manifest")
+        return emit({"ok": True, "phase": "sync-live-validation", "read_only": True, "source": str(root), "live_plugin_root": str(live_root), "runtime_package": {"files": len(source_manifest), "bytes": sum(item["length"] for item in source_manifest)}})
     if has_switch(args, "Validate", "validate"):
         result = run(["bash", str(root / "scripts" / "validate.sh")], root)
         print(result.stdout, end="")
