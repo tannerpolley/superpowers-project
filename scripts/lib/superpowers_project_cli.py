@@ -2214,6 +2214,7 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
         step("Runtime package manifest", lambda: run_must(["python3", str(root / "scripts" / "validate-runtime-package.py"), "--repo-root", str(root)], root))
         step("Plugin manifest validation", lambda: run_must(["python3", str(root / "scripts" / "validate-plugin.py"), str(root)], root))
         step("Generated workflow references", lambda: run_must(["bash", str(root / "scripts" / "generate-outcome-workflow-summary.sh"), "-RepoRoot", str(root), "-Check"], root))
+        step("Execution kernel displaced paths", lambda: validate_execution_kernel_cutover(root))
         step("Python unit suite", lambda: run_must([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], root))
         for skill in active_skill_names(root):
             step(f"quick_validate {skill}", lambda skill=skill: run_must(["python3", str(root / "scripts" / "quick-validate-skill.py"), str(root / "skills" / skill)], root))
@@ -2271,6 +2272,26 @@ def validate_superpowers_paths(root: Path) -> None:
                 raise ScriptError(f"active Superpowers Project skill uses retired canonical path '{pattern}': {normalize_rel(path, root)}")
 
 
+def validate_execution_kernel_cutover(root: Path) -> None:
+    retired = tuple("".join(parts) for parts in (
+        ('return complete(True, "validate', '-pr-ready"'),
+        ('return complete(True, "pre', 'merge"'),
+        ('return complete(True, "close', 'out"'),
+        ('premerge.get("', 'ok") is not True'),
+        ('"publish_ready": ', 'not dirty'),
+        ('def collect_simple_', 'ledger('),
+    ))
+    active = [root / "scripts/lib/superpowers_project_cli.py", *(root / "scripts/lib/commands").glob("*.py")]
+    offenders = []
+    for path in active:
+        text = read_text(path)
+        for pattern in retired:
+            if pattern in text:
+                offenders.append(f"{normalize_rel(path, root)}:{pattern}")
+    if offenders:
+        raise ScriptError("retired execution authorization remains: " + ", ".join(offenders))
+
+
 def stale_scan(root: Path) -> None:
     pattern = re.compile(r"plan-goal-implement-merge|setup-project-roadmap|setup_project_roadmap_plan|grill-create-issues|issue-goal-execute-merge|docs/ideas/<YYYY|docs/ideas/20|cross-milestone.*docs/ideas|docs/ideas.*cross-milestone", re.I)
     roots = [root / "skills", root / "docs", root / ".codex-plugin", root / "README.md", root / "AGENTS.md", root / "CHANGELOG.md"]
@@ -2295,28 +2316,6 @@ def command_align_project(ctx: Context, args: dict[str, Any]) -> int:
         if (root / forbidden).exists():
             findings.append({"category": "blocking", "path": forbidden, "reason": "retired canonical root exists"})
     return emit({"ok": len(findings) == 0, "phase": "align-project", "mode": mode, "findings": findings}, 0 if not findings else 1)
-
-
-def command_collect_premerge(ctx: Context, args: dict[str, Any]) -> int:
-    return collect_simple_ledger(ctx, args, "collect-premerge-ledger", "premerge-ledger.json")
-
-
-def command_collect_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return collect_simple_ledger(ctx, args, "collect-closeout-ledger", "closeout-ledger.json")
-
-
-def collect_simple_ledger(ctx: Context, args: dict[str, Any], phase: str, filename: str) -> int:
-    root = project_root_for(ctx, args)
-    ledger = {"ok": True, "phase": phase, "arguments": {k: v for k, v in args.items() if k != "_positional"}}
-    output_dir = arg_value(args, "OutputDir", default="")
-    ledger_path = ""
-    if output_dir:
-        out_dir = resolve_under(root, str(output_dir), "OutputDir")
-        out_dir.mkdir(parents=True, exist_ok=True)
-        target = out_dir / filename
-        write_text(target, json.dumps(ledger, indent=2))
-        ledger_path = normalize_rel(target, root)
-    return emit({"ok": True, "phase": phase, "reason": f"{phase} collected", "ledger": ledger, "ledger_path": ledger_path})
 
 
 def command_prepare_execution(ctx: Context, args: dict[str, Any]) -> int:

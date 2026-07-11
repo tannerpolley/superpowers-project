@@ -25,6 +25,10 @@ REQUIRED_RECEIPT_RULES = {
         "implementation_verification", "review_disposition", "plan_conformance",
         "workspace_receipt", "cleanup_state",
     }),
+    "premerge": frozenset({"repository_identity", "workflow_binding", "target_state", "authorization_binding", "merge_strategy", "source_artifacts", "implementation_verification", "review_disposition", "plan_conformance", "provider_state", "provider_observation", "pr_identity", "required_checks", "base_identity", "head_identity", "mergeability", "provider_reviews"}),
+    "merge_decision": frozenset({"repository_identity", "event_chain", "workflow_binding", "target_state", "authorization_binding", "merge_strategy", "source_artifacts", "implementation_verification", "provider_state", "provider_observation", "pr_identity", "required_checks", "base_identity", "head_identity", "mergeability", "provider_reviews"}),
+    "closeout": frozenset({"repository_identity", "target_identity", "event_chain", "workflow_binding", "target_state", "authorization_binding", "source_artifacts", "implementation_verification", "integration_proof", "completion_state", "workspace_disposition", "cleanup_state"}),
+    "publish_ready": frozenset({"repository_identity", "target_identity", "workflow_binding", "target_state", "authorization_binding", "source_artifacts", "implementation_verification", "source_validation", "sync_validation", "package_provenance", "installation_state", "agent_trial", "publish_authorization", "package_observation_current", "installation_observation_current", "agent_trial_observation_current", "cleanup_state"}),
 }
 
 

@@ -34,7 +34,7 @@ def envelope(root: Path, gate: str, *, prior_event_hash: str | None = None) -> d
         repository_root=root,
         workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
-        target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
+        target={"task_id": None, "workspace_id": "local", "branch": git(root, "branch", "--show-current"), "isolation_required": False},
         commands=("git_status",),
         provider_inputs={
             "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
@@ -54,6 +54,26 @@ def run_local_lifecycle(root: Path) -> list[dict[str, object]]:
     return [
         {"gate": pr_receipt.gate, "envelope_hash": pr_receipt.envelope_hash, "receipt_hash": pr_receipt.receipt_hash, "prior_receipt_hash": None, "observations": dict(pr_receipt.observations)},
         {"gate": closeout_receipt.gate, "envelope_hash": closeout_receipt.envelope_hash, "receipt_hash": closeout_receipt.receipt_hash, "prior_receipt_hash": pr_receipt.receipt_hash, "observations": dict(closeout_receipt.observations)},
+    ]
+
+
+def run_provider_lifecycle() -> tuple[Path, list[dict[str, object]]]:
+    from tests.test_gate_merge_decision import MergeDecisionTests, envelope as provider_envelope, make_repo as make_provider_repo
+
+    root = make_provider_repo()
+    helper = MergeDecisionTests()
+    helper.repo = root
+    pr_envelope = parse_envelope(envelope(root, "pr_ready"), root)
+    pr_receipt = validate_pr_ready(pr_envelope, root)
+    premerge_receipt = helper.validate_premerge_fixture(provider_envelope(root, "premerge"))
+    merge_receipt = helper.validate_merge_fixture(provider_envelope(root, "merge_decision", premerge_receipt.receipt_hash), premerge_receipt)
+    closeout_envelope = parse_envelope(envelope(root, "closeout", prior_event_hash=pr_receipt.receipt_hash), root)
+    closeout_receipt = validate_closeout(closeout_envelope, root, pr_receipt)
+    receipts = (pr_receipt, premerge_receipt, merge_receipt, closeout_receipt)
+    prior = (None, None, premerge_receipt.receipt_hash, pr_receipt.receipt_hash)
+    return root, [
+        {"gate": receipt.gate, "envelope_hash": receipt.envelope_hash, "receipt_hash": receipt.receipt_hash, "prior_receipt_hash": prior_hash, "observations": dict(receipt.observations)}
+        for receipt, prior_hash in zip(receipts, prior)
     ]
 
 

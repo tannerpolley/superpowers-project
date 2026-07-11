@@ -4,7 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
-from tests.execution_kernel_fixtures import git, make_repo, remove_repo, run_local_lifecycle
+from tests.execution_kernel_fixtures import git, make_repo, remove_repo, run_local_lifecycle, run_provider_lifecycle
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,10 +16,12 @@ class ExecutionKernelLifecycleTests(unittest.TestCase):
         self.addCleanup(remove_repo, self.repo)
 
     def test_lifecycle_receipts_match_independent_git_state(self):
-        trace = run_local_lifecycle(self.repo)
-        self.assertEqual(["pr_ready", "closeout"], [item["gate"] for item in trace])
-        self.assertEqual(git(self.repo, "rev-parse", "HEAD"), trace[-1]["observations"]["head"])
-        self.assertEqual(trace[0]["receipt_hash"], trace[1]["prior_receipt_hash"])
+        provider_repo, trace = run_provider_lifecycle()
+        self.addCleanup(remove_repo, provider_repo)
+        self.assertEqual(["pr_ready", "premerge", "merge_decision", "closeout"], [item["gate"] for item in trace])
+        self.assertEqual(git(provider_repo, "rev-parse", "HEAD"), trace[-1]["observations"]["head"])
+        self.assertEqual(trace[1]["receipt_hash"], trace[2]["prior_receipt_hash"])
+        self.assertEqual(trace[0]["receipt_hash"], trace[3]["prior_receipt_hash"])
         self.assertTrue(all(str(item["envelope_hash"]).startswith("sha256:") for item in trace))
 
     def test_acceptance_matrix_names_existing_behavioral_tests(self):
