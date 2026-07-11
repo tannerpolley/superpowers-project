@@ -12,6 +12,7 @@ try:
     from ..gate_merge_decision import validate_merge_decision
     from ..gate_pr_ready import validate_pr_ready
     from ..gate_premerge import validate_premerge
+    from ..gate_publish_ready import validate_publish_ready
     from ..gate_receipts import parse_receipt
 except ImportError:  # pragma: no cover - direct module execution fallback
     from command_support import Context, ScriptError, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
@@ -21,6 +22,7 @@ except ImportError:  # pragma: no cover - direct module execution fallback
     from gate_merge_decision import validate_merge_decision
     from gate_pr_ready import validate_pr_ready
     from gate_premerge import validate_premerge
+    from gate_publish_ready import validate_publish_ready
     from gate_receipts import parse_receipt
 
 
@@ -156,10 +158,26 @@ def command_collect_closeout(ctx: Context, args: dict[str, Any]) -> int:
     return _collect(ctx, args, "closeout")
 
 
+def command_collect_publish_ready(ctx: Context, args: dict[str, Any]) -> int:
+    return _collect(ctx, args, "publish_ready")
+
+
+def command_validate_publish_ready(ctx: Context, args: dict[str, Any]) -> int:
+    phase = "validate-publish-ready"
+    try:
+        root, envelope = _load_envelope(ctx, args, phase)
+        receipt = validate_publish_ready(envelope, root)
+        return emit({"ok": True, "phase": phase, "receipt": receipt.to_dict(), "receipt_hash": receipt.receipt_hash})
+    except Exception as exc:
+        return _error(phase, _normalize_error(exc))
+
+
 HANDLERS = {
     "command_collect_pr_ready": command_collect_pr_ready,
     "command_collect_premerge": command_collect_premerge,
     "command_collect_closeout": command_collect_closeout,
+    "command_collect_publish_ready": command_collect_publish_ready,
+    "command_validate_publish_ready": command_validate_publish_ready,
     "command_validate_pr_ready": command_validate_pr_ready,
     "command_premerge": command_premerge,
     "command_closeout": command_closeout,
