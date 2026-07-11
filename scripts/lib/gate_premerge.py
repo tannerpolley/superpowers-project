@@ -8,12 +8,12 @@ from typing import Mapping
 try:
     from .evidence_collectors import collect_github_state
     from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, is_hash_ref
-    from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
+    from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
     from .gate_receipts import build_receipt
 except ImportError:  # pragma: no cover
     from evidence_collectors import collect_github_state
     from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, is_hash_ref
-    from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
+    from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
     from gate_receipts import build_receipt
 
 
@@ -78,6 +78,7 @@ def validate_premerge(envelope: EvidenceEnvelope, repo_root: Path):
         workflow_binding_rule(grouped, envelope),
         git_state_rule(grouped, root),
         authorization_rule(grouped, envelope),
+        merge_strategy_rule(grouped, envelope),
         source_artifact_rule(grouped, envelope),
         command_rule(grouped),
         *review_rules(grouped),
@@ -87,5 +88,5 @@ def validate_premerge(envelope: EvidenceEnvelope, repo_root: Path):
     provider = grouped["github_state"][0]
     authorization = grouped["authorization_event"][0]
     authorization_event = authorization.get("event") if isinstance(authorization, Mapping) else None
-    observations = {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"], "provider_observation_hash": provider.get("observation_hash") if isinstance(provider, Mapping) else None, "source_branch": provider.get("source_branch") if isinstance(provider, Mapping) else None, "source_head": provider.get("source_sha") if isinstance(provider, Mapping) else None, "base_sha": provider.get("base_sha") if isinstance(provider, Mapping) else None, "strategy": authorization_event.get("strategy") if isinstance(authorization_event, Mapping) else None, "source_plan_hash": envelope.source["plan_hash"]}
+    observations = {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"], "provider_observation_hash": provider.get("observation_hash") if isinstance(provider, Mapping) else None, "source_branch": provider.get("source_branch") if isinstance(provider, Mapping) else None, "source_head": provider.get("source_sha") if isinstance(provider, Mapping) else None, "base_sha": provider.get("base_sha") if isinstance(provider, Mapping) else None, "strategy": authorization_event.get("merge_strategy") if isinstance(authorization_event, Mapping) else None, "source_plan_hash": envelope.source["plan_hash"]}
     return build_receipt(envelope, "premerge-validator@1", observations, rules)

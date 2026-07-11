@@ -54,7 +54,7 @@ class LocalMergeContractTests(unittest.TestCase):
             git(repo, "commit", "-qm", "result")
             source_head = git(repo, "rev-parse", "HEAD").stdout.strip()
             target_head = git(repo, "rev-parse", "main").stdout.strip()
-            authorization_hash = hash_ref({"authorized": True, "strategy": "ff-only"})
+            authorization_hash = hash_ref({"authorized": True, "merge_strategy": "ff-only"})
 
             def collected(gate, prior=None):
                 request = CollectionRequest(
@@ -62,11 +62,11 @@ class LocalMergeContractTests(unittest.TestCase):
                     repository_root=repo,
                     workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": authorization_hash},
                     source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
-                    target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
+                    target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False, "merge_strategy": "ff-only"},
                     commands=("git_status",),
                     provider_inputs={
                         "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
-                        "authorization": {"authorized": True, "strategy": "ff-only"},
+                        "authorization": {"authorized": True, "merge_strategy": "ff-only"},
                         "github_observation_id": "github_pr_state",
                         "github_fixture_payload": {"provider_available": True, "pr_id": 113, "repository": "fixture/repo", "repository_id": "fixture/repository-id", "base_ref": "main", "base_sha": target_head, "head_ref": "codex/fixture", "head_sha": source_head, "source_branch": "codex/fixture", "source_sha": source_head, "mergeable": True, "reviews": [], "checks": [{"name": "ci", "conclusion": "success"}]},
                     },

@@ -1809,7 +1809,7 @@ def command_apply_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> i
     if source.get("plan_path") != setup["source_plan"] or source.get("plan_hash") != hash_bytes_ref(project_path_for(root, str(setup["source_plan"]), "source_plan").read_bytes()):
         raise EvidenceError("artifact_hash_mismatch", "local integration source plan changed")
     observations = decision.observations
-    if observations.get("source_branch") != branch or observations.get("source_head") != setup["source_head"] or observations.get("strategy") != setup["strategy"] or observations.get("strategy") != "ff-only":
+    if target.get("merge_strategy") != setup["strategy"] or observations.get("source_branch") != branch or observations.get("source_head") != setup["source_head"] or observations.get("strategy") != setup["strategy"] or observations.get("strategy") != "ff-only":
         raise EvidenceError("receipt_stale", "local integration source or merge strategy binding changed")
     current = run(["git", "branch", "--show-current"], root)
     if current.returncode != 0 or current.stdout.strip() != "main":

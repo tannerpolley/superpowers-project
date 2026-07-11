@@ -42,19 +42,19 @@ def make_repo() -> Path:
     return root
 
 
-def envelope(root: Path, *, conclusion: str = "success", available: bool = True) -> dict[str, object]:
+def envelope(root: Path, *, conclusion: str = "success", available: bool = True, target_strategy: str = "ff-only", authorization_strategy: str = "ff-only") -> dict[str, object]:
     head = git(root, "rev-parse", "HEAD")
     base = git(root, "rev-parse", "main")
     request = CollectionRequest(
         gate="premerge",
         repository_root=root,
-        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True, "strategy": "ff-only"})},
+        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True, "merge_strategy": authorization_strategy})},
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
-        target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
+        target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False, "merge_strategy": target_strategy},
         commands=("git_status",),
         provider_inputs={
             "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
-            "authorization": {"authorized": True, "strategy": "ff-only"},
+            "authorization": {"authorized": True, "merge_strategy": authorization_strategy},
             "github_observation_id": "github_pr_state",
             "github_fixture_payload": {
                 "provider_available": available,

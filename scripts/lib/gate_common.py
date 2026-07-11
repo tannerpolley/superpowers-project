@@ -120,6 +120,15 @@ def authorization_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEn
     return RuleResult("authorization_binding", ok, "authorization matches workflow and is approved" if ok else "authorization is missing, unapproved, or does not match workflow")
 
 
+def merge_strategy_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope) -> RuleResult:
+    payload = grouped.get("authorization_event", [None])[0]
+    event = payload.get("event") if isinstance(payload, Mapping) else None
+    authorized_strategy = event.get("merge_strategy") if isinstance(event, Mapping) else None
+    target_strategy = envelope.target.get("merge_strategy")
+    ok = authorized_strategy in {"ff-only", "squash", "merge"} and target_strategy == authorized_strategy
+    return RuleResult("merge_strategy", ok, "target merge strategy matches authorization" if ok else "target merge strategy is missing, unsupported, or mismatched")
+
+
 def source_artifact_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope) -> RuleResult:
     payload = grouped.get("artifact_hashes", [None])[0]
     paths = payload.get("paths", {}) if isinstance(payload, Mapping) else {}

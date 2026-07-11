@@ -6,25 +6,17 @@ from typing import Mapping
 
 try:
     from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
-    from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule
+    from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule
     from .gate_premerge import _provider_rules
     from .gate_receipts import build_receipt, parse_receipt, verify_receipt
 except ImportError:  # pragma: no cover
     from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
-    from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule
+    from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule
     from gate_premerge import _provider_rules
     from gate_receipts import build_receipt, parse_receipt, verify_receipt
 
 
 MERGE_DECISION_REQUIRED_KINDS = {"git_state", "artifact_hashes", "command_result", "authorization_event", "github_state"}
-
-
-def _strategy_rule(grouped: Mapping[str, list[object]]) -> RuleResult:
-    payload = grouped.get("authorization_event", [None])[0]
-    event = payload.get("event") if isinstance(payload, Mapping) else None
-    strategy = event.get("strategy") if isinstance(event, Mapping) else None
-    ok = strategy in {"ff-only", "squash", "merge"}
-    return RuleResult("merge_strategy", ok, "merge strategy is authorization-bound and supported" if ok else "merge strategy is missing, unauthorized, or unsupported")
 
 
 def validate_merge_decision(envelope: EvidenceEnvelope, repo_root: Path, premerge_receipt) :
@@ -47,7 +39,7 @@ def validate_merge_decision(envelope: EvidenceEnvelope, repo_root: Path, premerg
         workflow_binding_rule(grouped, envelope),
         git_state_rule(grouped, root),
         authorization_rule(grouped, envelope),
-        _strategy_rule(grouped),
+        merge_strategy_rule(grouped, envelope),
         source_artifact_rule(grouped, envelope),
         command_rule(grouped),
         *_provider_rules(grouped, envelope, str(current["head"]), str(current["branch"]), root),
@@ -55,5 +47,5 @@ def validate_merge_decision(envelope: EvidenceEnvelope, repo_root: Path, premerg
     require_all_rules(rules)
     authorization = grouped["authorization_event"][0]
     authorization_event = authorization.get("event") if isinstance(authorization, Mapping) else None
-    observations = {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"], "provider_observation_hash": provider.get("observation_hash") if isinstance(provider, Mapping) else None, "source_branch": provider.get("source_branch") if isinstance(provider, Mapping) else None, "source_head": provider.get("source_sha") if isinstance(provider, Mapping) else None, "base_sha": provider.get("base_sha") if isinstance(provider, Mapping) else None, "strategy": authorization_event.get("strategy") if isinstance(authorization_event, Mapping) else None, "source_plan_hash": envelope.source["plan_hash"]}
+    observations = {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"], "provider_observation_hash": provider.get("observation_hash") if isinstance(provider, Mapping) else None, "source_branch": provider.get("source_branch") if isinstance(provider, Mapping) else None, "source_head": provider.get("source_sha") if isinstance(provider, Mapping) else None, "base_sha": provider.get("base_sha") if isinstance(provider, Mapping) else None, "strategy": authorization_event.get("merge_strategy") if isinstance(authorization_event, Mapping) else None, "source_plan_hash": envelope.source["plan_hash"]}
     return build_receipt(envelope, "merge-decision-validator@1", observations, rules)
