@@ -15,7 +15,6 @@ from scripts.lib.gate_publish_ready import validate_publish_ready
 from scripts.lib.gate_receipts import GateReceipt
 from scripts.lib.package_provenance import runtime_contract_hash, runtime_manifest
 import scripts.lib.evidence_collectors as evidence_collectors
-import scripts.lib.gate_publish_ready as gate_publish_ready
 
 
 ROOT = Path(__file__).parents[1]
@@ -46,7 +45,7 @@ def release_envelope(root: Path) -> dict[str, object]:
         repository_root=root,
         workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref(authorization)},
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md"},
-        target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
+        target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False, "installation_root": str(root.resolve()), "agent_trial_root": str((root / "tests/workflow-trials/receipts/current").resolve())},
         commands=("git_status", "source_validation", "sync_live_validation"),
             provider_inputs={
                 "authorization": authorization,
@@ -98,10 +97,6 @@ class PublishReadyGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = Path(tempfile.mkdtemp()) / "repo"
         shutil.copytree(ROOT, self.repo, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
-        evidence_collectors.DEFAULT_INSTALLATION_ROOT = self.repo
-        gate_publish_ready.DEFAULT_INSTALLATION_ROOT = self.repo
-        evidence_collectors.DEFAULT_TRIAL_ROOT_NAME = Path("tests/workflow-trials/receipts/current")
-        gate_publish_ready.DEFAULT_TRIAL_ROOT_NAME = Path("tests/workflow-trials/receipts/current")
         for receipt_path in (self.repo / "tests" / "workflow-trials" / "receipts" / "current").glob("**/receipt.json"):
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
             receipt["package_hash"] = runtime_contract_hash(self.repo)
@@ -144,15 +139,17 @@ class PublishReadyGateTests(unittest.TestCase):
             self.repo,
             "-PublishReadyReceiptPath",
             ".superpowers/runs/publish-ready-receipt.json",
-            "-LivePluginRoot",
-            str(self.repo),
-            "-AgentReceiptDir",
-            "tests/workflow-trials/receipts/current",
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         payload = json.loads(result.stdout)
         self.assertTrue(payload["publish_ready"])
         self.assertEqual(receipt.receipt_hash, payload["publish_ready_receipt_hash"])
+
+    def test_prepare_release_rejects_substituted_root_options(self):
+        write_receipt(self.repo, release_envelope(self.repo))
+        result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/publish-ready-receipt.json", "-LivePluginRoot", str(self.repo / "other-install"))
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual("repository_mismatch", json.loads(result.stdout)["error"]["code"])
 
     def test_prepare_release_rejects_a_self_hashed_receipt_with_forged_rules(self):
         receipt = write_receipt(self.repo, release_envelope(self.repo)).to_dict()
@@ -251,6 +248,15 @@ class PublishReadyGateTests(unittest.TestCase):
         envelope["envelope_hash"] = build_envelope_hash(envelope)
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
             validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+
+    def test_publish_ready_rejects_substituted_bound_installation_or_trial_root(self):
+        for field, value in (("installation_root", str((self.repo / "other-install").resolve())), ("agent_trial_root", str((self.repo / "other-trials").resolve()))):
+            with self.subTest(field=field):
+                envelope = release_envelope(self.repo)
+                envelope["target"][field] = value
+                envelope["envelope_hash"] = build_envelope_hash(envelope)
+                with self.assertRaisesRegex(EvidenceError, "required_rule_failed|repository_mismatch"):
+                    validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
 
     def test_prepare_release_rejects_uncommitted_package_change_after_receipt(self):
         receipt = write_receipt(self.repo, release_envelope(self.repo))

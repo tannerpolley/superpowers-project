@@ -10,7 +10,7 @@ try:
     from ..agent_usability import validate_trial_set
     from ..command_support import Context, arg_value, emit, has_switch, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
     from ..evidence_collectors import CollectionRequest, build_evidence_envelope
-    from ..evidence_collectors import DEFAULT_INSTALLATION_ROOT, DEFAULT_TRIAL_ROOT_NAME, collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
+    from ..evidence_collectors import collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
     from ..evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
     from ..gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
     from ..package_provenance import runtime_contract_hash, runtime_manifest
@@ -19,7 +19,7 @@ except ImportError:
     from agent_usability import validate_trial_set
     from command_support import Context, arg_value, emit, has_switch, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
     from evidence_collectors import CollectionRequest, build_evidence_envelope
-    from evidence_collectors import DEFAULT_INSTALLATION_ROOT, DEFAULT_TRIAL_ROOT_NAME, collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
+    from evidence_collectors import collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
     from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
     from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
     from package_provenance import runtime_contract_hash, runtime_manifest
@@ -111,7 +111,7 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
         repository_root=root,
         workflow=workflow,
         source=source,
-        target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False},
+        target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False, "installation_root": str(live_root), "agent_trial_root": str((root / str(arg_value(args, "AgentReceiptDir", default=".superpowers/runs"))).resolve())},
         commands=("source_validation", "sync_live_validation"),
         provider_inputs=provider_inputs,
     )
@@ -182,8 +182,16 @@ def _load_publish_receipt(root, args):
     trusted = receipt.observations.get("trusted_evidence")
     if not isinstance(trusted, dict):
         raise EvidenceError("receipt_stale", "publish-ready trusted observation bindings are missing")
-    live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(DEFAULT_INSTALLATION_ROOT)))).expanduser().resolve()
-    trial_root = project_path_for(root, str(arg_value(args, "AgentReceiptDir", default=str(DEFAULT_TRIAL_ROOT_NAME))), "AgentReceiptDir")
+    if not isinstance(target, dict) or not isinstance(target.get("installation_root"), str) or not isinstance(target.get("agent_trial_root"), str):
+        raise EvidenceError("receipt_stale", "publish-ready receipt root bindings are missing")
+    live_root = Path(str(target["installation_root"])).expanduser().resolve()
+    trial_root = project_path_for(root, str(target["agent_trial_root"]), "publish-ready agent trial root")
+    requested_live_root = arg_value(args, "LivePluginRoot")
+    if requested_live_root is not None and Path(str(requested_live_root)).expanduser().resolve() != live_root:
+        raise EvidenceError("repository_mismatch", "LivePluginRoot does not match the receipt binding")
+    requested_trial_root = arg_value(args, "AgentReceiptDir")
+    if requested_trial_root is not None and project_path_for(root, str(requested_trial_root), "AgentReceiptDir") != trial_root:
+        raise EvidenceError("repository_mismatch", "AgentReceiptDir does not match the receipt binding")
     try:
         fresh = {
             "package_provenance": collect_package_provenance(root),

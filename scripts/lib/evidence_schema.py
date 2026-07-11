@@ -336,13 +336,26 @@ def _parse_envelope(data: Mapping[str, object], repo_root: Path) -> EvidenceEnve
     simple_isolation_merge_target_keys = simple_isolation_target_keys | {"merge_strategy"}
     isolation_target_keys = base_target_keys | {"isolation_required", "workspace_provider", "workspace_thread_id", "workspace_owner", "cleanup_actor"}
     isolation_merge_target_keys = isolation_target_keys | {"merge_strategy"}
-    if target_keys not in (base_target_keys, merge_target_keys, simple_isolation_target_keys, simple_isolation_merge_target_keys, isolation_target_keys, isolation_merge_target_keys):
+    publish_target_keys = base_target_keys | {"isolation_required", "installation_root", "agent_trial_root"}
+    allowed_target_keys = (publish_target_keys,) if gate == "publish_ready" else (base_target_keys, merge_target_keys, simple_isolation_target_keys, simple_isolation_merge_target_keys, isolation_target_keys, isolation_merge_target_keys)
+    if target_keys not in allowed_target_keys:
         raise EvidenceError("schema_invalid", "target keys are invalid")
     _string(target["task_id"], "target.task_id", allow_none=True)
     _string(target["workspace_id"], "target.workspace_id")
     _string(target["branch"], "target.branch")
     if "isolation_required" in target and not isinstance(target["isolation_required"], bool):
         raise EvidenceError("schema_invalid", "target.isolation_required must be boolean")
+    if gate == "publish_ready":
+        installation_root = _canonical_path(target["installation_root"], "target.installation_root")
+        trial_root = _canonical_path(target["agent_trial_root"], "target.agent_trial_root")
+        try:
+            trial_root.relative_to(active_root)
+        except ValueError as exc:
+            raise EvidenceError("repository_mismatch", "target.agent_trial_root escapes repository") from exc
+        if not (installation_root / ".codex-plugin" / "plugin.json").is_file():
+            raise EvidenceError("repository_mismatch", "target.installation_root is not an installed plugin root")
+        if not trial_root.is_dir():
+            raise EvidenceError("repository_mismatch", "target.agent_trial_root is not a directory")
     if gate in {"premerge", "merge_decision"}:
         if "merge_strategy" not in target:
             raise EvidenceError("schema_invalid", "premerge and merge-decision targets must bind merge_strategy")
