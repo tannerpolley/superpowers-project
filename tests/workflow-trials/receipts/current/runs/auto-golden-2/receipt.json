@@ -9,7 +9,7 @@
   "verifier": {
     "id": "019f49fc-4a64-7071-9f0b-6e8bbb318d42"
   },
-  "package_hash": "c63c210d6a1266d12f73612c43c18b2843fcc3b3ca07cc181c3ea13259eeab75",
+  "package_hash": "f67a416a7afd1ee23ca5fb6a1ad00db38d5c56fc1d8ce33b04bdfae179c4ed05",
   "trial_root": "tests/workflow-trials/receipts/current/runs/auto-golden-2",
   "project_root": "tests/workflow-trials/receipts/current/runs/auto-golden-2/project",
   "expected_outcome": "pass",

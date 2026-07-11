@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from collections.abc import Mapping
@@ -2084,7 +2085,7 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     if os.environ.get("SUPERPOWERS_READ_ONLY_COLLECTION") == "1":
         if not has_switch(args, "Validate", "validate"):
             raise ScriptError("read-only sync observation requires --validate")
-        validation = run(["bash", str(root / "scripts" / "validate.sh")], root)
+        validation = run_without_read_only_collection(["bash", str(root / "scripts" / "validate.sh")], root)
         if validation.returncode != 0:
             raise ScriptError("validation failed before read-only sync observation")
         source_manifest = [entry.to_dict() for entry in runtime_manifest(root)]
@@ -2132,6 +2133,12 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         "deployed_user_skills": sorted(USER_SKILLS),
         "runtime_package": {"files": len(source_manifest), "bytes": sum(item["length"] for item in source_manifest)},
     })
+
+
+def run_without_read_only_collection(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    environment = os.environ.copy()
+    environment.pop("SUPERPOWERS_READ_ONLY_COLLECTION", None)
+    return subprocess.run(command, cwd=cwd, env=environment, text=True, capture_output=True, check=False)
 
 
 def command_install(ctx: Context, args: dict[str, Any]) -> int:

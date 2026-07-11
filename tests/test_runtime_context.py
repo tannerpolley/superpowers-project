@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 import sys
 from pathlib import Path
 
@@ -14,6 +15,12 @@ from superpowers_project_cli import Context, project_root_for
 
 
 class RuntimeContextTests(unittest.TestCase):
+    def test_nested_validation_does_not_inherit_read_only_collection_marker(self):
+        from scripts.lib.superpowers_project_cli import run_without_read_only_collection
+        with patch.dict("os.environ", {"SUPERPOWERS_READ_ONLY_COLLECTION": "1"}):
+            result = run_without_read_only_collection(["bash", "-c", "test -z \"${SUPERPOWERS_READ_ONLY_COLLECTION:-}\""], Path(__file__).resolve().parents[1])
+        self.assertEqual(0, result.returncode)
+
     def test_external_project_root_is_allowed(self):
         with tempfile.TemporaryDirectory() as d:
             project = Path(d).resolve()
