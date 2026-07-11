@@ -18,6 +18,7 @@ from scripts.lib.evidence_collectors import CollectionRequest, CollectorResult, 
 from scripts.lib.evidence_schema import EvidenceError, RuleResult, build_envelope_hash, hash_ref, parse_envelope
 from scripts.lib.gate_merge_decision import validate_merge_decision
 from scripts.lib.gate_premerge import validate_premerge
+from scripts.lib.gate_pr_ready import validate_pr_ready
 from scripts.lib.gate_receipts import build_receipt
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts" / "lib"))
 from scripts.lib.superpowers_project_cli import command_apply_local_branch_closeout
@@ -78,11 +79,22 @@ class MergeDecisionTests(unittest.TestCase):
         self.repo = make_repo()
         self.addCleanup(lambda: shutil.rmtree(self.repo, ignore_errors=True))
 
-    def validate_premerge_fixture(self, data):
+    def validate_premerge_fixture(self, data, prior=None):
+        if prior is None:
+            authorization = next(item for item in data["evidence"] if item["kind"] == "authorization_event")["payload"]["event"]
+            pr_data = build_evidence_envelope(CollectionRequest(
+                gate="pr_ready", repository_root=self.repo, workflow={**data["workflow"]},
+                source={"spec_path": data["source"]["spec_path"], "plan_path": data["source"]["plan_path"]},
+                target={"task_id": None, "workspace_id": "local", "branch": git(self.repo, "branch", "--show-current"), "isolation_required": False},
+                commands=("git_status",), provider_inputs={"reviews": [{"approved": True, "blocking": False, "plan_conformance": True}], "authorization": authorization, "cleanup": {"status_exit_code": 0, "dirty": False, "task_owned_paths": []}},
+            ))
+            prior = validate_pr_ready(parse_envelope(pr_data, self.repo), self.repo)
+            data["prior_event_hash"] = prior.receipt_hash
+            data["envelope_hash"] = build_envelope_hash(data)
         provider = next(item for item in data["evidence"] if item["kind"] == "github_state")["payload"]
         fixture = CollectorResult("github_state", "github-state@1", "2026-07-10T12:00:00Z", provider)
         with patch.object(gate_premerge, "collect_github_state", return_value=fixture):
-            return validate_premerge(parse_envelope(data, self.repo), self.repo)
+            return validate_premerge(parse_envelope(data, self.repo), self.repo, prior)
 
     def validate_merge_fixture(self, data, prior):
         provider = next(item for item in data["evidence"] if item["kind"] == "github_state")["payload"]

@@ -5,11 +5,11 @@ from pathlib import Path
 
 try:
     from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
-    from .gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_evidence, require_gate, require_all_rules, review_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
+    from .gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, review_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
     from .gate_receipts import GateReceipt, build_receipt
 except ImportError:  # pragma: no cover - CLI top-level import fallback
     from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
-    from gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_evidence, require_gate, require_all_rules, review_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
+    from gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, review_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
     from gate_receipts import GateReceipt, build_receipt
 
 
@@ -32,5 +32,5 @@ def validate_pr_ready(envelope: EvidenceEnvelope, repo_root: Path) -> GateReceip
         workspace_rule(grouped, envelope),
         cleanup_rule(grouped, Path(repo_root).resolve(), envelope.target.get("cleanup_actor")),
     ])
-    require_all_rules(rules)
+    finalize_gate_rules("pr_ready", rules)
     return build_receipt(envelope, "pr-ready-validator@1", {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"]}, rules)

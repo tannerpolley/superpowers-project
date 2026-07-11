@@ -7,12 +7,14 @@ import tempfile
 import unittest
 import contextlib
 import io
+from dataclasses import replace
 from pathlib import Path
 
 from scripts.lib.evidence_collectors import CollectionRequest, build_evidence_envelope
-from scripts.lib.evidence_schema import EvidenceError, build_envelope_hash, hash_ref, parse_envelope
+from scripts.lib.evidence_schema import EvidenceError, RuleResult, build_envelope_hash, hash_ref, parse_envelope
 from scripts.lib.gate_closeout import validate_closeout
 from scripts.lib.gate_pr_ready import validate_pr_ready
+from scripts.lib.gate_receipts import EXPECTED_VALIDATORS, REQUIRED_RECEIPT_RULES, build_receipt
 from scripts.lib.command_support import Context
 from scripts.lib.commands.gates import command_validate_resolve_terminal_closeout
 
@@ -52,6 +54,13 @@ def request(root: Path, gate: str, *, prior: str | None = None) -> dict[str, obj
     ))
 
 
+def merge_prior(root: Path):
+    base = parse_envelope(request(root, "pr_ready"), root)
+    merge_envelope = replace(base, gate="merge_decision")
+    rules = [RuleResult(rule_id, True, "observed") for rule_id in sorted(REQUIRED_RECEIPT_RULES["merge_decision"])]
+    return build_receipt(merge_envelope, EXPECTED_VALIDATORS["merge_decision"], {"head": git(root, "rev-parse", "HEAD"), "branch": "main"}, rules)
+
+
 class CloseoutGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = repo()
@@ -69,10 +78,9 @@ class CloseoutGateTests(unittest.TestCase):
         self.assertEqual("evidence_missing", json.loads(process.stdout)["error"]["code"])
 
     def test_closeout_accepts_current_prior_receipt_and_emits_rules(self):
-        pr_request = request(self.repo, "pr_ready")
-        pr_receipt = validate_pr_ready(parse_envelope(pr_request, self.repo), self.repo)
-        closeout = parse_envelope(request(self.repo, "closeout", prior=pr_receipt.receipt_hash), self.repo)
-        receipt = validate_closeout(closeout, self.repo, pr_receipt)
+        prior = merge_prior(self.repo)
+        closeout = parse_envelope(request(self.repo, "closeout", prior=prior.receipt_hash), self.repo)
+        receipt = validate_closeout(closeout, self.repo, prior)
         self.assertEqual("closeout", receipt.gate)
         self.assertEqual("passed", receipt.disposition)
         self.assertTrue({rule.rule_id for rule in receipt.rules} >= {"integration_proof", "completion_state", "workspace_disposition", "cleanup_state"})
@@ -88,14 +96,14 @@ class CloseoutGateTests(unittest.TestCase):
             validate_closeout(closeout, self.repo, forged)
 
     def test_closeout_rejects_stale_integration_head(self):
-        pr_receipt = validate_pr_ready(parse_envelope(request(self.repo, "pr_ready"), self.repo), self.repo)
-        envelope = request(self.repo, "closeout", prior=pr_receipt.receipt_hash)
+        prior = merge_prior(self.repo)
+        envelope = request(self.repo, "closeout", prior=prior.receipt_hash)
         integration = next(item for item in envelope["evidence"] if item["kind"] == "integration_state")
         integration["payload"]["head"] = "stale-head"
         integration["payload_hash"] = hash_ref(integration["payload"])
         envelope["envelope_hash"] = build_envelope_hash(envelope)
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_closeout(parse_envelope(envelope, self.repo), self.repo, pr_receipt)
+            validate_closeout(parse_envelope(envelope, self.repo), self.repo, prior)
 
     def test_terminal_decision_is_bound_to_run_candidate_and_authorization(self):
         pr_receipt = validate_pr_ready(parse_envelope(request(self.repo, "pr_ready"), self.repo), self.repo)

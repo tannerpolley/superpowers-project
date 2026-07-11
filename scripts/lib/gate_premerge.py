@@ -8,13 +8,13 @@ from typing import Mapping
 try:
     from .evidence_collectors import collect_github_state
     from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, is_hash_ref
-    from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
-    from .gate_receipts import build_receipt
+    from .gate_common import authorization_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, merge_strategy_rule, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
+    from .gate_receipts import build_receipt, verify_transition_receipt
 except ImportError:  # pragma: no cover
     from evidence_collectors import collect_github_state
     from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, is_hash_ref
-    from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
-    from gate_receipts import build_receipt
+    from gate_common import authorization_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, merge_strategy_rule, require_evidence, review_rules, source_artifact_rule, workflow_binding_rule
+    from gate_receipts import build_receipt, verify_transition_receipt
 
 
 PREMERGE_REQUIRED_KINDS = {"git_state", "artifact_hashes", "command_result", "review_result", "authorization_event", "github_state"}
@@ -67,7 +67,7 @@ def _provider_rules(grouped: Mapping[str, list[object]], envelope: EvidenceEnvel
     ]
 
 
-def validate_premerge(envelope: EvidenceEnvelope, repo_root: Path):
+def validate_premerge(envelope: EvidenceEnvelope, repo_root: Path, pr_ready_receipt):
     if envelope.gate != "premerge":
         raise EvidenceError("schema_invalid", "envelope gate must be premerge")
     root = Path(repo_root).resolve()
@@ -75,6 +75,7 @@ def validate_premerge(envelope: EvidenceEnvelope, repo_root: Path):
     current = current_git_state(root)
     rules = identity_rules(envelope, root, check_target_branch=False)
     rules.extend([
+        RuleResult("event_chain", bool(verify_transition_receipt(pr_ready_receipt, envelope, "pr_ready")), "current PR-ready receipt is consumed"),
         workflow_binding_rule(grouped, envelope),
         git_state_rule(grouped, root),
         authorization_rule(grouped, envelope),
@@ -84,7 +85,7 @@ def validate_premerge(envelope: EvidenceEnvelope, repo_root: Path):
         *review_rules(grouped),
         *_provider_rules(grouped, envelope, str(current["head"]), str(current["branch"]), root),
     ])
-    require_all_rules(rules)
+    finalize_gate_rules("premerge", rules)
     provider = grouped["github_state"][0]
     authorization = grouped["authorization_event"][0]
     authorization_event = authorization.get("event") if isinstance(authorization, Mapping) else None

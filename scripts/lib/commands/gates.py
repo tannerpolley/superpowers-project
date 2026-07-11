@@ -89,7 +89,8 @@ def command_premerge(ctx: Context, args: dict[str, Any]) -> int:
     phase = "premerge"
     try:
         root, envelope = _load_envelope(ctx, args, phase)
-        receipt = validate_premerge(envelope, root)
+        prior = _load_prior_receipt(root, args)
+        receipt = validate_premerge(envelope, root, prior)
         return emit({"ok": True, "phase": phase, "receipt": receipt.to_dict(), "receipt_hash": receipt.receipt_hash})
     except Exception as exc:
         return _error(phase, _normalize_error(exc))

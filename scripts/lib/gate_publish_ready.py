@@ -8,13 +8,13 @@ from typing import Mapping
 try:
     from .evidence_collectors import collect_agent_trial, collect_installation_state, collect_package_provenance
     from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, hash_ref, is_hash_ref
-    from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule, cleanup_rule
+    from .gate_common import authorization_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, source_artifact_rule, workflow_binding_rule, cleanup_rule
     from .gate_receipts import build_receipt
     from .package_provenance import runtime_contract_hash, runtime_manifest
 except ImportError:  # pragma: no cover
     from evidence_collectors import collect_agent_trial, collect_installation_state, collect_package_provenance
     from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, hash_ref, is_hash_ref
-    from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule, cleanup_rule
+    from gate_common import authorization_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, source_artifact_rule, workflow_binding_rule, cleanup_rule
     from gate_receipts import build_receipt
     from package_provenance import runtime_contract_hash, runtime_manifest
 
@@ -127,7 +127,7 @@ def validate_publish_ready(envelope: EvidenceEnvelope, repo_root: Path):
         *_fresh_observation_rules(grouped, envelope, root),
         cleanup_rule(grouped, root),
     ])
-    require_all_rules(rules)
+    finalize_gate_rules("publish_ready", rules)
     package_hash, version, contract_hash = _current_package(root)
     return build_receipt(
         envelope,

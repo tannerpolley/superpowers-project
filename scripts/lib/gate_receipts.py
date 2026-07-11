@@ -25,7 +25,7 @@ REQUIRED_RECEIPT_RULES = {
         "implementation_verification", "review_disposition", "plan_conformance",
         "workspace_receipt", "cleanup_state",
     }),
-    "premerge": frozenset({"repository_identity", "workflow_binding", "target_state", "authorization_binding", "merge_strategy", "source_artifacts", "implementation_verification", "review_disposition", "plan_conformance", "provider_state", "provider_observation", "pr_identity", "required_checks", "base_identity", "head_identity", "mergeability", "provider_reviews"}),
+    "premerge": frozenset({"repository_identity", "event_chain", "workflow_binding", "target_state", "authorization_binding", "merge_strategy", "source_artifacts", "implementation_verification", "review_disposition", "plan_conformance", "provider_state", "provider_observation", "pr_identity", "required_checks", "base_identity", "head_identity", "mergeability", "provider_reviews"}),
     "merge_decision": frozenset({"repository_identity", "event_chain", "workflow_binding", "target_state", "authorization_binding", "merge_strategy", "source_artifacts", "implementation_verification", "provider_state", "provider_observation", "pr_identity", "required_checks", "base_identity", "head_identity", "mergeability", "provider_reviews"}),
     "closeout": frozenset({"repository_identity", "target_identity", "event_chain", "workflow_binding", "target_state", "authorization_binding", "source_artifacts", "implementation_verification", "integration_proof", "completion_state", "workspace_disposition", "cleanup_state"}),
     "publish_ready": frozenset({"repository_identity", "target_identity", "workflow_binding", "target_state", "authorization_binding", "source_artifacts", "implementation_verification", "source_validation", "sync_validation", "package_provenance", "installation_state", "agent_trial", "publish_authorization", "package_observation_current", "installation_observation_current", "agent_trial_observation_current", "cleanup_state"}),
@@ -163,9 +163,10 @@ def verify_receipt(receipt: GateReceipt | Mapping[str, object], envelope: Eviden
     if allow_transition:
         for key in ("repository", "workflow", "source", "target"):
             if canonical_json(receipt.bindings.get(key)) != canonical_json(expected_bindings.get(key)):
-                raise EvidenceError("receipt_stale", f"receipt {key} binding does not match transition envelope")
+                rule = {"repository": "repository_identity", "workflow": "workflow_binding", "source": "source_artifacts", "target": "target_identity"}[key]
+                raise EvidenceError("receipt_stale", f"receipt {key} binding does not match transition envelope", rule)
         if envelope.prior_event_hash != receipt.receipt_hash:
-            raise EvidenceError("receipt_stale", "transition envelope does not name the consumed receipt")
+            raise EvidenceError("receipt_stale", "transition envelope does not name the consumed receipt", "event_chain")
     elif canonical_json(receipt.bindings) != canonical_json(expected_bindings):
         raise EvidenceError("receipt_stale", "receipt bindings do not match current envelope")
     if receipt.disposition != "passed" or not receipt.rules or not all(rule.ok for rule in receipt.rules):
@@ -182,4 +183,36 @@ def verify_receipt_hash(receipt: GateReceipt | Mapping[str, object]) -> GateRece
     parsed = parse_receipt(receipt) if isinstance(receipt, Mapping) else receipt
     if not isinstance(parsed, GateReceipt) or not is_hash_ref(parsed.receipt_hash) or _receipt_hash(parsed) != parsed.receipt_hash:
         raise EvidenceError("schema_invalid", "receipt_hash mismatch")
+    return parsed
+
+
+def verify_transition_receipt(receipt: GateReceipt | Mapping[str, object], envelope: EvidenceEnvelope, expected_gate: str) -> GateReceipt:
+    """Authenticate the immediately preceding gate across an allowed target transition."""
+    parsed = parse_receipt(receipt) if isinstance(receipt, Mapping) else receipt
+    if not isinstance(parsed, GateReceipt):
+        raise EvidenceError("legacy_evidence_unsupported", "unsupported receipt object")
+    if parsed.gate != expected_gate or parsed.validator_id != EXPECTED_VALIDATORS.get(expected_gate):
+        raise EvidenceError("receipt_stale", "prior gate or validator does not match transition")
+    if not is_hash_ref(parsed.receipt_hash) or _receipt_hash(parsed) != parsed.receipt_hash:
+        raise EvidenceError("schema_invalid", "receipt_hash mismatch")
+    if parsed.disposition != "passed" or not parsed.rules or not all(rule.ok for rule in parsed.rules):
+        raise EvidenceError("required_rule_failed", "prior receipt is not passing")
+    missing = sorted(REQUIRED_RECEIPT_RULES.get(expected_gate, frozenset()) - {rule.rule_id for rule in parsed.rules})
+    if missing:
+        raise EvidenceError("required_rule_failed", "prior receipt omits required rules: " + ", ".join(missing))
+    if envelope.prior_event_hash != parsed.receipt_hash:
+        raise EvidenceError("receipt_stale", "transition does not name the immediately preceding receipt", "event_chain")
+    expected = build_receipt(envelope, parsed.validator_id, parsed.observations, list(parsed.rules)).bindings
+    for key in ("repository", "workflow", "source"):
+        if canonical_json(parsed.bindings.get(key)) != canonical_json(expected.get(key)):
+            rule = {"repository": "repository_identity", "workflow": "workflow_binding", "source": "source_artifacts"}[key]
+            raise EvidenceError("receipt_stale", f"prior {key} binding does not match transition", rule)
+    prior_target = parsed.bindings.get("target")
+    next_target = expected.get("target")
+    stable_target_keys = {"task_id", "workspace_id", "isolation_required", "workspace_provider", "workspace_thread_id", "workspace_owner"}
+    if not isinstance(prior_target, Mapping) or not isinstance(next_target, Mapping):
+        raise EvidenceError("receipt_stale", "transition target binding is missing")
+    for key in stable_target_keys & (set(prior_target) | set(next_target)):
+        if prior_target.get(key) != next_target.get(key):
+            raise EvidenceError("receipt_stale", f"transition target {key} changed", "target_identity")
     return parsed

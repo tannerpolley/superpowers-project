@@ -23,6 +23,7 @@ from scripts.lib.evidence_collectors import CollectionRequest, CollectorResult, 
 from scripts.lib.evidence_schema import EvidenceError, hash_ref, parse_envelope
 from scripts.lib.gate_merge_decision import validate_merge_decision
 from scripts.lib.gate_premerge import validate_premerge
+from scripts.lib.gate_pr_ready import validate_pr_ready
 
 
 def git(root: Path, *args: str):
@@ -76,11 +77,19 @@ class LocalMergeContractTests(unittest.TestCase):
                 with patch.object(evidence_collectors, "collect_github_state", return_value=fixture):
                     return build_evidence_envelope(request)
 
-            premerge_envelope = collected("premerge")
+            pr_request = CollectionRequest(
+                gate="pr_ready", repository_root=repo,
+                workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": authorization_hash},
+                source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
+                target={"task_id": None, "workspace_id": "local", "branch": "codex/fixture", "isolation_required": False},
+                commands=("git_status",), provider_inputs={"reviews": [{"approved": True, "blocking": False, "plan_conformance": True}], "authorization": {"authorized": True, "merge_strategy": "ff-only"}, "cleanup": {"status_exit_code": 0, "dirty": False, "task_owned_paths": []}},
+            )
+            pr_receipt = validate_pr_ready(parse_envelope(build_evidence_envelope(pr_request), repo), repo)
+            premerge_envelope = collected("premerge", pr_receipt.receipt_hash)
             provider = next(item for item in premerge_envelope["evidence"] if item["kind"] == "github_state")["payload"]
             fixture = CollectorResult("github_state", "github-state@1", "2026-07-10T12:00:00Z", provider)
             with patch.object(gate_premerge, "collect_github_state", return_value=fixture):
-                premerge_receipt = validate_premerge(parse_envelope(premerge_envelope, repo), repo)
+                premerge_receipt = validate_premerge(parse_envelope(premerge_envelope, repo), repo, pr_receipt)
             merge_envelope = collected("merge_decision", premerge_receipt.receipt_hash)
             provider = next(item for item in merge_envelope["evidence"] if item["kind"] == "github_state")["payload"]
             fixture = CollectorResult("github_state", "github-state@1", "2026-07-10T12:00:00Z", provider)

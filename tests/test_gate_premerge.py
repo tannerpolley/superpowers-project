@@ -13,6 +13,7 @@ import scripts.lib.gate_premerge as gate_premerge
 from scripts.lib.evidence_collectors import CollectionRequest, CollectorResult, build_evidence_envelope
 from scripts.lib.evidence_schema import EvidenceError, build_envelope_hash, hash_ref, parse_envelope
 from scripts.lib.gate_premerge import validate_premerge
+from scripts.lib.gate_pr_ready import validate_pr_ready
 
 
 def git(root: Path, *args: str) -> str:
@@ -84,10 +85,20 @@ class PremergeGateTests(unittest.TestCase):
         self.addCleanup(lambda: shutil.rmtree(self.repo, ignore_errors=True))
 
     def validate(self, data, fresh_provider=None):
+        authorization = next(item for item in data["evidence"] if item["kind"] == "authorization_event")["payload"]["event"]
+        pr_data = build_evidence_envelope(CollectionRequest(
+            gate="pr_ready", repository_root=self.repo,
+            workflow={**data["workflow"]}, source={"spec_path": data["source"]["spec_path"], "plan_path": data["source"]["plan_path"]},
+            target={"task_id": None, "workspace_id": "local", "branch": git(self.repo, "branch", "--show-current"), "isolation_required": False},
+            commands=("git_status",), provider_inputs={"reviews": [{"approved": True, "blocking": False, "plan_conformance": True}], "authorization": authorization, "cleanup": {"status_exit_code": 0, "dirty": False, "task_owned_paths": []}},
+        ))
+        prior = validate_pr_ready(parse_envelope(pr_data, self.repo), self.repo)
+        data["prior_event_hash"] = prior.receipt_hash
+        data["envelope_hash"] = build_envelope_hash(data)
         provider = fresh_provider or next(item for item in data["evidence"] if item["kind"] == "github_state")["payload"]
         fixture = CollectorResult("github_state", "github-state@1", "2026-07-10T12:00:00Z", provider)
         with patch.object(gate_premerge, "collect_github_state", return_value=fixture):
-            return validate_premerge(parse_envelope(data, self.repo), self.repo)
+            return validate_premerge(parse_envelope(data, self.repo), self.repo, prior)
 
     def test_public_premerge_launcher_fails_without_evidence(self):
         root = Path(__file__).parents[1]

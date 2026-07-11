@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from tests.execution_kernel_fixtures import git, make_repo, remove_repo, run_local_lifecycle, run_provider_lifecycle
+from tests.execution_kernel_acceptance import execute_acceptance_row
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,19 +21,18 @@ class ExecutionKernelLifecycleTests(unittest.TestCase):
         self.addCleanup(remove_repo, provider_repo)
         self.assertEqual(["pr_ready", "premerge", "merge_decision", "closeout"], [item["gate"] for item in trace])
         self.assertEqual(git(provider_repo, "rev-parse", "HEAD"), trace[-1]["observations"]["head"])
-        self.assertEqual(trace[1]["receipt_hash"], trace[2]["prior_receipt_hash"])
-        self.assertEqual(trace[0]["receipt_hash"], trace[3]["prior_receipt_hash"])
+        for previous, current in zip(trace, trace[1:]):
+            self.assertEqual(previous["receipt_hash"], current["prior_receipt_hash"])
         self.assertTrue(all(str(item["envelope_hash"]).startswith("sha256:") for item in trace))
 
-    def test_acceptance_matrix_names_existing_behavioral_tests(self):
+    def test_acceptance_matrix_executes_every_adversarial_row(self):
         matrix = json.loads((ROOT / "tests/fixtures/execution-kernel/acceptance-matrix.json").read_text(encoding="utf-8"))
-        discovered = {path.stem: path.read_text(encoding="utf-8") for path in ROOT.glob("tests/test_*.py")}
-        self.assertGreaterEqual(len(matrix["rows"]), 12)
+        self.assertGreaterEqual(len(matrix["rows"]), 20)
         for row in matrix["rows"]:
             with self.subTest(row=row["id"]):
-                self.assertIn(row["test_module"], discovered)
-                self.assertIn(f"def {row['test_name']}", discovered[row["test_module"]])
-                self.assertIn(row["expected_error"], {"schema_invalid", "evidence_missing", "artifact_hash_mismatch", "collector_untrusted", "required_rule_failed", "receipt_stale", "provider_unavailable"})
+                error = execute_acceptance_row(row)
+                self.assertEqual(row["expected_error"], error.code)
+                self.assertEqual(row["expected_rule"], error.rule)
 
 
 if __name__ == "__main__":

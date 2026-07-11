@@ -7,12 +7,12 @@ from typing import Mapping
 
 try:
     from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, canonical_json
-    from .gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_evidence, require_gate, require_all_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
-    from .gate_receipts import GateReceipt, build_receipt, parse_receipt, verify_receipt
+    from .gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, source_artifact_rule, workflow_binding_rule, workspace_rule
+    from .gate_receipts import GateReceipt, build_receipt, parse_receipt, verify_transition_receipt
 except ImportError:  # pragma: no cover - CLI top-level import fallback
     from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, canonical_json
-    from gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, git_state_rule, identity_rules, require_evidence, require_gate, require_all_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
-    from gate_receipts import GateReceipt, build_receipt, parse_receipt, verify_receipt
+    from gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, source_artifact_rule, workflow_binding_rule, workspace_rule
+    from gate_receipts import GateReceipt, build_receipt, parse_receipt, verify_transition_receipt
 
 
 CLOSEOUT_REQUIRED_KINDS = {"git_state", "artifact_hashes", "command_result", "authorization_event", "cleanup_state", "integration_state"}
@@ -34,11 +34,11 @@ def validate_terminal_decision(decision: Mapping[str, object], envelope: Evidenc
 
 def _prior_receipt_rule(envelope: EvidenceEnvelope, prior_receipt: GateReceipt | Mapping[str, object] | None) -> RuleResult:
     if prior_receipt is None:
-        raise EvidenceError("receipt_stale", "a current PR-ready receipt is required", "event_chain")
+        raise EvidenceError("receipt_stale", "a current merge-decision receipt is required", "event_chain")
     if isinstance(prior_receipt, Mapping):
         prior_receipt = parse_receipt(prior_receipt)
-    verify_receipt(prior_receipt, envelope, "pr_ready", allow_transition=True)
-    return RuleResult("event_chain", True, "current PR-ready receipt is bound to closeout")
+    verify_transition_receipt(prior_receipt, envelope, "merge_decision")
+    return RuleResult("event_chain", True, "current merge-decision receipt is bound to closeout")
 
 
 def _integration_rules(grouped: Mapping[str, list[object]], current_head: object) -> tuple[RuleResult, RuleResult]:
@@ -67,5 +67,5 @@ def validate_closeout(envelope: EvidenceEnvelope, repo_root: Path, prior_receipt
         replace(workspace_rule(grouped, envelope), rule_id="workspace_disposition"),
         cleanup_rule(grouped, Path(repo_root).resolve(), envelope.target.get("cleanup_actor")),
     ])
-    require_all_rules(rules)
+    finalize_gate_rules("closeout", rules)
     return build_receipt(envelope, "closeout-validator@1", {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"]}, rules)

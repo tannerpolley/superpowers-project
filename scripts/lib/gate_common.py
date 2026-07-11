@@ -30,6 +30,19 @@ def require_all_rules(rules: list[RuleResult]) -> None:
         raise EvidenceError("required_rule_failed", first.reason, first.rule_id)
 
 
+def finalize_gate_rules(gate: str, rules: list[RuleResult]) -> None:
+    """Reject missing, duplicate, unexpected, or failing rules before receipt creation."""
+    try:
+        from .gate_receipts import REQUIRED_RECEIPT_RULES
+    except ImportError:  # pragma: no cover
+        from gate_receipts import REQUIRED_RECEIPT_RULES
+    expected = REQUIRED_RECEIPT_RULES.get(gate)
+    observed = [rule.rule_id for rule in rules]
+    if expected is None or len(observed) != len(expected) or set(observed) != expected:
+        raise EvidenceError("required_rule_failed", f"{gate} rule set is incomplete or unexpected", "rule_set_complete")
+    require_all_rules(rules)
+
+
 def evidence_by_kind(envelope: EvidenceEnvelope) -> dict[str, list[object]]:
     result: dict[str, list[object]] = {}
     for item in envelope.evidence:

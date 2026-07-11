@@ -6,12 +6,12 @@ from typing import Mapping
 
 try:
     from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
-    from .gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule
+    from .gate_common import authorization_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, merge_strategy_rule, require_evidence, source_artifact_rule, workflow_binding_rule
     from .gate_premerge import _provider_rules
     from .gate_receipts import build_receipt, parse_receipt, verify_receipt
 except ImportError:  # pragma: no cover
     from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
-    from gate_common import authorization_rule, command_rule, current_git_state, git_state_rule, identity_rules, merge_strategy_rule, require_all_rules, require_evidence, source_artifact_rule, workflow_binding_rule
+    from gate_common import authorization_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, merge_strategy_rule, require_evidence, source_artifact_rule, workflow_binding_rule
     from gate_premerge import _provider_rules
     from gate_receipts import build_receipt, parse_receipt, verify_receipt
 
@@ -44,7 +44,7 @@ def validate_merge_decision(envelope: EvidenceEnvelope, repo_root: Path, premerg
         command_rule(grouped),
         *_provider_rules(grouped, envelope, str(current["head"]), str(current["branch"]), root),
     ])
-    require_all_rules(rules)
+    finalize_gate_rules("merge_decision", rules)
     authorization = grouped["authorization_event"][0]
     authorization_event = authorization.get("event") if isinstance(authorization, Mapping) else None
     observations = {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"], "provider_observation_hash": provider.get("observation_hash") if isinstance(provider, Mapping) else None, "source_branch": provider.get("source_branch") if isinstance(provider, Mapping) else None, "source_head": provider.get("source_sha") if isinstance(provider, Mapping) else None, "base_sha": provider.get("base_sha") if isinstance(provider, Mapping) else None, "strategy": authorization_event.get("merge_strategy") if isinstance(authorization_event, Mapping) else None, "source_plan_hash": envelope.source["plan_hash"]}

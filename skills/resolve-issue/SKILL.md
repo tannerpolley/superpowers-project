@@ -36,7 +36,7 @@ Require `docs/superpowers/issues/<number>-<slug>.md` with `Sub-Issue Role: leaf`
 
 Collection and validation are separate operations. `collect-pr-ready-ledger.sh` must receive a complete `CollectionRequestJson` or `CollectionRequestPath` and emits a version-1 repository-bound evidence envelope only when `OutputPath` is explicit. `validate-pr-ready.sh` requires exactly one `EvidenceEnvelopeJson` or `EvidenceEnvelopePath`; it returns a hash-bound `pr_ready` receipt or a structured nonzero error. Missing evidence is `evidence_missing`, and legacy ledgers or bare `ok: true` objects are `legacy_evidence_unsupported` rather than compatibility passes.
 
-Resolve terminal closeout consumes the current `pr_ready` receipt, a matching closeout envelope, and an explicit terminal decision. It never treats a result boolean as proof and never collects missing evidence during validation.
+Resolve terminal closeout is final lifecycle closeout: it consumes the current `merge_decision` receipt after integration, a matching closeout envelope, and an explicit terminal decision. PR-ready proof is handed to merge-changes as the immediately preceding input to premerge; no route skips or splices the authenticated receipt chain.
 
 ## Stop Conditions And Closeout
 
