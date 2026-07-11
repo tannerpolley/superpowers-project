@@ -53,9 +53,8 @@ def _provider_rules(grouped: Mapping[str, list[object]], envelope: EvidenceEnvel
     head_ok = isinstance(payload.get("head_ref"), str) and bool(payload.get("head_ref")) and payload.get("head_ref") == current_branch and payload.get("head_ref") != payload.get("base_ref") and payload.get("head_sha") == current_head and payload.get("source_branch") == payload.get("head_ref") and payload.get("source_sha") == payload.get("head_sha")
     mergeability_ok = payload.get("mergeable") is True
     provider_reviews = payload.get("reviews")
-    blocking_states = {"CHANGES_REQUESTED", "REQUEST_CHANGES", "REQUESTED", "BLOCKED"}
+    blocking_states = {"CHANGES_REQUESTED", "REQUEST_CHANGES", "REQUESTED", "REVIEW_REQUIRED", "BLOCKED"}
     reviews_ok = payload.get("review_decision") not in blocking_states and isinstance(provider_reviews, list) and not any(isinstance(review, Mapping) and (review.get("blocking") is True or str(review.get("state", "")).upper() in blocking_states) for review in provider_reviews)
-    strategy_ok = payload.get("strategy") in {"ff-only", "squash", "merge"}
     return [
         RuleResult("provider_state", True, "provider state is available"),
         RuleResult("provider_observation", observation_ok, "provider observation is trusted and current" if observation_ok else "provider observation is missing, malformed, or stale"),
@@ -65,7 +64,6 @@ def _provider_rules(grouped: Mapping[str, list[object]], envelope: EvidenceEnvel
         RuleResult("head_identity", head_ok, "head ref and SHA match current checkout" if head_ok else "head ref or SHA is stale"),
         RuleResult("mergeability", mergeability_ok, "provider reports mergeable" if mergeability_ok else "provider reports a non-mergeable change"),
         RuleResult("provider_reviews", reviews_ok, "provider reviews contain no blocker" if reviews_ok else "provider reviews contain a blocker or are unavailable"),
-        RuleResult("merge_strategy", strategy_ok, "merge strategy is supported" if strategy_ok else "merge strategy is unsupported"),
     ]
 
 
@@ -87,5 +85,7 @@ def validate_premerge(envelope: EvidenceEnvelope, repo_root: Path):
     ])
     require_all_rules(rules)
     provider = grouped["github_state"][0]
-    observations = {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"], "provider_observation_hash": provider.get("observation_hash") if isinstance(provider, Mapping) else None, "source_branch": provider.get("source_branch") if isinstance(provider, Mapping) else None, "source_head": provider.get("source_sha") if isinstance(provider, Mapping) else None, "base_sha": provider.get("base_sha") if isinstance(provider, Mapping) else None, "strategy": provider.get("strategy") if isinstance(provider, Mapping) else None, "source_plan_hash": envelope.source["plan_hash"]}
+    authorization = grouped["authorization_event"][0]
+    authorization_event = authorization.get("event") if isinstance(authorization, Mapping) else None
+    observations = {"head": current["head"], "branch": current["branch"], "status_exit_code": current["status_exit_code"], "provider_observation_hash": provider.get("observation_hash") if isinstance(provider, Mapping) else None, "source_branch": provider.get("source_branch") if isinstance(provider, Mapping) else None, "source_head": provider.get("source_sha") if isinstance(provider, Mapping) else None, "base_sha": provider.get("base_sha") if isinstance(provider, Mapping) else None, "strategy": authorization_event.get("strategy") if isinstance(authorization_event, Mapping) else None, "source_plan_hash": envelope.source["plan_hash"]}
     return build_receipt(envelope, "premerge-validator@1", observations, rules)

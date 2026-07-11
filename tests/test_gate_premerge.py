@@ -48,13 +48,13 @@ def envelope(root: Path, *, conclusion: str = "success", available: bool = True)
     request = CollectionRequest(
         gate="premerge",
         repository_root=root,
-        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
+        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True, "strategy": "ff-only"})},
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
         target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
         commands=("git_status",),
         provider_inputs={
             "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
-            "authorization": {"authorized": True},
+            "authorization": {"authorized": True, "strategy": "ff-only"},
             "github_observation_id": "github_pr_state",
             "github_fixture_payload": {
                 "provider_available": available,
@@ -70,7 +70,6 @@ def envelope(root: Path, *, conclusion: str = "success", available: bool = True)
                 "mergeable": True,
                 "reviews": [],
                 "checks": [{"name": "ci", "conclusion": conclusion}],
-                "strategy": "ff-only",
             },
         },
     )
@@ -133,13 +132,15 @@ class PremergeGateTests(unittest.TestCase):
             self.validate(data)
 
     def test_premerge_rejects_blocking_provider_review(self):
-        data = envelope(self.repo)
-        provider = next(item for item in data["evidence"] if item["kind"] == "github_state")
-        provider["payload"]["review_decision"] = "CHANGES_REQUESTED"
-        provider["payload_hash"] = hash_ref(provider["payload"])
-        data["envelope_hash"] = build_envelope_hash(data)
-        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            self.validate(data)
+        for decision in ("CHANGES_REQUESTED", "REVIEW_REQUIRED"):
+            with self.subTest(decision=decision):
+                data = envelope(self.repo)
+                provider = next(item for item in data["evidence"] if item["kind"] == "github_state")
+                provider["payload"]["review_decision"] = decision
+                provider["payload_hash"] = hash_ref(provider["payload"])
+                data["envelope_hash"] = build_envelope_hash(data)
+                with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+                    self.validate(data)
 
     def test_premerge_rejects_changed_head_and_accepts_current_proof(self):
         collected = envelope(self.repo)

@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+import re
 from pathlib import Path
 import subprocess
 from typing import Mapping, Sequence
@@ -35,7 +36,7 @@ READ_ONLY_COMMAND_TIMEOUTS: dict[str, int] = {
     "runtime_package_validation": 60,
 }
 TRUSTED_PROVIDER_COMMANDS: dict[str, tuple[str, ...]] = {
-    "github_pr_state": ("gh", "pr", "view", "--json", "number,baseRefName,baseRefOid,headRefName,headRefOid,mergeable,reviews,reviewDecision,statusCheckRollup"),
+    "github_pr_state": ("gh", "pr", "view", "--json", "number,baseRefName,headRefName,headRefOid,mergeable,reviews,reviewDecision,statusCheckRollup"),
     "github_repository": ("gh", "repo", "view", "--json", "id,nameWithOwner"),
 }
 
@@ -218,7 +219,7 @@ def _strict_json_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def _normalize_github_state(raw: Mapping[str, object], repository: Mapping[str, object]) -> dict[str, object]:
+def _normalize_github_state(raw: Mapping[str, object], repository: Mapping[str, object], base_sha: object) -> dict[str, object]:
     checks = raw.get("checks")
     if not isinstance(checks, list):
         checks = raw.get("statusCheckRollup", [])
@@ -235,7 +236,7 @@ def _normalize_github_state(raw: Mapping[str, object], repository: Mapping[str, 
         "repository": repository.get("nameWithOwner"),
         "repository_id": repository.get("id"),
         "base_ref": raw.get("base_ref", raw.get("baseRefName")),
-        "base_sha": raw.get("base_sha", raw.get("baseRefOid")),
+        "base_sha": base_sha,
         "head_ref": raw.get("head_ref", raw.get("headRefName")),
         "head_sha": raw.get("head_sha", raw.get("headRefOid")),
         "source_branch": raw.get("source_branch", raw.get("headRefName")),
@@ -244,7 +245,6 @@ def _normalize_github_state(raw: Mapping[str, object], repository: Mapping[str, 
         "reviews": raw.get("reviews", []),
         "review_decision": raw.get("reviewDecision"),
         "checks": normalized_checks,
-        "strategy": raw.get("strategy", "ff-only"),
     }
 
 
@@ -267,11 +267,25 @@ def collect_github_state(root: Path, observation_id: str = "github_pr_state") ->
         repository = json.loads(str(repository_observation["_stdout_text"]), object_pairs_hook=_strict_json_pairs)
         if not isinstance(raw, Mapping) or not isinstance(repository, Mapping):
             raise ValueError("provider observation must be an object")
-        payload = _normalize_github_state(raw, repository)
+        repository_name = repository.get("nameWithOwner")
+        base_ref = raw.get("baseRefName")
+        if not isinstance(repository_name, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository_name) or not isinstance(base_ref, str) or not re.fullmatch(r"[A-Za-z0-9._/-]+", base_ref) or base_ref.startswith("-"):
+            raise ValueError("provider repository or base ref is invalid")
+        base_command = ("gh", "api", f"repos/{repository_name}/git/ref/heads/{base_ref}")
+        base_observation = _observe_process(Path(root).resolve(), base_command, 30)
+        if base_observation["exit_code"] != 0 or base_observation["timed_out"] is not False:
+            raise ValueError("base ref observation is unavailable")
+        base_response = json.loads(str(base_observation["_stdout_text"]), object_pairs_hook=_strict_json_pairs)
+        base_object = base_response.get("object") if isinstance(base_response, Mapping) else None
+        base_sha = base_object.get("sha") if isinstance(base_object, Mapping) else None
+        if not isinstance(base_sha, str) or not base_sha:
+            raise ValueError("base ref observation has no SHA")
+        payload = _normalize_github_state(raw, repository, base_sha)
+        observation_hash = hash_ref({"pr": pr_observation["stdout_hash"], "repository": repository_observation["stdout_hash"], "base": base_observation["stdout_hash"]})
     except (ValueError, json.JSONDecodeError, TypeError) as exc:
         return CollectorResult("github_state", "github-state@1", _observed_at(), {"provider_available": False, "observation_id": observation_id, "observation_hash": hash_ref({"pr": pr_observation["stdout_hash"], "repository": repository_observation["stdout_hash"]}), "error": str(exc)})
     payload["observation_id"] = observation_id
-    payload["observation_hash"] = hash_ref({"pr": pr_observation["stdout_hash"], "repository": repository_observation["stdout_hash"]})
+    payload["observation_hash"] = observation_hash
     return CollectorResult("github_state", "github-state@1", _observed_at(), payload)
 
 

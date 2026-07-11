@@ -15,7 +15,7 @@ import scripts.lib.evidence_collectors as evidence_collectors
 import scripts.lib.gate_premerge as gate_premerge
 from scripts.lib.command_support import Context
 from scripts.lib.evidence_collectors import CollectionRequest, CollectorResult, build_evidence_envelope
-from scripts.lib.evidence_schema import EvidenceError, RuleResult, hash_ref, parse_envelope
+from scripts.lib.evidence_schema import EvidenceError, RuleResult, build_envelope_hash, hash_ref, parse_envelope
 from scripts.lib.gate_merge_decision import validate_merge_decision
 from scripts.lib.gate_premerge import validate_premerge
 from scripts.lib.gate_receipts import build_receipt
@@ -56,15 +56,15 @@ def envelope(root: Path, gate: str, prior: str | None = None) -> dict[str, objec
     request = CollectionRequest(
         gate=gate,
         repository_root=root,
-        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True})},
+        workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref({"authorized": True, "strategy": "ff-only"})},
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/plan.md"},
         target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False},
         commands=("git_status",),
         provider_inputs={
             "reviews": [{"approved": True, "blocking": False, "plan_conformance": True}],
-            "authorization": {"authorized": True},
+            "authorization": {"authorized": True, "strategy": "ff-only"},
             "github_observation_id": "github_pr_state",
-            "github_fixture_payload": {"provider_available": True, "pr_id": 113, "repository": "fixture/repo", "repository_id": "fixture/repository-id", "base_ref": "main", "base_sha": base, "head_ref": "codex/fixture", "head_sha": head, "source_branch": "codex/fixture", "source_sha": head, "mergeable": True, "reviews": [], "checks": [{"name": "ci", "conclusion": "success"}], "strategy": "ff-only"},
+            "github_fixture_payload": {"provider_available": True, "pr_id": 113, "repository": "fixture/repo", "repository_id": "fixture/repository-id", "base_ref": "main", "base_sha": base, "head_ref": "codex/fixture", "head_sha": head, "source_branch": "codex/fixture", "source_sha": head, "mergeable": True, "reviews": [], "checks": [{"name": "ci", "conclusion": "success"}]},
         },
         prior_event_hash=prior,
     )
@@ -115,6 +115,16 @@ class MergeDecisionTests(unittest.TestCase):
         git(self.repo, "commit", "-qm", "changed after premerge")
         with self.assertRaisesRegex(EvidenceError, "stale"):
             self.validate_merge_fixture(envelope(self.repo, "merge_decision", premerge.receipt_hash), premerge)
+
+    def test_merge_decision_rejects_missing_authorization_strategy(self):
+        premerge = self.validate_premerge_fixture(envelope(self.repo, "premerge"))
+        data = envelope(self.repo, "merge_decision", premerge.receipt_hash)
+        authorization = next(item for item in data["evidence"] if item["kind"] == "authorization_event")
+        authorization["payload"]["event"].pop("strategy")
+        authorization["payload_hash"] = hash_ref(authorization["payload"])
+        data["envelope_hash"] = build_envelope_hash(data)
+        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
+            self.validate_merge_fixture(data, premerge)
 
     def test_local_merge_rejects_bare_success_object(self):
         ctx = Context(Path(__file__).parents[1] / "skills/merge-changes/scripts/apply-local-branch-closeout.sh", self.repo, "skills/merge-changes/scripts/apply-local-branch-closeout.sh", "apply-local-branch-closeout.sh", [], Path(__file__).parents[1], self.repo)
