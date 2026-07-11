@@ -9,10 +9,10 @@ from typing import Mapping, Sequence
 
 try:
     from .command_support import resolve_under
-    from .evidence_schema import EvidenceError, evidence_registration, hash_bytes_ref, hash_ref, build_envelope_hash
+    from .evidence_schema import EvidenceError, evidence_registration, hash_bytes_ref, hash_ref, build_envelope_hash, parse_envelope
 except ImportError:  # pragma: no cover - CLI loads scripts/lib as a top-level path
     from command_support import resolve_under
-    from evidence_schema import EvidenceError, evidence_registration, hash_bytes_ref, hash_ref, build_envelope_hash
+    from evidence_schema import EvidenceError, evidence_registration, hash_bytes_ref, hash_ref, build_envelope_hash, parse_envelope
 
 
 def _observed_at() -> str:
@@ -272,10 +272,9 @@ def build_evidence_envelope(request: CollectionRequest) -> dict[str, object]:
         results.append(collect_github_state(provider_inputs["github"]))
     authorization = provider_inputs.get("authorization")
     if not isinstance(authorization, Mapping):
-        authorization = {"authorization_hash": request.workflow.get("authorization_hash")}
+        raise EvidenceError("evidence_missing", "authorization observation is required")
     results.append(collect_authorization_event(authorization))
-    cleanup = provider_inputs.get("cleanup")
-    results.append(collect_cleanup_state(root) if not isinstance(cleanup, Mapping) else CollectorResult("cleanup_state", "cleanup-state@1", _observed_at(), dict(cleanup)))
+    results.append(collect_cleanup_state(root))
     for key, kind in (("integration", "integration_state"), ("package", "package_provenance"), ("installation", "installation_state"), ("agent_trial", "agent_trial")):
         if isinstance(provider_inputs.get(key), Mapping):
             registration = evidence_registration(kind, "1")
@@ -298,4 +297,5 @@ def build_evidence_envelope(request: CollectionRequest) -> dict[str, object]:
         "prior_event_hash": request.prior_event_hash,
     }
     envelope["envelope_hash"] = build_envelope_hash(envelope)
+    parse_envelope(envelope, root)
     return envelope
