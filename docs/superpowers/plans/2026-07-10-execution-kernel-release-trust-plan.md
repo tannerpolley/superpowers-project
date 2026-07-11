@@ -319,7 +319,7 @@ git commit -m "feat: collect repository-bound workflow evidence"
 
 **Interfaces:**
 
-- Consumes: `validate_pr_ready(envelope: EvidenceEnvelope, repo_root: Path) -> GateReceipt`; `validate_closeout(envelope: EvidenceEnvelope, repo_root: Path, prior_receipt: GateReceipt) -> GateReceipt`; handler args `EvidenceEnvelopeJson|Path` and `PriorReceiptJson|Path`.
+- Consumes: `validate_pr_ready(envelope: EvidenceEnvelope, repo_root: Path) -> GateReceipt`; `validate_closeout(envelope: EvidenceEnvelope, repo_root: Path, merge_decision_receipt: GateReceipt) -> GateReceipt`; handler args `EvidenceEnvelopeJson|Path` and `PriorReceiptJson|Path`.
 - Produces: `pr-ready-validator@1` and `closeout-validator@1` receipts with rule IDs `repository_identity`, `event_chain`, `authorization_binding`, `source_artifacts`, `target_identity`, `implementation_verification`, `review_disposition`, `plan_conformance`, `workspace_receipt`, `cleanup_state`, `integration_proof`, `completion_state`, and `workspace_disposition`.
 
 - [ ] **Step 1: Write failing no-evidence and adversarial gate tests**
@@ -418,7 +418,7 @@ git commit -m "fix: fail closed at PR-ready and closeout gates"
 
 **Interfaces:**
 
-- Consumes: `validate_premerge(envelope, repo_root) -> GateReceipt`, `validate_merge_decision(envelope, repo_root, premerge_receipt) -> GateReceipt`, and `command_apply_local_branch_closeout(..., MergeDecisionReceiptJson|Path)`.
+- Consumes: `validate_premerge(envelope, repo_root, pr_ready_receipt) -> GateReceipt`, `validate_merge_decision(envelope, repo_root, premerge_receipt) -> GateReceipt`, and `command_apply_local_branch_closeout(..., MergeDecisionReceiptJson|Path)`.
 - Produces: `premerge-validator@1` rules for PR identity/checks/review/base/head/current state; `merge-decision-validator@1` rules for prior receipt, authorization, strategy, and unchanged target; integration evidence containing consumed receipt hash and resulting commit.
 
 - [ ] **Step 1: Write failing provider and replay tests**

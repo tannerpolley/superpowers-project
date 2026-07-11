@@ -14,4 +14,6 @@ include:
   - docs/superpowers/WORKFLOW_ROUTE_INDEX.md
   - docs/superpowers/backlog/ACTIVE.md
   - docs/superpowers/examples/**
+  - docs/superpowers/plans/**
+  - docs/superpowers/specs/**
   - docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md

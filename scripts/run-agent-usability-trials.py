@@ -15,6 +15,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from package_provenance import runtime_contract_hash
+from run_agent_usability_trials_support import summarize_observed_events
 
 
 def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -71,22 +72,28 @@ def run_trial(
     prompt_path = plugin_root / "tests" / "workflow-trials" / "scenarios" / ("auto" if scenario == "auto-golden" else "loop") / "prompt.md"
     source_skills = [plugin_root / "skills" / "initiate-workflow" / "SKILL.md", plugin_root / "skills" / ("implement-plan" if scenario == "auto-golden" else "loop-controller") / "SKILL.md"]
     prompt = prompt_path.read_text() + "\n\nRead these exact source contracts first:\n" + "\n".join(f"- {path}" for path in source_skills) + f"\nRuntime: {plugin_root / 'scripts/workflow-run.sh'}\nAuthorization: {authorization}\nRun root: {run_root}\nReturn only the requested JSON."
+    observed_events: list[dict[str, object]] = []
     worker, worker_id = invoke_agent(project, prompt, worker_schema, trial_root / "worker-output.json")
+    observed_events.append({"kind": "tool_call", "name": "codex-worker", "session_id": worker_id})
     oracle_path = plugin_root / "tests" / "workflow-trials" / "oracles" / ("auto.json" if scenario == "auto-golden" else "loop.json")
     verifier_prompt = f"Act as an independent verifier. Read the untouched oracle {oracle_path}, repository {project}, and event ledger {run_root / 'events.jsonl'}. Do not trust worker narrative. The `decision` field names the observed route outcome, not whether verification itself succeeded: copy the oracle's `expected_outcome` (`pass` or `blocked`) only when repository and replayable event evidence match it; otherwise use `reject`. Return only JSON."
     verifier, verifier_id = invoke_agent(project, verifier_prompt, verifier_schema, trial_root / "verifier-output.json")
+    observed_events.append({"kind": "tool_call", "name": "codex-verifier", "session_id": verifier_id})
     ledger_path = run_root / "events.jsonl"
     last = json.loads(ledger_path.read_text().splitlines()[-1])
     result_file = project / "result.txt"
     expected = "pass" if scenario == "auto-golden" else "blocked"
     trial_rel = trial_root.relative_to(plugin_root).as_posix()
     project_rel = project.relative_to(plugin_root).as_posix()
+    metrics = summarize_observed_events(observed_events)
     receipt = {
         "schema_version": 1, "trial_id": f"{scenario}-{repetition}", "scenario": scenario, "repetition": repetition,
         "worker": {"id": worker_id}, "verifier": {"id": verifier_id}, "package_hash": runtime_contract_hash(plugin_root),
         "trial_root": trial_rel, "project_root": project_rel, "expected_outcome": expected,
         "observed_outcome": worker["observed_outcome"], "friction": worker["friction"], "user_input_calls": 0,
-        "external_mutations": 0, "repository_evidence": [{"path": "result.txt", "sha256": hashlib.sha256(result_file.read_bytes()).hexdigest()}],
+        "observed_events": observed_events, "tool_calls": metrics["tool_calls"],
+        "external_mutations": metrics["external_mutations"], "receipt_identities": metrics["receipt_identities"],
+        "repository_evidence": [{"path": "result.txt", "sha256": hashlib.sha256(result_file.read_bytes()).hexdigest()}],
         "event_ledger": {"path": ledger_path.relative_to(project).as_posix(), "last_hash": last["hash"]}, "worker_claim": worker["claim"],
         "verifier_decision": verifier["decision"], "verifier_reason": verifier["reason"],
     }

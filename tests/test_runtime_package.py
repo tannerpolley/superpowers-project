@@ -17,7 +17,12 @@ class RuntimePackageTests(unittest.TestCase):
         paths = {entry.path for entry in runtime_manifest(ROOT)}
         self.assertIn("docs/superpowers/workflow-contract.yml", paths)
         self.assertIn("docs/superpowers/capabilities.yml", paths)
-        self.assertNotIn("docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md", paths)
+        # The manifest already includes scripts/**, so kernel modules need no per-file manifest edits.
+        self.assertIn("scripts/lib/evidence_schema.py", paths)
+        self.assertIn("scripts/lib/evidence_collectors.py", paths)
+        self.assertIn("scripts/lib/commands/gates.py", paths)
+        self.assertIn("docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md", paths)
+        self.assertIn("docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md", paths)
         self.assertEqual([], validate_runtime_reads(ROOT, package))
 
     def test_included_content_and_mode_change_hash_but_excluded_history_does_not(self):
@@ -25,7 +30,7 @@ class RuntimePackageTests(unittest.TestCase):
             target = Path(tmp) / "repo"
             shutil.copytree(ROOT, target)
             first = runtime_contract_hash(target)
-            history = target / "docs" / "superpowers" / "plans" / "history.md"
+            history = target / "docs" / "superpowers" / "milestones" / "history.md"
             history.write_text("one")
             self.assertEqual(first, runtime_contract_hash(target))
             script = target / "scripts" / "workflow-run.sh"

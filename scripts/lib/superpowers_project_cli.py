@@ -9,14 +9,18 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 from package_provenance import runtime_contract_hash as package_contract_hash, runtime_manifest, verify_runtime_provenance
 from command_catalog import load_command_catalog
 from command_support import *
 from commands import load_handlers
+from evidence_schema import EvidenceError, hash_bytes_ref
+from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
 
 try:
     import yaml
@@ -1429,26 +1433,6 @@ def command_collect_continuation(ctx: Context, args: dict[str, Any], phase: str)
     return emit({"ok": True, "phase": phase, "reason": "continuation ledger collected", "ledger": ledger, "ledger_path": ledger_path})
 
 
-def command_validate_terminal_closeout(ctx: Context, args: dict[str, Any], phase: str) -> int:
-    root = project_root_for(ctx, args)
-    result_json_name = "PrReadyResultJson" if "resolve-issue" in ctx.script_rel else "CloseoutResultJson"
-    result_path_name = "PrReadyResultPath" if "resolve-issue" in ctx.script_rel else "CloseoutResultPath"
-    result, _ = read_json_arg(root, args, result_json_name, result_path_name, required=False)
-    if result is None:
-        alt_json = arg_value(args, "CloseoutResultJson") or arg_value(args, "PrReadyResultJson")
-        if alt_json:
-            result = json.loads(str(alt_json))
-    decision, _ = read_json_arg(root, args, "ContinuationDecisionJson", "ContinuationDecisionPath", required=False)
-    if result is None or decision is None:
-        raise ScriptError("result and continuation decision are required")
-    if result.get("ok") is not True:
-        raise ScriptError("result gate must be ok")
-    terminal = decision.get("terminal_state")
-    if terminal not in {"stop", "done"}:
-        raise ScriptError("terminal decision must be stop or done")
-    return complete(True, phase, "terminal closeout passed")
-
-
 def command_collect_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     setup_path = arg_value(args, "SetupLedgerPath")
@@ -1465,15 +1449,6 @@ def command_collect_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
         write_text(target, json.dumps(ledger, indent=2))
         ledger_path = normalize_rel(target, root)
     return emit({"ok": True, "phase": "collect-pr-ready-ledger", "reason": "PR-ready ledger collected", "ledger": ledger, "ledger_path": ledger_path})
-
-
-def command_validate_pr_ready(ctx: Context, args: dict[str, Any]) -> int:
-    data, _ = read_json_arg(ctx.repo_root, args, "PrReadyLedgerJson", "PrReadyLedgerPath", required=False)
-    if data is None:
-        return complete(True, "validate-pr-ready", "PR-ready gate passed")
-    if data.get("ok") is False:
-        raise ScriptError("PR-ready ledger is not ok")
-    return complete(True, "validate-pr-ready", "PR-ready gate passed")
 
 
 def _as_list(value: Any) -> list[str]:
@@ -1723,14 +1698,17 @@ def command_resolve_preflight(ctx: Context, args: dict[str, Any]) -> int:
     if not mirror.is_file():
         raise ScriptError("issue mirror is missing")
     text_value = read_text(mirror)
-    source_match = re.search(r"(?im)^Source Plan:\s*`?([^`\n]+)`?\s*$", text_value)
-    if not source_match:
+    source_value = field_value(text_value, "Source Plan")
+    if not source_value:
         raise ScriptError("issue mirror must link a source plan")
-    source_plan = project_path_for(root, source_match.group(1).strip(), "Source Plan")
+    source_plan_value = source_value.strip()
+    if source_plan_value.startswith("`") and source_plan_value.endswith("`"):
+        source_plan_value = source_plan_value[1:-1].strip()
+    source_plan = project_path_for(root, source_plan_value, "Source Plan")
     if not source_plan.is_file():
         raise ScriptError("linked source plan is missing")
-    executable = re.search(r"(?im)^Executable:\s*true\s*$", text_value) is not None
-    role = re.search(r"(?im)^Sub-Issue Role:\s*leaf\s*$", text_value) is not None
+    executable = (field_value(text_value, "Executable") or "").strip().lower() == "true"
+    role = (field_value(text_value, "Sub-Issue Role") or "").strip().lower() == "leaf"
     if not executable or not role:
         raise ScriptError("direct resolution requires an executable leaf issue mirror")
     return emit({"ok": True, "phase": "resolve-preflight", "issue_mirror": normalize_rel(mirror, root), "source_plan": normalize_rel(source_plan, root)})
@@ -1760,14 +1738,6 @@ def command_collect_merge_continuation(ctx: Context, args: dict[str, Any]) -> in
 
 def command_collect_resolve_continuation(ctx: Context, args: dict[str, Any]) -> int:
     return command_collect_continuation(ctx, args, "collect-resolve-continuation-ledger")
-
-
-def command_validate_merge_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return command_validate_terminal_closeout(ctx, args, "validate-merge-terminal-closeout")
-
-
-def command_validate_resolve_terminal_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return command_validate_terminal_closeout(ctx, args, "validate-resolve-terminal-closeout")
 
 
 def _load_local_branch_setup(root: Path, args: dict[str, Any]) -> dict[str, Any]:
@@ -1811,21 +1781,56 @@ def command_apply_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> i
     root = project_root_for(ctx, args)
     setup = _load_local_branch_setup(root, args)
     branch = str(setup["branch"])
-    premerge, _ = read_json_arg(root, args, "PremergeResultJson", "PremergeResultPath")
-    decision, _ = read_json_arg(root, args, "MergeDecisionJson", "MergeDecisionPath")
-    if premerge.get("ok") is not True:
-        raise ScriptError("premerge result must be ok")
-    if decision.get("selected_action") != "merge":
-        raise ScriptError("merge decision must select merge")
+    if any(arg_value(args, name) is not None for name in ("PremergeResultJson", "PremergeResultPath", "MergeDecisionJson", "MergeDecisionPath")):
+        raise EvidenceError("legacy_evidence_unsupported", "local integration requires a merge-decision receipt")
+    decision_data, _ = read_json_arg(root, args, "MergeDecisionReceiptJson", "MergeDecisionReceiptPath", required=False)
+    if decision_data is None:
+        raise EvidenceError("evidence_missing", "MergeDecisionReceiptJson or MergeDecisionReceiptPath is required")
+    decision = verify_receipt_hash(decision_data)
+    if decision.gate != "merge_decision" or decision.validator_id != EXPECTED_VALIDATORS["merge_decision"]:
+        raise EvidenceError("receipt_stale", "local integration requires a merge-decision receipt")
+    if decision.disposition != "passed":
+        raise EvidenceError("required_rule_failed", "merge-decision receipt is not passing")
+    required_setup = {"repository_root", "run_id", "candidate_id", "authorization_hash", "strategy", "source_head", "target_head"}
+    if not required_setup <= set(setup):
+        raise EvidenceError("receipt_stale", "local integration setup is missing receipt identity bindings")
+    bindings = decision.bindings
+    repository = bindings.get("repository") if isinstance(bindings, Mapping) else None
+    workflow = bindings.get("workflow") if isinstance(bindings, Mapping) else None
+    source = bindings.get("source") if isinstance(bindings, Mapping) else None
+    target = bindings.get("target") if isinstance(bindings, Mapping) else None
+    if not all(isinstance(item, Mapping) for item in (repository, workflow, source, target)):
+        raise EvidenceError("receipt_stale", "merge-decision receipt bindings are incomplete")
+    if str(Path(str(repository["root"])).resolve()) != str(root.resolve()) or str(Path(str(setup["repository_root"])).resolve()) != str(root.resolve()):
+        raise EvidenceError("repository_mismatch", "local integration repository binding changed")
+    if target.get("branch") != "main":
+        raise EvidenceError("target_state_changed", "merge-decision target is not main")
+    if workflow.get("run_id") != setup["run_id"] or workflow.get("candidate_id") != setup["candidate_id"] or workflow.get("authorization_hash") != setup["authorization_hash"]:
+        raise EvidenceError("receipt_stale", "local integration workflow or authorization binding changed")
+    if source.get("plan_path") != setup["source_plan"] or source.get("plan_hash") != hash_bytes_ref(project_path_for(root, str(setup["source_plan"]), "source_plan").read_bytes()):
+        raise EvidenceError("artifact_hash_mismatch", "local integration source plan changed")
+    observations = decision.observations
+    if target.get("merge_strategy") != setup["strategy"] or observations.get("source_branch") != branch or observations.get("source_head") != setup["source_head"] or observations.get("strategy") != setup["strategy"] or observations.get("strategy") != "ff-only":
+        raise EvidenceError("receipt_stale", "local integration source or merge strategy binding changed")
     current = run(["git", "branch", "--show-current"], root)
     if current.returncode != 0 or current.stdout.strip() != "main":
         raise ScriptError("apply local branch closeout must run from main")
+    status = run(["git", "status", "--short"], root)
+    if status.returncode != 0 or status.stdout.strip():
+        raise EvidenceError("target_state_changed", "main must be clean before local integration")
+    target_current = run(["git", "rev-parse", "HEAD"], root)
+    if target_current.returncode != 0 or target_current.stdout.strip() != setup["target_head"] or observations.get("base_sha") != target_current.stdout.strip():
+        raise EvidenceError("target_state_changed", "main HEAD changed after merge authorization")
+    source_current = run(["git", "rev-parse", branch], root)
+    if source_current.returncode != 0 or source_current.stdout.strip() != setup["source_head"]:
+        raise EvidenceError("receipt_stale", "source branch HEAD changed after merge authorization")
+    current_head = run(["git", "rev-parse", "HEAD"], root)
     if has_switch(args, "DryRun"):
-        return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch closeout dry run passed", "evidence": {"branch": branch, "would_merge": True, "remote_publication": False}})
+        return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch closeout dry run passed", "evidence": {"branch": branch, "would_merge": True, "remote_publication": False, "consumed_receipt_hash": decision.receipt_hash}})
     merge = run(["git", "merge", "--ff-only", branch], root)
     if merge.returncode != 0:
         raise ScriptError(f"git merge --ff-only failed: {merge.stderr.strip() or merge.stdout.strip()}")
-    return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch merged without remote publication", "evidence": {"branch": branch, "commit": run(["git", "rev-parse", "HEAD"], root).stdout.strip(), "remote_publication": False}})
+    return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch merged without remote publication", "evidence": {"branch": branch, "commit": run(["git", "rev-parse", "HEAD"], root).stdout.strip(), "remote_publication": False, "consumed_receipt_hash": decision.receipt_hash}})
 
 
 def command_generate_outcome_workflow_summary(ctx: Context, args: dict[str, Any]) -> int:
@@ -2074,9 +2079,23 @@ def copy_runtime_package(source: Path, target: Path) -> None:
 def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     root = ctx.repo_root.resolve()
     home = Path.home()
-    live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(home / ".codex" / "plugins" / "superpowers-project")))).expanduser()
+    live_root = Path(str(arg_value(args, "LivePluginRoot", default=os.environ.get("SUPERPOWERS_LIVE_PLUGIN_ROOT", str(home / ".codex" / "plugins" / "superpowers-project"))))).expanduser()
     user_skills = Path(str(arg_value(args, "UserSkillsRoot", default=str(home / ".agents" / "skills")))).expanduser()
     marketplace = Path(str(arg_value(args, "MarketplacePath", default=str(home / ".agents" / "plugins" / "marketplace.json")))).expanduser()
+    if os.environ.get("SUPERPOWERS_READ_ONLY_COLLECTION") == "1":
+        if not has_switch(args, "Validate", "validate"):
+            raise ScriptError("read-only sync observation requires --validate")
+        validation = run_without_read_only_collection(["bash", str(root / "scripts" / "validate.sh")], root)
+        if validation.returncode != 0:
+            raise ScriptError("validation failed before read-only sync observation")
+        source_manifest = [entry.to_dict() for entry in runtime_manifest(root)]
+        try:
+            live_manifest = [entry.to_dict() for entry in runtime_manifest(live_root)]
+        except (OSError, ValueError) as exc:
+            raise ScriptError(f"live installation is unavailable: {exc}") from exc
+        if source_manifest != live_manifest:
+            raise ScriptError("live install differs from the runtime package manifest")
+        return emit({"ok": True, "phase": "sync-live-validation", "read_only": True, "source": str(root), "live_plugin_root": str(live_root), "runtime_package": {"files": len(source_manifest), "bytes": sum(item["length"] for item in source_manifest)}})
     if has_switch(args, "Validate", "validate"):
         result = run(["bash", str(root / "scripts" / "validate.sh")], root)
         print(result.stdout, end="")
@@ -2114,6 +2133,12 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         "deployed_user_skills": sorted(USER_SKILLS),
         "runtime_package": {"files": len(source_manifest), "bytes": sum(item["length"] for item in source_manifest)},
     })
+
+
+def run_without_read_only_collection(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    environment = os.environ.copy()
+    environment.pop("SUPERPOWERS_READ_ONLY_COLLECTION", None)
+    return subprocess.run(command, cwd=cwd, env=environment, text=True, capture_output=True, check=False)
 
 
 def command_install(ctx: Context, args: dict[str, Any]) -> int:
@@ -2196,6 +2221,7 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
         step("Runtime package manifest", lambda: run_must(["python3", str(root / "scripts" / "validate-runtime-package.py"), "--repo-root", str(root)], root))
         step("Plugin manifest validation", lambda: run_must(["python3", str(root / "scripts" / "validate-plugin.py"), str(root)], root))
         step("Generated workflow references", lambda: run_must(["bash", str(root / "scripts" / "generate-outcome-workflow-summary.sh"), "-RepoRoot", str(root), "-Check"], root))
+        step("Execution kernel displaced paths", lambda: validate_execution_kernel_cutover(root))
         step("Python unit suite", lambda: run_must([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], root))
         for skill in active_skill_names(root):
             step(f"quick_validate {skill}", lambda skill=skill: run_must(["python3", str(root / "scripts" / "quick-validate-skill.py"), str(root / "skills" / skill)], root))
@@ -2253,6 +2279,26 @@ def validate_superpowers_paths(root: Path) -> None:
                 raise ScriptError(f"active Superpowers Project skill uses retired canonical path '{pattern}': {normalize_rel(path, root)}")
 
 
+def validate_execution_kernel_cutover(root: Path) -> None:
+    retired = tuple("".join(parts) for parts in (
+        ('return complete(True, "validate', '-pr-ready"'),
+        ('return complete(True, "pre', 'merge"'),
+        ('return complete(True, "close', 'out"'),
+        ('premerge.get("', 'ok") is not True'),
+        ('"publish_ready": ', 'not dirty'),
+        ('def collect_simple_', 'ledger('),
+    ))
+    active = [root / "scripts/lib/superpowers_project_cli.py", *(root / "scripts/lib/commands").glob("*.py")]
+    offenders = []
+    for path in active:
+        text = read_text(path)
+        for pattern in retired:
+            if pattern in text:
+                offenders.append(f"{normalize_rel(path, root)}:{pattern}")
+    if offenders:
+        raise ScriptError("retired execution authorization remains: " + ", ".join(offenders))
+
+
 def stale_scan(root: Path) -> None:
     pattern = re.compile(r"plan-goal-implement-merge|setup-project-roadmap|setup_project_roadmap_plan|grill-create-issues|issue-goal-execute-merge|docs/ideas/<YYYY|docs/ideas/20|cross-milestone.*docs/ideas|docs/ideas.*cross-milestone", re.I)
     roots = [root / "skills", root / "docs", root / ".codex-plugin", root / "README.md", root / "AGENTS.md", root / "CHANGELOG.md"]
@@ -2277,43 +2323,6 @@ def command_align_project(ctx: Context, args: dict[str, Any]) -> int:
         if (root / forbidden).exists():
             findings.append({"category": "blocking", "path": forbidden, "reason": "retired canonical root exists"})
     return emit({"ok": len(findings) == 0, "phase": "align-project", "mode": mode, "findings": findings}, 0 if not findings else 1)
-
-
-def command_collect_premerge(ctx: Context, args: dict[str, Any]) -> int:
-    return collect_simple_ledger(ctx, args, "collect-premerge-ledger", "premerge-ledger.json")
-
-
-def command_collect_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return collect_simple_ledger(ctx, args, "collect-closeout-ledger", "closeout-ledger.json")
-
-
-def collect_simple_ledger(ctx: Context, args: dict[str, Any], phase: str, filename: str) -> int:
-    root = project_root_for(ctx, args)
-    ledger = {"ok": True, "phase": phase, "arguments": {k: v for k, v in args.items() if k != "_positional"}}
-    output_dir = arg_value(args, "OutputDir", default="")
-    ledger_path = ""
-    if output_dir:
-        out_dir = resolve_under(root, str(output_dir), "OutputDir")
-        out_dir.mkdir(parents=True, exist_ok=True)
-        target = out_dir / filename
-        write_text(target, json.dumps(ledger, indent=2))
-        ledger_path = normalize_rel(target, root)
-    return emit({"ok": True, "phase": phase, "reason": f"{phase} collected", "ledger": ledger, "ledger_path": ledger_path})
-
-
-def command_premerge(ctx: Context, args: dict[str, Any]) -> int:
-    return complete(True, "premerge", "premerge gate passed")
-
-
-def command_closeout(ctx: Context, args: dict[str, Any]) -> int:
-    return complete(True, "closeout", "closeout gate passed")
-
-
-def command_validate_merge_decision(ctx: Context, args: dict[str, Any]) -> int:
-    decision, _ = read_json_arg(ctx.repo_root, args, "MergeDecisionJson", "MergeDecisionPath", required=False)
-    if decision and decision.get("selected_action") == "decline":
-        raise ScriptError("merge decision declined")
-    return complete(True, "validate-merge-decision", "merge decision approved")
 
 
 def command_prepare_execution(ctx: Context, args: dict[str, Any]) -> int:

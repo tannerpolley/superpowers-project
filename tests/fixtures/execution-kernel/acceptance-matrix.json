@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "rows": [
+    {"id":"pr-empty-evidence","gate":"pr_ready","mutation":"empty_evidence","expected_error":"evidence_missing","expected_rule":null},
+    {"id":"pr-forged-success","gate":"pr_ready","mutation":"forged_success","expected_error":"collector_untrusted","expected_rule":"collector_trust"},
+    {"id":"pr-unsupported-collector","gate":"pr_ready","mutation":"unsupported_collector","expected_error":"schema_invalid","expected_rule":null},
+    {"id":"pr-tampered-payload","gate":"pr_ready","mutation":"tampered_payload","expected_error":"schema_invalid","expected_rule":null},
+    {"id":"pr-stale-source","gate":"pr_ready","mutation":"stale_source","expected_error":"artifact_hash_mismatch","expected_rule":null},
+    {"id":"pr-stale-head","gate":"pr_ready","mutation":"stale_head","expected_error":"required_rule_failed","expected_rule":"target_state"},
+    {"id":"pr-bad-authorization","gate":"pr_ready","mutation":"bad_authorization","expected_error":"required_rule_failed","expected_rule":"authorization_binding"},
+    {"id":"pr-incomplete-command","gate":"pr_ready","mutation":"incomplete_command","expected_error":"required_rule_failed","expected_rule":"implementation_verification"},
+    {"id":"premerge-provider-unavailable","gate":"premerge","mutation":"provider_unavailable","expected_error":"provider_state_unavailable","expected_rule":"provider_state"},
+    {"id":"premerge-failed-check","gate":"premerge","mutation":"failed_check","expected_error":"required_rule_failed","expected_rule":"required_checks"},
+    {"id":"premerge-base-mismatch","gate":"premerge","mutation":"base_mismatch","expected_error":"required_rule_failed","expected_rule":"base_identity"},
+    {"id":"premerge-head-mismatch","gate":"premerge","mutation":"head_mismatch","expected_error":"required_rule_failed","expected_rule":"head_identity"},
+    {"id":"premerge-blocking-review","gate":"premerge","mutation":"blocking_review","expected_error":"required_rule_failed","expected_rule":"provider_reviews"},
+    {"id":"premerge-cross-run","gate":"premerge","mutation":"cross_run","expected_error":"receipt_stale","expected_rule":"workflow_binding"},
+    {"id":"premerge-cross-candidate","gate":"premerge","mutation":"cross_candidate","expected_error":"receipt_stale","expected_rule":"workflow_binding"},
+    {"id":"merge-tampered-chain","gate":"merge_decision","mutation":"tampered_chain","expected_error":"receipt_stale","expected_rule":"event_chain"},
+    {"id":"closeout-stale-integration","gate":"closeout","mutation":"stale_integration","expected_error":"required_rule_failed","expected_rule":"integration_proof"},
+    {"id":"publish-failed-validation","gate":"publish_ready","mutation":"failed_validation","expected_error":"required_rule_failed","expected_rule":"implementation_verification"},
+    {"id":"publish-missing-installation","gate":"publish_ready","mutation":"missing_installation","expected_error":"required_rule_failed","expected_rule":"evidence_kinds"},
+    {"id":"publish-dirty-target","gate":"publish_ready","mutation":"dirty_target","expected_error":"required_rule_failed","expected_rule":"target_state"}
+  ]
+}

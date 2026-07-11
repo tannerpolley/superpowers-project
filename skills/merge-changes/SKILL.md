@@ -27,12 +27,16 @@ Read `skills/advanced-user-input/SKILL.md` for global continuation, artifact dis
 
 ## Procedure
 
-1. Collect premerge evidence and validate source-plan/branch linkage.
+1. Consume the exact current `pr_ready` receipt when validating the version-1 premerge envelope; retain the resulting `premerge` receipt hash.
 2. Require readiness review fields `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` to be true.
-3. For local work, run `skills/merge-changes/scripts/prepare-local-branch-closeout.sh`; for PR work, validate checks and issue linkage.
+3. For local work, run `skills/merge-changes/scripts/prepare-local-branch-closeout.sh`; for PR work, validate checks and issue linkage. The merge-decision launcher consumes the current premerge receipt and the local closeout launcher consumes only `MergeDecisionReceiptJson|Path`.
 4. Show the Artifact Review Card, then ask `project_merge_approval`. Do not infer approval from Auto unless the immutable authorization explicitly permits merge after clean premerge.
 5. Integrate using the selected mode. Never push during local-only closeout.
-6. Re-run validation, remove only goal-owned branch/worktree state, run cleanup, replay workflow events, and prove clean repository state.
+6. Re-run validation, remove only goal-owned branch/worktree state, run cleanup, replay workflow events, and validate closeout with the exact current `merge_decision` receipt.
+
+## Evidence Gate Contract
+
+The authenticated chain is `pr_ready -> premerge -> merge_decision -> closeout`: every transition names the immediately preceding receipt and preserves repository, workflow, source, and stable target bindings. Missing, stale, cross-candidate, legacy, or bare boolean evidence fails nonzero with a stable error; validators never collect replacement evidence. Local integration may mutate Git only after consuming a current passing `merge_decision` receipt.
 
 ## Stop Conditions And Final Health
 

@@ -6,6 +6,7 @@ from shutil import copytree
 from pathlib import Path
 
 from scripts.lib.command_catalog import CommandSpec, ScriptError, _COMMANDS, build_command_registry, load_command_catalog, resolve_command
+from scripts.lib.commands import load_handlers
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +57,13 @@ class CommandRegistryTests(unittest.TestCase):
             {handler for handler in _COMMANDS.values() if not callable(cli.resolve_handler(handler))}
         )
         self.assertEqual([], missing)
+
+    def test_execution_kernel_collection_handlers_are_registered(self):
+        handlers = load_handlers()
+        self.assertEqual(
+            {"command_collect_pr_ready", "command_collect_premerge", "command_collect_closeout"},
+            {name for name in handlers if name.startswith("command_collect_") and name in {"command_collect_pr_ready", "command_collect_premerge", "command_collect_closeout"}},
+        )
 
     def test_typed_catalog_has_known_kinds_and_mutation_classes(self):
         catalog = load_command_catalog(ROOT)
