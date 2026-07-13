@@ -10,7 +10,6 @@ capabilities:
   native.user-input: Ask native structured user questions.
   subagents: Delegate bounded work to isolated workers.
   goals: Activate and inspect native Codex goals.
-  browser: Preview companion artifacts when requested.
 routes:
   align-project:
     required: [filesystem.read, shell, git]
@@ -22,12 +21,8 @@ routes:
     method_pairings: []
   brainstorm-spec:
     required: [filesystem.read, filesystem.write, native.user-input]
-    optional: [browser]
+    optional: []
     method_pairings: [superpowers:brainstorming]
-  companion-interface:
-    required: [filesystem.read, filesystem.write]
-    optional: [browser, native.user-input]
-    method_pairings: []
   create-issues:
     required: [filesystem.read, filesystem.write, shell, github, native.user-input]
     optional: []
@@ -62,5 +57,5 @@ routes:
     method_pairings: []
   write-plan:
     required: [filesystem.read, filesystem.write, shell, native.user-input]
-    optional: [browser]
+    optional: []
     method_pairings: [superpowers:writing-plans, superpowers:test-driven-development, superpowers:systematic-debugging, superpowers:verification-before-completion]

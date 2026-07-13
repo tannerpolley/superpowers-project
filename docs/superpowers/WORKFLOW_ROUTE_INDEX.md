@@ -44,19 +44,8 @@ Gates:
 - `project_brainstorm_plan_route` (data_selection): Create One Plan, Multi-Spec Planning
 - `project_brainstorm_reiteration_route` (nested_revisit_route): Revise Spec, Review Or Restart
 - `project_brainstorm_review_restart_route` (nested_revisit_route): Review First, Re-run Brainstorm
-- `project_brainstorm_visual_companion` (data_selection): Use Visual Companion, Skip Visual Companion
 
-Next routes: `companion-interface`, `write-plan`
-
-## `$superpowers-project:companion-interface`
-
-Optional Agent-Native visual-plan or visual-recap review surface.
-
-Owner: `companion-interface`
-
-Gates:
-
-Next routes: `brainstorm-spec`, `write-plan`, `merge-changes`
+Next routes: `write-plan`
 
 ## `$superpowers-project:create-issues`
 

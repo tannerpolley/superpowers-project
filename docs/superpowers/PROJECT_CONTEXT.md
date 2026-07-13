@@ -10,7 +10,6 @@ Superpowers Project extends Superpowers with durable project context, roadmap an
 - Plans: `docs/superpowers/plans/`
 - Issue mirrors: `docs/superpowers/issues/`
 - Milestone pages: `docs/superpowers/milestones/`
-- Agent-Native review artifacts: `plans/<slug>/plan.mdx` with optional `canvas.mdx` or `prototype.mdx`; use visual-plan artifacts for forward-looking specs and implementation plans, and visual-recap artifacts for after-action PR, branch, validation, audit, merge, and workflow proof. These are rich review and audit surfaces, not replacements for canonical Superpowers specs, plans, issue mirrors, or milestone pages.
 
 Specs, plans, issue mirrors, and milestone pages are working artifacts. Remove them after their work is merged or closed unless active runtime code, validation, or an explicit retention marker requires them. GitHub and Git history retain completed-work history.
 
@@ -22,6 +21,7 @@ Specs, plans, issue mirrors, and milestone pages are working artifacts. Remove t
 - `docs/superpowers/examples/worker-handoff-packets.md` is packet shape evidence for worker orchestration.
 - Runtime-included milestone receipts are current validation inputs, not general history archives.
 - `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.
+- The upstream brainstorming visual companion is temporary presentation state. Its browser events are advisory and do not replace native approval.
 
 ## Roadmap And Milestones
 
@@ -54,7 +54,6 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 - `setup-project`
 - `brainstorm-spec`
 - `write-plan`
-- `companion-interface`
 - `loop-controller`
 - `implement-plan`
 - `create-issues`

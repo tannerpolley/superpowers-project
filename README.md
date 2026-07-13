@@ -20,7 +20,6 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:setup-project`: creates and maintains project setup, context, milestone pages, tracker config, and approved GitHub Project board evidence.
 - `$superpowers-project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
 - `$superpowers-project:write-plan`: writes Superpowers implementation plans with project context.
-- `$superpowers-project:companion-interface`: creates and refreshes repo-owned Agent-Native visual-plan or visual-recap MDX artifacts for rich review while native Codex input remains the approval channel.
 - `$superpowers-project:loop-controller`: coordinates repeated workflow runs with local run ledgers, budgets, candidate selection, verifier proof, metrics, and policy continuation.
 - `$superpowers-project:implement-plan`: implements an approved plan on a development branch without creating GitHub issue mirrors.
 - `$superpowers-project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
@@ -30,16 +29,11 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:audit-project`: reviews code or workflow behavior and writes P-coded repair findings specs.
 - `$superpowers-project:align-project`: aligns project, GitHub, migration, tracker, and live-sync drift.
 
-## Agent-Native Companion Artifacts
+## Upstream Visual Companion
 
-The companion route uses BuilderIO/Agent-Native MDX as a visual guide and audit surface. It does not replace canonical Superpowers artifacts:
+`$superpowers-project:brainstorm-spec` pairs with `superpowers:brainstorming` and inherits its just-in-time visual companion for questions that genuinely benefit from a visual comparison. Browser events are advisory; native Codex input remains the approval channel. Generated `.superpowers/brainstorm/` state is ignored, and its local server should be stopped after use.
 
-- Canonical specs, implementation plans, issue mirrors, and milestone pages stay under `docs/superpowers/*`.
-- Visual companion sources live under `plans/<slug>/plan.mdx`, with optional `canvas.mdx`, `prototype.mdx`, and `.plan-state.json`.
-- Use `visual-plan` for forward-looking specs, implementation plans, route choices, architecture decisions, and review-before-work.
-- Use `visual-recap` for after-action PR, branch, commit, validation, audit, merge, and workflow proof.
-- Skip the companion for tiny obvious edits that review faster as a plain diff or short chat note.
-- Native Codex chat and `request_user_input` remain the Manual approval boundary; Auto and Looping rely on the startup mode ledger plus existing proof gates.
+Set `SUPERPOWERS_DISABLE_TELEMETRY=true` before starting a visual session to disable the upstream Prime Radiant version check. Planning, merge review, and workflow recaps stay in Markdown and native Codex rather than adding a second companion route.
 
 ## Source-Of-Truth Roles
 
@@ -62,26 +56,6 @@ GitHub Milestones remain the milestone tracker. Parent issues and optional plan-
 - Leaf merge closeout records `hierarchy_rollup` parent progress from GitHub `subIssuesSummary`; parent or wrapper closeout still needs native approval plus child proof.
 - `$superpowers-project:align-project` reports parent/sub-issue drift and clean-title migration candidates before any GitHub mutation.
 - `$superpowers-project:loop-controller` skips parent and plan-wrapper implementation candidates and reserves them for rollup, alignment, or tracker repair.
-
-## Docker Agent-Native Preview
-
-To host the checked-in Agent-Native companion preview from a container:
-
-```bash
-docker compose -f ./docker-compose.agent-native-preview.yml up --build
-```
-
-Then open `http://localhost:8097/preview.html`. The image runs Agent-Native `plan local check`, generates the local preview inside the container, and serves only the generated preview HTML.
-
-To preview another local artifact or a recap:
-
-```bash
-export PLAN_DIR="/repo/plans/<slug>"
-export PLAN_KIND="recap"
-docker compose -f ./docker-compose.agent-native-preview.yml up --build
-```
-
-The Docker preview is a local rendering bridge for source-controlled MDX. Hosted comments, feedback tools, and full Agent-Native collaboration require hosted Plan tools or a proper local Plan app using the same plan source.
 
 ## Native Q&A Workflow
 

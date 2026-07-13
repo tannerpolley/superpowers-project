@@ -9,11 +9,11 @@ Use this design-only adapter before planning or implementation. Announce that `$
 
 ## Capability Preflight
 
-Require `filesystem.read`, `filesystem.write`, and `native.user-input` from `docs/superpowers/capabilities.yml`. `browser` is optional for a requested companion preview. Stop with an exact missing-capability finding.
+Require `filesystem.read`, `filesystem.write`, and `native.user-input` from `docs/superpowers/capabilities.yml`. The paired upstream skill owns any browser transport. Stop with an exact missing-capability finding.
 
 ## Required Method
 
-Run `superpowers:brainstorming` without weakening its checklist: inspect knowable context, ask one unresolved decision at a time, compare two or three viable approaches, recommend one, present architecture/components/data flow/error handling/testing in reviewable sections, obtain approval, write the spec, and invite review. Do not implement, branch, create issues, or write an implementation plan here.
+Run `superpowers:brainstorming` without weakening its checklist: inspect knowable context, ask one unresolved decision at a time, compare two or three viable approaches, recommend one, present architecture/components/data flow/error handling/testing in reviewable sections, obtain approval, write the spec, and invite review. Honor its just-in-time visual companion when a question genuinely benefits from visual comparison; browser events are advisory and native Codex input remains authoritative. Treat `.superpowers/brainstorm/` as generated ignored state, stop its server after use, and do not invent a second companion route. Do not implement, branch, create issues, or write an implementation plan here.
 
 ## Shared Policy
 
@@ -22,8 +22,6 @@ Use `skills/advanced-user-input/SKILL.md` for global question geometry and artif
 ## Spec Contract
 
 Write `docs/superpowers/specs/YYYY-MM-DD-<slug>-design.md` with context, goals, non-goals, alternatives, selected design, interfaces, data flow, errors, testing, risks, unresolved decisions, and a Decision Ledger. Validate with `./scripts/validate-decision-ledger.sh -Path <saved-spec-path> -Kind spec`.
-
-Offer `$superpowers-project:companion-interface` only through `project_brainstorm_visual_companion`; skipping it must not block the canonical Markdown spec.
 
 ## Stop Conditions And Closeout
 

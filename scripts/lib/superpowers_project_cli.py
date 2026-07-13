@@ -34,7 +34,6 @@ PLUGIN_SKILLS = {
     "align-project",
     "audit-project",
     "brainstorm-spec",
-    "companion-interface",
     "create-issues",
     "implement-plan",
     "initiate-workflow",
@@ -842,24 +841,6 @@ def command_validate_advanced_user_input_policy(ctx: Context, args: dict[str, An
     if findings:
         return emit({"ok": False, "phase": "advanced-user-input-policy", "reason": "advanced user input policy failed", "findings": findings}, 1)
     return emit({"ok": True, "phase": "advanced-user-input-policy", "reason": "native input and closeout policy passed", "findings": []})
-
-
-def command_test_agent_native_companion_preview(ctx: Context, args: dict[str, Any]) -> int:
-    """Validate the local companion source contract without network or hosted tools."""
-    checks: list[dict[str, Any]] = []
-    with tempfile.TemporaryDirectory(prefix="agent-native-companion-") as tmp:
-        plan_dir = Path(tmp) / "plans" / "fixture-agent-native-companion"
-        plan_dir.mkdir(parents=True)
-        plan = plan_dir / "plan.mdx"
-        plan.write_text("# Fixture\n\n<Callout id=\"decision\" tone=\"decision\">Review me.</Callout>\n", encoding="utf-8")
-        text = read_text(plan)
-        checks.append({"name": "accepted plan source", "ok": "<Callout" in text and "id=\"decision\"" in text, "reason": str(plan)})
-        checks.append({"name": "plan source is local", "ok": plan.is_file() and plan.is_relative_to(plan_dir), "reason": str(plan)})
-        unsupported = plan_dir / "unsupported.mdx"
-        unsupported.write_text("# unsupported\n", encoding="utf-8")
-        checks.append({"name": "unsupported artifact rejected", "ok": unsupported.name != "plan.mdx", "reason": "only plan.mdx is preview input"})
-    ok = all(item["ok"] for item in checks)
-    return emit({"ok": ok, "phase": "agent-native-companion-preview", "checks": checks}, 0 if ok else 1)
 
 
 ARTIFACT_REVIEW_CARD_FIELDS = (
@@ -2268,7 +2249,7 @@ def validate_skill_source_contract(root: Path) -> None:
 def validate_no_windows_active_surface(root: Path) -> None:
     if list((root / "scripts").rglob("*.ps1")) or list((root / "skills").rglob("*.ps1")) or list((root / ".github").rglob("*.ps1")):
         raise ScriptError("active script/workflow tree still contains .ps1 files")
-    active_paths = [root / "AGENTS.md", root / "README.md", root / ".codex-plugin", root / ".github", root / "scripts", root / "skills", root / "docker-compose.agent-native-preview.yml", root / "docker"]
+    active_paths = [root / "AGENTS.md", root / "README.md", root / ".codex-plugin", root / ".github", root / "scripts", root / "skills", root / "docker"]
     files: list[Path] = []
     for path in active_paths:
         if path.is_file():
