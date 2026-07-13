@@ -8,14 +8,13 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 project="$tmp/project"
 outside="$tmp/outside"
-mkdir -p "$project/docs/superpowers/runs" "$project/docs/superpowers/specs" "$outside"
+mkdir -p "$project/docs/superpowers/runs" "$outside"
 git -C "$project" init -q
 cat > "$project/mode.json" <<'JSON'
 {"question_id":"project_workflow_mode","source":"test","selected_mode":"manual","repo_root":"external","plugin_manifest_version":"1","plugin_contract_hash":"x","started_at":"2026-01-01T00:00:00Z","autonomy_scope":"ask-every-material-decision","mutation_scope":"project","candidate_scope":"one","route_policy":{"one_route_only":false},"proof_policy":{"required":true},"stop_conditions":["failed-validation"],"downstream_ledger_paths":["docs/superpowers/runs/result.json"]}
 JSON
-echo '# source' > "$project/docs/superpowers/specs/source.md"
-cat > "$project/auth.json" <<'JSON'
-{"question_id":"project_auto_mode_authorization","source":"request_user_input","selected_authority":"bounded-auto-merge","source_spec":"docs/superpowers/specs/source.md","route_policy":{"selected_mode":"agent-chooses","issue_route":"direct-inline-resolve-issue"},"decision_policy":{"selected_mode":"recorded-defaults","stop_outside_policy":true},"merge_permission":{"selected_mode":"preauthorized-after-clean-premerge","require_clean_premerge":true},"mutation_scope":["current-repo","development-branch"],"required_proof":["plan-proof-oracle","verification-receipts","cleanup-hook","premerge-proof","closeout-proof"],"stop_conditions":["missing-proof","dirty-unsafe-state","failed-validation","decision-outside-policy"]}
+cat > "$project/auth.json" <<JSON
+{"question_id":"project_workflow_mode","source":"request_user_input","selected_mode":"auto","repo_root":"$project","request_fingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","autonomy_scope":"one-outcome-lifecycle","candidate_scope":["raw-request"],"route_policy":{"selected_mode":"agent-chooses","issue_route":"evidence-based","one_outcome_only":true,"continue_to_next_candidate":false},"merge_permission":{"selected_mode":"preauthorized-after-clean-premerge","require_clean_premerge":true},"mutation_scope":["current-repo","development-branch"],"required_proof":["plan-proof-oracle","verification-receipts","cleanup-hook","premerge-proof","closeout-proof"],"stop_conditions":["missing-proof","dirty-unsafe-state","failed-validation","decision-outside-policy"]}
 JSON
 before="$(find "$plugin_root" -type f -not -path '*/__pycache__/*' -printf '%P\n' | sort)"
 set +e
