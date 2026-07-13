@@ -1103,7 +1103,10 @@ def command_test_plugin_only_live_sync(ctx: Context, args: dict[str, Any]) -> in
     """Run live sync into disposable roots and verify the installable surface."""
     with tempfile.TemporaryDirectory(prefix="plugin-live-sync-") as tmp:
         base = Path(tmp)
-        user_skills = base / "skills"
+        home = base / "home"
+        user_skills = home / ".agents" / "skills"
+        live = home / ".codex" / "plugins" / "superpowers-project"
+        marketplace = home / ".agents" / "plugins" / "marketplace.json"
         legacy_helper = user_skills / "advanced-user-input" / "SKILL.md"
         unrelated = user_skills / "unrelated" / "SKILL.md"
         legacy_helper.parent.mkdir(parents=True)
@@ -1111,14 +1114,22 @@ def command_test_plugin_only_live_sync(ctx: Context, args: dict[str, Any]) -> in
         legacy_helper.write_text("legacy helper owned by user\n", encoding="utf-8")
         unrelated.write_text("unrelated user skill\n", encoding="utf-8")
         before = {path.relative_to(user_skills).as_posix(): path.read_bytes() for path in user_skills.rglob("*") if path.is_file()}
-        result = command_sync_live(ctx, {"LivePluginRoot": str(base / "live"), "UserSkillsRoot": str(user_skills), "MarketplacePath": str(base / "marketplace.json"), "SkipValidation": True})
+        previous_home = os.environ.get("HOME")
+        os.environ["HOME"] = str(home)
+        try:
+            result = command_sync_live(ctx, {"SkipValidation": True})
+        finally:
+            if previous_home is None:
+                os.environ.pop("HOME", None)
+            else:
+                os.environ["HOME"] = previous_home
         after = {path.relative_to(user_skills).as_posix(): path.read_bytes() for path in user_skills.rglob("*") if path.is_file()}
         ok = (
             result == 0
-            and (base / "live/.codex-plugin/plugin.json").is_file()
-            and (base / "live/docs/superpowers/loop-mode-contract.yml").is_file()
-            and (base / "marketplace.json").is_file()
-            and runtime_contract_hash(base / "live") == runtime_contract_hash(ctx.repo_root)
+            and (live / ".codex-plugin/plugin.json").is_file()
+            and (live / "docs/superpowers/loop-mode-contract.yml").is_file()
+            and marketplace.is_file()
+            and runtime_contract_hash(live) == runtime_contract_hash(ctx.repo_root)
             and after == before
         )
     return emit({"ok": ok, "phase": "plugin-only-live-sync", "isolated": True}, 0 if ok else 1)
