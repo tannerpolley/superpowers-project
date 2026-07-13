@@ -10,7 +10,6 @@ home="$tmp/codex-home"; market="$tmp/market"
 mkdir -p "$home"
 "$root/scripts/sync-live.sh" \
   -LivePluginRoot "$market/.codex/plugins/superpowers-project" \
-  -UserSkillsRoot "$tmp/user-skills" \
   -MarketplacePath "$market/.agents/plugins/marketplace.json" >/dev/null
 export CODEX_HOME="$home"
 codex plugin marketplace add "$market" --json >/dev/null
