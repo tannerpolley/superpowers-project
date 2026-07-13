@@ -7,42 +7,37 @@ Source Spec: docs/superpowers/specs/2026-07-10-contract-distribution-simplificat
 Source Plan: docs/superpowers/plans/2026-07-10-contract-distribution-simplification-plan.md
 Milestone: M2 - Distribution
 Labels: type:feature, status:ready
-Dependencies: Blocked by the execution-kernel, Auto/Loop lifecycle, and Codex-native workspace-isolation issues. Rebase onto current `main` after all three merge and migrate their final consumers during schema-v2 generation.
+Dependencies: Issues #113, #114, and #115 are merged. Implement from current `main`.
 Sub-Issue Role: leaf
 Executable: true
 Goal Command: Implement and verify `docs/superpowers/plans/2026-07-10-contract-distribution-simplification-plan.md` task by task.
 
-**Execution Mode:** Ask at runtime
-**Worktree Policy:** Native Codex worktree thread first
-**Integration Policy:** Worker PR reviewed by main thread
-**TDD Policy:** Required
-**Parallelization Plan:** Sequential plan tasks; no concurrent Git writers
-**Reviewer Role:** Main thread orchestrator
-**Script Gate Mode:** Safety only
-
 ## Summary
 
-Normalize workflow contract ownership, generate per-skill route slices, validate the vanilla Superpowers dependency, stop ordinary global helper deployment, complete command locality, classify revision impact from the shipped surface, and validate canonical artifact lifecycle.
+Resolve the two remaining distribution problems without adding another framework:
+
+- stop copying the plugin-owned `advanced-user-input` skill into the global user-skill directory;
+- stop shipping all historical specs and plans in the runtime package.
+
+The existing version-2 workflow graph, generated views, runtime-read validator, and focused command modules remain unchanged.
 
 ## Acceptance Criteria
 
-- [ ] One normalized graph record owns every gate, option, transition, and owner skill.
-- [ ] Per-skill route slices, runtime lookup data, contract digest, and fixtures are generated deterministically and fail validation on drift.
-- [ ] Setup reports compatible, missing, incompatible, and incomplete vanilla Superpowers states without editing vanilla or cache files.
-- [ ] Ordinary install, sync, refresh, and uninstall leave unrelated global user skills byte-identical.
-- [ ] Remaining distribution-domain handlers live in focused modules behind stable public launchers.
-- [ ] Revision classification covers specs, plans, skills, scripts, runtime-read documents, tests, ambiguous reads, and mixed changes.
-- [ ] Active indexes reject missing or Superseded artifacts while receipt-bound history remains valid.
-- [ ] Full validation, isolated plugin lifecycle tests, required deployment gates, cleanup, and clean-main proof pass.
+- [ ] Normal sync/install does not create, replace, or delete global user skills.
+- [ ] A legacy global helper and an unrelated skill remain byte-identical in isolated sync tests.
+- [ ] `advanced-user-input` remains available inside `superpowers-project`.
+- [ ] Broad spec/plan runtime globs are removed.
+- [ ] The two release-trust source artifacts directly read by the publish path remain packaged.
+- [ ] Other spec/plan edits do not change runtime provenance.
+- [ ] Runtime-read validation, full validation, PASS/PASS review, deployment gates, cleanup, and CI pass.
+- [ ] The final change is net-negative and adds no production module or launcher.
 
 ## Proof Oracle
 
-- `python3 -m unittest tests.test_workflow_graph tests.test_workflow_generation -v`
-- `python3 -m unittest tests.test_dependency_contract tests.test_plugin_namespace -v`
-- `python3 -m unittest tests.test_command_locality tests.test_revision_impact tests.test_artifact_lifecycle -v`
-- `./scripts/validate-generated-state.sh`
+- `python3 -m unittest tests.test_runtime_package tests.test_package_provenance -v`
 - `./scripts/test-plugin-only-live-sync.sh`
 - `./scripts/test-install-transaction.sh`
+- `./scripts/validate-runtime-package.py --repo-root .`
 - `./scripts/validate.sh`
 - `./scripts/sync-live.sh --validate`
 - `codex plugin add superpowers-project@personal --json`
@@ -52,42 +47,35 @@ Normalize workflow contract ownership, generate per-skill route slices, validate
 
 ## Non-Goals
 
-- Redefining Auto and Looping lifecycle semantics.
-- Implementing evidence-gate rules owned by the execution kernel.
-- Selecting or provisioning workspace providers.
-- Vendoring or modifying vanilla Superpowers.
-- Replacing stable public skill or launcher names.
+- Rewriting the already-versioned workflow graph or generating route-slice files.
+- Adding dependency/cache inspection unsupported by the plugin manifest.
+- Building revision-classification or artifact-lifecycle subsystems.
+- Refactoring command handlers that already satisfy locality tests.
+- Deleting a pre-existing global helper.
+- Changing Auto, Loop, execution-kernel, or workspace semantics.
 
 ## Branch Policy
 
-Use `codex/issue-<number>-contract-distribution-simplification`. Do not implement directly on `main`. The main thread owns review, PR, merge, and cleanup.
-
-## Project Merge
-
-**Merge Owner:** Main thread orchestrator
-**Merge Gate:** Native UI approval required
-**Merge Policy:** Repo default
-**Worktree Cleanup Policy:** Remove owned worktree after merge
-**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+Use `codex/issue-116-contract-distribution-simplification`. The main thread owns review, PR, merge, and cleanup.
 
 ## Outcome Summary
 
 **Outcome Source:** `docs/superpowers/specs/2026-07-10-contract-distribution-simplification-design.md` and `docs/superpowers/plans/2026-07-10-contract-distribution-simplification-plan.md`
 
-**Intent:** Remove duplicated workflow authority and distribution side effects so agents consume a smaller, trustworthy plugin contract.
+**Intent:** Make plugin distribution smaller and stop accidental global policy writes.
 
-**Target Output:** Normalized workflow graph, generated route slices, dependency preflight, plugin-scoped helper behavior, focused modules, revision classifier, and artifact lifecycle validator.
+**Target Output:** Plugin-only sync behavior, a precise runtime manifest, focused regression tests, and corrected source docs.
 
-**Owner:** Superpowers Project contract and distribution maintainer.
+**Owner:** Superpowers Project distribution and runtime-package code.
 
-**Interface:** `compile_route_slices`, `validate_contract_ownership`, `inspect_superpowers_dependency`, `classify_revision`, and `validate_artifact_lifecycle` behind stable launchers.
+**Interface:** Existing `scripts/sync-live.sh`, `runtime_manifest()`, and `validate_runtime_reads()` interfaces.
 
-**Cutover:** Generate and validate contract projections first, isolate dependency and namespace behavior second, then replace directory-only revision policy after classifier proof passes.
+**Cutover:** Future syncs stop managing global helpers immediately; existing global files remain untouched.
 
-**Replaced Path:** Hand-copied gate facts, implicit vanilla availability, ordinary global helper writes, broad distribution handlers, and directory-only deployment classification.
+**Replaced Path:** The `USER_SKILLS` copy loop and broad spec/plan runtime globs.
 
-**Acceptance Proof:** All Acceptance Criteria and Proof Oracle commands pass from a clean checkout and isolated Codex home with no vanilla or unrelated user-skill mutations.
+**Acceptance Proof:** Focused tests, full validation, independent PASS/PASS review, release loop, CI, and clean main.
 
-**Stop Criteria:** Stop on unstable public route IDs, unobservable dependency identity, ambiguous runtime reads that cannot select strict gates, user-owned helper deletion risk, or failed validation.
+**Stop Criteria:** Stop on a changed global sentinel, excluded runtime read, package drift, failed validation, or non-clean closeout.
 
-**Avoid:** Do not edit plugin caches, vendor vanilla, create a second graph authority, keep permissive compatibility paths, or delete receipt-bound historical artifacts.
+**Avoid:** Avoid new schemas, generators, classifiers, cache reads, compatibility shims, and destructive legacy cleanup.

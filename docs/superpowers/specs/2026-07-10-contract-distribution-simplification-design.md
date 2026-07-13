@@ -2,346 +2,103 @@
 
 ## Status
 
-Proposed. This specification defines architecture and maintenance behavior but does not implement it.
+Approved for the lean issue #116 implementation.
 
 ## Context
 
-The plugin has accumulated several sources for workflow behavior: question definitions, nested routes, gates, skill text, runtime policy, and generated or copied metadata. The July 10 audit found that these representations disagree in places. Prompt complexity moved between files instead of disappearing, while the main CLI grew broad enough to hide shallow safety handlers.
+The original design proposed a schema migration, generated route slices, dependency discovery, more command modules, a revision classifier, and an artifact-lifecycle subsystem. Current `main` already has the useful parts: a version-2 workflow graph, deterministic generated workflow views, focused command handlers, runtime-read validation, and canonical artifact roots.
 
-Distribution has similar ambiguity. The plugin depends on vanilla Superpowers but does not verify that dependency as part of setup. Installation also exposes a helper skill through a global user-level namespace. The required post-revision loop treats every canonical document edit as a live plugin refresh even though the runtime package intentionally excludes specs and plans.
+Two distribution problems remain:
 
-The project needs a smaller contract surface, generated projections, explicit dependencies, and a revision policy that matches what is shipped.
+- `sync-live` copies `advanced-user-input` into the global user-skill directory even though the same skill is already shipped inside the plugin;
+- the runtime package includes every spec and plan, adding about 1.1 MB of design history to the installed plugin.
 
-## Source Findings
-
-This design resolves these findings from `docs/superpowers/specs/2026-07-10-autonomous-workflow-and-codex-worktree-audit-findings.md`:
-
-- the workflow graph is not fully authoritative;
-- installation leaks plugin policy into the global skill namespace;
-- the base Superpowers dependency is undeclared and unverified;
-- the runtime command module is too broad;
-- prompt complexity was relocated rather than eliminated;
-- historical design status is ambiguous;
-- documentation-only revisions trigger a distribution loop that does not match runtime packaging.
-
-It supersedes the architecture, distribution, and maintenance portions of the removed July 9 specifications and plans.
+Adding five new interfaces to solve those two problems would make the project larger and harder to maintain.
 
 ## Goals
 
-1. Establish one normalized source for workflow modes, gates, options, defaults, transitions, and owner skills.
-2. Generate runtime and skill-facing projections instead of hand-copying contract facts.
-3. Reduce skill prompt load to the route slice needed by the current owner skill.
-4. Split the broad CLI into cohesive modules while preserving stable launchers.
-5. Declare and verify the vanilla Superpowers dependency without vendoring or modifying it.
-6. Keep helper skills plugin-scoped unless a separate user-level installation is explicitly requested.
-7. Classify revisions by shipped impact so validation, sync, install, and release gates match reality.
-8. Give specs and plans explicit active, superseded, and historical status rules.
+1. Make normal sync/install mutate only the plugin live root and marketplace metadata.
+2. Keep `advanced-user-input` plugin-scoped and leave any existing global copy untouched.
+3. Ship only runtime contracts and the two source artifacts directly read by the release path.
+4. Preserve stable skill names, launchers, workflow behavior, and release validation.
 
 ## Non-Goals
 
-- Redefining Auto and Looping lifecycle semantics.
-- Implementing safety validator logic.
-- Selecting or provisioning worktree providers.
-- Replacing Markdown specs and plans with a database.
-- Publishing a new marketplace format.
-- Removing stable public skill names or shell launchers without a migration period.
-- Combining vanilla Superpowers and Superpowers Project into one plugin.
-
-## Alternatives
-
-### Alternative A: Continue patching every representation
-
-Update YAML, skills, scripts, tests, and setup instructions together whenever behavior changes.
-
-This preserves current structure but depends on perfect manual synchronization. The audit shows that this does not scale.
-
-### Alternative B: Normalized contract plus generated projections
-
-Make one machine-readable graph authoritative. Generate route slices, gate metadata, and validation fixtures. Modularize runtime commands and make distribution rules inspect the actual shipped surface.
-
-This is the selected design. It removes duplication while keeping human-readable skills and stable commands.
-
-### Alternative C: Central autonomous engine
-
-Replace skills and workflow files with one executable engine.
-
-This could eliminate some duplication but would make the plugin less composable and move too much product policy into code. It is outside this repair.
+- Rewriting the version-2 workflow contract or generating per-skill route files.
+- Adding a second dependency manifest or inspecting app-managed plugin caches.
+- Building a revision classifier or artifact-lifecycle database.
+- Refactoring handlers that already satisfy command-locality tests.
+- Deleting a pre-existing global `advanced-user-input` directory.
+- Changing Auto, Loop, execution-kernel, or workspace-isolation semantics.
 
 ## Selected Design
 
-### Normalized Workflow Contract
+### Plugin-scoped sync
 
-`docs/superpowers/workflow-contract.yml` remains the canonical policy source, but its schema becomes normalized. Each fact has one owner.
+`skills/advanced-user-input` remains a normal `superpowers-project:` plugin skill. `sync-live` copies the runtime package to the plugin live root and updates the personal marketplace entry, but it does not create, replace, or delete anything under the supplied user-skill root.
 
-```yaml
-schema_version: 2
-modes:
-  manual:
-    interaction_policy: ask-at-material-gates
-  auto:
-    interaction_policy: no-routine-prompts
-  looping:
-    interaction_policy: no-routine-prompts
-gates:
-  <gate_id>:
-    owner_skill: <canonical skill name>
-    lifecycle_states: [<state>]
-    question:
-      header: <short label>
-      prompt: <single sentence>
-    options:
-      - id: <stable option id>
-        label: <display label>
-        effect: <transition or action id>
-    manual_default: <option id or null>
-    autonomous_policy: <resolver policy id or forbidden>
-transitions:
-  <transition_id>:
-    from: [<states>]
-    to: <state>
-    owner_skill: <canonical skill name>
-```
+Existing global helper copies are legacy/user-owned state. This change stops managing them; it does not remove them.
 
-Question IDs, option IDs, effects, transitions, and owner skills must not be redeclared in nested route trees. A route references gate and transition IDs.
+### Minimal runtime package
 
-### Generated Projections
+The runtime manifest keeps:
 
-A deterministic generator produces:
+- plugin metadata, assets, scripts, and skills;
+- workflow, lifecycle, governance, capability, project-context, generated-index, backlog, and example contracts read at runtime;
+- the issue #113 release-trust spec and plan currently used as default publish-ready source artifacts.
 
-- one compact route slice per skill;
-- runtime lookup tables;
-- gate inventory documentation;
-- test fixtures for question headers, options, and transitions;
-- a contract digest consumed by provenance checks.
+The broad `docs/superpowers/specs/**` and `docs/superpowers/plans/**` patterns are removed. Other specs and plans remain canonical repository history but no longer affect the installed package hash.
 
-Generated files carry a header naming their source and generator version. Validation regenerates them in a temporary location and fails on drift. Generated files are never edited by hand.
+### External Superpowers boundary
 
-### Skill Contract
+The plugin continues to name vanilla Superpowers skills through existing canonical method pairings. Codex exposes no supported plugin-dependency field in this repository's validated manifest schema, so this issue does not invent one or inspect cache directories. Runtime capability preflight remains responsible for reporting a missing required method when a route is invoked.
 
-Each workflow skill contains only:
+### Existing contract machinery
 
-- its purpose and trigger;
-- required inputs;
-- its owned domain procedure;
-- a reference to its generated route slice;
-- explicit stop and handoff behavior;
-- scripts or references required for its domain.
+`docs/superpowers/workflow-contract.yml` remains the version-2 authority. Existing graph validation and generated `OUTCOME_WORKFLOW.md` / `WORKFLOW_ROUTE_INDEX.md` checks already prevent drift. No parallel route-slice generator is added.
 
-Cross-cutting mode, gate, and transition prose is not copied into every skill. Load-bearing provider or safety detail lives in a focused reference linked from the skill, not deleted to meet an arbitrary line target.
+## Interfaces
 
-Prompt-size validation measures duplicated semantic facts and unresolved references. It does not enforce quality through a raw line-count ceiling.
+No new public interface is introduced.
 
-### Runtime Modules
-
-The public `superpowers-project` command remains stable while internal modules align with bounded responsibilities:
-
-- workflow contract loading and generated projections;
-- lifecycle state and event replay;
-- gate resolution;
-- issue routing and provider integration;
-- workspace isolation;
-- evidence gates;
-- packaging and provenance;
-- maintenance and release classification.
-
-Argument parsing and output serialization stay at the command boundary. Domain modules expose typed data rather than printing or exiting directly. A module may not import a higher-level command router.
-
-### Dependency Declaration
-
-The plugin manifest declares vanilla Superpowers as an external required capability with a compatible version range and required canonical skills. Setup and validation perform a read-only preflight:
-
-1. locate the installed vanilla plugin through supported Codex plugin metadata;
-2. confirm the compatible version range;
-3. confirm required canonical skills are discoverable;
-4. report one actionable installation or update command when missing;
-5. stop before workflow execution if the dependency is unsatisfied.
-
-The project does not copy vanilla skill files into this repository or modify plugin cache contents.
-
-### Namespace Ownership
-
-Plugin helpers remain under the `superpowers-project:` namespace. Installation must not write `advanced-user-input` or another helper into the global user skill directory as a side effect of installing the plugin.
-
-If a user explicitly wants a standalone personal helper, that is a separate installation product with separate source, version, uninstall path, and consent. Plugin validation confirms that normal install and sync leave unrelated global skills unchanged.
-
-### Revision Classification
-
-Every revision is classified from the changed paths and runtime manifest:
-
-| Class | Examples | Required gates |
-|---|---|---|
-| `runtime_surface` | manifest, skills, assets, scripts, runtime-included docs | full validation, commit, sync, install refresh, version proof, cleanup |
-| `canonical_design` | specs and plans excluded from runtime package | document validation, link/status checks, commit, cleanup |
-| `historical_record` | completed receipts or archived evidence excluded from active policy | integrity and link checks, commit, cleanup |
-| `repository_support` | tests and contributor tooling not shipped | proportionate tests, commit, cleanup |
-
-If a canonical document is included in the runtime package or referenced by a runtime-read validator, it is classified as `runtime_surface` regardless of directory.
-
-The classifier outputs changed paths, manifest membership, runtime-read references, selected class, and required gates. Repository policy consumes this result instead of using one directory-wide rule.
-
-### Spec And Plan Lifecycle
-
-Canonical artifacts use one of these statuses:
-
-- `Proposed`: design not approved for implementation;
-- `Approved`: accepted design awaiting or undergoing implementation;
-- `Implemented`: completed contract retained as current architecture;
-- `Superseded`: replaced by named artifacts and excluded from active indexes;
-- `Historical`: retained only as evidence for a receipt or release.
-
-Active milestone pages list only Proposed, Approved, or current Implemented artifacts. Superseded files are either deleted when Git history is sufficient or retained in an explicit historical index when another shipped artifact requires the path.
-
-Plans that have completed and no longer support a current receipt may be deleted after inbound-reference validation. A receipt-dependent source plan remains historical and is labeled as such.
-
-### Documentation Indexes
-
-Milestone pages become generated or validated indexes. Each listed file must exist, declare a compatible status, and belong to that milestone. The checker rejects dangling paths, duplicate active contracts for the same decision, and a Superseded artifact in an active list.
-
-## Data Flow
-
-```mermaid
-flowchart TD
-    C["Normalized workflow contract"] --> G["Deterministic generator"]
-    G --> S["Per-skill route slices"]
-    G --> R["Runtime lookup data"]
-    G --> T["Contract test fixtures"]
-    G --> D["Contract digest"]
-    S --> V["Drift and reference validation"]
-    R --> V
-    T --> V
-    D --> V
-    M["Changed paths and runtime manifest"] --> K["Revision classifier"]
-    K --> Q["Required validation and distribution gates"]
-```
+- `scripts/sync-live.sh --validate` keeps its stable command line and stops user-skill writes.
+- `.codex-plugin/runtime-package.yml` remains the single shipped-membership declaration.
+- `runtime_manifest()` and `validate_runtime_reads()` continue to prove package contents.
 
 ## Error Handling
 
-Contract generation fails when:
+- Sync fails if source and live runtime manifests differ.
+- Runtime validation fails if a required read is excluded.
+- Tests fail if sync changes a sentinel global skill or recreates the helper.
+- Package tests fail if a non-runtime spec/plan enters the manifest or changes its hash.
 
-- an ID is duplicated or missing;
-- an option references an unknown effect;
-- a route references an unknown gate or transition;
-- two owner skills claim the same gate;
-- a lifecycle transition is unreachable or invalid;
-- a generated projection differs from committed output.
+## Testing
 
-Dependency preflight fails with a distinct missing, incompatible, or incomplete-capability error. It never edits plugin cache paths as recovery.
-
-Revision classification fails when a changed file has ambiguous manifest membership or an unresolved runtime read. Ambiguity selects the stricter gate set until classification is fixed.
-
-Artifact lifecycle validation fails on missing status, dangling supersession links, active indexes that reference Superseded artifacts, and historical deletion that would break a shipped receipt.
-
-## Compatibility And Migration
-
-The normalized contract receives a schema-version migration tool that reads the current contract and reports ambiguous duplicates rather than choosing silently. Existing public gate IDs and option IDs remain stable where semantics have not changed.
-
-Runtime launchers and skill names remain stable. Generated route slices may replace copied skill prose only after behavioral parity tests pass.
-
-The current global helper installation is removed from normal sync after plugin-scoped consumers are migrated. An explicit standalone helper installation, if retained, must not share mutable source with plugin deployment.
-
-The current required post-revision loop remains in force until the classifier and policy update are implemented and validated.
-
-## Testing Strategy
-
-### Contract tests
-
-- Parse and validate the normalized schema.
-- Reject duplicate and dangling IDs.
-- Compare generated route slices with owner-skill expectations.
-- Exercise every gate in Manual and autonomous resolution modes.
-- Prove all lifecycle states are reachable through allowed transitions.
-
-### Drift tests
-
-Mutate a gate option, owner skill, transition, and question header in only one generated output. Validation must fail and name the canonical source.
-
-### Prompt-load tests
-
-Measure duplicated contract facts across skills before and after migration. Verify that removing duplication does not remove required provider, authorization, or recovery references.
-
-### Module tests
-
-Import domain modules without initializing the CLI. Confirm they return typed results and do not print, exit, or mutate global state. Public launchers retain their current machine-readable interface.
-
-### Dependency tests
-
-Test compatible vanilla install, missing install, incompatible version, and missing required skill. Confirm setup provides one clear recovery path and leaves cache contents untouched.
-
-### Namespace tests
-
-Snapshot global user skills before plugin install, sync, refresh, and uninstall. Confirm no plugin helper is added, replaced, or removed outside the plugin namespace.
-
-### Revision-classification tests
-
-Test a spec-only edit, a plan-only edit, a skill edit, a script edit, a runtime-included document edit, a test-only edit, and a mixed edit. Confirm each produces the expected gate set. A mixed edit takes the strictest applicable class.
-
-### Artifact-lifecycle tests
-
-Reject dangling milestone links and duplicate active designs. Confirm a stale plan can be deleted when unreferenced and a receipt-bound plan is retained as Historical.
-
-## Acceptance Criteria
-
-- One normalized record owns each gate, option, transition, and owner skill.
-- Runtime and skill projections are generated and drift-checked.
-- Skills load only their route slice plus focused domain references.
-- The broad CLI delegates to cohesive modules without changing stable launchers.
-- Setup fails clearly when compatible vanilla Superpowers is unavailable.
-- Normal plugin installation does not modify the global user skill namespace.
-- A specs-only revision no longer requires live plugin refresh unless runtime membership or runtime reads make it shipped surface.
-- Active milestone indexes contain no dangling or Superseded artifact paths.
-- Historical receipt dependencies remain intact and labeled.
-- Full repository and installed-plugin validation pass.
-
-## Outcome Proof
-
-Implementation proof includes:
-
-1. a contract ownership report showing no duplicate semantic facts;
-2. generated-output drift failures from controlled mutations;
-3. before-and-after skill context and duplication measurements;
-4. module import and launcher compatibility results;
-5. dependency preflight results for all supported states;
-6. global-skill namespace snapshots across install operations;
-7. revision-classifier receipts for every path class;
-8. a clean active-artifact index with no dangling links.
+- Extend the isolated sync test with legacy-helper and unrelated-skill sentinels.
+- Assert `deployed_user_skills` is empty.
+- Assert only the two release-trust source artifacts remain from specs/plans.
+- Prove editing an excluded #116 design does not change the package hash.
+- Run full validation, live sync validation, marketplace refresh, version proof, cleanup, and CI.
 
 ## Risks
 
-- Generation can hide complexity if the canonical schema becomes too abstract.
-- Stable IDs can preserve obsolete semantics if migration avoids necessary changes.
-- Plugin dependency metadata may not support every desired constraint.
-- Revision classification can under-classify a document consumed through an untracked runtime read.
-- Removing global helpers can break users who relied on accidental installation.
-- Deleting stale artifacts can erase context still needed by a receipt.
-
-Mitigations are human-readable generated slices, explicit semantic migrations, runtime-read scanning, stricter mixed classification, namespace migration notices, and inbound-reference checks before deletion.
-
-## Unresolved Decisions
-
-- Whether generated route slices are committed or created during validation and packaging.
-- The exact supported vanilla Superpowers version range.
-- Whether artifact status belongs in frontmatter or a generated registry.
-- How to represent runtime reads that are computed rather than statically discoverable.
-
-These decisions must be made in the implementation plan and validated against the installed Codex plugin system.
+- A user may have relied on the accidental global helper. The file is preserved; only future management stops.
+- A future runtime read may require another document. `validate_runtime_reads()` fails closed until the manifest is updated explicitly.
 
 ## Decision Ledger
 
 | Decision | Source | Answer | Impact | Deferred? | Risk owner |
 |---|---|---|---|---|---|
-| Workflow authority | Contract-drift findings | Use one normalized contract. | Manual synchronization no longer owns duplicated policy facts. | No | Contract owner |
-| Skill consumption | Prompt-complexity audit | Generate route slices. | Skills receive local context without copied global policy. | No | Skill owner |
-| Prompt quality | Regression caused by line-count slimming | Validate duplication and references. | Load-bearing detail is not deleted to satisfy a size metric. | No | Validation owner |
-| Runtime architecture | Broad CLI audit | Use cohesive modules behind stable launchers. | Internal repair does not break skill integrations. | No | Runtime owner |
-| Vanilla relationship | Extension architecture and missing dependency check | Declare an external dependency. | The project verifies vanilla without vendoring or modifying it. | No | Distribution owner |
-| Helper namespace | Global-skill leakage finding | Keep helpers plugin-scoped by default. | Installing one plugin cannot silently mutate global user policy. | No | Distribution owner |
-| Revision loop | Runtime package versus directory-policy conflict | Classify revisions by shipped impact. | Required gates match the actual distribution surface. | No | Maintenance owner |
-| Artifact cleanup | Historical design ambiguity | Use status plus inbound-reference validation. | Active truth stays small without breaking historical receipts. | No | Documentation owner |
+| Workflow schema | Current version-2 graph | Keep it. | Avoids a no-op migration and generated slice tree. | No | Contract owner |
+| Helper namespace | Duplicate global deployment | Plugin-scoped only; preserve legacy files. | Sync no longer mutates global skill policy. | No | Distribution owner |
+| Runtime history | Package inventory | Exclude broad specs/plans; retain only direct release reads. | Removes roughly 1.1 MB from installs. | No | Package owner |
+| Vanilla dependency | Supported manifest schema | Keep canonical method pairings and runtime preflight. | Avoids unsupported metadata and cache probing. | No | Runtime owner |
+| Revision policy | Existing strict repository loop | Keep it for installable changes. | Avoids a classifier larger than the problem. | No | Maintainer |
 
-## Spec Self-Review
+## Acceptance Criteria
 
-- The design reduces duplicate authority instead of adding another hand-maintained layer.
-- Distribution behavior follows observable runtime membership and reads.
-- Historical cleanup preserves load-bearing receipts.
-- Public skills and launchers keep stable names.
-- The design does not redefine Auto behavior, evidence validation, or worktree provisioning.
+- Normal sync leaves the complete user-skill tree byte-identical.
+- `advanced-user-input` remains available inside the plugin.
+- Runtime reads validate with broad spec/plan patterns removed.
+- Non-runtime spec/plan edits do not change the package hash.
+- Stable launchers and workflow behavior continue to pass full validation.
