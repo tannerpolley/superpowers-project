@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import Any, Mapping
 
 try:
-    from .workflow_policy import GovernanceProfile, validate_governance
+    from .workflow_policy import GovernanceProfile, resolve_gate, validate_governance
     from .workflow_state import WorkflowStateError, append_event, replay_events
 except ImportError:
-    from workflow_policy import GovernanceProfile, validate_governance
+    from workflow_policy import GovernanceProfile, resolve_gate, validate_governance
     from workflow_state import WorkflowStateError, append_event, replay_events
 
 
@@ -143,6 +143,39 @@ class WorkflowRuntime:
         append_event(self.run_root, {"type": "run_stopped", "reason": reason})
         return self.receipt("block")
 
+    def resolve(
+        self,
+        gate_id: str,
+        options: list[str],
+        recommendation: str,
+        *,
+        selected_option: str | None = None,
+        authorized: bool = True,
+    ) -> dict[str, Any]:
+        context = self._context()
+        authorization = self._authorization()
+        decision = resolve_gate(
+            self._profile(authorization, context["mode"]),
+            gate_id,
+            options,
+            recommendation,
+            authorized=authorized,
+            selected=selected_option,
+        )
+        if decision.action == "decide":
+            append_event(
+                self.run_root,
+                {
+                    "type": "gate_resolved",
+                    "gate_id": gate_id,
+                    "selected_option": decision.selected_option,
+                    "source": decision.source,
+                },
+            )
+        elif decision.action == "block":
+            append_event(self.run_root, {"type": "run_stopped", "reason": decision.reason})
+        return self.receipt("resolve-gate", decision=decision.as_dict())
+
     def complete(self, claim: str) -> dict[str, Any]:
         try:
             from .workflow_completion import load_profiles, validate_completion_claim
@@ -179,6 +212,11 @@ def execute_workflow_action(
     candidate: str = "",
     claim: str = "",
     reason: str = "",
+    gate_id: str = "",
+    options: list[str] | None = None,
+    recommendation: str = "",
+    selected_option: str | None = None,
+    authorized: bool = True,
 ) -> dict[str, Any]:
     runtime = WorkflowRuntime(plugin_root, project_root, run_root, authorization_path)
     if action == "start":
@@ -189,6 +227,14 @@ def execute_workflow_action(
         return runtime.record(action, candidate)
     if action == "block":
         return runtime.block(reason)
+    if action == "resolve-gate":
+        return runtime.resolve(
+            gate_id,
+            options or [],
+            recommendation,
+            selected_option=selected_option,
+            authorized=authorized,
+        )
     if action == "complete":
         return runtime.complete(claim)
     raise WorkflowRuntimeError(f"unknown workflow action: {action}")

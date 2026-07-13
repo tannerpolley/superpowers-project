@@ -807,6 +807,10 @@ def command_validate_advanced_user_input_policy(ctx: Context, args: dict[str, An
     require_text(shared, [
         "request_user_input",
         "request_agent_input",
+        "## Lifecycle Mode Policy",
+        "scripts/workflow-run.sh -Action resolve-gate",
+        "`Manual` returns `ask`",
+        "`Auto` and `Looping` return `decide`",
         "Use Stop for mid-loop exits",
         "Use Done only for verified final states",
         "Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop",

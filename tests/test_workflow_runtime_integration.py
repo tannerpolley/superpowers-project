@@ -94,6 +94,47 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             rejected = self.invoke(other, run_root, auth, "select", "-Candidate", "one")
             self.assertNotEqual(0, rejected.returncode)
 
+    def test_auto_gate_decision_is_recorded_in_existing_ledger(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, run_root, auth = self.fixture(Path(tmp), "auto")
+            self.assert_ok(self.invoke(project, run_root, auth, "start", "-RunId", "auto-gate"))
+            result = self.assert_ok(
+                self.invoke(
+                    project,
+                    run_root,
+                    auth,
+                    "resolve-gate",
+                    "-GateId",
+                    "issue-route",
+                    "-OptionsJson",
+                    '["direct", "issue"]',
+                    "-Recommendation",
+                    "issue",
+                )
+            )
+            self.assertEqual("issue", result["decision"]["selected_option"])
+            self.assertEqual("issue-route", result["projection"]["gate_decisions"][0]["gate_id"])
+
+    def test_auto_rejects_caller_selected_gate_answer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, run_root, auth = self.fixture(Path(tmp), "auto")
+            self.assert_ok(self.invoke(project, run_root, auth, "start", "-RunId", "auto-gate"))
+            rejected = self.invoke(
+                project,
+                run_root,
+                auth,
+                "resolve-gate",
+                "-GateId",
+                "issue-route",
+                "-OptionsJson",
+                '["direct", "issue"]',
+                "-Recommendation",
+                "direct",
+                "-SelectedOption",
+                "issue",
+            )
+            self.assertNotEqual(0, rejected.returncode)
+
 
 if __name__ == "__main__":
     unittest.main()

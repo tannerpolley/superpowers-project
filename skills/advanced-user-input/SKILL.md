@@ -11,6 +11,16 @@ Use the richest input shape that makes the decision clear. Native `request_user_
 
 Use the smallest native question shape that preserves the real decision tree.
 
+## Lifecycle Mode Policy
+
+For a started Superpowers Project workflow, resolve every routine graph-owned gate through `scripts/workflow-run.sh -Action resolve-gate` and reuse the existing run root and authorization ledger.
+
+- `Manual` returns `ask`; render native input, then record the user's option with `-SelectedOption`.
+- `Auto` and `Looping` return `decide` for the owner skill's safe recommendation without native input.
+- Every mode returns `block` when no option remains inside startup scope or existing proof policy.
+
+Auto covers one requested outcome across skill boundaries, not one skill invocation. Looping applies the same rule inside each candidate and uses its startup budget and health checks between candidates. Never pass `-SelectedOption` for Auto or Looping, widen the startup scope, or treat a recommendation as permission to bypass proof.
+
 Do not collapse real routes into fake categories just to fit old 1-3 question or 2-3 option guidance. Current Codex Desktop testing showed much larger native prompts work, including 20 questions and 20 options. Treat that as current runtime-permissive behavior, not a public guarantee.
 
 For project workflow closeout gates, always ask the three-way trajectory question first. Ask the top-level closeout as Continue? Use Yes for the progress route. Use Revisit as the standard go-back route label unless a more specific local label is materially clearer. Use Stop for mid-loop exits. Use Done only for verified final states. Do not flatten closeout into a five-option or larger peer menu. If Yes or Revisit needs more detail, ask the nested branch question after that answer.

@@ -1,6 +1,7 @@
 """Production workflow command handlers."""
 from __future__ import annotations
 
+import json
 from typing import Any
 
 try:
@@ -29,6 +30,11 @@ def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:
         candidate=str(arg_value(args, "Candidate", default="")),
         claim=str(arg_value(args, "Claim", default="")),
         reason=str(arg_value(args, "Reason", default="")),
+        gate_id=str(arg_value(args, "GateId", default="")),
+        options=json.loads(str(arg_value(args, "OptionsJson", default="[]"))),
+        recommendation=str(arg_value(args, "Recommendation", default="")),
+        selected_option=(str(arg_value(args, "SelectedOption")) if arg_value(args, "SelectedOption") is not None else None),
+        authorized=str(arg_value(args, "Authorized", default="true")).lower() not in {"false", "0", "no"},
     )
     return emit(receipt)
 

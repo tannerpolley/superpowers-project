@@ -35,6 +35,7 @@ class RunProjection:
     verified_candidates: list[str] = field(default_factory=list)
     budget_rechecks: list[str] = field(default_factory=list)
     continuation_grants: list[str] = field(default_factory=list)
+    gate_decisions: list[dict[str, Any]] = field(default_factory=list)
     mutation_count: int = 0
     project_health_verified: bool = False
     events: int = 0
@@ -49,6 +50,7 @@ class RunProjection:
             "verified_candidates": list(self.verified_candidates),
             "budget_rechecks": list(self.budget_rechecks),
             "continuation_grants": list(self.continuation_grants),
+            "gate_decisions": list(self.gate_decisions),
             "mutation_count": self.mutation_count,
             "project_health_verified": self.project_health_verified,
             "events": self.events,
@@ -93,6 +95,15 @@ def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
         if projection.selected_candidate is None:
             raise WorkflowStateError("mutation requires a selected candidate")
         projection.mutation_count += 1
+    elif kind == "gate_resolved":
+        gate_id = str(event.get("gate_id") or "")
+        selected_option = str(event.get("selected_option") or "")
+        source = str(event.get("source") or "")
+        if not gate_id or not selected_option or source not in {"user", "policy"}:
+            raise WorkflowStateError("gate_resolved requires gate_id, selected_option, and source")
+        projection.gate_decisions.append(
+            {"gate_id": gate_id, "selected_option": selected_option, "source": source}
+        )
     elif kind == "project_health_verified":
         projection.project_health_verified = True
     elif kind == "run_stopped":
