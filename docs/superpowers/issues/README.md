@@ -66,4 +66,4 @@ Use this marker only for unusual mirrors that must remain as historical artifact
 
 Retained mirrors must include a retention reason in closeout evidence. `$superpowers-project:audit-project` reports closed mirrors without this marker as repairable drift.
 
-Milestone pages keep durable closed issue history. When a mirror is deleted, the milestone page should remove the active mirror link and add a concise closed summary with both the GitHub issue link and the PR link that closed it.
+When a mirror is deleted, its GitHub issue, closing pull request, and Git history remain the durable record. Do not create a duplicate local closed summary unless an active runtime consumer requires one.

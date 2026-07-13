@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 import json
 import subprocess
+import tempfile
 from pathlib import Path
 from scripts.lib.evidence_schema import hash_ref
 
@@ -20,8 +21,46 @@ REQUEST = {
     "candidate_id": "candidate-1",
 }
 
+ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_ISSUE = "docs/superpowers/issues/115-workspace-fixture.md"
+FIXTURE_PLAN = "docs/superpowers/plans/workspace-fixture-plan.md"
+FIXTURE_BRANCH = "codex/issue-115-workspace-fixture"
+
 
 class WorkspaceIsolationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._fixture_dir = tempfile.TemporaryDirectory()
+        cls.fixture_root = Path(cls._fixture_dir.name)
+        issue = cls.fixture_root / FIXTURE_ISSUE
+        plan = cls.fixture_root / FIXTURE_PLAN
+        issue.parent.mkdir(parents=True)
+        plan.parent.mkdir(parents=True)
+        plan.write_text("# Workspace Fixture Plan\n", encoding="utf-8")
+        issue.write_text(
+            "# Workspace Fixture\n\n"
+            "**GitHub Issue:** https://github.com/example/project/issues/115\n"
+            f"**Source Plan:** `{FIXTURE_PLAN}`\n"
+            "**Sub-Issue Role:** leaf\n"
+            "**Executable:** true\n"
+            "**Goal Command:** `/goal run fixture`\n\n"
+            "## Proof Oracle\n\n- `./scripts/validate.sh`\n",
+            encoding="utf-8",
+        )
+        commands = (
+            ["git", "init", "-b", FIXTURE_BRANCH],
+            ["git", "config", "user.name", "Fixture"],
+            ["git", "config", "user.email", "fixture@example.invalid"],
+            ["git", "add", "."],
+            ["git", "commit", "-m", "fixture"],
+        )
+        for command in commands:
+            subprocess.run(command, cwd=cls.fixture_root, check=True, text=True, capture_output=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._fixture_dir.cleanup()
+
     def native_receipt(self, *, head_mode: str = "branch", branch: str | None = "codex/issue-115"):
         return {
             "schema_version": 1,
@@ -323,7 +362,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
                 self.assertIn("Codex", text)
 
     def test_worker_handoff_requires_workspace_receipt_reference(self):
-        root = Path(__file__).resolve().parents[1]
+        root = self.fixture_root
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         current_branch = subprocess.run(["git", "branch", "--show-current"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         common_value = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
@@ -347,17 +386,17 @@ class WorkspaceIsolationTests(unittest.TestCase):
             "disposition": "active",
         }
         handoff = {
-            "issue_mirror": "docs/superpowers/issues/115-codex-native-workspace-isolation.md",
-            "source_plan": "docs/superpowers/plans/2026-07-10-codex-native-workspace-isolation-plan.md",
+            "issue_mirror": FIXTURE_ISSUE,
+            "source_plan": FIXTURE_PLAN,
             "worker_identity": {
                 "issue_number": 115,
-                "issue_slug": "codex-native-workspace-isolation",
+                "issue_slug": "workspace-fixture",
                 "thread_title": "Resolve #115",
-                "branch": "codex/issue-115-codex-native-workspace-isolation",
+                "branch": FIXTURE_BRANCH,
                 "evidence_folder": "issue-115",
                 "pr_title": "Resolve #115",
             },
-            "branch": "codex/issue-115-codex-native-workspace-isolation",
+            "branch": FIXTURE_BRANCH,
             "branch_worktree_policy": "provider-selected isolated workspace",
             "workspace_provider": "codex_managed_worktree",
             "workspace_receipt": receipt,
@@ -375,7 +414,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
                 "superpowers:finishing-a-development-branch",
             ],
         }
-        script = root / "skills/orchestrate-issues/scripts/validate-worker-handoff.sh"
+        script = ROOT / "skills/orchestrate-issues/scripts/validate-worker-handoff.sh"
         valid = subprocess.run(
             ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(handoff)],
             text=True,
@@ -435,7 +474,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
         self.assertIn("workspace_receipt_ref", missing.stdout)
 
     def test_worker_handoff_preparation_binds_workspace_reference(self):
-        root = Path(__file__).resolve().parents[1]
+        root = self.fixture_root
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         current_branch = subprocess.run(["git", "branch", "--show-current"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         common_value = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
@@ -461,11 +500,11 @@ class WorkspaceIsolationTests(unittest.TestCase):
         process = subprocess.run(
             [
                 "bash",
-                str(root / "skills/orchestrate-issues/scripts/prepare-worker-handoff.sh"),
+                str(ROOT / "skills/orchestrate-issues/scripts/prepare-worker-handoff.sh"),
                 "-RepoRoot",
                 str(root),
                 "-IssueFile",
-                "docs/superpowers/issues/115-codex-native-workspace-isolation.md",
+                FIXTURE_ISSUE,
                 "-WorkspaceReceiptJson",
                 json.dumps(receipt),
                 "-WorkflowRunId",

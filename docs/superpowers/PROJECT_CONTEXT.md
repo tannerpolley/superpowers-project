@@ -12,30 +12,32 @@ Superpowers Project extends Superpowers with durable project context, roadmap an
 - Milestone pages: `docs/superpowers/milestones/`
 - Agent-Native review artifacts: `plans/<slug>/plan.mdx` with optional `canvas.mdx` or `prototype.mdx`; use visual-plan artifacts for forward-looking specs and implementation plans, and visual-recap artifacts for after-action PR, branch, validation, audit, merge, and workflow proof. These are rich review and audit surfaces, not replacements for canonical Superpowers specs, plans, issue mirrors, or milestone pages.
 
+Specs, plans, issue mirrors, and milestone pages are working artifacts. Remove them after their work is merged or closed unless active runtime code, validation, or an explicit retention marker requires them. GitHub and Git history retain completed-work history.
+
 ## Source-Of-Truth Roles
 
 - `docs/superpowers/workflow-contract.yml` is the route contract for native question IDs, gate types, exact option labels, and material approval boundaries.
-- `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source. Historical plan checkboxes, milestone receipts, and closed issue mirrors are not active candidates.
+- `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source.
 - `docs/superpowers/examples/workflow-golden-paths.md` is an examples surface for expected workflow shape.
 - `docs/superpowers/examples/worker-handoff-packets.md` is packet shape evidence for worker orchestration.
-- `docs/superpowers/milestones/*receipt*.md` files are validation receipts and milestone history.
+- Runtime-included milestone receipts are current validation inputs, not general history archives.
 - `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.
 
 ## Roadmap And Milestones
 
-The project roadmap has three active GitHub-backed milestones:
+The project roadmap uses three GitHub-backed categories:
 
 - `M0 - Governance`: validation, guardrails, and workflow contracts that keep the plugin dependable.
 - `M1 - Source Of Truth`: source/live skill alignment, artifact layout, and drift prevention.
 - `M2 - Distribution`: installation, CI, release policy, and deployment proof.
 
-Milestone pages under `docs/superpowers/milestones/` are the durable project map. GitHub milestones are the tracker-side grouping. Specs, plans, and issue mirrors should link back to one of these roadmap buckets when the work is milestone-owned.
+GitHub milestones are the durable tracker-side grouping. Local milestone pages exist only while they actively coordinate work or supply runtime validation evidence.
 
 ## GitHub Tracker Config
 
 - Repository: `tannerpolley/superpowers-project`
-- Issue tracker: GitHub Issues plus local mirrors under `docs/superpowers/issues/`
-- GitHub milestone policy: mirrors the roadmap pages under `docs/superpowers/milestones/`
+- Issue tracker: GitHub Issues, with local mirrors only while an issue is executable
+- GitHub milestone policy: local pages are optional working views under `docs/superpowers/milestones/`
 - GitHub Projects policy: optional dashboard evidence created or verified by `$superpowers-project:setup-project` only after native approval
 - Label vocabulary: `docs/agents/triage-labels.md`
 - Tracker config: `docs/agents/issue-tracker.md` and `docs/agents/project-roadmap.json`
@@ -61,11 +63,3 @@ Issue implementation uses native `/goal` or goal tools plus Superpowers executio
 - `merge-changes`
 - `audit-project`
 - `align-project`
-
-## Current Open Questions
-
-- Decide whether GitHub Projects should stay dashboard-only or become a required project-management surface.
-
-## Decisions
-
-- The pre-publication smoke-test issue mirror was resolved locally and should not be published as a real GitHub issue unless a future workflow explicitly needs a new smoke fixture.

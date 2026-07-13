@@ -44,10 +44,11 @@ The companion route uses BuilderIO/Agent-Native MDX as a visual guide and audit 
 ## Source-Of-Truth Roles
 
 - `docs/superpowers/workflow-contract.yml` is the route contract for material native gates, gate types, exact option labels, and approval or permission effects.
-- `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source; historical plan checkboxes and closed issue mirrors are not active candidates.
+- `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source.
 - `docs/superpowers/examples/workflow-golden-paths.md` is an examples surface, not the route authority.
 - `docs/superpowers/examples/worker-handoff-packets.md` is packet shape evidence for orchestrated worker handoffs.
-- `docs/superpowers/milestones/*receipt*.md` files are validation receipts and milestone history, not active backlog.
+- Specs, plans, issue mirrors, and milestone pages are working artifacts and are removed after completion unless the runtime or an explicit retention marker still requires them.
+- GitHub and Git history are the durable record of completed work.
 - `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.
 
 ## GitHub Milestones And Sub-Issues
