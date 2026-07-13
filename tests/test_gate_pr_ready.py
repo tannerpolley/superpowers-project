@@ -49,7 +49,7 @@ def valid_pr_ready_envelope(repo: Path, *, isolation: bool = False, workspace: d
             "workspace_id": "workspace-1" if isolation else "local",
             "branch": "main",
             "isolation_required": isolation,
-            **({"workspace_provider": "codex", "workspace_thread_id": "thread-1", "workspace_owner": "plugin", "cleanup_actor": "plugin"} if isolation else {}),
+            **({"workspace_provider": "codex_managed_worktree", "workspace_thread_id": "thread-1", "workspace_owner": "codex_app", "cleanup_actor": "codex_app"} if isolation else {}),
         },
         commands=("git_status",),
         provider_inputs={
@@ -137,14 +137,20 @@ class PrReadyGateTests(unittest.TestCase):
 
     def test_isolation_workspace_receipt_binds_provider_owner_and_fresh_head(self):
         head = git(self.repo, "rev-parse", "HEAD")
-        workspace = {"provider": "codex", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "owner": "plugin", "disposition": "owned"}
+        workspace = {"schema_version": 1, "provider": "codex_managed_worktree", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "git_common_dir": str((self.repo / ".git").resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "head_mode": "branch", "branch": "main", "owner": "codex_app", "disposition": "active"}
         receipt = validate_pr_ready(parse_envelope(valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace), self.repo), self.repo)
         self.assertEqual("passed", receipt.disposition)
 
+    def test_isolation_workspace_receipt_rejects_detached_publication(self):
+        head = git(self.repo, "rev-parse", "HEAD")
+        workspace = {"schema_version": 1, "provider": "codex_managed_worktree", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "git_common_dir": str((self.repo / ".git").resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "head_mode": "detached", "branch": None, "owner": "codex_app", "disposition": "active"}
+        with self.assertRaisesRegex(EvidenceError, "branch-bound"):
+            validate_pr_ready(parse_envelope(valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace), self.repo), self.repo)
+
     def test_isolation_workspace_receipt_rejects_missing_duplicate_or_mismatched_bindings(self):
         head = git(self.repo, "rev-parse", "HEAD")
-        workspace = {"provider": "codex", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "owner": "plugin", "disposition": "owned"}
-        for mutation in ("missing", "duplicate", "provider", "thread", "task", "candidate", "head", "owner", "cleanup"):
+        workspace = {"schema_version": 1, "provider": "codex_managed_worktree", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "git_common_dir": str((self.repo / ".git").resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "head_mode": "branch", "branch": "main", "owner": "codex_app", "disposition": "active"}
+        for mutation in ("missing", "duplicate", "provider", "thread", "task", "candidate", "head", "owner", "branch", "schema", "cleanup"):
             with self.subTest(mutation=mutation):
                 envelope = valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace)
                 if mutation == "missing":
@@ -164,8 +170,10 @@ class PrReadyGateTests(unittest.TestCase):
                         "candidate": "candidate_id",
                         "head": "observed_head",
                         "owner": "owner",
+                        "branch": "branch",
+                        "schema": "schema_version",
                     }[mutation]
-                    item["payload"][key] = "fixture" if mutation == "provider" else "forged"
+                    item["payload"][key] = 2 if mutation == "schema" else ("fixture" if mutation == "provider" else "forged")
                     item["payload_hash"] = hash_ref(item["payload"])
                 envelope["envelope_hash"] = build_envelope_hash(envelope)
                 with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):

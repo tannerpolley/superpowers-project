@@ -13,6 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CommandRegistryTests(unittest.TestCase):
+    def test_workspace_policy_launcher_is_registered_as_mutation_free(self):
+        self.assertEqual("command_workspace_isolation", _COMMANDS["scripts/workspace-isolation.sh"])
+        self.assertEqual("none", load_command_catalog(ROOT)["scripts/workspace-isolation.sh"].mutation)
+
     def test_known_skill_launcher_is_explicitly_configured(self):
         self.assertIn("skills/loop-controller/scripts/validate-budget.sh", _COMMANDS)
 

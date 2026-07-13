@@ -29,7 +29,7 @@ def validate_pr_ready(envelope: EvidenceEnvelope, repo_root: Path) -> GateReceip
         source_artifact_rule(grouped, envelope),
         command_rule(grouped),
         *review_rules(grouped),
-        workspace_rule(grouped, envelope),
+        workspace_rule(grouped, envelope, publication=True),
         cleanup_rule(grouped, Path(repo_root).resolve(), envelope.target.get("cleanup_actor")),
     ])
     finalize_gate_rules("pr_ready", rules)
