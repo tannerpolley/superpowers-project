@@ -26,11 +26,12 @@ Before worker creation, call `scripts/workspace-isolation.sh`. Adopt or request 
 ## Procedure
 
 1. Require a ready mirror with `Sub-Issue Role: leaf`, `Executable: true`, a valid source plan, acceptance criteria, and proof oracle.
-2. Run `skills/orchestrate-issues/scripts/derive-worker-identity.sh` and `prepare-worker-handoff.sh`.
-3. Validate the handoff with `validate-worker-handoff.sh` and the examples contract in `docs/superpowers/examples/worker-handoff-packets.md`.
-4. Satisfy Workspace Isolation, then create the worker and send the immutable packet. Record workflow selection and mutations.
-5. Review the worker's diff, task evidence, tests, branch state, and PR-ready packet independently. Reject narrative that disagrees with repository evidence.
-6. Route accepted work to `$superpowers-project:merge-changes`; the main thread owns approval and merge.
+2. Run `skills/orchestrate-issues/scripts/derive-worker-identity.sh`.
+3. Satisfy Workspace Isolation and collect its receipt before preparing the handoff.
+4. Run `prepare-worker-handoff.sh`, then validate the packet with `validate-worker-handoff.sh` and `docs/superpowers/examples/worker-handoff-packets.md`.
+5. Create the worker and send the immutable packet. Record workflow selection and mutations.
+6. Review the worker's diff, task evidence, tests, branch state, and PR-ready packet independently. Reject narrative that disagrees with repository evidence.
+7. Route accepted work to `$superpowers-project:merge-changes`; the main thread owns approval and merge.
 
 ## Stop Conditions And Closeout
 

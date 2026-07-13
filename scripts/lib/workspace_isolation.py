@@ -112,7 +112,7 @@ def validate_workspace_receipt(
     unknown = sorted(set(receipt) - _RECEIPT_FIELDS)
     if missing or unknown:
         raise WorkspaceIsolationError(f"workspace receipt fields are invalid: missing={missing}, unknown={unknown}")
-    if receipt["schema_version"] != 1:
+    if type(receipt["schema_version"]) is not int or receipt["schema_version"] != 1:
         raise WorkspaceIsolationError("workspace receipt schema_version must be 1")
 
     provider = receipt["provider"]
@@ -124,6 +124,8 @@ def validate_workspace_receipt(
         raise WorkspaceIsolationError("workspace disposition is invalid")
     if not isinstance(receipt["workspace_id"], str) or not receipt["workspace_id"]:
         raise WorkspaceIsolationError("workspace_id is required")
+    for field in ("repository_root", "run_id", "candidate_id"):
+        _required_text(receipt, field)
     if provider == "codex_managed_worktree" and (
         not isinstance(receipt["task_id"], str)
         or not receipt["task_id"]
@@ -131,6 +133,12 @@ def validate_workspace_receipt(
         or not receipt["thread_id"]
     ):
         raise WorkspaceIsolationError("Codex workspace receipt requires task and thread identity")
+    if provider == "local_git_worktree" and (
+        receipt["task_id"] is not None
+        or not isinstance(receipt["thread_id"], str)
+        or not receipt["thread_id"].strip()
+    ):
+        raise WorkspaceIsolationError("local workspace receipt requires null task_id and a thread marker")
     if not isinstance(receipt["git_common_dir"], str) or not receipt["git_common_dir"]:
         raise WorkspaceIsolationError("git_common_dir is required")
     if not isinstance(receipt["observed_head"], str) or not re.fullmatch(r"[0-9a-f]{40}", receipt["observed_head"]):

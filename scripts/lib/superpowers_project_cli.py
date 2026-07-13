@@ -1407,6 +1407,8 @@ def capture_command(func) -> str:
 
 
 def _validate_worker_workspace(root: Path, receipt: Mapping[str, Any], run_id: str, candidate_id: str) -> None:
+    if not run_id.strip() or not candidate_id.strip():
+        raise ScriptError("workflow binding requires non-empty run_id and candidate_id")
     head = run(["git", "rev-parse", "HEAD"], root)
     branch = run(["git", "branch", "--show-current"], root)
     common_result = run(["git", "rev-parse", "--git-common-dir"], root)
@@ -1458,11 +1460,17 @@ def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     workflow_binding = handoff.get("workflow_binding")
     if not isinstance(workspace_receipt, Mapping) or not isinstance(workflow_binding, Mapping):
         raise ScriptError("workspace receipt and workflow binding must be objects")
+    if set(workflow_binding) != {"run_id", "candidate_id"}:
+        raise ScriptError("workflow binding requires exactly run_id and candidate_id")
+    run_id = workflow_binding["run_id"]
+    candidate_id = workflow_binding["candidate_id"]
+    if not isinstance(run_id, str) or not isinstance(candidate_id, str):
+        raise ScriptError("workflow binding values must be strings")
     if handoff.get("workspace_receipt_ref") != str(hash_ref(dict(workspace_receipt))):
         raise ScriptError("workspace_receipt_ref does not authenticate workspace_receipt")
     if workspace_receipt.get("provider") != handoff.get("workspace_provider"):
         raise ScriptError("workspace provider does not match receipt")
-    _validate_worker_workspace(root, workspace_receipt, str(workflow_binding.get("run_id", "")), str(workflow_binding.get("candidate_id", "")))
+    _validate_worker_workspace(root, workspace_receipt, run_id, candidate_id)
     for skill in ["superpowers:test-driven-development", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]:
         if skill not in handoff.get("required_skills", []):
             raise ScriptError(f"required skill missing: {skill}")

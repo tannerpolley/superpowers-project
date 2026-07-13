@@ -182,11 +182,46 @@ class WorkspaceIsolationTests(unittest.TestCase):
             {"provider": "shared_subagent"},
             {"owner": "plugin"},
             {"schema_version": 2},
+            {"schema_version": True},
+            {"run_id": ""},
+            {"candidate_id": ""},
         ):
             with self.subTest(mutation=mutation), self.assertRaises(WorkspaceIsolationError):
                 validate_workspace_receipt(
                     {**self.native_receipt(), **mutation},
                     self.expected_receipt(),
+                    current_head="a" * 40,
+                    current_branch="codex/issue-115",
+                    publication=True,
+                )
+
+    def test_local_receipt_requires_local_identity_shape(self):
+        receipt = {
+            **self.native_receipt(),
+            "provider": "local_git_worktree",
+            "owner": "plugin",
+            "task_id": None,
+            "thread_id": "local-worktree",
+        }
+        expected = {
+            **self.expected_receipt(),
+            "provider": "local_git_worktree",
+            "owner": "plugin",
+            "task_id": None,
+            "thread_id": "local-worktree",
+        }
+        validate_workspace_receipt(
+            receipt,
+            expected,
+            current_head="a" * 40,
+            current_branch="codex/issue-115",
+            publication=True,
+        )
+        for mutation in ({"task_id": "task-1"}, {"thread_id": ""}):
+            with self.subTest(mutation=mutation), self.assertRaises(WorkspaceIsolationError):
+                validate_workspace_receipt(
+                    {**receipt, **mutation},
+                    expected,
                     current_head="a" * 40,
                     current_branch="codex/issue-115",
                     publication=True,
@@ -274,6 +309,11 @@ class WorkspaceIsolationTests(unittest.TestCase):
             self.assertIn(phrase, merge)
         self.assertRegex(merge, r"physical.*remov")
 
+        orchestrate = (root / "skills/orchestrate-issues/SKILL.md").read_text(encoding="utf-8")
+        isolation_step = orchestrate.index("Satisfy Workspace Isolation")
+        handoff_step = orchestrate.index("prepare-worker-handoff.sh")
+        self.assertLess(isolation_step, handoff_step)
+
     def test_startup_metadata_exposes_workspace_routing(self):
         root = Path(__file__).resolve().parents[1]
         for skill in ("implement-plan", "resolve-issue", "orchestrate-issues", "merge-changes"):
@@ -360,6 +400,29 @@ class WorkspaceIsolationTests(unittest.TestCase):
             capture_output=True,
         )
         self.assertNotEqual(0, mismatch_result.returncode)
+
+        missing_binding = json.loads(json.dumps(handoff))
+        missing_binding["workflow_binding"] = {}
+        missing_binding_result = subprocess.run(
+            ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(missing_binding)],
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(0, missing_binding_result.returncode)
+
+        invalid_local = json.loads(json.dumps(handoff))
+        invalid_local["workspace_provider"] = "local_git_worktree"
+        invalid_local["workspace_receipt"].update(
+            {"provider": "local_git_worktree", "owner": "plugin", "task_id": "task-1", "thread_id": ""}
+        )
+        invalid_local["workspace_receipt_ref"] = str(hash_ref(invalid_local["workspace_receipt"]))
+        invalid_local["required_skills"].append("superpowers:using-git-worktrees")
+        invalid_local_result = subprocess.run(
+            ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(invalid_local)],
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(0, invalid_local_result.returncode)
 
         handoff.pop("workspace_receipt_ref")
         missing = subprocess.run(

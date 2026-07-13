@@ -63,7 +63,7 @@ The execution kernel canonicalizes and hashes the evidence item, binds it to the
 
 ## Trust Boundary
 
-Codex does not expose a signed host receipt for project-task creation. Native task identity and workspace fields are therefore cooperative provider observations supplied by the active local agent/app adapter. The kernel provides deterministic binding, freshness, ordering, and replay resistance; it does not claim cryptographic host attestation.
+Codex does not expose a signed host receipt for project-task creation. Native task identity and workspace fields are therefore cooperative provider observations supplied by the active local agent/app adapter. The kernel provides deterministic binding, current-head freshness, and ordered transition-chain replay checks within that evidence model; it does not claim cryptographic host attestation or host-level replay prevention.
 
 Caller-selected mode, candidate, repository, or head values cannot widen the lifecycle envelope. A mismatched or stale receipt fails the existing gate. This is sufficient for a cooperative local automation agent and honest about what the host can prove.
 
