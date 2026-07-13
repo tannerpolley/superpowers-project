@@ -932,13 +932,6 @@ def command_test_artifact_review_card(ctx: Context, args: dict[str, Any]) -> int
     return emit({"ok": ok, "phase": "artifact-review-card", "checks": checks}, 0 if ok else 1)
 
 
-def command_test_auto_loop_trials(ctx: Context, args: dict[str, Any]) -> int:
-    result = run([sys.executable, str(ctx.plugin_root / "tests" / "test_auto_loop_trials.py"), "-v"], ctx.repo_root)
-    print(result.stdout, end="")
-    print(result.stderr, file=sys.stderr, end="")
-    return result.returncode
-
-
 def command_run_agent_usability_trials(ctx: Context, args: dict[str, Any]) -> int:
     raise ScriptError("run-agent-usability-trials.sh must be invoked directly with --execute and an explicit output directory")
 

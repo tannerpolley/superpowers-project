@@ -28,7 +28,7 @@
 | workflow contract validator | `./scripts/validate-workflow-contract.sh -RepoRoot .` | pass |
 | metadata tests | `./scripts/test-skill-metadata-contract.sh` | pass |
 | metadata validator | `./scripts/validate-skill-metadata-contract.sh -RepoRoot .` | pass |
-| loop controller tests | `./scripts/test-loop-controller.sh` | pass |
+| loop controller tests | `./scripts/test-workflow-runtime.sh` | pass |
 | loop scenarios | `./skills/loop-controller/scripts/test-scenarios.sh` | pass |
 | scorecard tests | `./scripts/test-scorecard-proof.sh` | pass |
 | scorecard validator | `./scripts/validate-scorecard-proof.sh -RepoRoot .` | pass |

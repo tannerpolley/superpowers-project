@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import subprocess
 import tempfile
 import unittest
@@ -18,7 +17,6 @@ from scripts.lib.evidence_schema import (
     canonical_json,
     hash_ref,
     parse_envelope_json,
-    register_evidence_kind,
     register_provider_evidence_kind,
 )
 from scripts.lib.gate_receipts import build_receipt, verify_receipt

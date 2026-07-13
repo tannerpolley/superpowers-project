@@ -40,7 +40,7 @@ Flow:
 **Route sequence:** write-plan -> create-issues -> resolve-issue -> merge-changes -> align-project -> loop-controller
 **Question IDs:** project_plan_next_step, project_plan_issue_count, project_issue_hierarchy_mode, project_issue_hierarchy_parent, project_issue_hierarchy_children, project_issue_hierarchy_publish, project_resolve_push_permission, project_resolve_next_step, project_merge_approval, project_merge_final_health_gate, project_align_next_step, project_loop_next_step
 **Artifacts:** docs/superpowers/plans/<approved-plan>.md; docs/superpowers/issues/<parent>.md; docs/superpowers/issues/<leaf>.md; GitHub Sub-issues section; hierarchy_rollup closeout ledger; parent progress count
-**Validators:** skills/create-issues/scripts/validate-issue-hierarchy.sh; skills/merge-changes/scripts/closeout.sh; skills/align-project/scripts/align-project.sh; skills/loop-controller/scripts/select-candidate.sh; scripts/test-workflow-examples.sh
+**Validators:** skills/create-issues/scripts/validate-issue-hierarchy.sh; skills/merge-changes/scripts/closeout.sh; skills/align-project/scripts/align-project.sh; skills/loop-controller/scripts/select-candidate.sh; scripts/validate-workflow-examples.sh
 **Stop point:** project_loop_next_step after leaf closeout records parent progress, parent rollup remains approval-gated, and loop selection skips non-leaf implementation candidates.
 
 Flow:

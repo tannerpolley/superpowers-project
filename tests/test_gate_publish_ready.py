@@ -74,8 +74,6 @@ def write_trial_receipts(root: Path) -> None:
 
 
 def release_envelope(root: Path) -> dict[str, object]:
-    head = git(root, "rev-parse", "HEAD")
-    manifest = json.loads((root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
     package = package_hash(root)
     authorization = {
         "authorized": True,
@@ -123,6 +121,10 @@ def write_receipt(root: Path, envelope: dict[str, object]) -> GateReceipt:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(receipt.to_dict(), indent=2) + "\n", encoding="utf-8")
     return receipt
+
+
+def evidence_item(envelope: dict[str, object], kind: str) -> dict[str, object]:
+    return next(item for item in envelope["evidence"] if item["kind"] == kind)
 
 
 def run_prepare(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -205,37 +207,43 @@ class PublishReadyGateTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn(json.loads(result.stdout)["error"]["code"], {"receipt_stale", "required_rule_failed"})
 
-    def test_publish_ready_rejects_missing_installation_evidence(self):
-        envelope = release_envelope(self.repo)
-        envelope["evidence"] = [item for item in envelope["evidence"] if item["kind"] != "installation_state"]
-        envelope["envelope_hash"] = __import__("scripts.lib.evidence_schema", fromlist=["build_envelope_hash"]).build_envelope_hash(envelope)
-        with self.assertRaisesRegex(EvidenceError, "missing evidence:.*installation_state"):
-            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
-    def test_publish_ready_rejects_failed_validation_command(self):
-        envelope = release_envelope(self.repo)
-        command = next(item for item in envelope["evidence"] if item["kind"] == "command_result")
-        command["payload"]["exit_code"] = 1
-        command["payload_hash"] = hash_ref(command["payload"])
-        envelope["envelope_hash"] = __import__("scripts.lib.evidence_schema", fromlist=["build_envelope_hash"]).build_envelope_hash(envelope)
-        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
-    def test_publish_ready_rejects_failed_sync_command(self):
-        envelope = release_envelope(self.repo)
-        command = next(item for item in envelope["evidence"] if item.get("payload", {}).get("command_id") == "sync_live_validation")
-        command["payload"]["exit_code"] = 1
-        command["payload_hash"] = hash_ref(command["payload"])
-        envelope["envelope_hash"] = build_envelope_hash(envelope)
-        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
-    def test_publish_ready_requires_trusted_validation_and_sync_commands(self):
-        envelope = release_envelope(self.repo)
-        envelope["evidence"] = [item for item in envelope["evidence"] if item.get("payload", {}).get("command_id") not in {"source_validation", "sync_live_validation"}]
-        envelope["envelope_hash"] = build_envelope_hash(envelope)
-        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
+    def test_publish_ready_rejects_tampered_or_substituted_evidence(self):
+        cases = (
+            ("remove_kind", "installation_state", None, None, "missing evidence"),
+            ("remove_commands", None, None, None, "required_rule_failed"),
+            ("payload", "package_provenance", "revision_classification", "historical", "required_rule_failed"),
+            ("payload", "installation_state", "manifest_version", "forged", "required_rule_failed"),
+            ("payload", "installation_state", "current_version", "forged", "required_rule_failed"),
+            ("payload", "installation_state", "installation_root", "/tmp/forged-install", "required_rule_failed"),
+            ("payload", "agent_trial", "tool_calls", [{"name": "forged"}], "required_rule_failed"),
+            ("payload", "agent_trial", "external_mutations", 99, "required_rule_failed"),
+            ("payload", "agent_trial", "receipt_hashes", [hash_ref({"forged": True})], "required_rule_failed"),
+            ("authorization_pop", "authorization_event", "scope", None, "required_rule_failed"),
+            ("target", None, "installation_root", "other-install", "required_rule_failed|repository_mismatch"),
+            ("target", None, "agent_trial_root", "other-trials", "required_rule_failed|repository_mismatch"),
+        )
+        for action, kind, field, value, pattern in cases:
+            with self.subTest(action=action, kind=kind, field=field):
+                envelope = release_envelope(self.repo)
+                if action == "remove_kind":
+                    envelope["evidence"] = [item for item in envelope["evidence"] if item["kind"] != kind]
+                elif action == "remove_commands":
+                    envelope["evidence"] = [
+                        item for item in envelope["evidence"]
+                        if item.get("payload", {}).get("command_id") not in {"source_validation", "sync_live_validation"}
+                    ]
+                elif action == "target":
+                    envelope["target"][field] = str((self.repo / value).resolve())
+                else:
+                    item = evidence_item(envelope, kind)
+                    if action == "authorization_pop":
+                        item["payload"]["event"].pop(field)
+                    else:
+                        item["payload"][field] = value
+                    item["payload_hash"] = hash_ref(item["payload"])
+                envelope["envelope_hash"] = build_envelope_hash(envelope)
+                with self.assertRaisesRegex(EvidenceError, pattern):
+                    validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
 
     def test_publish_ready_rejects_dirty_checkout_after_collection(self):
         envelope = release_envelope(self.repo)
@@ -251,57 +259,8 @@ class PublishReadyGateTests(unittest.TestCase):
         with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
             validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
 
-    def test_publish_ready_rejects_invalid_package_provenance(self):
-        envelope = release_envelope(self.repo)
-        package = next(item for item in envelope["evidence"] if item["kind"] == "package_provenance")
-        package["payload"]["revision_classification"] = "historical"
-        package["payload_hash"] = hash_ref(package["payload"])
-        envelope["envelope_hash"] = __import__("scripts.lib.evidence_schema", fromlist=["build_envelope_hash"]).build_envelope_hash(envelope)
-        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
-    def test_publish_ready_rejects_wrong_manifest_version_or_installation_path(self):
-        for field, value in (("manifest_version", "forged"), ("current_version", "forged"), ("installation_root", "/tmp/forged-install")):
-            with self.subTest(field=field):
-                envelope = release_envelope(self.repo)
-                item = next(item for item in envelope["evidence"] if item["kind"] == "installation_state")
-                item["payload"][field] = value
-                item["payload_hash"] = hash_ref(item["payload"])
-                envelope["envelope_hash"] = build_envelope_hash(envelope)
-                with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-                    validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
-    def test_publish_ready_rejects_hardcoded_trial_counters_or_forged_receipt_hash(self):
-        for field, value in (("tool_calls", [{"name": "forged"}]), ("external_mutations", 99), ("receipt_hashes", [hash_ref({"forged": True})])):
-            with self.subTest(field=field):
-                envelope = release_envelope(self.repo)
-                item = next(item for item in envelope["evidence"] if item["kind"] == "agent_trial")
-                item["payload"][field] = value
-                item["payload_hash"] = hash_ref(item["payload"])
-                envelope["envelope_hash"] = build_envelope_hash(envelope)
-                with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-                    validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
-    def test_publish_ready_requires_explicit_publish_authorization_bindings(self):
-        envelope = release_envelope(self.repo)
-        item = next(item for item in envelope["evidence"] if item["kind"] == "authorization_event")
-        item["payload"]["event"].pop("scope")
-        item["payload_hash"] = hash_ref(item["payload"])
-        envelope["envelope_hash"] = build_envelope_hash(envelope)
-        with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-            validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
-    def test_publish_ready_rejects_substituted_bound_installation_or_trial_root(self):
-        for field, value in (("installation_root", str((self.repo / "other-install").resolve())), ("agent_trial_root", str((self.repo / "other-trials").resolve()))):
-            with self.subTest(field=field):
-                envelope = release_envelope(self.repo)
-                envelope["target"][field] = value
-                envelope["envelope_hash"] = build_envelope_hash(envelope)
-                with self.assertRaisesRegex(EvidenceError, "required_rule_failed|repository_mismatch"):
-                    validate_publish_ready(parse_envelope(envelope, self.repo), self.repo)
-
     def test_prepare_release_rejects_uncommitted_package_change_after_receipt(self):
-        receipt = write_receipt(self.repo, release_envelope(self.repo))
+        write_receipt(self.repo, release_envelope(self.repo))
         script = self.repo / "scripts" / "workflow-run.sh"
         script.write_text(script.read_text(encoding="utf-8") + "\n# stale after receipt\n", encoding="utf-8")
         result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/publish-ready-receipt.json", "-LivePluginRoot", str(self.repo), "-AgentReceiptDir", TRIAL_RECEIPTS.as_posix())
