@@ -67,7 +67,7 @@ def validate_workflow_graph(graph: WorkflowGraph, root: Path) -> list[Finding]:
             if not isinstance(route.get(field), list) or not route.get(field):
                 findings.append(Finding(code, f"{path}.{field}", f"{field} must be a non-empty list"))
         gates = route.get("gates")
-        if not isinstance(gates, list) or (route_name != "companion-interface" and not gates):
+        if not isinstance(gates, list) or not gates:
             findings.append(Finding("missing-gates", f"{path}.gates", "route gates are required"))
             gates = []
         allowed_parents = set(_labels(route.get("top_level_options", [])))

@@ -22,7 +22,7 @@ if find scripts skills -name '*.sh' -type f ! -perm -111 -print -quit | grep -q 
 fi
 
 if rg -n --hidden -S '(pwsh|powershell|ExecutionPolicy|windows-latest|choco install|\\.ps1|scripts\\\\|C:\\\\Users\\\\|cmd\\.exe|powershell\\.exe)' \
-  AGENTS.md README.md .codex-plugin .github scripts skills docker-compose.agent-native-preview.yml docker \
+  AGENTS.md README.md .codex-plugin .github scripts skills docker \
   -g '!*.png' \
   -g '!scripts/test-linux-migration.sh' \
   -g '!scripts/lib/superpowers_project_cli.py' >/tmp/superpowers-linux-migration-rg.txt; then

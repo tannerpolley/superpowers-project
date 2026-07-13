@@ -1,10 +1,11 @@
 interface:
-  capabilities: [filesystem.read, filesystem.write, shell, native.user-input, browser]
+  capabilities: [filesystem.read, filesystem.write, shell, native.user-input]
   display_name: "Write Plan"
   short_description: "Write implementation plans from approved specs or issues with native grilling gates."
   default_prompt: >-
     Use $superpowers-project:write-plan when an approved Superpowers Project spec or issue mirror needs an
-    implementation plan under docs/superpowers/plans; opt-in long plan review can route to Agent-Native visual-plan.
+    implementation plan under docs/superpowers/plans. Keep plan and merge review in Markdown and native Codex;
+    do not reuse the brainstorming visual companion as a planning or recap surface.
     Read SKILL.md for exact planning gates and
     docs/superpowers/workflow-contract.yml for route question ids and options. Task # Use Cases are a strict requirement;
     run scripts/validate-plan-task-use-cases.sh before marking any plan ready. Use superpowers:writing-plans,
