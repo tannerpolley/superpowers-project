@@ -1117,7 +1117,14 @@ def command_test_plugin_only_live_sync(ctx: Context, args: dict[str, Any]) -> in
         previous_home = os.environ.get("HOME")
         os.environ["HOME"] = str(home)
         try:
-            result = command_sync_live(ctx, {"SkipValidation": True})
+            result = command_sync_live(
+                ctx,
+                {
+                    "LivePluginRoot": str(live),
+                    "MarketplacePath": str(marketplace),
+                    "SkipValidation": True,
+                },
+            )
         finally:
             if previous_home is None:
                 os.environ.pop("HOME", None)
