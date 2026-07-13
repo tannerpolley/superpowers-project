@@ -1,7 +1,6 @@
 """Production workflow command handlers."""
 from __future__ import annotations
 
-import json
 from typing import Any
 
 try:
@@ -19,6 +18,8 @@ def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:
     action = str(arg_value(args, "Action", default=""))
     if not run_root_value or not authorization_value or not action:
         raise ScriptError("RunRoot, AuthorizationPath, and Action are required")
+    if arg_value(args, "OptionsJson") is not None or arg_value(args, "Authorized") is not None:
+        raise ScriptError("gate options and authorization come from the workflow contract and startup ledger")
     receipt = execute_workflow_action(
         ctx.plugin_root or ctx.repo_root,
         root,
@@ -31,10 +32,10 @@ def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:
         claim=str(arg_value(args, "Claim", default="")),
         reason=str(arg_value(args, "Reason", default="")),
         gate_id=str(arg_value(args, "GateId", default="")),
-        options=json.loads(str(arg_value(args, "OptionsJson", default="[]"))),
         recommendation=str(arg_value(args, "Recommendation", default="")),
         selected_option=(str(arg_value(args, "SelectedOption")) if arg_value(args, "SelectedOption") is not None else None),
-        authorized=str(arg_value(args, "Authorized", default="true")).lower() not in {"false", "0", "no"},
+        budget_evidence_path=str(arg_value(args, "BudgetEvidencePath", default="")),
+        health_evidence_path=str(arg_value(args, "HealthEvidencePath", default="")),
     )
     return emit(receipt)
 

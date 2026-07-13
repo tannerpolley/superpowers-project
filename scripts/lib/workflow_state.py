@@ -34,6 +34,7 @@ class RunProjection:
     accepted_candidates: list[str] = field(default_factory=list)
     verified_candidates: list[str] = field(default_factory=list)
     budget_rechecks: list[str] = field(default_factory=list)
+    continuation_evidence: dict[str, dict[str, str]] = field(default_factory=dict)
     continuation_grants: list[str] = field(default_factory=list)
     gate_decisions: list[dict[str, Any]] = field(default_factory=list)
     mutation_count: int = 0
@@ -49,6 +50,7 @@ class RunProjection:
             "accepted_candidates": list(self.accepted_candidates),
             "verified_candidates": list(self.verified_candidates),
             "budget_rechecks": list(self.budget_rechecks),
+            "continuation_evidence": dict(self.continuation_evidence),
             "continuation_grants": list(self.continuation_grants),
             "gate_decisions": list(self.gate_decisions),
             "mutation_count": self.mutation_count,
@@ -61,6 +63,8 @@ class RunProjection:
 def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
     kind = event.get("type")
     candidate = event.get("candidate")
+    if projection.status in {"stopped", "completed"}:
+        raise WorkflowStateError(f"workflow is already {projection.status}")
     if kind == "run_started":
         if projection.events:
             raise WorkflowStateError("run_started must be the first event")
@@ -80,17 +84,25 @@ def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
             if not ready:
                 raise WorkflowStateError("second candidate requires acceptance, verifier, budget recheck, and continuation grant")
         projection.selected_candidate = str(candidate)
-    elif kind in {"candidate_accepted", "verifier_passed", "budget_rechecked", "continuation_granted"}:
+    elif kind in {"candidate_accepted", "verifier_passed", "continuation_granted"}:
         if not candidate:
             raise WorkflowStateError(f"{kind} requires candidate")
         target = {
             "candidate_accepted": projection.accepted_candidates,
             "verifier_passed": projection.verified_candidates,
-            "budget_rechecked": projection.budget_rechecks,
             "continuation_granted": projection.continuation_grants,
         }[kind]
         if str(candidate) not in target:
             target.append(str(candidate))
+    elif kind == "budget_rechecked":
+        evidence = event.get("evidence")
+        required = {"budget_path", "budget_hash", "health_path", "health_hash"}
+        if not candidate or not isinstance(evidence, Mapping) or any(not str(evidence.get(key) or "") for key in required):
+            raise WorkflowStateError("budget_rechecked requires candidate and bound budget/health evidence")
+        candidate_id = str(candidate)
+        if candidate_id not in projection.budget_rechecks:
+            projection.budget_rechecks.append(candidate_id)
+        projection.continuation_evidence[candidate_id] = {key: str(evidence[key]) for key in required}
     elif kind == "mutation_applied":
         if projection.selected_candidate is None:
             raise WorkflowStateError("mutation requires a selected candidate")

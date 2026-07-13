@@ -14,6 +14,7 @@ Use the smallest native question shape that preserves the real decision tree.
 ## Lifecycle Mode Policy
 
 For a started Superpowers Project workflow, resolve every routine graph-owned gate through `scripts/workflow-run.sh -Action resolve-gate` and reuse the existing run root and authorization ledger.
+Pass only the graph-owned `-GateId` and the owner skill's `-Recommendation`; the runtime loads options from `docs/superpowers/workflow-contract.yml`. Caller-supplied option lists or authorization flags are invalid.
 
 - `Manual` returns `ask`; render native input, then record the user's option with `-SelectedOption`.
 - `Auto` and `Looping` return `decide` for the owner skill's safe recommendation without native input.

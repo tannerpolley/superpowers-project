@@ -16,13 +16,30 @@ class WorkflowStateTests(unittest.TestCase):
             append_event(root, {"type": "candidate_selected", "candidate": "one"})
             append_event(root, {"type": "candidate_accepted", "candidate": "one"})
             append_event(root, {"type": "verifier_passed", "candidate": "one"})
-            append_event(root, {"type": "budget_rechecked", "candidate": "one"})
+            append_event(root, {
+                "type": "budget_rechecked",
+                "candidate": "one",
+                "evidence": {
+                    "budget_path": "budget.json",
+                    "budget_hash": "a" * 64,
+                    "health_path": "health.json",
+                    "health_hash": "b" * 64,
+                },
+            })
             append_event(root, {"type": "continuation_granted", "candidate": "one"})
             append_event(root, {"type": "candidate_selected", "candidate": "two"})
             projection = replay_events(root / "events.jsonl")
             self.assertEqual(projection.selected_candidate, "two")
             self.assertEqual(projection.events, 7)
             self.assertEqual(projection.as_dict(), json.loads((root / "run.json").read_text()))
+
+    def test_terminal_state_rejects_later_events(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            append_event(root, {"type": "run_started", "run_id": "trial-terminal"})
+            append_event(root, {"type": "run_stopped", "reason": "done"})
+            with self.assertRaisesRegex(WorkflowStateError, "already stopped"):
+                append_event(root, {"type": "run_stopped", "reason": "late"})
 
     def test_second_candidate_is_fail_closed_until_all_gates(self):
         with tempfile.TemporaryDirectory() as tmp:

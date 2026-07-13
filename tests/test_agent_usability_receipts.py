@@ -21,6 +21,7 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
         self.assertFalse(any(source_receipts.glob("**/receipt.json")))
         distribution = (ROOT / "scripts/lib/commands/distribution.py").read_text(encoding="utf-8")
         self.assertIn('.superpowers/runs/agent-trials/current', distribution)
+        self.assertNotIn('default=".superpowers/runs"', distribution)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("--output-dir .superpowers/runs/agent-trials/current", readme)
         validator = (ROOT / "scripts/lib/superpowers_project_cli.py").read_text(encoding="utf-8")

@@ -104,14 +104,14 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
         "installation_observation_id": "installation_current",
         "agent_trial_observation_id": "agent_trials_current",
         "installation_root": str(live_root),
-        "agent_trial_receipt_dir": str(arg_value(args, "AgentReceiptDir", default=".superpowers/runs")),
+        "agent_trial_receipt_dir": str(receipt_dir_value),
     }
     request = CollectionRequest(
         gate="publish_ready",
         repository_root=root,
         workflow=workflow,
         source=source,
-        target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False, "installation_root": str(live_root), "agent_trial_root": str((root / str(arg_value(args, "AgentReceiptDir", default=".superpowers/runs"))).resolve())},
+        target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False, "installation_root": str(live_root), "agent_trial_root": str(receipt_dir.resolve())},
         commands=("source_validation", "sync_live_validation"),
         provider_inputs=provider_inputs,
     )

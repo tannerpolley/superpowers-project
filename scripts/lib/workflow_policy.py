@@ -63,8 +63,6 @@ def validate_governance(mode: str, authorization: Mapping[str, Any], *, noninter
     source = authorization.get("source")
     if profile.interactive and source != "request_user_input":
         raise PolicyError("manual governance requires request_user_input")
-    if not profile.interactive and source == "request_user_input" and not noninteractive_trial:
-        raise PolicyError("noninteractive governance cannot silently depend on request_user_input")
     if noninteractive_trial and source != "trial-fixture":
         raise PolicyError("noninteractive trial requires trial-fixture provenance")
     candidates = authorization.get("candidate_scope") or []
@@ -75,6 +73,32 @@ def validate_governance(mode: str, authorization: Mapping[str, Any], *, noninter
     if mode == "auto" and authorization.get("continuation_grant"):
         raise PolicyError("Auto mode cannot carry a continuation grant")
     return profile
+
+
+def validate_loop_evidence(candidate: str, budget: Mapping[str, Any], health: Mapping[str, Any]) -> None:
+    """Validate the existing Loop budget and verifier ledgers for one candidate."""
+    if budget.get("candidate_id") != candidate or health.get("candidate_id") != candidate:
+        raise PolicyError("Loop evidence must match the active candidate")
+    limits = (
+        ("candidates_completed", "max_candidates", True),
+        ("current_phase_attempts", "max_attempts_per_phase", True),
+        ("repeated_same_failure_count", "max_repeated_same_failure", True),
+        ("changed_files", "max_changed_files", False),
+        ("github_mutations", "max_github_mutations", False),
+        ("validator_reruns", "max_validator_reruns", False),
+        ("unreviewed_diff_lines", "max_unreviewed_diff_lines", False),
+    )
+    for actual, maximum, exclusive in limits:
+        if actual not in budget or maximum not in budget:
+            raise PolicyError(f"Loop budget evidence is missing {actual} or {maximum}")
+        exhausted = int(budget[actual]) >= int(budget[maximum]) if exclusive else int(budget[actual]) > int(budget[maximum])
+        if exhausted:
+            raise PolicyError(f"Loop budget exhausted: {actual}")
+    proof = health.get("proof")
+    if health.get("independent") is not True or not isinstance(proof, list) or not proof:
+        raise PolicyError("Loop health requires independent verifier proof")
+    if any(not isinstance(item, Mapping) or item.get("ok") is not True for item in proof):
+        raise PolicyError("Loop health proof failed")
 
 
 def resolve_gate(

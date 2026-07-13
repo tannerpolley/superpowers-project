@@ -25,7 +25,7 @@ For each iteration:
 2. Select exactly one ready executable candidate with `select-candidate.sh`.
 3. Record selection through `scripts/workflow-run.sh` and route to the graph owner.
 4. Record mutations, acceptance, and independent verifier proof.
-5. Recheck budget and health, then record policy-sourced `grant-continuation` evidence before any second candidate. Do not ask a routine continuation question unless startup policy explicitly requires a checkpoint.
+5. Recheck budget and health with `recheck-budget -BudgetEvidencePath <budget-ledger> -HealthEvidencePath <verifier-ledger>`, then record policy-sourced `grant-continuation` evidence before any second candidate. The runtime hashes and revalidates both ledgers. Do not ask a routine continuation question unless startup policy explicitly requires a checkpoint.
 6. Replay the event ledger; never edit `run.json` directly.
 7. Write metrics with `write-metrics-report.sh`.
 

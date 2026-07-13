@@ -7,6 +7,10 @@ class GovernancePolicyTests(unittest.TestCase):
         profile = validate_governance("auto", {"source": "trial-fixture", "candidate_scope": ["a"]}, noninteractive_trial=True)
         self.assertFalse(profile.interactive)
 
+    def test_auto_accepts_the_real_startup_selection_provenance(self):
+        profile = validate_governance("auto", {"source": "request_user_input", "candidate_scope": ["a"]})
+        self.assertFalse(profile.interactive)
+
     def test_loop_rejects_multiple_candidates(self):
         with self.assertRaises(PolicyError):
             validate_governance("looping", {"source": "trial-fixture", "candidate_scope": ["a", "b"], "selected_candidates": ["a", "b"]}, noninteractive_trial=True)
