@@ -19,8 +19,9 @@ from package_provenance import runtime_contract_hash as package_contract_hash, r
 from command_catalog import load_command_catalog
 from command_support import *
 from commands import load_handlers
-from evidence_schema import EvidenceError, hash_bytes_ref, is_hash_ref
+from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
 from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
+from workspace_isolation import validate_workspace_receipt
 
 try:
     import yaml
@@ -1353,12 +1354,17 @@ def command_prepare_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     proof = section_bullets(text, "Proof Oracle")
     if not proof:
         raise ScriptError("Proof Oracle section with commands is required")
-    workspace_receipt_ref = arg_value(args, "WorkspaceReceiptRef")
-    workspace_provider = arg_value(args, "WorkspaceProvider")
-    if not is_hash_ref(workspace_receipt_ref):
-        raise ScriptError("WorkspaceReceiptRef must be a sha256 HashRef")
-    if workspace_provider not in {"codex_managed_worktree", "local_git_worktree"}:
-        raise ScriptError("WorkspaceProvider must identify an isolated provider")
+    workspace_receipt, _ = read_json_arg(root, args, "WorkspaceReceiptJson", "WorkspaceReceiptPath")
+    workflow_run_id = arg_value(args, "WorkflowRunId")
+    candidate_id = arg_value(args, "CandidateId")
+    if not isinstance(workspace_receipt, Mapping) or not workflow_run_id or not candidate_id:
+        raise ScriptError("WorkspaceReceipt and workflow run/candidate bindings are required")
+    _validate_worker_workspace(root, workspace_receipt, str(workflow_run_id), str(candidate_id))
+    workspace_provider = workspace_receipt["provider"]
+    workspace_receipt_ref = str(hash_ref(dict(workspace_receipt)))
+    required_skills = ["superpowers:test-driven-development", "superpowers:executing-plans", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]
+    if workspace_provider == "local_git_worktree":
+        required_skills.insert(0, "superpowers:using-git-worktrees")
     handoff = {
         "issue_mirror": normalize_rel(issue, root),
         "issue_url": field_value(text, "GitHub Issue"),
@@ -1369,13 +1375,15 @@ def command_prepare_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
         "branch": identity_payload["identity"]["branch"],
         "branch_worktree_policy": "workspace provider is selected before worker creation",
         "workspace_provider": workspace_provider,
+        "workspace_receipt": dict(workspace_receipt),
         "workspace_receipt_ref": workspace_receipt_ref,
+        "workflow_binding": {"run_id": str(workflow_run_id), "candidate_id": str(candidate_id)},
         "reviewer_role": "main-thread-orchestrator",
         "proof_oracle": proof,
         "validation": {"required_commands": ["skills/orchestrate-issues/scripts/validate-worker-handoff.sh -RepoRoot . -HandoffPath <handoff-json>"]},
         "topology_handoff": {"orchestrator_role": "main-thread-orchestrator", "worker_role": "implementation-worker", "merge_owner": "merge-changes", "worker_must_not_merge": True, "wakeup_policy": "worker handoff or bounded heartbeat"},
         "merge_handoff": {"merge_owner": "merge-changes", "worker_must_not_merge": True},
-        "required_skills": ["superpowers:using-git-worktrees", "superpowers:test-driven-development", "superpowers:executing-plans", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"],
+        "required_skills": required_skills,
     }
     written = ""
     output = arg_value(args, "OutputPath")
@@ -1398,10 +1406,33 @@ def capture_command(func) -> str:
     return buf.getvalue()
 
 
+def _validate_worker_workspace(root: Path, receipt: Mapping[str, Any], run_id: str, candidate_id: str) -> None:
+    head = run(["git", "rev-parse", "HEAD"], root)
+    branch = run(["git", "branch", "--show-current"], root)
+    common_result = run(["git", "rev-parse", "--git-common-dir"], root)
+    if any(result.returncode != 0 for result in (head, branch, common_result)):
+        raise ScriptError("current Git workspace state is unavailable")
+    common = Path(common_result.stdout.strip())
+    if not common.is_absolute():
+        common = root / common
+    expected = {
+        "provider": receipt.get("provider"),
+        "workspace_id": receipt.get("workspace_id"),
+        "repository_root": str(root.resolve()),
+        "git_common_dir": str(common.resolve()),
+        "run_id": run_id,
+        "candidate_id": candidate_id,
+        "task_id": receipt.get("task_id"),
+        "thread_id": receipt.get("thread_id"),
+        "owner": receipt.get("owner"),
+    }
+    validate_workspace_receipt(receipt, expected, current_head=head.stdout.strip(), current_branch=branch.stdout.strip(), publication=False)
+
+
 def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     handoff, _ = read_json_arg(root, args, "HandoffJson", "HandoffPath")
-    required = ["issue_mirror", "source_plan", "worker_identity", "branch", "branch_worktree_policy", "workspace_provider", "workspace_receipt_ref", "reviewer_role", "proof_oracle", "validation", "topology_handoff", "merge_handoff", "required_skills"]
+    required = ["issue_mirror", "source_plan", "worker_identity", "branch", "branch_worktree_policy", "workspace_provider", "workspace_receipt", "workspace_receipt_ref", "workflow_binding", "reviewer_role", "proof_oracle", "validation", "topology_handoff", "merge_handoff", "required_skills"]
     for field in required:
         if field not in handoff or handoff[field] in (None, "", []):
             raise ScriptError(f"handoff missing {field}")
@@ -1423,11 +1454,23 @@ def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
         raise ScriptError("merge_handoff.merge_owner must be merge-changes")
     if handoff.get("workspace_provider") not in {"codex_managed_worktree", "local_git_worktree"}:
         raise ScriptError("workspace_provider must identify an isolated provider")
-    if not is_hash_ref(handoff.get("workspace_receipt_ref")):
-        raise ScriptError("workspace_receipt_ref must be a sha256 HashRef")
-    for skill in ["superpowers:using-git-worktrees", "superpowers:test-driven-development", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]:
+    workspace_receipt = handoff.get("workspace_receipt")
+    workflow_binding = handoff.get("workflow_binding")
+    if not isinstance(workspace_receipt, Mapping) or not isinstance(workflow_binding, Mapping):
+        raise ScriptError("workspace receipt and workflow binding must be objects")
+    if handoff.get("workspace_receipt_ref") != str(hash_ref(dict(workspace_receipt))):
+        raise ScriptError("workspace_receipt_ref does not authenticate workspace_receipt")
+    if workspace_receipt.get("provider") != handoff.get("workspace_provider"):
+        raise ScriptError("workspace provider does not match receipt")
+    _validate_worker_workspace(root, workspace_receipt, str(workflow_binding.get("run_id", "")), str(workflow_binding.get("candidate_id", "")))
+    for skill in ["superpowers:test-driven-development", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]:
         if skill not in handoff.get("required_skills", []):
             raise ScriptError(f"required skill missing: {skill}")
+    local_skill = "superpowers:using-git-worktrees"
+    if handoff["workspace_provider"] == "local_git_worktree" and local_skill not in handoff["required_skills"]:
+        raise ScriptError(f"required skill missing: {local_skill}")
+    if handoff["workspace_provider"] == "codex_managed_worktree" and local_skill in handoff["required_skills"]:
+        raise ScriptError("native workspace handoff must not require superpowers:using-git-worktrees")
     return emit({"ok": True, "phase": "validate-worker-handoff", "reason": "worker handoff passed", "evidence": {"branch": handoff["branch"], "issue_mirror": handoff["issue_mirror"], "source_plan": handoff["source_plan"], "workspace_receipt_ref": handoff["workspace_receipt_ref"], "recollection_required": True}})
 
 

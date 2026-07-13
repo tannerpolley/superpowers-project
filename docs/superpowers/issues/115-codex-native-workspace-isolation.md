@@ -56,7 +56,7 @@ The shell adapter returns an untrusted action decision. The active Codex agent p
 - Detached HEAD is accepted for implementation and validation, while push and pull-request actions fail until a matching branch-bound provider transition exists.
 - Native fallback to a local worktree is forbidden after a native task has been created.
 - Worker handoffs and kernel gates reject missing, stale, shared-subagent, repository-mismatched, run-mismatched, candidate-mismatched, and head-mismatched workspace evidence.
-- App-owned and user-owned worktrees never authorize plugin filesystem deletion; plugin-owned local cleanup targets only the exact recorded workspace ID and path after integration proof.
+- Workspace receipts never authorize filesystem deletion; app/user workspaces are preserved and plugin-owned local cleanup remains governed by independent vanilla worktree provenance.
 - Focused policy and scenario tests prove native adoption/request behavior, detached publication rejection, vanilla fallback, and exact cleanup ownership without committing generated trial runs.
 - All focused unit tests, owner-skill scenario tests, worker packet tests, workspace-isolation trial tests, and `./scripts/validate.sh` pass.
 - The required post-revision validation, commit, sync, marketplace refresh, version check, cleanup, and clean-status sequence completes before final release claims.

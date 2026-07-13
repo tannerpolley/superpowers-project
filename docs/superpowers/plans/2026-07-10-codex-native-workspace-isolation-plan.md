@@ -2,7 +2,7 @@
 
 > Execute test-first. Reuse the issue #113 evidence kernel and issue #114 lifecycle; do not add a parallel workspace subsystem.
 
-**Goal:** Prefer visible Codex-managed worktrees when available, preserve safe vanilla local-worktree fallback, and enforce provider-aware publication and cleanup with the existing `workspace_receipt`.
+**Goal:** Prefer visible Codex-managed worktrees when available, preserve safe vanilla local-worktree fallback, and enforce provider-aware publication and logical disposition with the existing `workspace_receipt`.
 
 **Architecture:** One small pure policy module selects a provider from lifecycle requirement and observed capabilities. The existing execution kernel owns receipt hashing, envelope binding, freshness, and gate receipts. Owner skills execute native Codex actions or invoke vanilla fallback and record the resulting cooperative provider observation.
 
@@ -14,7 +14,7 @@
 - Local fallback is forbidden after a native task is created.
 - Detached native HEAD is valid for implementation, not publication.
 - Never claim host cryptographic attestation; Codex exposes no signed task receipt.
-- Never physically remove app-owned or user-owned workspaces.
+- Workspace receipts grant no physical-removal path; local cleanup remains under independently proven vanilla worktree provenance.
 - Use the existing `workspace_receipt`, `EvidenceEnvelope`, `workspace_rule`, and receipt chain.
 - Do not add `workspace_reality`, a second serializer, workspace-specific gate receipts, generated trial corpora, or app metadata access.
 
@@ -24,7 +24,7 @@
 
 **Current Behavior:** Skills request worktrees in prose, worker routing can imply subagents are isolated, and the existing generic receipt does not yet enforce provider/head-mode semantics.
 
-**Expected Outcome:** Provider selection is deterministic; workspace receipts are schema- and branch-aware; publication and cleanup follow provider ownership; owner skills share the same concise rules.
+**Expected Outcome:** Provider selection is deterministic; workspace receipts are schema- and branch-aware; publication and logical disposition follow provider ownership; owner skills share the same concise rules.
 
 **Target Output:** One provider-policy module and launcher, strengthened existing workspace rule, focused tests, and small owner-skill updates.
 
@@ -89,7 +89,7 @@
 
 - Shell returns an untrusted action request, never a native-operation claim.
 - Owner skills adopt native worktrees or invoke vanilla fallback exactly once; detached native work can implement but cannot push.
-- Scenario proof covers provider-owned cleanup and displaces subagent-as-isolation language.
+- Scenario proof covers provider-owned logical disposition and displaces subagent-as-isolation language.
 
 1. Add failing command registration/surface tests for a mutation-free `scripts/workspace-isolation.sh` policy launcher.
 2. Register a thin handler that rejects caller observation/receipt/head/path fields and emits only the provider action decision.
@@ -137,7 +137,7 @@ python3 -m unittest tests.test_workspace_isolation tests.test_gate_pr_ready test
 | Native preference | Approved spec | Adopt matching native workspace, then fork/create. | Avoid duplicate worktrees. | No | Workflow owner |
 | Local fallback | Cross-host requirement | Invoke vanilla unchanged only when native is unavailable and not started. | Terminal hosts remain safe. | No | Skill owner |
 | Detached HEAD | Codex behavior | Allow work; require a fresh branch receipt to publish. | Native tasks remain usable without weakening publication. | No | Git owner |
-| Cleanup | Provider ownership | App/user logical only; plugin exact-workspace removal after proof. | Prevent destructive cleanup. | No | Cleanup owner |
+| Cleanup | Provider ownership | Receipts authorize logical disposition only; vanilla finishing retains independent local-worktree provenance. | Prevent destructive cleanup. | No | Cleanup owner |
 | Deployment order | Repository policy | Commit, validate/sync/install/version/cleanup, then publish. | Auditable release state. | No | Release owner |
 
 ## Plan Self-Review

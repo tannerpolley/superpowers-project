@@ -64,7 +64,7 @@ def validate_closeout(envelope: EvidenceEnvelope, repo_root: Path, prior_receipt
         source_artifact_rule(grouped, envelope),
         command_rule(grouped),
         *_integration_rules(grouped, current["head"]),
-        replace(workspace_rule(grouped, envelope), rule_id="workspace_disposition"),
+        replace(workspace_rule(grouped, envelope, allowed_dispositions={"integrated", "preserved"}), rule_id="workspace_disposition"),
         cleanup_rule(grouped, Path(repo_root).resolve(), envelope.target.get("cleanup_actor")),
     ])
     finalize_gate_rules("closeout", rules)

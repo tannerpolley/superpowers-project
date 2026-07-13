@@ -17,4 +17,4 @@ interface:
     This route is the closeout adapter for superpowers:finishing-a-development-branch. Require upstream
     superpowers:verification-before-completion proof, and do not treat merge-time judgment as a substitute for
     missing execution-time verification or branch-finish discipline.
-    Consume the Codex or local workspace_receipt; preserve app/user-owned workspaces and remove only an exact plugin-owned local worktree after proof.
+    Consume the Codex or local workspace_receipt; preserve app/user-owned workspaces, and let only provenance-backed vanilla finishing clean a plugin-owned local worktree.

@@ -199,7 +199,7 @@ def cleanup_rule(grouped: Mapping[str, list[object]], repo_root: Path, expected_
     return RuleResult("cleanup_state", ok, "cleanup state is clean" if ok else "cleanup state is incomplete or dirty")
 
 
-def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope, *, publication: bool = False) -> RuleResult:
+def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope, *, publication: bool = False, allowed_dispositions: set[str] | None = None) -> RuleResult:
     if not envelope.target.get("isolation_required", False):
         return RuleResult("workspace_receipt", True, "workspace receipt not required")
     payloads = grouped.get("workspace_receipt", [])
@@ -207,6 +207,8 @@ def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelo
     current = current_git_state(Path(str(envelope.repository["root"])))
     if not isinstance(payload, Mapping):
         return RuleResult("workspace_receipt", False, "workspace receipt is missing or duplicated")
+    if envelope.target.get("cleanup_actor") != envelope.target.get("workspace_owner"):
+        return RuleResult("workspace_receipt", False, "workspace cleanup actor does not match provider owner")
     expected = {
         "provider": envelope.target["workspace_provider"],
         "workspace_id": envelope.target["workspace_id"],
@@ -225,6 +227,7 @@ def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelo
             current_head=str(current["head"]),
             current_branch=str(current["branch"]),
             publication=publication,
+            allowed_dispositions=allowed_dispositions,
         )
     except WorkspaceIsolationError as error:
         return RuleResult("workspace_receipt", False, str(error))

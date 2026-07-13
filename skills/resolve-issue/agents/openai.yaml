@@ -8,7 +8,7 @@ interface:
     GitHub hierarchy parents and plan-wrappers are rollup records; direct execution is leaf-only and requires Sub-Issue Role leaf with Executable true when hierarchy fields exist.
     read docs/superpowers/workflow-contract.yml for route question ids and options. Task # Use Cases are a strict requirement;
     run scripts/validate-plan-task-use-cases.sh before issue execution. This route is the issue-backed
-    adapter for superpowers:executing-plans. Require superpowers:using-git-worktrees before implementation, require
+    adapter for superpowers:executing-plans. Use superpowers:using-git-worktrees only when workspace policy selects local_git_worktree; require
     superpowers:executing-plans as the base execution method, require superpowers:test-driven-development unless the
     source plan records an explicit opt-out, require superpowers:systematic-debugging or diagnose for bugs,
     regressions, failing tests, CI failures, performance work, or unclear failure modes, require

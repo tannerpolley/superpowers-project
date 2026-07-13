@@ -38,7 +38,7 @@ Read `skills/advanced-user-input/SKILL.md` for global continuation, artifact dis
 
 The authenticated chain is `pr_ready -> premerge -> merge_decision -> closeout`: every transition names the immediately preceding receipt and preserves repository, workflow, source, and stable target bindings. Missing, stale, cross-candidate, legacy, or bare boolean evidence fails nonzero with a stable error; validators never collect replacement evidence. Local integration may mutate Git only after consuming a current passing `merge_decision` receipt.
 
-For isolated work, consume the existing version-1 `workspace_receipt`. `codex_app` and user-owned workspaces receive logical disposition only; never perform physical removal. A plugin-owned `local_git_worktree` may be removed only at its exact recorded path after integration proof. Detached receipts cannot authorize publication.
+For isolated work, consume the existing version-1 `workspace_receipt`. `codex_app` and user-owned workspaces receive logical disposition only; never perform physical removal. The receipt grants no deletion path; a plugin-owned `local_git_worktree` is cleaned only through the finishing skill's independently proven worktree provenance after integration. Detached receipts cannot authorize publication.
 
 ## Stop Conditions And Final Health
 

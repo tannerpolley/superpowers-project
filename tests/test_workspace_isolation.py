@@ -4,6 +4,7 @@ import unittest
 import json
 import subprocess
 from pathlib import Path
+from scripts.lib.evidence_schema import hash_ref
 
 from scripts.lib.workspace_isolation import (
     WorkspaceIsolationError,
@@ -58,6 +59,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
             {
                 "codex_project_tasks": True,
                 "local_git_worktrees": True,
+                "native_task_status": "created",
                 "current_workspace": {
                     "provider": "codex_managed_worktree",
                     "repository_identity": "repo:superpowers",
@@ -74,7 +76,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
     def test_native_provider_prefers_fork_when_source_task_exists(self):
         decision = resolve_workspace_isolation(
             REQUEST,
-            {"codex_project_tasks": True, "local_git_worktrees": True, "source_task_id": "task-1"},
+            {"codex_project_tasks": True, "local_git_worktrees": True, "source_task_id": "task-1", "native_task_status": "not_started"},
         )
 
         self.assertEqual(
@@ -85,7 +87,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
     def test_terminal_host_uses_unchanged_vanilla_fallback(self):
         decision = resolve_workspace_isolation(
             REQUEST,
-            {"codex_project_tasks": False, "local_git_worktrees": True},
+            {"codex_project_tasks": False, "local_git_worktrees": True, "native_task_status": "not_started"},
         )
 
         self.assertEqual("local_git_worktree", decision["provider"])
@@ -100,8 +102,21 @@ class WorkspaceIsolationTests(unittest.TestCase):
                     "codex_project_tasks": False,
                     "local_git_worktrees": False,
                     "delegation_provider": "shared_subagent",
+                    "native_task_status": "not_started",
                 },
             )
+
+    def test_shared_subagent_is_ignored_when_isolation_is_only_preferred(self):
+        decision = resolve_workspace_isolation(
+            {**REQUEST, "requirement": "preferred"},
+            {
+                "codex_project_tasks": False,
+                "local_git_worktrees": False,
+                "delegation_provider": "shared_subagent",
+                "native_task_status": "not_started",
+            },
+        )
+        self.assertEqual("current_checkout", decision["provider"])
 
     def test_local_fallback_is_forbidden_after_native_task_creation(self):
         with self.assertRaisesRegex(WorkspaceIsolationError, "native task.*fallback"):
@@ -110,7 +125,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
                 {
                     "codex_project_tasks": False,
                     "local_git_worktrees": True,
-                    "native_task_created": True,
+                    "native_task_status": "created",
                 },
             )
 
@@ -118,14 +133,21 @@ class WorkspaceIsolationTests(unittest.TestCase):
         with self.assertRaisesRegex(WorkspaceIsolationError, "required isolation"):
             resolve_workspace_isolation(
                 REQUEST,
-                {"codex_project_tasks": False, "local_git_worktrees": False},
+                {"codex_project_tasks": False, "local_git_worktrees": False, "native_task_status": "not_started"},
             )
 
     def test_caller_cannot_supply_workspace_observations(self):
         with self.assertRaisesRegex(WorkspaceIsolationError, "unsupported request field"):
             resolve_workspace_isolation(
                 {**REQUEST, "observed_head": "0" * 40},
-                {"codex_project_tasks": True},
+                {"codex_project_tasks": True, "native_task_status": "not_started"},
+            )
+
+    def test_native_task_status_is_required(self):
+        with self.assertRaisesRegex(WorkspaceIsolationError, "native_task_status"):
+            resolve_workspace_isolation(
+                REQUEST,
+                {"codex_project_tasks": False, "local_git_worktrees": True},
             )
 
     def test_branch_bound_native_receipt_passes_publication(self):
@@ -181,6 +203,35 @@ class WorkspaceIsolationTests(unittest.TestCase):
                     publication=True,
                 )
 
+    def test_receipt_rejects_unvalidated_workspace_path(self):
+        with self.assertRaisesRegex(WorkspaceIsolationError, "unknown"):
+            validate_workspace_receipt(
+                {**self.native_receipt(), "workspace_path": "/caller/selected"},
+                self.expected_receipt(),
+                current_head="a" * 40,
+                current_branch="codex/issue-115",
+                publication=True,
+            )
+
+    def test_closeout_policy_rejects_active_workspace_disposition(self):
+        with self.assertRaisesRegex(WorkspaceIsolationError, "disposition"):
+            validate_workspace_receipt(
+                self.native_receipt(),
+                self.expected_receipt(),
+                current_head="a" * 40,
+                current_branch="codex/issue-115",
+                publication=False,
+                allowed_dispositions={"integrated", "preserved"},
+            )
+        validate_workspace_receipt(
+            {**self.native_receipt(), "disposition": "integrated"},
+            self.expected_receipt(),
+            current_head="a" * 40,
+            current_branch="codex/issue-115",
+            publication=False,
+            allowed_dispositions={"integrated", "preserved"},
+        )
+
     def test_public_launcher_returns_only_an_untrusted_action_decision(self):
         root = Path(__file__).resolve().parents[1]
         process = subprocess.run(
@@ -192,7 +243,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
                 "-RequestJson",
                 json.dumps(REQUEST),
                 "-CapabilitiesJson",
-                json.dumps({"codex_project_tasks": True, "source_task_id": "task-1"}),
+                json.dumps({"codex_project_tasks": True, "source_task_id": "task-1", "native_task_status": "not_started"}),
             ],
             cwd="/tmp",
             text=True,
@@ -233,6 +284,27 @@ class WorkspaceIsolationTests(unittest.TestCase):
 
     def test_worker_handoff_requires_workspace_receipt_reference(self):
         root = Path(__file__).resolve().parents[1]
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+        common_value = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+        common = Path(common_value)
+        if not common.is_absolute():
+            common = root / common
+        receipt = {
+            "schema_version": 1,
+            "provider": "codex_managed_worktree",
+            "workspace_id": "workspace-1",
+            "repository_root": str(root.resolve()),
+            "git_common_dir": str(common.resolve()),
+            "run_id": "run-1",
+            "candidate_id": "issue-115",
+            "task_id": "task-1",
+            "thread_id": "thread-1",
+            "observed_head": head,
+            "head_mode": "branch",
+            "branch": "codex/issue-115-codex-native-workspace-isolation",
+            "owner": "codex_app",
+            "disposition": "active",
+        }
         handoff = {
             "issue_mirror": "docs/superpowers/issues/115-codex-native-workspace-isolation.md",
             "source_plan": "docs/superpowers/plans/2026-07-10-codex-native-workspace-isolation-plan.md",
@@ -247,15 +319,17 @@ class WorkspaceIsolationTests(unittest.TestCase):
             "branch": "codex/issue-115-codex-native-workspace-isolation",
             "branch_worktree_policy": "provider-selected isolated workspace",
             "workspace_provider": "codex_managed_worktree",
-            "workspace_receipt_ref": "sha256:" + "a" * 64,
+            "workspace_receipt": receipt,
+            "workspace_receipt_ref": str(hash_ref(receipt)),
+            "workflow_binding": {"run_id": "run-1", "candidate_id": "issue-115"},
             "reviewer_role": "main-thread-orchestrator",
             "proof_oracle": ["./scripts/validate.sh"],
             "validation": {"required_commands": ["./scripts/validate.sh"]},
             "topology_handoff": {"worker_must_not_merge": True},
             "merge_handoff": {"merge_owner": "merge-changes"},
             "required_skills": [
-                "superpowers:using-git-worktrees",
                 "superpowers:test-driven-development",
+                "superpowers:executing-plans",
                 "superpowers:verification-before-completion",
                 "superpowers:finishing-a-development-branch",
             ],
@@ -268,6 +342,25 @@ class WorkspaceIsolationTests(unittest.TestCase):
         )
         self.assertEqual(0, valid.returncode, valid.stdout + valid.stderr)
 
+        forged = json.loads(json.dumps(handoff))
+        forged["workspace_receipt_ref"] = "sha256:" + "b" * 64
+        forged_result = subprocess.run(
+            ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(forged)],
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(0, forged_result.returncode)
+
+        mismatched = json.loads(json.dumps(handoff))
+        mismatched["workspace_receipt"]["candidate_id"] = "other"
+        mismatched["workspace_receipt_ref"] = str(hash_ref(mismatched["workspace_receipt"]))
+        mismatch_result = subprocess.run(
+            ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(mismatched)],
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(0, mismatch_result.returncode)
+
         handoff.pop("workspace_receipt_ref")
         missing = subprocess.run(
             ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(handoff)],
@@ -279,6 +372,27 @@ class WorkspaceIsolationTests(unittest.TestCase):
 
     def test_worker_handoff_preparation_binds_workspace_reference(self):
         root = Path(__file__).resolve().parents[1]
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+        common_value = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+        common = Path(common_value)
+        if not common.is_absolute():
+            common = root / common
+        receipt = {
+            "schema_version": 1,
+            "provider": "codex_managed_worktree",
+            "workspace_id": "workspace-1",
+            "repository_root": str(root.resolve()),
+            "git_common_dir": str(common.resolve()),
+            "run_id": "run-1",
+            "candidate_id": "issue-115",
+            "task_id": "task-1",
+            "thread_id": "thread-1",
+            "observed_head": head,
+            "head_mode": "branch",
+            "branch": "codex/issue-115-codex-native-workspace-isolation",
+            "owner": "codex_app",
+            "disposition": "active",
+        }
         process = subprocess.run(
             [
                 "bash",
@@ -287,10 +401,12 @@ class WorkspaceIsolationTests(unittest.TestCase):
                 str(root),
                 "-IssueFile",
                 "docs/superpowers/issues/115-codex-native-workspace-isolation.md",
-                "-WorkspaceProvider",
-                "codex_managed_worktree",
-                "-WorkspaceReceiptRef",
-                "sha256:" + "a" * 64,
+                "-WorkspaceReceiptJson",
+                json.dumps(receipt),
+                "-WorkflowRunId",
+                "run-1",
+                "-CandidateId",
+                "issue-115",
             ],
             text=True,
             capture_output=True,
@@ -299,7 +415,8 @@ class WorkspaceIsolationTests(unittest.TestCase):
         self.assertEqual(0, process.returncode, process.stdout + process.stderr)
         handoff = json.loads(process.stdout)["handoff"]
         self.assertEqual("codex_managed_worktree", handoff["workspace_provider"])
-        self.assertEqual("sha256:" + "a" * 64, handoff["workspace_receipt_ref"])
+        self.assertEqual(str(hash_ref(receipt)), handoff["workspace_receipt_ref"])
+        self.assertNotIn("superpowers:using-git-worktrees", handoff["required_skills"])
 
 
 if __name__ == "__main__":

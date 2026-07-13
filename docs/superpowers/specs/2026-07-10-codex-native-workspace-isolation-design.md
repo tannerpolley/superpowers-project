@@ -30,7 +30,7 @@ Once a native task has been created, the workflow may not create a local fallbac
 | Provider | Separate checkout | Owner | Publication requirement | Cleanup |
 |---|---:|---|---|---|
 | `codex_managed_worktree` | yes | `codex_app` | named branch matching the current head | logical disposition only |
-| `local_git_worktree` | yes | `plugin` or `user` | named branch matching the current head | exact plugin-owned path only; user-owned is preserved |
+| `local_git_worktree` | yes | `plugin` or `user` | named branch matching the current head | vanilla finishing provenance only; user-owned is preserved |
 | `current_checkout` | no | `user` | route-specific | never treated as isolation |
 | `shared_subagent` | no | current task | not applicable | never treated as isolation |
 
@@ -76,7 +76,7 @@ Caller-selected mode, candidate, repository, or head values cannot widen the lif
 - local fallback is allowed only before native task creation;
 - detached native work is allowed, but publication requires a fresh branch-bound receipt.
 
-`merge-changes` consumes the existing kernel receipt chain. It never deletes app-owned or user-owned workspaces. Exact physical removal is allowed only for a plugin-owned local worktree after integration proof.
+`merge-changes` consumes the existing kernel receipt chain. It never deletes app-owned or user-owned workspaces. The receipt carries no deletion path and grants no physical-removal authority; plugin-owned local cleanup remains governed by the vanilla finishing skill's independently established worktree provenance.
 
 ## Non-Goals
 
@@ -95,7 +95,7 @@ Caller-selected mode, candidate, repository, or head values cannot widen the lif
 - Local fallback is blocked after native task creation.
 - The existing `workspace_receipt` kernel rule validates schema, provider, repository, run, candidate, task/thread, head, branch, and owner bindings.
 - Detached native receipts pass execution policy but fail publication policy.
-- App-owned and user-owned workspaces never authorize physical deletion; plugin-owned cleanup is exact-workspace only.
+- Workspace receipts never authorize physical deletion; any plugin-owned local cleanup remains subject to independent vanilla worktree provenance.
 - Owner skills use one provider policy and leave vanilla Superpowers unchanged.
 - Focused tests, owner scenario tests, the full validator, and required deployment gates pass.
 

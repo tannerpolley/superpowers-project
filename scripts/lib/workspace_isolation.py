@@ -57,6 +57,9 @@ def resolve_workspace_isolation(
         raise WorkspaceIsolationError(f"unsupported isolation requirement: {requirement}")
     if requirement == "none":
         return {"provider": "current_checkout", "operation": "adopt", "reason": "isolation is not required"}
+    native_status = capabilities.get("native_task_status")
+    if native_status not in {"not_started", "created"}:
+        raise WorkspaceIsolationError("native_task_status must be not_started or created")
 
     current = capabilities.get("current_workspace")
     if (
@@ -74,7 +77,7 @@ def resolve_workspace_isolation(
             "reason": "matching Codex worktree is already active",
         }
 
-    if capabilities.get("native_task_created") is True:
+    if native_status == "created":
         raise WorkspaceIsolationError("native task already exists; local fallback is forbidden")
     if capabilities.get("codex_project_tasks") is True:
         return {
@@ -88,7 +91,7 @@ def resolve_workspace_isolation(
             "operation": "invoke_vanilla_worktree_skill",
             "reason": "native worktrees are unavailable",
         }
-    if capabilities.get("delegation_provider") == "shared_subagent":
+    if capabilities.get("delegation_provider") == "shared_subagent" and requirement == "required":
         raise WorkspaceIsolationError("shared_subagent is delegation, not an isolation provider")
     if requirement == "preferred":
         return {"provider": "current_checkout", "operation": "adopt", "reason": "no isolation provider is available"}
@@ -102,10 +105,11 @@ def validate_workspace_receipt(
     current_head: str,
     current_branch: str,
     publication: bool,
+    allowed_dispositions: set[str] | None = None,
 ) -> None:
     """Validate one cooperative provider observation against kernel-owned bindings."""
     missing = sorted(_RECEIPT_FIELDS - set(receipt))
-    unknown = sorted(set(receipt) - _RECEIPT_FIELDS - {"workspace_path"})
+    unknown = sorted(set(receipt) - _RECEIPT_FIELDS)
     if missing or unknown:
         raise WorkspaceIsolationError(f"workspace receipt fields are invalid: missing={missing}, unknown={unknown}")
     if receipt["schema_version"] != 1:
@@ -115,7 +119,8 @@ def validate_workspace_receipt(
     owner = receipt["owner"]
     if provider not in _OWNER_BY_PROVIDER or owner not in _OWNER_BY_PROVIDER[provider]:
         raise WorkspaceIsolationError("workspace provider and owner are incompatible")
-    if receipt["disposition"] not in {"active", "integrated", "preserved"}:
+    dispositions = allowed_dispositions or {"active", "integrated", "preserved"}
+    if receipt["disposition"] not in dispositions:
         raise WorkspaceIsolationError("workspace disposition is invalid")
     if not isinstance(receipt["workspace_id"], str) or not receipt["workspace_id"]:
         raise WorkspaceIsolationError("workspace_id is required")
