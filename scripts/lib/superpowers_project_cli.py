@@ -2253,7 +2253,7 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
                     step(f"scenario tests {skill}", lambda scenario=scenario: run_must(["bash", str(scenario)], root, timeout=int(arg_value(args, "ScenarioTimeoutSeconds", default=600))))
         step("flat artifact root contract", lambda: command_validate_flat_roots(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("flat artifact root validator failed")))
         step("generated runtime state guardrails", lambda: command_validate_generated_state(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("generated runtime state validator failed")))
-        trial_receipts = root / "tests" / "workflow-trials" / "receipts" / "current"
+        trial_receipts = root / ".superpowers" / "runs" / "agent-trials" / "current"
         if trial_receipts.is_dir():
             receipt_handler = resolve_handler("command_validate_agent_usability_receipt")
             if receipt_handler is None:

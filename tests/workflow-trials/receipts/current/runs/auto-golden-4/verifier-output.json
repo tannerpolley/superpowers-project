@@ -1,1 +1,0 @@
-{"decision":"pass","reason":"Oracle expects pass; result.txt is complete, the hash-chained ledger replays correctly, exactly one authorized mutation occurred, and no user-input or external-mutation events occurred."}

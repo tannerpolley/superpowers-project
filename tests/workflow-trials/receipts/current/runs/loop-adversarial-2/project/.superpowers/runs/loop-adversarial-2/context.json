@@ -1,8 +1,0 @@
-{
-  "authorization_hash": "ae659a27a309475dd7962a36dee365b2ff95c70c5f370bd02837454f4e1641b2",
-  "authorization_path": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/tests/workflow-trials/receipts/current/runs/loop-adversarial-2/project/authorization.json",
-  "mode": "looping",
-  "plugin_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project",
-  "project_root": "/home/tnnrpolley21/Workspaces/Projects/superpowers-project/tests/workflow-trials/receipts/current/runs/loop-adversarial-2/project",
-  "run_id": "loop-adversarial-2"
-}

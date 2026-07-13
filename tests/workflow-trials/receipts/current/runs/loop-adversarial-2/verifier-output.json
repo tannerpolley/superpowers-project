@@ -1,1 +1,0 @@
-{"decision":"blocked","reason":"The replayable hash-chained ledger matches the oracle: exactly one mutation occurred, candidate two was never selected, and no continuation evidence exists. The repository remains pending, with authorization unchanged and scoped to the disposable project."}

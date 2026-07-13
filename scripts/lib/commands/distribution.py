@@ -48,7 +48,7 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         raise EvidenceError("evidence_missing", "current installed plugin provenance is required") from exc
 
-    receipt_dir_value = arg_value(args, "AgentReceiptDir", default="tests/workflow-trials/receipts/current")
+    receipt_dir_value = arg_value(args, "AgentReceiptDir", default=".superpowers/runs/agent-trials/current")
     receipt_dir = project_path_for(root, str(receipt_dir_value), "AgentReceiptDir")
     receipt_paths = sorted(receipt_dir.glob("**/receipt.json")) if receipt_dir.is_dir() else []
     if not receipt_paths:

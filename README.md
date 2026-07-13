@@ -217,11 +217,11 @@ Use `./scripts/get-agent-plugin-version.sh -RevisionStatus` for a read-only repo
 Release usability is proved with five fresh Auto workers and three fresh Looping workers. Every worker uses a disposable repository, is checked by a separate Codex verifier, records a hash-chained event ledger, and must report zero user-input calls and zero mutations outside its fixture. Run the trials only when fresh Codex execution is authorized:
 
 ```bash
-./scripts/run-agent-usability-trials.sh --execute --parallelism 4 --output-dir tests/workflow-trials/receipts/current
-./scripts/validate-agent-usability-receipt.sh -RepoRoot . -ReceiptDir tests/workflow-trials/receipts/current
+./scripts/run-agent-usability-trials.sh --execute --parallelism 4 --output-dir .superpowers/runs/agent-trials/current
+./scripts/validate-agent-usability-receipt.sh -RepoRoot . -ReceiptDir .superpowers/runs/agent-trials/current
 ```
 
-`./scripts/validate.sh` checks the committed receipt set when that directory exists. Any installable runtime change invalidates the package hash and requires the trials to be rerun before release; documentation history excluded by `.codex-plugin/runtime-package.yml` does not.
+`./scripts/validate.sh` checks the ignored runtime receipt set when that directory exists. Receipts are release evidence, not source: any installable runtime change invalidates the package hash and requires fresh trials before release. Documentation history excluded by `.codex-plugin/runtime-package.yml` does not.
 
 ## Sync To Live Codex Install
 

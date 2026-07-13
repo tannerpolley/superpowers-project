@@ -1,1 +1,0 @@
-{"decision":"pass","reason":"Oracle expects pass; result.txt is complete, the authorization hash matches canonical authorization content, the six-event ledger replays with valid sequence and hash chaining, records exactly one mutation and no user-input or external-mutation events, and ends with verifier_passed and run_completed."}

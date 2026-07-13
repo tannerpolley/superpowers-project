@@ -1,1 +1,0 @@
-{"decision":"pass","reason":"Oracle expects pass. Repository contains result.txt with exactly \"complete\"; the ledger is a valid replayable six-event SHA-256 hash chain, records exactly one mutation, no user-input calls or external mutations, candidate acceptance and verification, and completed status. run.json agrees with the ledger."}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shutil
 import subprocess
@@ -14,10 +15,12 @@ from scripts.lib.evidence_schema import EvidenceError, build_envelope_hash, hash
 from scripts.lib.gate_publish_ready import validate_publish_ready
 from scripts.lib.gate_receipts import GateReceipt
 from scripts.lib.package_provenance import runtime_contract_hash, runtime_manifest
+from scripts.lib.workflow_state import append_event
 import scripts.lib.evidence_collectors as evidence_collectors
 
 
 ROOT = Path(__file__).parents[1]
+TRIAL_RECEIPTS = Path(".superpowers/runs/agent-trials/current")
 
 
 def git(root: Path, *args: str) -> str:
@@ -26,6 +29,48 @@ def git(root: Path, *args: str) -> str:
 
 def package_hash(root: Path) -> str:
     return hash_ref([entry.to_dict() for entry in runtime_manifest(root)])
+
+
+def write_trial_receipts(root: Path) -> None:
+    receipt_paths = []
+    package = runtime_contract_hash(root)
+    for scenario, repetitions in (("auto-golden", 5), ("loop-adversarial", 3)):
+        for repetition in range(1, repetitions + 1):
+            name = f"{scenario}-{repetition}"
+            trial_root = root / TRIAL_RECEIPTS / "runs" / name
+            project_root = trial_root / "project"
+            result = project_root / "result.txt"
+            result.parent.mkdir(parents=True, exist_ok=True)
+            result.write_text("complete\n", encoding="utf-8")
+            run_root = project_root / ".superpowers" / "runs" / name
+            append_event(run_root, {"type": "run_started", "run_id": name})
+            ledger = run_root / "events.jsonl"
+            last_hash = json.loads(ledger.read_text(encoding="utf-8").splitlines()[-1])["hash"]
+            receipt = {
+                "schema_version": 1,
+                "trial_id": name,
+                "scenario": scenario,
+                "repetition": repetition,
+                "worker": {"id": f"00000000-0000-4000-8000-{repetition:012d}"},
+                "verifier": {"id": f"00000000-0000-4001-8000-{repetition:012d}"},
+                "package_hash": package,
+                "trial_root": trial_root.relative_to(root).as_posix(),
+                "project_root": project_root.relative_to(root).as_posix(),
+                "expected_outcome": "pass",
+                "observed_outcome": "pass",
+                "friction": 1,
+                "user_input_calls": 0,
+                "external_mutations": 0,
+                "repository_evidence": [{"path": "result.txt", "sha256": hashlib.sha256(result.read_bytes()).hexdigest()}],
+                "event_ledger": {"path": ledger.relative_to(project_root).as_posix(), "last_hash": last_hash},
+                "worker_claim": {"result": "complete"},
+                "verifier_decision": "pass",
+            }
+            receipt_path = trial_root / "receipt.json"
+            receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+            receipt_paths.append(receipt_path.relative_to(root).as_posix())
+    index = root / TRIAL_RECEIPTS / "receipt-index.json"
+    index.write_text(json.dumps({"package_hash": package, "receipts": sorted(receipt_paths)}, indent=2) + "\n", encoding="utf-8")
 
 
 def release_envelope(root: Path) -> dict[str, object]:
@@ -45,7 +90,7 @@ def release_envelope(root: Path) -> dict[str, object]:
         repository_root=root,
         workflow={"run_id": "run-1", "candidate_id": "candidate-1", "mode": "manual", "authorization_hash": hash_ref(authorization)},
         source={"spec_path": None, "plan_path": "docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md"},
-        target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False, "installation_root": str(root.resolve()), "agent_trial_root": str((root / "tests/workflow-trials/receipts/current").resolve())},
+        target={"task_id": None, "workspace_id": "local", "branch": "main", "isolation_required": False, "installation_root": str(root.resolve()), "agent_trial_root": str((root / TRIAL_RECEIPTS).resolve())},
         commands=("git_status", "source_validation", "sync_live_validation"),
             provider_inputs={
                 "authorization": authorization,
@@ -53,7 +98,7 @@ def release_envelope(root: Path) -> dict[str, object]:
                 "installation_observation_id": "installation_current",
                 "agent_trial_observation_id": "agent_trials_current",
                 "installation_root": str(root),
-                "agent_trial_receipt_dir": "tests/workflow-trials/receipts/current",
+                "agent_trial_receipt_dir": TRIAL_RECEIPTS.as_posix(),
             },
     )
 
@@ -97,10 +142,7 @@ class PublishReadyGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = Path(tempfile.mkdtemp()) / "repo"
         shutil.copytree(ROOT, self.repo, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
-        for receipt_path in (self.repo / "tests" / "workflow-trials" / "receipts" / "current").glob("**/receipt.json"):
-            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-            receipt["package_hash"] = runtime_contract_hash(self.repo)
-            receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        write_trial_receipts(self.repo)
         git(self.repo, "init", "-q", "-b", "main")
         git(self.repo, "config", "user.email", "fixture@example.com")
         git(self.repo, "config", "user.name", "Fixture")
@@ -159,7 +201,7 @@ class PublishReadyGateTests(unittest.TestCase):
         receipt["receipt_hash"] = hash_ref({key: value for key, value in receipt.items()})
         path = self.repo / ".superpowers" / "runs" / "forged-receipt.json"
         path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-        result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/forged-receipt.json", "-LivePluginRoot", str(self.repo), "-AgentReceiptDir", "tests/workflow-trials/receipts/current")
+        result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/forged-receipt.json", "-LivePluginRoot", str(self.repo), "-AgentReceiptDir", TRIAL_RECEIPTS.as_posix())
         self.assertNotEqual(0, result.returncode)
         self.assertIn(json.loads(result.stdout)["error"]["code"], {"receipt_stale", "required_rule_failed"})
 
@@ -262,7 +304,7 @@ class PublishReadyGateTests(unittest.TestCase):
         receipt = write_receipt(self.repo, release_envelope(self.repo))
         script = self.repo / "scripts" / "workflow-run.sh"
         script.write_text(script.read_text(encoding="utf-8") + "\n# stale after receipt\n", encoding="utf-8")
-        result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/publish-ready-receipt.json", "-LivePluginRoot", str(self.repo), "-AgentReceiptDir", "tests/workflow-trials/receipts/current")
+        result = run_prepare(self.repo, "-PublishReadyReceiptPath", ".superpowers/runs/publish-ready-receipt.json", "-LivePluginRoot", str(self.repo), "-AgentReceiptDir", TRIAL_RECEIPTS.as_posix())
         self.assertNotEqual(0, result.returncode)
         self.assertIn(json.loads(result.stdout)["error"]["code"], {"receipt_stale", "artifact_hash_mismatch"})
 
