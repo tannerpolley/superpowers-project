@@ -42,8 +42,8 @@ class RuntimePackageTests(unittest.TestCase):
             target = Path(tmp) / "repo"
             shutil.copytree(ROOT, target)
             first = runtime_contract_hash(target)
-            history = target / "docs" / "superpowers" / "specs" / "2026-07-10-contract-distribution-simplification-design.md"
-            history.write_text(history.read_text() + "\nexcluded history change\n")
+            history = target / "docs" / "superpowers" / "specs" / "completed-history.md"
+            history.write_text("excluded history fixture\n")
             self.assertEqual(first, runtime_contract_hash(target))
             script = target / "scripts" / "workflow-run.sh"
             script.write_text(script.read_text() + "\n# changed\n")

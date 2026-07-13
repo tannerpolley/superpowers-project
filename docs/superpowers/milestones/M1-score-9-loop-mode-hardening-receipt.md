@@ -65,8 +65,6 @@
 - `scripts/sync-live.sh --validate` is the live install proof command.
 - `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` is the version freshness proof command.
 - `skills/align-project/scripts/align-project.sh -RepoRoot . -Mode GitHubAware -TrackerHygiene` is the tracker hygiene proof command.
-- `docs/superpowers/milestones/M0-governance.md` links this receipt.
-- `docs/superpowers/milestones/M1-source-of-truth.md` links this receipt.
 
 ## Project Context Roles
 
@@ -74,5 +72,5 @@
 - `docs/superpowers/backlog/ACTIVE.md` is the active Looping Mode candidate source.
 - `docs/superpowers/examples/workflow-golden-paths.md` is an examples surface, not the route authority.
 - `docs/superpowers/examples/worker-handoff-packets.md` is packet shape evidence for orchestrated work.
-- `docs/superpowers/milestones/*receipt*.md` files are validation receipts and milestone history.
+- This runtime-included receipt is a current validation input, not a general history archive.
 - `.chatgpt/**` and `.superpowers/**` are not canonical project docs. `.chatgpt/**` is handoff input; `.superpowers/**` is generated runtime evidence.

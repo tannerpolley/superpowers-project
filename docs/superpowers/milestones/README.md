@@ -1,19 +1,7 @@
 # Superpowers Project Milestones
 
-Milestone pages explain how specs, plans, issue mirrors, and GitHub milestones fit into the larger project roadmap.
+GitHub Milestones are the durable roadmap and history. Local milestone pages are temporary working views and should be deleted after their active issues close.
 
-`$superpowers-project:setup-project` owns creation and repair of this roadmap surface. `$superpowers-project:orchestrate-issues` owns worker-thread implementation routes when a milestone issue should be delegated to a Codex worktree worker.
+Keep a local milestone receipt only when active runtime code or validation reads it. The current retained runtime receipt is [M1 score-9 loop-mode hardening](M1-score-9-loop-mode-hardening-receipt.md).
 
-Milestone pages are index views, not canonical artifact roots. Canonical specs, plans, and issues remain flat under:
-
-- `docs/superpowers/specs`
-- `docs/superpowers/plans`
-- `docs/superpowers/issues`
-
-Represent milestone/category views through frontmatter plus milestone indexes. Link to flat canonical artifacts instead of creating nested `specs`, `plans`, or `issues` folders under a milestone directory. Nested canonical milestone artifact folders are drift unless explicitly marked as generated index/view output.
-
-## Milestones
-
-- [M0 - Governance](M0-governance.md)
-- [M1 - Source Of Truth](M1-source-of-truth.md)
-- [M2 - Distribution](M2-distribution.md)
+Do not create nested `specs`, `plans`, or `issues` folders here. Canonical working artifacts remain flat under `docs/superpowers/specs`, `docs/superpowers/plans`, and `docs/superpowers/issues`.

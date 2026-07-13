@@ -13,6 +13,8 @@ This repository is the canonical source of truth for the local Superpowers Proje
 - New implementation plans belong under `docs/superpowers/plans/`.
 - Local GitHub issue mirrors belong under `docs/superpowers/issues/`.
 - Roadmap milestone pages belong under `docs/superpowers/milestones/`.
+- Treat specs, plans, issue mirrors, and milestone pages as working artifacts. Delete them after the related work is merged or closed unless active runtime code, validation, or an explicit retention marker still requires them.
+- Use Git history and GitHub as the durable record of completed work; do not retain duplicate local history summaries by default.
 - Do not create canonical artifacts under `docs/ideas`, root-level `docs/issues`, root-level `docs/plans`, or retired `docs/milestones/<milestone-folder>/ideas|issues|plans`.
 
 ## Required Post-Revision Loop
