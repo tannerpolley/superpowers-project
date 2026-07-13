@@ -21,7 +21,7 @@
 | `create-issues` | Vertical-slice GitHub issues and synced local issue mirrors. | `docs/superpowers/issues` | `skills/create-issues/scripts/validate-issue-mirror.sh` | `resolve-issue`<br>`orchestrate-issues` |
 | `implement-plan` | Approved non-issue implementation plan execution with branch-backed proof. | `docs/superpowers/plans` | `skills/implement-plan/scripts/test-scenarios.sh` | `merge-changes` |
 | `initiate-workflow` | Route setup, brainstorming, audits, planning, issue creation, issue resolution, orchestration, merge cleanup, and alignment checks. | `.superpowers/runs` | `scripts/validate-workflow-mode-ledger.sh`<br>`scripts/validate-auto-mode-authorization.sh` | `setup-project`<br>`brainstorm-spec`<br>`audit-project`<br>`write-plan`<br>`create-issues`<br>`resolve-issue`<br>`orchestrate-issues`<br>`merge-changes`<br>`align-project`<br>`loop-controller` |
-| `loop-controller` | Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation gates. | `.superpowers/runs` | `skills/loop-controller/scripts/validate-run-ledger.sh`<br>`skills/loop-controller/scripts/validate-budget.sh`<br>`skills/loop-controller/scripts/validate-terminal-closeout.sh` | `brainstorm-spec`<br>`write-plan`<br>`create-issues`<br>`resolve-issue`<br>`orchestrate-issues`<br>`merge-changes`<br>`audit-project`<br>`align-project` |
+| `loop-controller` | Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and policy continuation. | `.superpowers/runs` | `skills/loop-controller/scripts/validate-run-ledger.sh`<br>`skills/loop-controller/scripts/validate-budget.sh`<br>`skills/loop-controller/scripts/validate-terminal-closeout.sh` | `brainstorm-spec`<br>`write-plan`<br>`create-issues`<br>`resolve-issue`<br>`orchestrate-issues`<br>`merge-changes`<br>`audit-project`<br>`align-project` |
 | `merge-changes` | Review, approve, merge, clean up, close linked issues, and record final proof for PR-ready or local branch work. | `docs/superpowers/issues`<br>`docs/superpowers/plans` | `skills/merge-changes/scripts/validate-terminal-closeout.sh`<br>`skills/merge-changes/scripts/validate-merge-decision.sh` | `write-plan`<br>`create-issues`<br>`resolve-issue`<br>`orchestrate-issues`<br>`align-project` |
 | `orchestrate-issues` | Delegate a ready issue to a Codex worktree worker while the current thread reviews and integrates. | `docs/superpowers/issues`<br>`docs/superpowers/examples/worker-handoff-packets.md` | `skills/orchestrate-issues/scripts/validate-worker-handoff.sh`<br>`skills/orchestrate-issues/scripts/test-scenarios.sh`<br>`scripts/validate-worker-packets.sh`<br>`scripts/test-worker-packets.sh` | `merge-changes`<br>`resolve-issue` |
 | `resolve-issue` | Direct current-thread implementation for one ready GitHub issue mirror. | `docs/superpowers/issues`<br>`docs/superpowers/plans` | `skills/resolve-issue/scripts/validate-setup.sh`<br>`skills/resolve-issue/scripts/validate-pr-ready.sh`<br>`skills/resolve-issue/scripts/validate-terminal-closeout.sh` | `merge-changes`<br>`resolve-issue`<br>`orchestrate-issues` |
@@ -31,9 +31,9 @@
 ## Completion Scope
 
 - `candidate`: the selected candidate has acceptance and verifier proof.
-- `route`: the one authorized Auto route has closed with acceptance and verifier proof.
+- `outcome`: the one authorized Auto outcome has closed with acceptance and verifier proof.
 - `iteration`: the Looping candidate has acceptance, verifier, and budget evidence.
-- `project`: reserved for explicit final health proof; route completion never implies project completion.
+- `project`: reserved for explicit final health proof; outcome completion never implies project completion.
 
 ## Required Local Gates
 

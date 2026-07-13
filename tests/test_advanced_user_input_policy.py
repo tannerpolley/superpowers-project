@@ -16,5 +16,13 @@ class AdvancedUserInputPolicyTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["phase"], "advanced-user-input-policy")
 
+    def test_shared_policy_owns_mode_aware_gate_behavior(self):
+        text = (ROOT / "skills/advanced-user-input/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("## Lifecycle Mode Policy", text)
+        self.assertIn("`Manual` returns `ask`", text)
+        self.assertIn("`Auto` and `Looping` return `decide`", text)
+        self.assertIn("scripts/workflow-run.sh -Action resolve-gate", text)
+        self.assertIn("This lifecycle mode policy takes precedence", text)
+
 if __name__ == "__main__":
     unittest.main()

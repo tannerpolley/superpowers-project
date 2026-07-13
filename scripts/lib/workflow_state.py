@@ -31,12 +31,16 @@ class RunProjection:
     run_id: str | None = None
     status: str = "created"
     selected_candidate: str | None = None
+    selected_candidates: list[str] = field(default_factory=list)
     accepted_candidates: list[str] = field(default_factory=list)
     verified_candidates: list[str] = field(default_factory=list)
     budget_rechecks: list[str] = field(default_factory=list)
+    continuation_evidence: dict[str, dict[str, str]] = field(default_factory=dict)
     continuation_grants: list[str] = field(default_factory=list)
+    gate_decisions: list[dict[str, Any]] = field(default_factory=list)
     mutation_count: int = 0
     project_health_verified: bool = False
+    last_event_type: str | None = None
     events: int = 0
     last_hash: str = "0" * 64
 
@@ -45,12 +49,16 @@ class RunProjection:
             "run_id": self.run_id,
             "status": self.status,
             "selected_candidate": self.selected_candidate,
+            "selected_candidates": list(self.selected_candidates),
             "accepted_candidates": list(self.accepted_candidates),
             "verified_candidates": list(self.verified_candidates),
             "budget_rechecks": list(self.budget_rechecks),
+            "continuation_evidence": dict(self.continuation_evidence),
             "continuation_grants": list(self.continuation_grants),
+            "gate_decisions": list(self.gate_decisions),
             "mutation_count": self.mutation_count,
             "project_health_verified": self.project_health_verified,
+            "last_event_type": self.last_event_type,
             "events": self.events,
             "last_hash": self.last_hash,
         }
@@ -59,6 +67,8 @@ class RunProjection:
 def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
     kind = event.get("type")
     candidate = event.get("candidate")
+    if projection.status in {"stopped", "completed"}:
+        raise WorkflowStateError(f"workflow is already {projection.status}")
     if kind == "run_started":
         if projection.events:
             raise WorkflowStateError("run_started must be the first event")
@@ -67,8 +77,13 @@ def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
     elif kind == "candidate_selected":
         if not candidate:
             raise WorkflowStateError("candidate_selected requires candidate")
+        candidate_id = str(candidate)
+        if candidate_id in projection.selected_candidates:
+            raise WorkflowStateError("candidate is already selected")
         if projection.selected_candidate is not None:
             previous = projection.selected_candidate
+            if projection.last_event_type != "continuation_granted":
+                raise WorkflowStateError("second candidate must immediately follow continuation grant")
             ready = (
                 previous in projection.accepted_candidates
                 and previous in projection.verified_candidates
@@ -77,22 +92,42 @@ def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
             )
             if not ready:
                 raise WorkflowStateError("second candidate requires acceptance, verifier, budget recheck, and continuation grant")
-        projection.selected_candidate = str(candidate)
-    elif kind in {"candidate_accepted", "verifier_passed", "budget_rechecked", "continuation_granted"}:
+        projection.selected_candidate = candidate_id
+        projection.selected_candidates.append(candidate_id)
+    elif kind in {"candidate_accepted", "verifier_passed", "continuation_granted"}:
         if not candidate:
             raise WorkflowStateError(f"{kind} requires candidate")
+        if kind == "continuation_granted" and projection.last_event_type != "budget_rechecked":
+            raise WorkflowStateError("continuation grant must immediately follow budget recheck")
         target = {
             "candidate_accepted": projection.accepted_candidates,
             "verifier_passed": projection.verified_candidates,
-            "budget_rechecked": projection.budget_rechecks,
             "continuation_granted": projection.continuation_grants,
         }[kind]
         if str(candidate) not in target:
             target.append(str(candidate))
+    elif kind == "budget_rechecked":
+        evidence = event.get("evidence")
+        required = {"budget_path", "budget_hash", "health_path", "health_hash"}
+        if not candidate or not isinstance(evidence, Mapping) or any(not str(evidence.get(key) or "") for key in required):
+            raise WorkflowStateError("budget_rechecked requires candidate and bound budget/health evidence")
+        candidate_id = str(candidate)
+        if candidate_id not in projection.budget_rechecks:
+            projection.budget_rechecks.append(candidate_id)
+        projection.continuation_evidence[candidate_id] = {key: str(evidence[key]) for key in required}
     elif kind == "mutation_applied":
         if projection.selected_candidate is None:
             raise WorkflowStateError("mutation requires a selected candidate")
         projection.mutation_count += 1
+    elif kind == "gate_resolved":
+        gate_id = str(event.get("gate_id") or "")
+        selected_option = str(event.get("selected_option") or "")
+        source = str(event.get("source") or "")
+        if not gate_id or not selected_option or source not in {"user", "policy"}:
+            raise WorkflowStateError("gate_resolved requires gate_id, selected_option, and source")
+        projection.gate_decisions.append(
+            {"gate_id": gate_id, "selected_option": selected_option, "source": source}
+        )
     elif kind == "project_health_verified":
         projection.project_health_verified = True
     elif kind == "run_stopped":
@@ -101,6 +136,7 @@ def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
         projection.status = "completed"
     else:
         raise WorkflowStateError(f"unsupported event type: {kind}")
+    projection.last_event_type = str(kind)
 
 
 def append_event(run_root: str | os.PathLike[str], event: Mapping[str, Any]) -> dict[str, Any]:

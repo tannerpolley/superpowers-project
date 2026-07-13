@@ -397,10 +397,12 @@ def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
         required = [
             "question_id",
             "source",
-            "selected_authority",
-            "source_spec",
+            "selected_mode",
+            "repo_root",
+            "request_fingerprint",
+            "autonomy_scope",
+            "candidate_scope",
             "route_policy",
-            "decision_policy",
             "merge_permission",
             "mutation_scope",
             "required_proof",
@@ -409,29 +411,32 @@ def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
         for field in required:
             if field not in auth:
                 raise ScriptError(f"missing {field}")
-        if auth.get("question_id") != "project_auto_mode_authorization":
-            raise ScriptError("question_id must be project_auto_mode_authorization")
+        if auth.get("question_id") != "project_workflow_mode":
+            raise ScriptError("question_id must be project_workflow_mode")
         source = auth.get("source")
         allowed_sources = {"request_user_input"}
         if os.environ.get("SUPERPOWERS_TRIAL_NONINTERACTIVE") == "1":
             allowed_sources.add("trial-fixture")
         if source not in allowed_sources:
             raise ScriptError("source must be request_user_input, or trial-fixture in an explicit noninteractive trial")
-        if auth.get("selected_authority") != "bounded-auto-merge":
-            raise ScriptError("selected_authority must be bounded-auto-merge")
-        spec = resolve_under(root, str(auth.get("source_spec", "")), "source_spec")
-        if not normalize_rel(spec, root).startswith("docs/superpowers/specs/") or not spec.is_file():
-            raise ScriptError("source_spec must exist under docs/superpowers/specs")
+        if auth.get("selected_mode") != "auto":
+            raise ScriptError("selected_mode must be auto")
+        if Path(str(auth.get("repo_root"))).resolve() != root:
+            raise ScriptError("repo_root must match the active repository")
+        if not re.fullmatch(r"[0-9a-f]{64}", str(auth.get("request_fingerprint", ""))):
+            raise ScriptError("request_fingerprint must be a lowercase SHA-256 digest")
+        if auth.get("autonomy_scope") != "one-outcome-lifecycle":
+            raise ScriptError("autonomy_scope must be one-outcome-lifecycle")
+        candidates = auth.get("candidate_scope")
+        if not isinstance(candidates, list) or len(candidates) != 1 or not str(candidates[0]).strip():
+            raise ScriptError("candidate_scope must name exactly one outcome")
         route = auth.get("route_policy") or {}
         if route.get("selected_mode") != "agent-chooses":
             raise ScriptError("route_policy.selected_mode must be agent-chooses")
-        if "worker_route" in route:
-            raise ScriptError("route_policy.worker_route is obsolete; use route_policy.issue_route")
-        if route.get("issue_route") != "direct-inline-resolve-issue":
-            raise ScriptError("route_policy.issue_route must be direct-inline-resolve-issue")
-        decision = auth.get("decision_policy") or {}
-        if decision.get("selected_mode") != "recorded-defaults" or decision.get("stop_outside_policy") is not True:
-            raise ScriptError("decision_policy must use recorded-defaults and stop_outside_policy true")
+        if route.get("issue_route") != "evidence-based":
+            raise ScriptError("route_policy.issue_route must be evidence-based")
+        if route.get("one_outcome_only") is not True or route.get("continue_to_next_candidate") is True:
+            raise ScriptError("route_policy must stay within one outcome")
         merge = auth.get("merge_permission") or {}
         if merge.get("selected_mode") != "preauthorized-after-clean-premerge" or merge.get("require_clean_premerge") is not True:
             raise ScriptError("merge_permission must require clean premerge")
@@ -450,16 +455,14 @@ def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
 
 
 def command_test_auto_mode_contract(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise accepted and rejected bounded-Auto authorization fixtures."""
+    """Exercise accepted and rejected one-outcome Auto authorization fixtures."""
     with tempfile.TemporaryDirectory(prefix="auto-mode-contract-") as tmp:
         root = Path(tmp)
-        (root / "docs/superpowers/specs").mkdir(parents=True)
-        (root / "docs/superpowers/specs/source.md").write_text("# fixture\n", encoding="utf-8")
         auth = {
-            "question_id": "project_auto_mode_authorization", "source": "request_user_input",
-            "selected_authority": "bounded-auto-merge", "source_spec": "docs/superpowers/specs/source.md",
-            "route_policy": {"selected_mode": "agent-chooses", "issue_route": "direct-inline-resolve-issue"},
-            "decision_policy": {"selected_mode": "recorded-defaults", "stop_outside_policy": True},
+            "question_id": "project_workflow_mode", "source": "request_user_input", "selected_mode": "auto",
+            "repo_root": str(root), "request_fingerprint": hashlib.sha256(b"raw request").hexdigest(),
+            "autonomy_scope": "one-outcome-lifecycle", "candidate_scope": ["raw-request"],
+            "route_policy": {"selected_mode": "agent-chooses", "issue_route": "evidence-based", "one_outcome_only": True, "continue_to_next_candidate": False},
             "merge_permission": {"selected_mode": "preauthorized-after-clean-premerge", "require_clean_premerge": True},
             "mutation_scope": ["current-repo", "development-branch"],
             "required_proof": ["plan-proof-oracle", "verification-receipts", "cleanup-hook", "premerge-proof", "closeout-proof"],
@@ -469,7 +472,7 @@ def command_test_auto_mode_contract(ctx: Context, args: dict[str, Any]) -> int:
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             accepted = command_validate_auto_mode(ctx, {"RepoRoot": str(root), "AuthorizationPath": str(path)})
-        auth["route_policy"]["issue_route"] = "wrong-route"; path.write_text(json.dumps(auth), encoding="utf-8")
+        auth["question_id"] = "project_auto_mode_authorization"; path.write_text(json.dumps(auth), encoding="utf-8")
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             rejected = command_validate_auto_mode(ctx, {"RepoRoot": str(root), "AuthorizationPath": str(path)})
@@ -518,13 +521,17 @@ def command_validate_workflow_mode(ctx: Context, args: dict[str, Any]) -> int:
     if mode == "manual" and ledger.get("autonomy_scope") != "ask-every-material-decision":
         raise ScriptError("manual mode must use ask-every-material-decision autonomy_scope")
     if mode == "auto":
-        if ledger.get("autonomy_scope") != "one-route":
-            raise ScriptError("auto mode must be one-route autonomy")
+        if ledger.get("autonomy_scope") != "one-outcome-lifecycle":
+            raise ScriptError("auto mode must use one-outcome-lifecycle autonomy_scope")
+        if not re.fullmatch(r"[0-9a-f]{64}", str(ledger.get("request_fingerprint", ""))):
+            raise ScriptError("auto mode requires a request_fingerprint")
         route = ledger.get("route_policy") or {}
-        if route.get("one_route_only") is not True:
-            raise ScriptError("auto mode requires route_policy.one_route_only true")
+        if route.get("one_outcome_only") is not True:
+            raise ScriptError("auto mode requires route_policy.one_outcome_only true")
+        if route.get("issue_route") != "evidence-based":
+            raise ScriptError("auto mode requires evidence-based issue routing")
         if route.get("continue_to_next_candidate") is True:
-            raise ScriptError("auto mode must remain one-route and cannot continue to next candidate")
+            raise ScriptError("auto mode cannot continue to another candidate")
     if mode == "looping":
         if ledger.get("autonomy_scope") != "bounded-loop":
             raise ScriptError("looping mode must use bounded-loop autonomy_scope")
@@ -800,6 +807,10 @@ def command_validate_advanced_user_input_policy(ctx: Context, args: dict[str, An
     require_text(shared, [
         "request_user_input",
         "request_agent_input",
+        "## Lifecycle Mode Policy",
+        "scripts/workflow-run.sh -Action resolve-gate",
+        "`Manual` returns `ask`",
+        "`Auto` and `Looping` return `decide`",
         "Use Stop for mid-loop exits",
         "Use Done only for verified final states",
         "Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop",
@@ -2242,7 +2253,7 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
                     step(f"scenario tests {skill}", lambda scenario=scenario: run_must(["bash", str(scenario)], root, timeout=int(arg_value(args, "ScenarioTimeoutSeconds", default=600))))
         step("flat artifact root contract", lambda: command_validate_flat_roots(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("flat artifact root validator failed")))
         step("generated runtime state guardrails", lambda: command_validate_generated_state(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("generated runtime state validator failed")))
-        trial_receipts = root / "tests" / "workflow-trials" / "receipts" / "current"
+        trial_receipts = root / ".superpowers" / "runs" / "agent-trials" / "current"
         if trial_receipts.is_dir():
             receipt_handler = resolve_handler("command_validate_agent_usability_receipt")
             if receipt_handler is None:

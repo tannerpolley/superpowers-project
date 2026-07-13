@@ -28,7 +28,7 @@ def load_profiles(path: Path) -> dict[str, GovernanceProfile]:
         if not isinstance(value, dict):
             raise CompletionError(f"profile {name} must be a mapping")
         claims = value.get("completion_claims")
-        if not isinstance(claims, list) or not claims or any(claim not in {"candidate", "route", "iteration", "project"} for claim in claims):
+        if not isinstance(claims, list) or not claims or any(claim not in {"candidate", "route", "outcome", "iteration", "project"} for claim in claims):
             raise CompletionError(f"profile {name} has invalid completion claims")
         profiles[name] = GovernanceProfile(
             name=name,
@@ -59,10 +59,10 @@ def validate_completion_claim(
         raise CompletionError("completion requires candidate acceptance")
     if candidate not in projection.verified_candidates:
         raise CompletionError("completion requires verifier proof")
-    if claim == "route":
+    if claim in {"route", "outcome"}:
         scope = authorization.get("candidate_scope") or []
         if profile.name == "auto" and (len(scope) != 1 or scope[0] != candidate):
-            raise CompletionError("Auto route completion must match its one authorized candidate")
+            raise CompletionError("Auto outcome completion must match its one authorized candidate")
     elif claim == "iteration":
         if candidate not in projection.budget_rechecks:
             raise CompletionError("iteration completion requires budget recheck evidence")

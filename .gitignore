@@ -10,7 +10,5 @@ node_modules/
 .idea/
 .chatgpt/
 .superpowers/
-!tests/workflow-trials/receipts/**/project/.superpowers/
-!tests/workflow-trials/receipts/**/project/.superpowers/**
 .worktrees/
 plans/**/preview.html

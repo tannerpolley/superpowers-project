@@ -1,1 +1,0 @@
-{"decision":"pass","reason":"Oracle expects pass; repository contains result.txt with complete, and the replayable hash-chained ledger shows one authorized candidate, exactly one mutation, acceptance, verification, and completed status, with no user-input or external-mutation events."}

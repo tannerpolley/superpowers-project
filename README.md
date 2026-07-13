@@ -21,7 +21,7 @@ The canonical plugin identity is `superpowers-project`, the GitHub repository is
 - `$superpowers-project:brainstorm-spec`: runs Superpowers brainstorming with native grilling.
 - `$superpowers-project:write-plan`: writes Superpowers implementation plans with project context.
 - `$superpowers-project:companion-interface`: creates and refreshes repo-owned Agent-Native visual-plan or visual-recap MDX artifacts for rich review while native Codex input remains the approval channel.
-- `$superpowers-project:loop-controller`: coordinates repeated workflow runs with local run ledgers, budgets, candidate selection, verifier proof, metrics, and native continuation gates.
+- `$superpowers-project:loop-controller`: coordinates repeated workflow runs with local run ledgers, budgets, candidate selection, verifier proof, metrics, and policy continuation.
 - `$superpowers-project:implement-plan`: implements an approved plan on a development branch without creating GitHub issue mirrors.
 - `$superpowers-project:create-issues`: creates GitHub issue mirrors and GitHub issues from approved plans/specs.
 - `$superpowers-project:resolve-issue`: resolves one issue directly in the current thread with native `/goal` and Superpowers execution.
@@ -39,7 +39,7 @@ The companion route uses BuilderIO/Agent-Native MDX as a visual guide and audit 
 - Use `visual-plan` for forward-looking specs, implementation plans, route choices, architecture decisions, and review-before-work.
 - Use `visual-recap` for after-action PR, branch, commit, validation, audit, merge, and workflow proof.
 - Skip the companion for tiny obvious edits that review faster as a plain diff or short chat note.
-- Native Codex chat and `request_user_input` remain the approval boundary for push, publish, merge, live sync, GitHub mutation, and final Done.
+- Native Codex chat and `request_user_input` remain the Manual approval boundary; Auto and Looping rely on the startup mode ledger plus existing proof gates.
 
 ## Source-Of-Truth Roles
 
@@ -84,9 +84,9 @@ The Docker preview is a local rendering bridge for source-controlled MDX. Hosted
 
 ## Native Q&A Workflow
 
-The main workflow is a chain of small native Codex questions. Each skill summarizes what it produced, asks `Continue?`, and then starts the selected next skill automatically. The top-level closeout options are always `Yes`, `Revisit`, and `Stop`. When `Yes` has multiple possible next skills, the agent asks a nested route question after `Yes` is selected. Nested Yes menus list only forward routes, nested Revisit menus list only review, revision, repair, recovery, rerun, or evidence routes, and terminal options are not repeated inside those nested route menus.
+Manual workflow is a chain of small native Codex questions. Auto and Looping use the same graph but resolve routine gates through the shared lifecycle mode policy. In Manual, each skill summarizes what it produced and asks `Continue?`; top-level closeout options are `Yes`, `Revisit`, and `Stop`.
 
-At startup, `$superpowers-project:initiate-workflow` first asks `project_workflow_mode` with `Manual Mode`, `Auto Mode`, and `Looping Mode`. Manual Mode asks at each material decision. Auto Mode is selected there, is one-route autonomy only, and stops at route closeout instead of continuing to another candidate. Looping Mode routes to `$superpowers-project:loop-controller`, which selects one ready maintenance candidate at a time, routes the actual work to the owning skill, and re-checks budget before another candidate.
+At startup, `$superpowers-project:initiate-workflow` asks `project_workflow_mode` once with `Manual Mode`, `Auto Mode`, and `Looping Mode`. Manual Mode asks at material gates. Auto Mode authorizes one outcome lifecycle across owner skills. Looping Mode runs those outcomes one candidate at a time and continues only while its startup budget, verifier, and health policy pass.
 
 ![Native Q&A main workflow flowchart](docs/assets/native-qa-main-flow.svg)
 
@@ -217,11 +217,11 @@ Use `./scripts/get-agent-plugin-version.sh -RevisionStatus` for a read-only repo
 Release usability is proved with five fresh Auto workers and three fresh Looping workers. Every worker uses a disposable repository, is checked by a separate Codex verifier, records a hash-chained event ledger, and must report zero user-input calls and zero mutations outside its fixture. Run the trials only when fresh Codex execution is authorized:
 
 ```bash
-./scripts/run-agent-usability-trials.sh --execute --parallelism 4 --output-dir tests/workflow-trials/receipts/current
-./scripts/validate-agent-usability-receipt.sh -RepoRoot . -ReceiptDir tests/workflow-trials/receipts/current
+./scripts/run-agent-usability-trials.sh --execute --parallelism 4 --output-dir .superpowers/runs/agent-trials/current
+./scripts/validate-agent-usability-receipt.sh -RepoRoot . -ReceiptDir .superpowers/runs/agent-trials/current
 ```
 
-`./scripts/validate.sh` checks the committed receipt set when that directory exists. Any installable runtime change invalidates the package hash and requires the trials to be rerun before release; documentation history excluded by `.codex-plugin/runtime-package.yml` does not.
+`./scripts/validate.sh` checks the ignored runtime receipt set when that directory exists. Receipts are release evidence, not source: any installable runtime change invalidates the package hash and requires fresh trials before release. Documentation history excluded by `.codex-plugin/runtime-package.yml` does not.
 
 ## Sync To Live Codex Install
 

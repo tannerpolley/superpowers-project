@@ -48,7 +48,7 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         raise EvidenceError("evidence_missing", "current installed plugin provenance is required") from exc
 
-    receipt_dir_value = arg_value(args, "AgentReceiptDir", default="tests/workflow-trials/receipts/current")
+    receipt_dir_value = arg_value(args, "AgentReceiptDir", default=".superpowers/runs/agent-trials/current")
     receipt_dir = project_path_for(root, str(receipt_dir_value), "AgentReceiptDir")
     receipt_paths = sorted(receipt_dir.glob("**/receipt.json")) if receipt_dir.is_dir() else []
     if not receipt_paths:
@@ -104,14 +104,14 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
         "installation_observation_id": "installation_current",
         "agent_trial_observation_id": "agent_trials_current",
         "installation_root": str(live_root),
-        "agent_trial_receipt_dir": str(arg_value(args, "AgentReceiptDir", default=".superpowers/runs")),
+        "agent_trial_receipt_dir": str(receipt_dir_value),
     }
     request = CollectionRequest(
         gate="publish_ready",
         repository_root=root,
         workflow=workflow,
         source=source,
-        target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False, "installation_root": str(live_root), "agent_trial_root": str((root / str(arg_value(args, "AgentReceiptDir", default=".superpowers/runs"))).resolve())},
+        target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False, "installation_root": str(live_root), "agent_trial_root": str(receipt_dir.resolve())},
         commands=("source_validation", "sync_live_validation"),
         provider_inputs=provider_inputs,
     )

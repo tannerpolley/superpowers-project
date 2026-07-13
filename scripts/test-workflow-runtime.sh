@@ -22,8 +22,19 @@ with tempfile.TemporaryDirectory(prefix="workflow-runtime-") as tmp:
         pass
     else:
         raise SystemExit("second candidate was not blocked")
-    for kind in ("candidate_accepted", "verifier_passed", "budget_rechecked", "continuation_granted"):
-        append_event(root, {"type": kind, "candidate": "one"})
+    append_event(root, {"type": "candidate_accepted", "candidate": "one"})
+    append_event(root, {"type": "verifier_passed", "candidate": "one"})
+    append_event(root, {
+        "type": "budget_rechecked",
+        "candidate": "one",
+        "evidence": {
+            "budget_path": "budget.json",
+            "budget_hash": "a" * 64,
+            "health_path": "health.json",
+            "health_hash": "b" * 64,
+        },
+    })
+    append_event(root, {"type": "continuation_granted", "candidate": "one"})
     append_event(root, {"type": "candidate_selected", "candidate": "two"})
     projection = replay_events(root / "events.jsonl")
     assert projection.selected_candidate == "two"

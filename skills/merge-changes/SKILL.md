@@ -30,7 +30,7 @@ Read `skills/advanced-user-input/SKILL.md` for global continuation, artifact dis
 1. Consume the exact current `pr_ready` receipt when validating the version-1 premerge envelope; retain the resulting `premerge` receipt hash.
 2. Require readiness review fields `plan_alignment`, `correctness`, `maintainability`, and `reality_evidence` to be true.
 3. For local work, run `skills/merge-changes/scripts/prepare-local-branch-closeout.sh`; for PR work, validate checks and issue linkage. The merge-decision launcher consumes the current premerge receipt and the local closeout launcher consumes only `MergeDecisionReceiptJson|Path`.
-4. Show the Artifact Review Card, then ask `project_merge_approval`. Do not infer approval from Auto unless the immutable authorization explicitly permits merge after clean premerge.
+4. Show the Artifact Review Card, then resolve `project_merge_approval` through the shared lifecycle mode policy. Manual asks; Auto or Looping selects Merge only when the immutable authorization permits it and clean premerge proof passes.
 5. Integrate using the selected mode. Never push during local-only closeout.
 6. Re-run validation, remove only goal-owned branch/worktree state, run cleanup, replay workflow events, and validate closeout with the exact current `merge_decision` receipt.
 

@@ -1,1 +1,0 @@
-{"decision":"blocked","reason":"Replayable hash-chained evidence matches the oracle: exactly one mutation was applied to candidate one; candidate two was never selected; no acceptance, verification, budget-recheck, continuation, user-input, or external-mutation evidence exists. Authorization, project scope, and the derived run projection also match."}

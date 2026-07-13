@@ -8,8 +8,8 @@ interface:
     gates. GitHub hierarchy parents and plan-wrappers are rollup records; worker execution is leaf-only and requires Sub-Issue Role leaf with Executable true when hierarchy fields exist.
     Read docs/superpowers/workflow-contract.yml for route question ids and options. This route is the
     delegated adapter for superpowers:subagent-driven-development. Use derive-worker-identity.sh for worker-thread
-    identity and route completed worker PRs through merge-changes. Auto Mode authorization ledger uses
-    project_auto_mode_authorization with Bounded Auto Merge and Manual Mode plus bounded-auto-merge. summarize
+    identity and route completed worker PRs through merge-changes. Auto Mode reuses the project_workflow_mode
+    one-outcome ledger and resolves routine gates through the shared lifecycle mode policy. summarize
     artifact review gate status, broader project context, recommended next route, and machine-readable artifacts.
     Use docs/superpowers/examples/worker-handoff-packets.md and scripts/validate-worker-packets.sh for worker
     handoff and PR-ready return packet fields.

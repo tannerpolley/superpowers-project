@@ -101,7 +101,6 @@ Route setup, brainstorming, audits, planning, issue creation, issue resolution, 
 Owner: `initiate-workflow`
 
 Gates:
-- `project_auto_mode_authorization` (approval): Bounded Auto Merge, Manual Mode
 - `project_workflow_mode` (workflow_mode): Manual Mode, Auto Mode, Looping Mode
 - `project_issue_resolution_route` (data_selection): Project Resolve, Project Orchestrate, Review First
 
@@ -109,13 +108,12 @@ Next routes: `setup-project`, `brainstorm-spec`, `audit-project`, `write-plan`, 
 
 ## `$superpowers-project:loop-controller`
 
-Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation gates.
+Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and policy continuation.
 
 Owner: `loop-controller`
 
 Gates:
 - `project_loop_final_health_gate` (final_health): Done, Revisit, Stop
-- `project_loop_next_step` (top_level_continuation): Yes, Revisit, Stop
 
 Next routes: `brainstorm-spec`, `write-plan`, `create-issues`, `resolve-issue`, `orchestrate-issues`, `merge-changes`, `audit-project`, `align-project`
 

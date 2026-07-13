@@ -8,12 +8,11 @@ interface:
     must not claim GitHub issue closure. Read SKILL.md for exact setup, push, PR, and closeout gates; read docs/superpowers/workflow-contract.yml
     for route question ids and options. Task # Use Cases are a strict requirement; run
     scripts/validate-plan-task-use-cases.sh before implementation. This route is the non-issue adapter for
-    superpowers:executing-plans. Require native `/goal` activation, development branch, request_user_input,
-    implement_plan_topology with Inline, Worker, and Stop. implement_plan_push_permission has Push Branch
+    superpowers:executing-plans. Require native `/goal` activation and a development branch. Resolve
+    implement_plan_topology with Inline, Worker, and Stop through the shared lifecycle mode policy. implement_plan_push_permission has Push Branch
     and Hold. Require branch push proof, outcome proof, readiness review, merge-ready local-branch handoff to
-    merge-changes, and no open pull requests for local-only merge handoff. Auto Mode authorization ledger uses
-    project_auto_mode_authorization with Bounded Auto Merge and Manual Mode, the plugin-provided Auto Mode validator, bounded-auto-merge, recorded defaults,
-    preauthorized-after-clean-premerge, and stop outside policy. Require superpowers:executing-plans as the base method, require
+    merge-changes, and no open pull requests for local-only merge handoff. Auto Mode reuses the project_workflow_mode
+    one-outcome ledger, preauthorized-after-clean-premerge, and stop-outside-policy behavior. Require superpowers:executing-plans as the base method, require
     superpowers:test-driven-development for feature and bug work unless the approved plan records an explicit opt-out,
     require superpowers:systematic-debugging or diagnose for bugs, regressions, CI failures, performance work, or unclear failure modes, require
     superpowers:verification-before-completion before any success claim, commit, or local merge, require

@@ -5,7 +5,7 @@ interface:
   default_prompt: >-
     Use $superpowers-project:merge-changes for PR-ready or local-branch integration, merge approval, linked issue
     closure, branch/worktree cleanup, mirror cleanup, and clean repo proof. Intake may be an issue-backed PR URL or
-    local-branch handoff; modes include pr-issue and local-branch. Use request_user_input for merge approval. Read SKILL.md for premerge, approval,
+    local-branch handoff; modes include pr-issue and local-branch. Resolve merge approval through the shared lifecycle mode policy. Read SKILL.md for premerge, approval,
     closeout, and terminal gates; read docs/superpowers/workflow-contract.yml for route question ids and options.
     Require readiness_review with plan_alignment and reality_evidence, plus verification evidence. summarize artifact review gate status,
     broader project context, recommended next route, and machine-readable artifacts.
@@ -13,7 +13,7 @@ interface:
     for child routes before starting the selected next skill.
     Terminal closeout uses collect-continuation-ledger.sh and validate-terminal-closeout.sh with explicit Stop or
     verified final Done. Reassessment routing can Reassess Plan or Reassess Spec through request_agent_input.
-    Auto Mode authorization ledger uses project_auto_mode_authorization with Bounded Auto Merge and Manual Mode,
-    bounded-auto-merge, and preauthorized-after-clean-premerge. This route is the closeout adapter for superpowers:finishing-a-development-branch. Require upstream
+    Auto Mode uses the project_workflow_mode ledger for one outcome lifecycle and preauthorized-after-clean-premerge.
+    This route is the closeout adapter for superpowers:finishing-a-development-branch. Require upstream
     superpowers:verification-before-completion proof, and do not treat merge-time judgment as a substitute for
     missing execution-time verification or branch-finish discipline.

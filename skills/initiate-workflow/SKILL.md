@@ -5,7 +5,7 @@ description: Route Superpowers Project extension requests to project setup, brai
 
 # Initiate Workflow
 
-This is the single entrypoint and route owner for `project_workflow_mode` and `project_auto_mode_authorization`. It selects one owning skill; it does not perform that skill's work.
+This is the single entrypoint and route owner for `project_workflow_mode`. It selects one owning skill; it does not perform that skill's work.
 
 ## Capability Preflight
 
@@ -19,9 +19,9 @@ Read `skills/advanced-user-input/SKILL.md` for global question and artifact-revi
 
 1. Resolve the loaded plugin root and run `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent` there.
 2. Inspect the active repository, request, canonical artifacts, and Git state without mutating.
-3. Ask `project_workflow_mode`: Manual Mode, Auto Mode, or Looping Mode.
-4. Write the mode ledger and validate it with `scripts/validate-workflow-mode-ledger.sh` from the plugin root.
-5. For Auto Mode, ask `project_auto_mode_authorization`, write the immutable authorization ledger, and validate it with `scripts/validate-auto-mode-authorization.sh`. Auto authorizes exactly one route and one candidate; it never authorizes unrelated scope or remote publication.
+3. Ask `project_workflow_mode`: Manual Mode, Auto Mode, or Looping Mode. This is the only routine startup question.
+4. Write the mode ledger, including the raw-request fingerprint, repository, candidate scope, mutation scope, proof policy, and stop conditions; validate it with `scripts/validate-workflow-mode-ledger.sh` from the plugin root.
+5. For Auto Mode, validate that same ledger with `scripts/validate-auto-mode-authorization.sh`. Auto authorizes one outcome lifecycle and evidence-based direct or issue-backed routing; push, PR, and merge remain conditional on existing proof gates.
 6. For Looping Mode, route through `$superpowers-project:loop-controller` with explicit budget and candidate sources.
 
 ## Owner Routing

@@ -583,7 +583,6 @@ workflow_skills:
     purpose: Route setup, brainstorming, audits, planning, issue creation, issue resolution, orchestration, merge cleanup,
       and alignment checks.
     question_ids:
-    - project_auto_mode_authorization
     - project_issue_resolution_route
     - project_workflow_mode
     final_health_gate: null
@@ -595,11 +594,6 @@ workflow_skills:
       - Manual Mode
       - Auto Mode
       - Looping Mode
-    - question_id: project_auto_mode_authorization
-      parent_option: Auto Mode
-      options:
-      - Bounded Auto Merge
-      - Manual Mode
     - question_id: project_issue_resolution_route
       parent_option: issue request
       options:
@@ -623,15 +617,6 @@ workflow_skills:
     - align-project
     - loop-controller
     gates:
-    - question_id: project_auto_mode_authorization
-      gate_type: approval
-      prompt: Authorize bounded Auto Mode for this initiated workflow route?
-      parent_option: Auto Mode
-      options:
-      - label: Bounded Auto Merge
-        approval_effect: bounded-auto-merge
-      - label: Manual Mode
-        approval_effect: manual-mode
     - question_id: project_workflow_mode
       gate_type: workflow_mode
       prompt: How should I run this Superpowers Project workflow?
@@ -656,20 +641,15 @@ workflow_skills:
         terminal_state: revisit
   loop-controller:
     owner: loop-controller
-    purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation
-      gates.
+    purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and policy continuation.
     question_ids:
     - project_loop_final_health_gate
-    - project_loop_next_step
     final_health_gate: project_loop_final_health_gate
     final_options:
     - Done
     - Revisit
     - Stop
-    top_level_options:
-    - 'Yes'
-    - Revisit
-    - Stop
+    top_level_options: []
     nested_routes: []
     validators:
     - skills/loop-controller/scripts/validate-run-ledger.sh
@@ -693,16 +673,6 @@ workflow_skills:
       options:
       - label: Done
         terminal_state: done
-      - label: Revisit
-        terminal_state: revisit
-      - label: Stop
-        terminal_state: stop
-    - question_id: project_loop_next_step
-      gate_type: top_level_continuation
-      prompt: Should I continue on with the loop workflow?
-      options:
-      - label: 'Yes'
-        terminal_state: continue
       - label: Revisit
         terminal_state: revisit
       - label: Stop

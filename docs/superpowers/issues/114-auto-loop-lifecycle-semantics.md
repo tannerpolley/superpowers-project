@@ -22,30 +22,29 @@ Goal Command: Implement and verify `docs/superpowers/plans/2026-07-10-auto-loop-
 
 ## Summary
 
-Replace the contradictory one-route Auto contract with one raw-request authority and a typed lifecycle across specification, planning, route selection, execution, verification, integration, and closeout. Make Looping repeat bounded candidate lifecycles without intra-candidate questions.
+Replace the contradictory one-route Auto contract with one raw-request outcome lifecycle. Reuse the existing workflow runtime and proof kernel; make Looping repeat bounded candidates without routine downstream questions.
 
 ## Acceptance Criteria
 
 - [ ] Raw requests enter Auto or Looping before a spec exists.
-- [ ] Root authority is immutable and generated spec/plan hashes bind through append-only events.
+- [ ] Startup mode and scope remain bound by the existing immutable authorization hash.
 - [ ] Auto records one startup native-input call and zero routine downstream calls.
 - [ ] Manual Mode still renders every graph-owned material gate.
-- [ ] Owner skills consume one lifecycle controller and gate-decision interface.
+- [ ] Owner skills consume the existing lifecycle runtime and one small mode-aware gate policy.
 - [ ] Direct versus real issue-backed execution is selected by a recorded evidence rubric.
 - [ ] Auto consumes merge authority after current fail-closed proof without asking bounded merge again.
 - [ ] Looping supports multiple sequential candidates and stops on budgets, no-ready, health, repeated blocker, expiry, or interruption.
-- [ ] Installed-plugin trials report observed tool/input/provider metrics instead of hardcoded counters.
+- [ ] Focused source and installed-plugin smoke tests observe question behavior without committing generated trial runs.
 - [ ] Full validation, required deployment gates, cleanup, and clean-main proof pass.
 
 ## Proof Oracle
 
-- `python3 -m unittest tests.test_lifecycle_authorization tests.test_lifecycle_controller -v`
-- `python3 -m unittest tests.test_gate_resolver tests.test_issue_route -v`
-- `python3 -m unittest tests.test_loop_lifecycle tests.test_workflow_policy -v`
-- `python3 -m unittest tests.test_auto_lifecycle_e2e tests.test_loop_lifecycle_e2e -v`
+- `python3 -m unittest tests.test_workflow_policy tests.test_workflow_runtime_integration tests.test_workflow_completion -v`
+- `python3 -m unittest tests.test_auto_loop_trials -v`
 - `./skills/loop-controller/scripts/test-scenarios.sh`
 - `./scripts/test-loop-controller.sh`
-- `./scripts/run-agent-usability-trials.sh`
+- `./scripts/test-auto-mode-contract.sh`
+- `./scripts/validate-workflow-contract.sh`
 - `./scripts/validate.sh`
 - `./scripts/sync-live.sh --validate`
 - `codex plugin add superpowers-project@personal --json`
@@ -79,13 +78,13 @@ Use `codex/issue-<number>-auto-loop-lifecycle-semantics`. Do not implement direc
 
 **Intent:** Make Auto and Looping behave as low-friction, bounded outcome workflows instead of repeated manual routes.
 
-**Target Output:** Root authorization, lifecycle controller, artifact binding, shared gate resolver, issue rubric, merge consumption, finite Loop controller, and observed behavior trials.
+**Target Output:** Startup-ledger cutover, one shared gate policy, existing-ledger decision records, finite Loop behavior, and focused behavior tests.
 
 **Owner:** Superpowers Project workflow and governance maintainer.
 
-**Interface:** `create_root_authorization`, `bind_artifact`, `transition_lifecycle`, `resolve_gate`, `decide_issue_route`, and `evaluate_loop` behind stable workflow entrypoints.
+**Interface:** `resolve_gate` behind the existing `WorkflowRuntime` and `scripts/workflow-run.sh` entrypoints.
 
-**Cutover:** Land authority/state first, migrate owner gates second, enable issue/merge resolution third, complete Looping fourth, and remove obsolete prompt paths only after trials pass.
+**Cutover:** Accept Auto from `project_workflow_mode`, migrate shared gate behavior, then retire obsolete prompt paths after focused tests pass.
 
 **Replaced Path:** Post-spec Auto re-entry, future-spec prerequisite, one-skill completion, per-route Auto questions, hardcoded direct-inline route, bounded-merge prompt, and intra-candidate Loop questions.
 

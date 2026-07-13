@@ -6,11 +6,13 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+import yaml
+
 try:
-    from .workflow_policy import GovernanceProfile, validate_governance
+    from .workflow_policy import GovernanceProfile, resolve_gate, validate_governance, validate_loop_evidence
     from .workflow_state import WorkflowStateError, append_event, replay_events
 except ImportError:
-    from workflow_policy import GovernanceProfile, validate_governance
+    from workflow_policy import GovernanceProfile, resolve_gate, validate_governance, validate_loop_evidence
     from workflow_state import WorkflowStateError, append_event, replay_events
 
 
@@ -76,13 +78,25 @@ class WorkflowRuntime:
             noninteractive_trial=authorization.get("source") == "trial-fixture",
         )
 
-    def start(self, run_id: str, mode: str | None = None) -> dict[str, Any]:
+    def _running(self) -> tuple[dict[str, Any], Any]:
+        context = self._context()
+        projection = replay_events(self.run_root / "events.jsonl")
+        if projection.status != "running":
+            raise WorkflowRuntimeError(f"workflow run is {projection.status}")
+        return context, projection
+
+    def start(self, run_id: str) -> dict[str, Any]:
         if self.context_path.exists() or (self.run_root / "events.jsonl").exists():
             raise WorkflowRuntimeError("workflow run already started")
         authorization = self._authorization()
-        selected_mode = str(mode or authorization.get("mode") or authorization.get("selected_mode") or "")
-        if selected_mode == "loop":
-            selected_mode = "looping"
+        declared_modes = {
+            "looping" if str(value).lower() == "loop" else str(value).lower()
+            for value in (authorization.get("mode"), authorization.get("selected_mode"))
+            if value
+        }
+        if len(declared_modes) != 1:
+            raise WorkflowRuntimeError("authorization must declare exactly one startup mode")
+        selected_mode = declared_modes.pop()
         self._profile(authorization, selected_mode)
         if not run_id.strip():
             raise WorkflowRuntimeError("RunId is required")
@@ -100,10 +114,7 @@ class WorkflowRuntime:
         return self.receipt("start")
 
     def _candidate(self, candidate: str) -> tuple[dict[str, Any], Any]:
-        context = self._context()
-        projection = replay_events(self.run_root / "events.jsonl")
-        if projection.status != "running":
-            raise WorkflowRuntimeError(f"workflow run is {projection.status}")
+        context, projection = self._running()
         if not candidate.strip():
             raise WorkflowRuntimeError("Candidate is required")
         return context, projection
@@ -114,13 +125,49 @@ class WorkflowRuntime:
         scope = authorization.get("candidate_scope") or []
         if scope and candidate not in scope:
             raise WorkflowRuntimeError("candidate is outside the authorized scope")
+        if candidate in projection.selected_candidates:
+            raise WorkflowRuntimeError("candidate is already selected")
         if context["mode"] == "auto" and projection.selected_candidate is not None:
             raise WorkflowRuntimeError("Auto mode authorizes exactly one selected route")
+        if context["mode"] == "looping" and projection.selected_candidate is not None:
+            if projection.last_event_type != "continuation_granted":
+                raise WorkflowRuntimeError("next candidate must immediately follow continuation grant")
+            self._validate_recorded_loop_evidence(projection.selected_candidate, projection)
         append_event(self.run_root, {"type": "candidate_selected", "candidate": candidate})
         return self.receipt("select")
 
-    def record(self, action: str, candidate: str) -> dict[str, Any]:
-        _, projection = self._candidate(candidate)
+    def _evidence(self, path_value: str, label: str) -> tuple[Path, dict[str, Any], str]:
+        if not path_value:
+            raise WorkflowRuntimeError(f"{label} evidence path is required")
+        path = Path(path_value)
+        if not path.is_absolute():
+            path = self.project_root / path
+        path = path.resolve()
+        self._require_under(self.project_root, path, f"{label} evidence")
+        if not path.is_file():
+            raise WorkflowRuntimeError(f"{label} evidence is missing")
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise WorkflowRuntimeError(f"{label} evidence must be a JSON object")
+        return path, value, hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def _validate_recorded_loop_evidence(self, candidate: str, projection: Any) -> None:
+        evidence = projection.continuation_evidence.get(candidate) or {}
+        budget_path, budget, budget_hash = self._evidence(str(evidence.get("budget_path") or ""), "budget")
+        health_path, health, health_hash = self._evidence(str(evidence.get("health_path") or ""), "health")
+        validate_loop_evidence(candidate, budget, health)
+        if budget_hash != evidence.get("budget_hash") or health_hash != evidence.get("health_hash"):
+            raise WorkflowRuntimeError("Loop continuation evidence changed after recheck")
+
+    def record(
+        self,
+        action: str,
+        candidate: str,
+        *,
+        budget_evidence_path: str = "",
+        health_evidence_path: str = "",
+    ) -> dict[str, Any]:
+        context, projection = self._candidate(candidate)
         if projection.selected_candidate != candidate:
             raise WorkflowRuntimeError("event candidate must be the active selected candidate")
         event_types = {
@@ -133,15 +180,85 @@ class WorkflowRuntime:
         event_type = event_types.get(action)
         if event_type is None:
             raise WorkflowRuntimeError(f"unknown workflow action: {action}")
-        append_event(self.run_root, {"type": event_type, "candidate": candidate})
+        event = {"type": event_type, "candidate": candidate}
+        if action == "recheck-budget":
+            if context["mode"] != "looping":
+                raise WorkflowRuntimeError("budget recheck is only valid in Looping mode")
+            budget_path, budget, budget_hash = self._evidence(budget_evidence_path, "budget")
+            health_path, health, health_hash = self._evidence(health_evidence_path, "health")
+            validate_loop_evidence(candidate, budget, health)
+            event["evidence"] = {
+                "budget_path": budget_path.relative_to(self.project_root).as_posix(),
+                "budget_hash": budget_hash,
+                "health_path": health_path.relative_to(self.project_root).as_posix(),
+                "health_hash": health_hash,
+            }
+        elif action == "grant-continuation":
+            if context["mode"] != "looping":
+                raise WorkflowRuntimeError("continuation is only valid in Looping mode")
+            if not all(
+                candidate in values
+                for values in (
+                    projection.accepted_candidates,
+                    projection.verified_candidates,
+                    projection.budget_rechecks,
+                )
+            ):
+                raise WorkflowRuntimeError("continuation requires acceptance, verifier, and budget evidence")
+            if projection.last_event_type != "budget_rechecked":
+                raise WorkflowRuntimeError("continuation must immediately follow budget and health recheck")
+            self._validate_recorded_loop_evidence(candidate, projection)
+            event["source"] = "policy"
+        append_event(self.run_root, event)
         return self.receipt(action)
 
     def block(self, reason: str) -> dict[str, Any]:
-        self._context()
+        self._running()
         if not reason.strip():
             raise WorkflowRuntimeError("Reason is required")
         append_event(self.run_root, {"type": "run_stopped", "reason": reason})
         return self.receipt("block")
+
+    def resolve(
+        self,
+        gate_id: str,
+        recommendation: str,
+        *,
+        selected_option: str | None = None,
+    ) -> dict[str, Any]:
+        context, _ = self._running()
+        authorization = self._authorization()
+        contract = yaml.safe_load((self.plugin_root / "docs" / "superpowers" / "workflow-contract.yml").read_text(encoding="utf-8")) or {}
+        gates = [
+            gate
+            for skill in (contract.get("workflow_skills") or {}).values()
+            for gate in (skill.get("gates") or [])
+            if gate.get("question_id") == gate_id
+        ]
+        if len(gates) != 1:
+            raise WorkflowRuntimeError("gate_id is not uniquely defined by the workflow contract")
+        options = [str(option.get("label") or "") for option in gates[0].get("options") or []]
+        decision = resolve_gate(
+            self._profile(authorization, context["mode"]),
+            gate_id,
+            options,
+            recommendation,
+            authorized=True,
+            selected=selected_option,
+        )
+        if decision.action == "decide":
+            append_event(
+                self.run_root,
+                {
+                    "type": "gate_resolved",
+                    "gate_id": gate_id,
+                    "selected_option": decision.selected_option,
+                    "source": decision.source,
+                },
+            )
+        elif decision.action == "block":
+            append_event(self.run_root, {"type": "run_stopped", "reason": decision.reason})
+        return self.receipt("resolve-gate", decision=decision.as_dict())
 
     def complete(self, claim: str) -> dict[str, Any]:
         try:
@@ -149,8 +266,7 @@ class WorkflowRuntime:
         except ImportError:
             from workflow_completion import load_profiles, validate_completion_claim
 
-        context = self._context()
-        projection = replay_events(self.run_root / "events.jsonl")
+        context, projection = self._running()
         profiles = load_profiles(self.plugin_root / "docs" / "superpowers" / "governance-profiles.yml")
         profile = profiles.get(context["mode"])
         if profile is None:
@@ -175,20 +291,35 @@ def execute_workflow_action(
     action: str,
     *,
     run_id: str = "",
-    mode: str = "",
     candidate: str = "",
     claim: str = "",
     reason: str = "",
+    gate_id: str = "",
+    recommendation: str = "",
+    selected_option: str | None = None,
+    budget_evidence_path: str = "",
+    health_evidence_path: str = "",
 ) -> dict[str, Any]:
     runtime = WorkflowRuntime(plugin_root, project_root, run_root, authorization_path)
     if action == "start":
-        return runtime.start(run_id, mode or None)
+        return runtime.start(run_id)
     if action == "select":
         return runtime.select(candidate)
     if action in {"mutate", "accept", "verify", "recheck-budget", "grant-continuation"}:
-        return runtime.record(action, candidate)
+        return runtime.record(
+            action,
+            candidate,
+            budget_evidence_path=budget_evidence_path,
+            health_evidence_path=health_evidence_path,
+        )
     if action == "block":
         return runtime.block(reason)
+    if action == "resolve-gate":
+        return runtime.resolve(
+            gate_id,
+            recommendation,
+            selected_option=selected_option,
+        )
     if action == "complete":
         return runtime.complete(claim)
     raise WorkflowRuntimeError(f"unknown workflow action: {action}")
