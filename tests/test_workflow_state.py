@@ -49,6 +49,14 @@ class WorkflowStateTests(unittest.TestCase):
             with self.assertRaisesRegex(WorkflowStateError, "second candidate"):
                 append_event(root, {"type": "candidate_selected", "candidate": "two"})
 
+    def test_same_candidate_cannot_be_reselected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            append_event(root, {"type": "run_started", "run_id": "trial-repeat"})
+            append_event(root, {"type": "candidate_selected", "candidate": "one"})
+            with self.assertRaisesRegex(WorkflowStateError, "already selected"):
+                append_event(root, {"type": "candidate_selected", "candidate": "one"})
+
     def test_tampering_is_detected(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

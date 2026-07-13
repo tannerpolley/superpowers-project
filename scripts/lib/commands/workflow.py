@@ -18,8 +18,8 @@ def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:
     action = str(arg_value(args, "Action", default=""))
     if not run_root_value or not authorization_value or not action:
         raise ScriptError("RunRoot, AuthorizationPath, and Action are required")
-    if arg_value(args, "OptionsJson") is not None or arg_value(args, "Authorized") is not None:
-        raise ScriptError("gate options and authorization come from the workflow contract and startup ledger")
+    if any(arg_value(args, name) is not None for name in ("Mode", "OptionsJson", "Authorized")):
+        raise ScriptError("mode, gate options, and authorization come from the startup ledger and workflow contract")
     receipt = execute_workflow_action(
         ctx.plugin_root or ctx.repo_root,
         root,
@@ -27,7 +27,6 @@ def command_workflow_run(ctx: Context, args: dict[str, Any]) -> int:
         project_path_for(root, str(authorization_value), "AuthorizationPath"),
         action,
         run_id=str(arg_value(args, "RunId", default="")),
-        mode=str(arg_value(args, "Mode", default="")),
         candidate=str(arg_value(args, "Candidate", default="")),
         claim=str(arg_value(args, "Claim", default="")),
         reason=str(arg_value(args, "Reason", default="")),

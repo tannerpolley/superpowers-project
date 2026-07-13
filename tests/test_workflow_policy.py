@@ -15,6 +15,11 @@ class GovernancePolicyTests(unittest.TestCase):
         with self.assertRaises(PolicyError):
             validate_governance("looping", {"source": "trial-fixture", "candidate_scope": ["a", "b"], "selected_candidates": ["a", "b"]}, noninteractive_trial=True)
 
+    def test_every_mode_requires_a_bounded_candidate_scope(self):
+        for mode in ("manual", "auto", "looping"):
+            with self.subTest(mode=mode), self.assertRaises(PolicyError):
+                validate_governance(mode, {"source": "request_user_input", "candidate_scope": []})
+
     def test_auto_rejects_continuation(self):
         with self.assertRaises(PolicyError):
             validate_governance("auto", {"source": "trial-fixture", "candidate_scope": ["a"], "continuation_grant": True}, noninteractive_trial=True)

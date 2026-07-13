@@ -85,13 +85,18 @@ class WorkflowRuntime:
             raise WorkflowRuntimeError(f"workflow run is {projection.status}")
         return context, projection
 
-    def start(self, run_id: str, mode: str | None = None) -> dict[str, Any]:
+    def start(self, run_id: str) -> dict[str, Any]:
         if self.context_path.exists() or (self.run_root / "events.jsonl").exists():
             raise WorkflowRuntimeError("workflow run already started")
         authorization = self._authorization()
-        selected_mode = str(mode or authorization.get("mode") or authorization.get("selected_mode") or "")
-        if selected_mode == "loop":
-            selected_mode = "looping"
+        declared_modes = {
+            "looping" if str(value).lower() == "loop" else str(value).lower()
+            for value in (authorization.get("mode"), authorization.get("selected_mode"))
+            if value
+        }
+        if len(declared_modes) != 1:
+            raise WorkflowRuntimeError("authorization must declare exactly one startup mode")
+        selected_mode = declared_modes.pop()
         self._profile(authorization, selected_mode)
         if not run_id.strip():
             raise WorkflowRuntimeError("RunId is required")
@@ -123,6 +128,8 @@ class WorkflowRuntime:
         if context["mode"] == "auto" and projection.selected_candidate is not None:
             raise WorkflowRuntimeError("Auto mode authorizes exactly one selected route")
         if context["mode"] == "looping" and projection.selected_candidate is not None:
+            if candidate == projection.selected_candidate:
+                raise WorkflowRuntimeError("candidate is already selected")
             self._validate_recorded_loop_evidence(projection.selected_candidate, projection)
         append_event(self.run_root, {"type": "candidate_selected", "candidate": candidate})
         return self.receipt("select")
@@ -280,7 +287,6 @@ def execute_workflow_action(
     action: str,
     *,
     run_id: str = "",
-    mode: str = "",
     candidate: str = "",
     claim: str = "",
     reason: str = "",
@@ -292,7 +298,7 @@ def execute_workflow_action(
 ) -> dict[str, Any]:
     runtime = WorkflowRuntime(plugin_root, project_root, run_root, authorization_path)
     if action == "start":
-        return runtime.start(run_id, mode or None)
+        return runtime.start(run_id)
     if action == "select":
         return runtime.select(candidate)
     if action in {"mutate", "accept", "verify", "recheck-budget", "grant-continuation"}:

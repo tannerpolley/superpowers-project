@@ -101,6 +101,17 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             project, run_root, auth = self.fixture(Path(tmp), "auto", source="request_user_input")
             self.assert_ok(self.invoke(project, run_root, auth, "start", "-RunId", "auto-native"))
 
+    def test_caller_cannot_override_the_startup_mode_or_empty_scope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, run_root, auth = self.fixture(Path(tmp), "manual", source="request_user_input")
+            widened = self.invoke(project, run_root, auth, "start", "-RunId", "mode-widen", "-Mode", "auto")
+            self.assertNotEqual(0, widened.returncode)
+            ledger = json.loads(auth.read_text(encoding="utf-8"))
+            ledger["candidate_scope"] = []
+            auth.write_text(json.dumps(ledger), encoding="utf-8")
+            rejected = self.invoke(project, run_root, auth, "start", "-RunId", "empty-scope")
+            self.assertNotEqual(0, rejected.returncode)
+
     def test_loop_requires_all_iteration_gates_before_second_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
             project, run_root, auth = self.fixture(Path(tmp), "looping")
@@ -117,6 +128,8 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             budget, health = self.loop_evidence(project, "one")
             self.assert_ok(self.invoke(project, run_root, auth, "recheck-budget", "-Candidate", "one", "-BudgetEvidencePath", str(budget), "-HealthEvidencePath", str(health)))
             self.assert_ok(self.invoke(project, run_root, auth, "grant-continuation", "-Candidate", "one"))
+            replayed = self.invoke(project, run_root, auth, "select", "-Candidate", "one")
+            self.assertNotEqual(0, replayed.returncode)
             self.assert_ok(self.invoke(project, run_root, auth, "select", "-Candidate", "two"))
             events = [json.loads(line) for line in (run_root / "events.jsonl").read_text().splitlines()]
             grant = next(event for event in events if event["type"] == "continuation_granted")

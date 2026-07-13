@@ -75,6 +75,8 @@ def _transition(projection: RunProjection, event: Mapping[str, Any]) -> None:
             raise WorkflowStateError("candidate_selected requires candidate")
         if projection.selected_candidate is not None:
             previous = projection.selected_candidate
+            if str(candidate) == previous:
+                raise WorkflowStateError("candidate is already selected")
             ready = (
                 previous in projection.accepted_candidates
                 and previous in projection.verified_candidates
