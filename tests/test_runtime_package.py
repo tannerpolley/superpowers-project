@@ -23,6 +23,18 @@ class RuntimePackageTests(unittest.TestCase):
         self.assertIn("scripts/lib/commands/gates.py", paths)
         self.assertIn("docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md", paths)
         self.assertIn("docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md", paths)
+        packaged_history = {
+            path
+            for path in paths
+            if path.startswith("docs/superpowers/specs/") or path.startswith("docs/superpowers/plans/")
+        }
+        self.assertEqual(
+            {
+                "docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md",
+                "docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md",
+            },
+            packaged_history,
+        )
         self.assertEqual([], validate_runtime_reads(ROOT, package))
 
     def test_included_content_and_mode_change_hash_but_excluded_history_does_not(self):
@@ -30,8 +42,8 @@ class RuntimePackageTests(unittest.TestCase):
             target = Path(tmp) / "repo"
             shutil.copytree(ROOT, target)
             first = runtime_contract_hash(target)
-            history = target / "docs" / "superpowers" / "milestones" / "history.md"
-            history.write_text("one")
+            history = target / "docs" / "superpowers" / "specs" / "2026-07-10-contract-distribution-simplification-design.md"
+            history.write_text(history.read_text() + "\nexcluded history change\n")
             self.assertEqual(first, runtime_contract_hash(target))
             script = target / "scripts" / "workflow-run.sh"
             script.write_text(script.read_text() + "\n# changed\n")

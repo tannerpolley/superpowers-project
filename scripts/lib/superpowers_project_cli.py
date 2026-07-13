@@ -29,7 +29,8 @@ except Exception:  # pragma: no cover - reported by validate.sh
     yaml = None
 
 
-ACTIVE_SKILLS_EXCLUDING_USER = {
+PLUGIN_SKILLS = {
+    "advanced-user-input",
     "align-project",
     "audit-project",
     "brainstorm-spec",
@@ -45,7 +46,6 @@ ACTIVE_SKILLS_EXCLUDING_USER = {
     "write-plan",
 }
 
-USER_SKILLS = {"advanced-user-input"}
 RETIRED_SKILLS = {
     "using-milestones",
     "setup-project-milestones",
@@ -709,7 +709,7 @@ def command_validate_active_backlog(ctx: Context, args: dict[str, Any]) -> int:
             if not row.get(column):
                 raise ScriptError(f"{column.replace('_', ' ')} is required in active backlog row {row_index + 1}")
         route = row["route_owner"]
-        if route not in ACTIVE_SKILLS_EXCLUDING_USER | {"advanced-user-input"}:
+        if route not in PLUGIN_SKILLS:
             raise ScriptError(f"Route owner is unsupported for {row['id']}: {route}")
         if row["priority"].upper() not in {"P0", "P1", "P2", "P3"}:
             raise ScriptError(f"Priority is unsupported for {row['id']}: {row['priority']}")
@@ -1103,13 +1103,23 @@ def command_test_plugin_only_live_sync(ctx: Context, args: dict[str, Any]) -> in
     """Run live sync into disposable roots and verify the installable surface."""
     with tempfile.TemporaryDirectory(prefix="plugin-live-sync-") as tmp:
         base = Path(tmp)
-        result = command_sync_live(ctx, {"LivePluginRoot": str(base / "live"), "UserSkillsRoot": str(base / "skills"), "MarketplacePath": str(base / "marketplace.json"), "SkipValidation": True})
+        user_skills = base / "skills"
+        legacy_helper = user_skills / "advanced-user-input" / "SKILL.md"
+        unrelated = user_skills / "unrelated" / "SKILL.md"
+        legacy_helper.parent.mkdir(parents=True)
+        unrelated.parent.mkdir(parents=True)
+        legacy_helper.write_text("legacy helper owned by user\n", encoding="utf-8")
+        unrelated.write_text("unrelated user skill\n", encoding="utf-8")
+        before = {path.relative_to(user_skills).as_posix(): path.read_bytes() for path in user_skills.rglob("*") if path.is_file()}
+        result = command_sync_live(ctx, {"LivePluginRoot": str(base / "live"), "UserSkillsRoot": str(user_skills), "MarketplacePath": str(base / "marketplace.json"), "SkipValidation": True})
+        after = {path.relative_to(user_skills).as_posix(): path.read_bytes() for path in user_skills.rglob("*") if path.is_file()}
         ok = (
             result == 0
             and (base / "live/.codex-plugin/plugin.json").is_file()
             and (base / "live/docs/superpowers/loop-mode-contract.yml").is_file()
             and (base / "marketplace.json").is_file()
             and runtime_contract_hash(base / "live") == runtime_contract_hash(ctx.repo_root)
+            and after == before
         )
     return emit({"ok": ok, "phase": "plugin-only-live-sync", "isolated": True}, 0 if ok else 1)
 
@@ -2127,12 +2137,6 @@ def command_test_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int
     }, 0 if ok else 1)
 
 
-def copy_tree(source: Path, target: Path) -> None:
-    if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-
-
 def copy_runtime_package(source: Path, target: Path) -> None:
     entries = runtime_manifest(source)
     staged = target.with_name(f".{target.name}.staged-{os.getpid()}")
@@ -2157,7 +2161,6 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
     root = ctx.repo_root.resolve()
     home = Path.home()
     live_root = Path(str(arg_value(args, "LivePluginRoot", default=os.environ.get("SUPERPOWERS_LIVE_PLUGIN_ROOT", str(home / ".codex" / "plugins" / "superpowers-project"))))).expanduser()
-    user_skills = Path(str(arg_value(args, "UserSkillsRoot", default=str(home / ".agents" / "skills")))).expanduser()
     marketplace = Path(str(arg_value(args, "MarketplacePath", default=str(home / ".agents" / "plugins" / "marketplace.json")))).expanduser()
     if os.environ.get("SUPERPOWERS_READ_ONLY_COLLECTION") == "1":
         if not has_switch(args, "Validate", "validate"):
@@ -2180,11 +2183,6 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         if result.returncode != 0:
             raise ScriptError("validation failed before sync")
     copy_runtime_package(root, live_root)
-    user_skills.mkdir(parents=True, exist_ok=True)
-    for skill in USER_SKILLS:
-        source = root / "skills" / skill
-        if source.is_dir():
-            copy_tree(source, user_skills / skill)
     marketplace.parent.mkdir(parents=True, exist_ok=True)
     if marketplace.is_file():
         data = json.loads(read_text(marketplace))
@@ -2204,10 +2202,9 @@ def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
         "ok": True,
         "source": str(root),
         "live_plugin_root": str(live_root),
-        "user_skills_root": str(user_skills),
         "marketplace": {"marketplace_path": str(marketplace), "plugin_name": "superpowers-project", "source_path": "./.codex/plugins/superpowers-project"},
         "deployed_plugin_skills": sorted(active_skill_names(root)),
-        "deployed_user_skills": sorted(USER_SKILLS),
+        "deployed_user_skills": [],
         "runtime_package": {"files": len(source_manifest), "bytes": sum(item["length"] for item in source_manifest)},
     })
 
@@ -2230,7 +2227,7 @@ def command_install(ctx: Context, args: dict[str, Any]) -> int:
 
 def validate_skill_source_contract(root: Path) -> None:
     names = active_skill_names(root)
-    expected = sorted(ACTIVE_SKILLS_EXCLUDING_USER | USER_SKILLS)
+    expected = sorted(PLUGIN_SKILLS)
     missing = sorted(set(expected) - set(names))
     extra = sorted(set(names) - set(expected))
     if missing:

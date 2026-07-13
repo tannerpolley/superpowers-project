@@ -233,11 +233,7 @@ The sync script deploys this repo's plugin manifest and full skill implementatio
 
 - `/home/tnnrpolley21/.codex/plugins/superpowers-project`
 
-It also deploys only the shared helper skill to:
-
-- `/home/tnnrpolley21/.agents/skills/advanced-user-input`
-
-The command updates only the explicit live install and marketplace source metadata. Installed package discovery and updates are owned by the supported Codex marketplace/plugin CLI.
+`advanced-user-input` is included in that plugin namespace. Sync does not create, replace, or delete global user skills. Any pre-existing standalone helper is left untouched. The command updates only the explicit live install and marketplace source metadata. Installed package discovery and updates are owned by the supported Codex marketplace/plugin CLI.
 
 ## Revision And Refresh Loop
 
