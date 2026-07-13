@@ -583,7 +583,6 @@ workflow_skills:
     purpose: Route setup, brainstorming, audits, planning, issue creation, issue resolution, orchestration, merge cleanup,
       and alignment checks.
     question_ids:
-    - project_auto_mode_authorization
     - project_issue_resolution_route
     - project_workflow_mode
     final_health_gate: null
@@ -595,11 +594,6 @@ workflow_skills:
       - Manual Mode
       - Auto Mode
       - Looping Mode
-    - question_id: project_auto_mode_authorization
-      parent_option: Auto Mode
-      options:
-      - Bounded Auto Merge
-      - Manual Mode
     - question_id: project_issue_resolution_route
       parent_option: issue request
       options:
@@ -623,15 +617,6 @@ workflow_skills:
     - align-project
     - loop-controller
     gates:
-    - question_id: project_auto_mode_authorization
-      gate_type: approval
-      prompt: Authorize bounded Auto Mode for this initiated workflow route?
-      parent_option: Auto Mode
-      options:
-      - label: Bounded Auto Merge
-        approval_effect: bounded-auto-merge
-      - label: Manual Mode
-        approval_effect: manual-mode
     - question_id: project_workflow_mode
       gate_type: workflow_mode
       prompt: How should I run this Superpowers Project workflow?

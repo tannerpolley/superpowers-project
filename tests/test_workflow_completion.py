@@ -23,16 +23,16 @@ class WorkflowCompletionTests(unittest.TestCase):
     def test_four_profiles_load_with_explicit_claims(self):
         profiles = load_profiles(PROFILES)
         self.assertEqual({"manual", "auto", "looping", "trial.local"}, set(profiles))
-        self.assertEqual({"candidate", "route"}, allowed_completion_claims(profiles["auto"]))
+        self.assertEqual({"outcome"}, allowed_completion_claims(profiles["auto"]))
 
-    def test_candidate_and_auto_route_accept_proof_and_reject_missing_verifier(self):
+    def test_candidate_and_auto_outcome_accept_proof_and_reject_missing_verifier(self):
         profiles = load_profiles(PROFILES)
         projection = proven()
         validate_completion_claim(profiles["manual"], "candidate", projection, {})
-        validate_completion_claim(profiles["auto"], "route", projection, {"candidate_scope": ["one"]})
+        validate_completion_claim(profiles["auto"], "outcome", projection, {"candidate_scope": ["one"]})
         projection.verified_candidates.clear()
         with self.assertRaises(CompletionError):
-            validate_completion_claim(profiles["auto"], "route", projection, {"candidate_scope": ["one"]})
+            validate_completion_claim(profiles["auto"], "outcome", projection, {"candidate_scope": ["one"]})
 
     def test_loop_iteration_requires_budget_and_continuation(self):
         profiles = load_profiles(PROFILES)

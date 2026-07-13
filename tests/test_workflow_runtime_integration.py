@@ -55,7 +55,7 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         return payload
 
-    def test_auto_records_one_route_and_completes_after_proof(self):
+    def test_auto_records_one_outcome_and_completes_after_proof(self):
         with tempfile.TemporaryDirectory() as tmp:
             project, run_root, auth = self.fixture(Path(tmp), "auto")
             self.assert_ok(self.invoke(project, run_root, auth, "start", "-RunId", "auto-1"))
@@ -63,7 +63,7 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             self.assert_ok(self.invoke(project, run_root, auth, "mutate", "-Candidate", "one"))
             self.assert_ok(self.invoke(project, run_root, auth, "accept", "-Candidate", "one"))
             self.assert_ok(self.invoke(project, run_root, auth, "verify", "-Candidate", "one"))
-            completed = self.assert_ok(self.invoke(project, run_root, auth, "complete", "-Claim", "route"))
+            completed = self.assert_ok(self.invoke(project, run_root, auth, "complete", "-Claim", "outcome"))
             self.assertEqual("completed", completed["projection"]["status"])
             rejected = self.invoke(project, run_root, auth, "select", "-Candidate", "two")
             self.assertNotEqual(0, rejected.returncode)
