@@ -13,8 +13,9 @@ interface:
     artifact review gate status, broader project context, recommended next route, and machine-readable artifacts.
     Use docs/superpowers/examples/worker-handoff-packets.md and scripts/validate-worker-packets.sh for worker
     handoff and PR-ready return packet fields.
-    The orchestrator must use that delegation discipline, and every worker handoff must require superpowers:using-git-worktrees,
+    The orchestrator must use that delegation discipline. Require superpowers:using-git-worktrees only for local_git_worktree; every handoff requires
     superpowers:test-driven-development, superpowers:executing-plans or superpowers:subagent-driven-development,
     superpowers:verification-before-completion, and superpowers:finishing-a-development-branch. Do not create or
     launch a worker without that companion skill set in the handoff.
     Intermediate closeout uses Stop; Done is reserved for verified final states.
+    Resolve Codex-native versus vanilla local isolation before delegation and bind workspace_receipt evidence; a shared subagent is not isolation.

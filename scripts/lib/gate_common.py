@@ -9,9 +9,11 @@ from typing import Mapping
 try:
     from .evidence_collectors import READ_ONLY_COMMANDS
     from .evidence_schema import EvidenceError, EvidenceEnvelope, RuleResult, hash_bytes_ref, is_hash_ref
+    from .workspace_isolation import WorkspaceIsolationError, validate_workspace_receipt
 except ImportError:  # pragma: no cover - CLI top-level import fallback
     from evidence_collectors import READ_ONLY_COMMANDS
     from evidence_schema import EvidenceError, EvidenceEnvelope, RuleResult, hash_bytes_ref, is_hash_ref
+    from workspace_isolation import WorkspaceIsolationError, validate_workspace_receipt
 
 
 def evaluate_rules(checks: list[tuple[str, Callable[[], tuple[bool, str]]]]) -> list[RuleResult]:
@@ -197,25 +199,36 @@ def cleanup_rule(grouped: Mapping[str, list[object]], repo_root: Path, expected_
     return RuleResult("cleanup_state", ok, "cleanup state is clean" if ok else "cleanup state is incomplete or dirty")
 
 
-def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope) -> RuleResult:
+def workspace_rule(grouped: Mapping[str, list[object]], envelope: EvidenceEnvelope, *, publication: bool = False, allowed_dispositions: set[str] | None = None) -> RuleResult:
     if not envelope.target.get("isolation_required", False):
         return RuleResult("workspace_receipt", True, "workspace receipt not required")
     payloads = grouped.get("workspace_receipt", [])
     payload = payloads[0] if len(payloads) == 1 else None
     current = current_git_state(Path(str(envelope.repository["root"])))
-    required = {"provider", "workspace_id", "repository_root", "run_id", "candidate_id", "task_id", "thread_id", "observed_head", "owner", "disposition"}
-    ok = isinstance(payload, Mapping) and required <= set(payload)
-    if ok:
-        ok = (
-            payload["provider"] == envelope.target["workspace_provider"]
-            and payload["workspace_id"] == envelope.target["workspace_id"]
-            and payload["repository_root"] == envelope.repository["root"]
-            and payload["run_id"] == envelope.workflow["run_id"]
-            and payload["candidate_id"] == envelope.workflow["candidate_id"]
-            and payload["task_id"] == envelope.target.get("task_id")
-            and payload["thread_id"] == envelope.target["workspace_thread_id"]
-            and payload["observed_head"] == current["head"]
-            and payload["owner"] == envelope.target["workspace_owner"]
-            and payload["disposition"] in {"owned", "active"}
+    if not isinstance(payload, Mapping):
+        return RuleResult("workspace_receipt", False, "workspace receipt is missing or duplicated")
+    if envelope.target.get("cleanup_actor") != envelope.target.get("workspace_owner"):
+        return RuleResult("workspace_receipt", False, "workspace cleanup actor does not match provider owner")
+    expected = {
+        "provider": envelope.target["workspace_provider"],
+        "workspace_id": envelope.target["workspace_id"],
+        "repository_root": envelope.repository["root"],
+        "git_common_dir": envelope.repository["git_common_dir"],
+        "run_id": envelope.workflow["run_id"],
+        "candidate_id": envelope.workflow["candidate_id"],
+        "task_id": envelope.target.get("task_id"),
+        "thread_id": envelope.target["workspace_thread_id"],
+        "owner": envelope.target["workspace_owner"],
+    }
+    try:
+        validate_workspace_receipt(
+            payload,
+            expected,
+            current_head=str(current["head"]),
+            current_branch=str(current["branch"]),
+            publication=publication,
+            allowed_dispositions=allowed_dispositions,
         )
-    return RuleResult("workspace_receipt", bool(ok), "workspace receipt matches provider, task, thread, repository, candidate, head, and owner" if ok else "workspace receipt is missing, duplicated, stale, or mismatched")
+    except WorkspaceIsolationError as error:
+        return RuleResult("workspace_receipt", False, str(error))
+    return RuleResult("workspace_receipt", True, "workspace receipt matches provider, repository, workflow, head, branch, and owner")

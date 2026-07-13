@@ -11,7 +11,29 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   "source_plan": "docs/superpowers/plans/<source-plan>.md",
   "goal_command": "/goal Resolve the delegated issue with complete worker handoff and PR-ready proof.",
   "branch": "codex/issue-<issue-number>-<issue-slug>",
-  "branch_worktree_policy": "worker creates an isolated worktree for the branch",
+  "branch_worktree_policy": "workspace provider is selected before worker creation",
+  "workspace_provider": "codex_managed_worktree",
+  "workspace_receipt": {
+    "schema_version": 1,
+    "provider": "codex_managed_worktree",
+    "workspace_id": "<redacted-workspace>",
+    "repository_root": "<ephemeral-canonical-root>",
+    "git_common_dir": "<ephemeral-git-common-dir>",
+    "run_id": "<run-id>",
+    "candidate_id": "<candidate-id>",
+    "task_id": "<redacted-task>",
+    "thread_id": "<redacted-thread>",
+    "observed_head": "<40-character-commit>",
+    "head_mode": "branch",
+    "branch": "codex/issue-<issue-number>-<issue-slug>",
+    "owner": "codex_app",
+    "disposition": "active"
+  },
+  "workspace_receipt_ref": "sha256:<redacted-receipt-hash>",
+  "workflow_binding": {
+    "run_id": "<run-id>",
+    "candidate_id": "<candidate-id>"
+  },
   "reviewer_role": "main-thread-orchestrator",
   "proof_oracle": [
     "./scripts/test-worker-packets.sh",

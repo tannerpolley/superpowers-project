@@ -6,6 +6,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+import scripts.lib.evidence_schema as evidence_schema_module
 from dataclasses import replace
 from pathlib import Path
 
@@ -156,6 +157,13 @@ class EvidenceSchemaTests(unittest.TestCase):
             parse_envelope_json(json.dumps(envelope), self.repo)
 
     def test_registered_evidence_kind_round_trips_and_receipt_is_bound(self):
+        registrations = dict(evidence_schema_module._REGISTRATIONS)
+
+        def restore_registrations():
+            evidence_schema_module._REGISTRATIONS.clear()
+            evidence_schema_module._REGISTRATIONS.update(registrations)
+
+        self.addCleanup(restore_registrations)
         seen: list[dict[str, object]] = []
 
         def validate_workspace(payload):

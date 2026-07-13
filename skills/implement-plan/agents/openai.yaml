@@ -20,3 +20,4 @@ interface:
     skills as optional suggestions. Closeout summarizes artifact review gate, verification evidence, broader project context,
     recommended next route, and machine-readable artifacts. Do not recommend Stop merely because the branch is clean, validated, or already pushed.
     Do not ask for push approval first and explain later.
+    Prefer Codex-managed worktrees through scripts/workspace-isolation.sh; bind the observed workspace_receipt and use vanilla local fallback only when selected.

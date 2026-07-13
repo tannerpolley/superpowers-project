@@ -209,7 +209,7 @@ def verify_transition_receipt(receipt: GateReceipt | Mapping[str, object], envel
             raise EvidenceError("receipt_stale", f"prior {key} binding does not match transition", rule)
     prior_target = parsed.bindings.get("target")
     next_target = expected.get("target")
-    stable_target_keys = {"task_id", "workspace_id", "isolation_required", "workspace_provider", "workspace_thread_id", "workspace_owner"}
+    stable_target_keys = {"task_id", "workspace_id", "isolation_required", "workspace_provider", "workspace_thread_id", "workspace_owner", "cleanup_actor"}
     if not isinstance(prior_target, Mapping) or not isinstance(next_target, Mapping):
         raise EvidenceError("receipt_stale", "transition target binding is missing")
     for key in stable_target_keys & (set(prior_target) | set(next_target)):

@@ -37,16 +37,13 @@
 
 ## Scope
 
-Implement the six vertical tasks in the source plan as one executable feature slice:
+Implement the three lean tasks in the revised source plan:
 
-- add the provider-selection, workspace-receipt, publication-transition, and cleanup-ownership kernel;
-- expose provider resolution and receipt/transition validation through registered public launchers;
-- require validated workspace evidence in plan implementation and direct issue resolution;
-- bind orchestrated worker handoffs to repository, workflow run, candidate, artifact hashes, and one workspace receipt;
-- enforce branch-bound publication and provider-owned cleanup during merge;
-- prove native Codex and terminal-only local Git behavior without changing vanilla Superpowers.
+- add one small provider-selection policy and mutation-free launcher;
+- strengthen the existing issue #113 `workspace_receipt` rule for provider, branch, and ownership semantics;
+- update owner skills to prefer/adopt native Codex worktrees, use vanilla local fallback only when appropriate, and enforce provider-owned publication and cleanup.
 
-The shell adapter returns policy decisions and validates observations. The active Codex agent performs native task create, fork, branch, and Handoff operations and feeds observable results back into receipt construction. Shell code must not pretend it can execute app-native operations.
+The shell adapter returns an untrusted action decision. The active Codex agent performs native task operations and records cooperative provider observations through the existing evidence kernel. Codex exposes no signed task receipt, so this issue does not claim host cryptographic attestation.
 
 ## Acceptance Criteria
 
@@ -54,26 +51,24 @@ The shell adapter returns policy decisions and validates observations. The activ
 - A matching current Codex worktree is adopted without creating a duplicate workspace.
 - A `shared_subagent` is classified as delegation and cannot produce or satisfy an isolated-workspace receipt.
 - Terminal-only environments retain safe `local_git_worktree` fallback through the unmodified `superpowers:using-git-worktrees` skill.
-- Every receipt is schema-versioned, canonically hashed, and bound to repository identity, workflow run, candidate, workspace, Git common directory, and observed head.
+- The existing `workspace_receipt` is schema-versioned, canonically hashed, and bound to repository identity, workflow run, candidate, workspace, Git common directory, and observed head.
 - Native isolation creates no repository-local `.worktrees` directory and does not invoke vanilla worktree creation.
 - Detached HEAD is accepted for implementation and validation, while push and pull-request actions fail until a matching branch-bound provider transition exists.
 - Native fallback to a local worktree is forbidden after a native task has been created.
-- Worker handoffs reject missing, forged, stale, shared-subagent, repository-mismatched, run-mismatched, candidate-mismatched, and head-mismatched workspace evidence.
-- App-owned and user-owned worktrees never authorize plugin filesystem deletion; plugin-owned local cleanup targets only the exact recorded workspace ID and path after integration proof.
-- Installed-app evidence proves a visible native project worktree task, detached start, supported branch or Handoff transition, logical disposition, zero duplicate `.worktrees`, and unchanged vanilla skill checksums.
-- Terminal-only evidence proves vanilla invocation, a valid named-branch local receipt, and exact plugin-owned cleanup authorization.
+- Worker handoffs and kernel gates reject missing, stale, shared-subagent, repository-mismatched, run-mismatched, candidate-mismatched, and head-mismatched workspace evidence.
+- Workspace receipts never authorize filesystem deletion; app/user workspaces are preserved and plugin-owned local cleanup remains governed by independent vanilla worktree provenance.
+- Focused policy and scenario tests prove native adoption/request behavior, detached publication rejection, vanilla fallback, and exact cleanup ownership without committing generated trial runs.
 - All focused unit tests, owner-skill scenario tests, worker packet tests, workspace-isolation trial tests, and `./scripts/validate.sh` pass.
 - The required post-revision validation, commit, sync, marketplace refresh, version check, cleanup, and clean-status sequence completes before final release claims.
 
 ## Proof Oracle
 
-- `python3 -m unittest tests.test_workspace_isolation tests.test_command_registry tests.test_command_surface -v`
+- `python3 -m unittest tests.test_workspace_isolation tests.test_gate_pr_ready tests.test_gate_premerge tests.test_gate_closeout tests.test_command_registry tests.test_command_surface -v`
 - `./skills/implement-plan/scripts/test-scenarios.sh`
 - `./skills/resolve-issue/scripts/test-scenarios.sh`
 - `./skills/orchestrate-issues/scripts/test-scenarios.sh`
 - `./skills/merge-changes/scripts/test-scenarios.sh`
 - `./scripts/test-worker-packets.sh`
-- `./scripts/test-workspace-isolation-trials.sh`
 - `./scripts/validate-plan-outcome-proof.sh -PlanPath docs/superpowers/plans/2026-07-10-codex-native-workspace-isolation-plan.md`
 - `./scripts/validate-plan-task-use-cases.sh -PlanPath docs/superpowers/plans/2026-07-10-codex-native-workspace-isolation-plan.md`
 - `./scripts/validate-decision-ledger.sh -Path docs/superpowers/plans/2026-07-10-codex-native-workspace-isolation-plan.md -Kind plan`
@@ -102,17 +97,17 @@ The shell adapter returns policy decisions and validates observations. The activ
 
 **Intent:** Make coding-agent isolation use visible, app-managed Codex project worktrees when available while retaining safe terminal-only local Git worktrees and preventing same-checkout delegation from being mislabeled as isolation.
 
-**Target Output:** A provider-neutral policy and receipt kernel, public adapter commands, migrated owner skills and handoff contracts, provider-aware publication and cleanup gates, redacted examples, and native/local acceptance-trial evidence.
+**Target Output:** One provider policy and launcher, stronger existing workspace-receipt rules, concise owner-skill routing, and focused native/local behavior tests.
 
 **Owner:** Superpowers Project workspace-isolation runtime and its implementation, orchestration, issue-resolution, and merge route owners.
 
-**Interface:** `resolve_workspace_isolation`, `build_workspace_receipt`, `validate_workspace_receipt`, `validate_workspace_transition`, and `authorize_workspace_cleanup`, exposed through registered shell launchers and consumed through `workspace_receipt` and `workspace_transition` packet objects.
+**Interface:** `resolve_workspace_isolation` plus the existing registered `workspace_receipt`, `EvidenceEnvelope`, and gate-receipt chain.
 
 **Cutover:** All new implementation, worker-handoff, publication, and cleanup evidence switches from prose worktree policy and skill-name membership to validated provider receipts and transitions in the same source revision.
 
 **Replaced Path:** Branch labels, worker names, `required_skills` entries, and `branch_worktree_policy` remain descriptive only and cannot establish isolation or authorize cleanup.
 
-**Acceptance Proof:** Native and terminal-only traces, focused unit tests, four owner-skill scenario suites, worker packet validation, workspace trial validation, full repository validation, unchanged vanilla checksums, zero native `.worktrees` creation, and clean post-revision deployment receipts.
+**Acceptance Proof:** Focused unit/gate tests, four owner-skill scenario suites, worker packet validation, full repository validation, independent review, CI, and clean post-revision deployment receipts.
 
 **Stop Criteria:** Stop before mutation or publication when project identity, provider capability, separate-checkout evidence, repository/run/candidate binding, native operation output, branch transition, or cleanup ownership cannot be proven; after native task creation, retain and report that app-owned task instead of creating a local fallback.
 
