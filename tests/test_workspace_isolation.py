@@ -325,6 +325,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
     def test_worker_handoff_requires_workspace_receipt_reference(self):
         root = Path(__file__).resolve().parents[1]
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+        current_branch = subprocess.run(["git", "branch", "--show-current"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         common_value = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         common = Path(common_value)
         if not common.is_absolute():
@@ -340,8 +341,8 @@ class WorkspaceIsolationTests(unittest.TestCase):
             "task_id": "task-1",
             "thread_id": "thread-1",
             "observed_head": head,
-            "head_mode": "branch",
-            "branch": "codex/issue-115-codex-native-workspace-isolation",
+            "head_mode": "branch" if current_branch else "detached",
+            "branch": current_branch or None,
             "owner": "codex_app",
             "disposition": "active",
         }
@@ -436,6 +437,7 @@ class WorkspaceIsolationTests(unittest.TestCase):
     def test_worker_handoff_preparation_binds_workspace_reference(self):
         root = Path(__file__).resolve().parents[1]
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+        current_branch = subprocess.run(["git", "branch", "--show-current"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         common_value = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         common = Path(common_value)
         if not common.is_absolute():
@@ -451,8 +453,8 @@ class WorkspaceIsolationTests(unittest.TestCase):
             "task_id": "task-1",
             "thread_id": "thread-1",
             "observed_head": head,
-            "head_mode": "branch",
-            "branch": "codex/issue-115-codex-native-workspace-isolation",
+            "head_mode": "branch" if current_branch else "detached",
+            "branch": current_branch or None,
             "owner": "codex_app",
             "disposition": "active",
         }
