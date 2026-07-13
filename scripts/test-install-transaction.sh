@@ -17,5 +17,5 @@ if "$tmp/forged/scripts/install.sh" -SkipValidation -LivePluginRoot "$live" -Mar
   echo "forged update unexpectedly installed" >&2; exit 1
 fi
 test "$before" = "$(sha256sum "$live/.codex-plugin/plugin.json")"
-python3 -m unittest "$root/tests/test_package_provenance.py" -q
+python3 -m unittest "$root/tests/test_runtime_package.py" -q
 printf '%s\n' '{"ok":true,"phase":"install-transaction","reason":"invalid update preserved previous install"}'

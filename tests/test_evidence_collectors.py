@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import json
 import shutil
 import subprocess
@@ -166,20 +165,6 @@ class EvidenceCollectorTests(unittest.TestCase):
         self.assertEqual("pr_ready", parsed.gate)
         self.assertGreaterEqual(len(parsed.evidence), 5)
         self.assertEqual("main", parsed.target["branch"])
-
-    def test_public_collection_without_request_fails_with_structured_error(self):
-        root = Path(__file__).parents[1]
-        for launcher in (
-            "skills/resolve-issue/scripts/collect-pr-ready-ledger.sh",
-            "skills/merge-changes/scripts/collect-premerge-ledger.sh",
-            "skills/merge-changes/scripts/collect-closeout-ledger.sh",
-        ):
-            with self.subTest(launcher=launcher):
-                process = subprocess.run(["bash", str(root / launcher)], cwd=root, text=True, capture_output=True)
-                self.assertNotEqual(0, process.returncode)
-                payload = json.loads(process.stdout)
-                self.assertEqual("evidence_missing", payload["error"]["code"])
-
 
 if __name__ == "__main__":
     unittest.main()

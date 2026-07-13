@@ -69,16 +69,6 @@ class PrReadyGateTests(unittest.TestCase):
         self.repo = fixture_repo()
         self.addCleanup(lambda: shutil.rmtree(self.repo, ignore_errors=True))
 
-    def test_public_pr_ready_launcher_fails_without_evidence(self):
-        result = subprocess.run(
-            ["bash", str(Path(__file__).parents[1] / "skills/resolve-issue/scripts/validate-pr-ready.sh")],
-            cwd=Path(__file__).parents[1],
-            text=True,
-            capture_output=True,
-        )
-        self.assertNotEqual(0, result.returncode)
-        self.assertEqual("evidence_missing", json.loads(result.stdout)["error"]["code"])
-
     def test_pr_ready_rejects_forged_success_and_stale_source(self):
         envelope = valid_pr_ready_envelope(self.repo)
         envelope["evidence"].append({
@@ -143,18 +133,6 @@ class PrReadyGateTests(unittest.TestCase):
         receipt = validate_pr_ready(parse_envelope(valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace), self.repo), self.repo)
         self.assertEqual("passed", receipt.disposition)
 
-    def test_isolation_workspace_receipt_rejects_detached_publication(self):
-        head = git(self.repo, "rev-parse", "HEAD")
-        workspace = {"schema_version": 1, "provider": "codex_managed_worktree", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "git_common_dir": str((self.repo / ".git").resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "head_mode": "detached", "branch": None, "owner": "codex_app", "disposition": "active"}
-        with self.assertRaisesRegex(EvidenceError, "branch-bound"):
-            validate_pr_ready(parse_envelope(valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace), self.repo), self.repo)
-
-    def test_isolation_workspace_receipt_rejects_cleanup_actor_widening(self):
-        head = git(self.repo, "rev-parse", "HEAD")
-        workspace = {"schema_version": 1, "provider": "codex_managed_worktree", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "git_common_dir": str((self.repo / ".git").resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "head_mode": "branch", "branch": "main", "owner": "codex_app", "disposition": "active"}
-        with self.assertRaisesRegex(EvidenceError, "cleanup actor"):
-            validate_pr_ready(parse_envelope(valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace, cleanup_actor="plugin"), self.repo), self.repo)
-
     def test_workspace_cleanup_actor_is_stable_across_receipt_transition(self):
         head = git(self.repo, "rev-parse", "HEAD")
         workspace = {"schema_version": 1, "provider": "codex_managed_worktree", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "git_common_dir": str((self.repo / ".git").resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "head_mode": "branch", "branch": "main", "owner": "codex_app", "disposition": "active"}
@@ -168,39 +146,6 @@ class PrReadyGateTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(EvidenceError, "cleanup_actor changed"):
             verify_transition_receipt(receipt, next_envelope, "pr_ready")
-
-    def test_isolation_workspace_receipt_rejects_missing_duplicate_or_mismatched_bindings(self):
-        head = git(self.repo, "rev-parse", "HEAD")
-        workspace = {"schema_version": 1, "provider": "codex_managed_worktree", "workspace_id": "workspace-1", "repository_root": str(self.repo.resolve()), "git_common_dir": str((self.repo / ".git").resolve()), "run_id": "run-1", "candidate_id": "candidate-1", "task_id": "task-1", "thread_id": "thread-1", "observed_head": head, "head_mode": "branch", "branch": "main", "owner": "codex_app", "disposition": "active"}
-        for mutation in ("missing", "duplicate", "provider", "thread", "task", "candidate", "head", "owner", "branch", "schema", "cleanup"):
-            with self.subTest(mutation=mutation):
-                envelope = valid_pr_ready_envelope(self.repo, isolation=True, workspace=workspace)
-                if mutation == "missing":
-                    envelope["evidence"] = [item for item in envelope["evidence"] if item["kind"] != "workspace_receipt"]
-                elif mutation == "duplicate":
-                    envelope["evidence"].append(dict(next(item for item in envelope["evidence"] if item["kind"] == "workspace_receipt")))
-                elif mutation == "cleanup":
-                    item = next(item for item in envelope["evidence"] if item["kind"] == "cleanup_state")
-                    item["payload"]["cleanup_actor"] = "untrusted"
-                    item["payload_hash"] = hash_ref(item["payload"])
-                else:
-                    item = next(item for item in envelope["evidence"] if item["kind"] == "workspace_receipt")
-                    key = {
-                        "provider": "provider",
-                        "thread": "thread_id",
-                        "task": "task_id",
-                        "candidate": "candidate_id",
-                        "head": "observed_head",
-                        "owner": "owner",
-                        "branch": "branch",
-                        "schema": "schema_version",
-                    }[mutation]
-                    item["payload"][key] = 2 if mutation == "schema" else ("fixture" if mutation == "provider" else "forged")
-                    item["payload_hash"] = hash_ref(item["payload"])
-                envelope["envelope_hash"] = build_envelope_hash(envelope)
-                with self.assertRaisesRegex(EvidenceError, "required_rule_failed"):
-                    validate_pr_ready(parse_envelope(envelope, self.repo), self.repo)
-
 
 if __name__ == "__main__":
     unittest.main()

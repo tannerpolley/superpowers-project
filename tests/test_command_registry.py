@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 import tempfile
@@ -32,8 +33,22 @@ class CommandRegistryTests(unittest.TestCase):
 
     def test_every_shipped_launcher_has_one_entry(self):
         registry = build_command_registry(ROOT)
+        catalog = load_command_catalog(ROOT)
         launchers = {p.relative_to(ROOT).as_posix() for base in (ROOT / "scripts", ROOT / "skills") for p in base.rglob("*.sh") if "/lib/" not in p.as_posix()}
         self.assertEqual(launchers, set(registry))
+        for path, spec in catalog.items():
+            with self.subTest(path=path):
+                process = subprocess.run(
+                    ["bash", str(ROOT / path), "-DispatchProbe"],
+                    cwd="/tmp",
+                    text=True,
+                    capture_output=True,
+                )
+                self.assertEqual(0, process.returncode, process.stdout + process.stderr)
+                self.assertEqual(
+                    {"ok": True, "path": path, "handler": spec.handler, "kind": spec.kind, "mutation": spec.mutation},
+                    json.loads(process.stdout),
+                )
 
     def test_library_file_is_not_classified_as_test(self):
         registry = build_command_registry(ROOT)
@@ -61,6 +76,15 @@ class CommandRegistryTests(unittest.TestCase):
             {handler for handler in _COMMANDS.values() if not callable(cli.resolve_handler(handler))}
         )
         self.assertEqual([], missing)
+        expected_modules = {
+            "command_workflow_run": "commands.workflow",
+            "command_validate_agent_usability_receipt": "commands.validation",
+            "command_select_candidate": "commands.project",
+            "command_prepare_release": "commands.distribution",
+        }
+        handlers = load_handlers()
+        for name, module in expected_modules.items():
+            self.assertTrue(handlers[name].__module__.endswith(module))
 
     def test_execution_kernel_collection_handlers_are_registered(self):
         handlers = load_handlers()
@@ -89,3 +113,19 @@ class CommandRegistryTests(unittest.TestCase):
         payload = __import__("json").loads(process.stdout)
         self.assertTrue(payload["ok"])
         self.assertEqual("workflow-contract", payload["phase"])
+
+    def test_evidence_launchers_fail_closed_without_a_request(self):
+        paths = (
+            "skills/resolve-issue/scripts/validate-pr-ready.sh",
+            "skills/merge-changes/scripts/premerge.sh",
+            "skills/merge-changes/scripts/validate-merge-decision.sh",
+            "skills/merge-changes/scripts/closeout.sh",
+            "skills/resolve-issue/scripts/collect-pr-ready-ledger.sh",
+            "skills/merge-changes/scripts/collect-premerge-ledger.sh",
+            "skills/merge-changes/scripts/collect-closeout-ledger.sh",
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                process = subprocess.run(["bash", str(ROOT / path)], cwd=ROOT, text=True, capture_output=True)
+                self.assertNotEqual(0, process.returncode)
+                self.assertEqual("evidence_missing", json.loads(process.stdout)["error"]["code"])

@@ -47,6 +47,20 @@ class WorkflowGraphTests(unittest.TestCase):
         indexes = {render_route_index(graph) for _ in range(5)}
         self.assertEqual(1, len(summaries))
         self.assertEqual(1, len(indexes))
+        self.assertEqual(summaries.pop(), (ROOT / "docs/superpowers/OUTCOME_WORKFLOW.md").read_text())
+        self.assertEqual(indexes.pop(), (ROOT / "docs/superpowers/WORKFLOW_ROUTE_INDEX.md").read_text())
+
+        routes = graph.routes
+        self.assertNotIn("companion-interface", routes)
+        self.assertEqual(["write-plan"], routes["brainstorm-spec"]["next_routes"])
+        question_ids = {
+            gate["question_id"]
+            for route in routes.values()
+            for gate in route["gates"]
+        }
+        self.assertNotIn("project_brainstorm_visual_companion", question_ids)
+        self.assertNotIn("project_auto_mode_authorization", question_ids)
+        self.assertNotIn("project_loop_next_step", question_ids)
 
     def test_generated_summary_names_auto_outcome_not_route(self):
         graph = load_workflow_graph(ROOT / "docs" / "superpowers" / "workflow-contract.yml")
