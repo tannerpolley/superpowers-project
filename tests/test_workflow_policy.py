@@ -17,8 +17,9 @@ class GovernancePolicyTests(unittest.TestCase):
 
     def test_every_mode_requires_a_bounded_candidate_scope(self):
         for mode in ("manual", "auto", "looping"):
-            with self.subTest(mode=mode), self.assertRaises(PolicyError):
-                validate_governance(mode, {"source": "request_user_input", "candidate_scope": []})
+            for scope in ([], [""], ["same", "same"]):
+                with self.subTest(mode=mode, scope=scope), self.assertRaises(PolicyError):
+                    validate_governance(mode, {"source": "request_user_input", "candidate_scope": scope})
 
     def test_auto_rejects_continuation(self):
         with self.assertRaises(PolicyError):

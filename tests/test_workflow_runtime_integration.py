@@ -131,6 +131,13 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             replayed = self.invoke(project, run_root, auth, "select", "-Candidate", "one")
             self.assertNotEqual(0, replayed.returncode)
             self.assert_ok(self.invoke(project, run_root, auth, "select", "-Candidate", "two"))
+            self.assert_ok(self.invoke(project, run_root, auth, "accept", "-Candidate", "two"))
+            self.assert_ok(self.invoke(project, run_root, auth, "verify", "-Candidate", "two"))
+            budget, health = self.loop_evidence(project, "two")
+            self.assert_ok(self.invoke(project, run_root, auth, "recheck-budget", "-Candidate", "two", "-BudgetEvidencePath", str(budget), "-HealthEvidencePath", str(health)))
+            self.assert_ok(self.invoke(project, run_root, auth, "grant-continuation", "-Candidate", "two"))
+            replayed = self.invoke(project, run_root, auth, "select", "-Candidate", "one")
+            self.assertNotEqual(0, replayed.returncode)
             events = [json.loads(line) for line in (run_root / "events.jsonl").read_text().splitlines()]
             grant = next(event for event in events if event["type"] == "continuation_granted")
             self.assertEqual("policy", grant["source"])
@@ -210,6 +217,24 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             self.assert_ok(self.invoke(project, run_root, auth, "recheck-budget", "-Candidate", "one", "-BudgetEvidencePath", str(budget), "-HealthEvidencePath", str(health)))
             health.write_text(json.dumps({"candidate_id": "one", "verifier_type": "independent", "independent": True, "proof": [{"command": "focused tests", "ok": False, "artifact": "changed"}]}), encoding="utf-8")
             rejected = self.invoke(project, run_root, auth, "grant-continuation", "-Candidate", "one")
+            self.assertNotEqual(0, rejected.returncode)
+
+    def test_loop_checkpoint_must_immediately_precede_grant_and_selection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project, run_root, auth = self.fixture(Path(tmp), "looping")
+            self.assert_ok(self.invoke(project, run_root, auth, "start", "-RunId", "loop-order"))
+            self.assert_ok(self.invoke(project, run_root, auth, "select", "-Candidate", "one"))
+            self.assert_ok(self.invoke(project, run_root, auth, "accept", "-Candidate", "one"))
+            self.assert_ok(self.invoke(project, run_root, auth, "verify", "-Candidate", "one"))
+            budget, health = self.loop_evidence(project, "one")
+            self.assert_ok(self.invoke(project, run_root, auth, "recheck-budget", "-Candidate", "one", "-BudgetEvidencePath", str(budget), "-HealthEvidencePath", str(health)))
+            self.assert_ok(self.invoke(project, run_root, auth, "mutate", "-Candidate", "one"))
+            rejected = self.invoke(project, run_root, auth, "grant-continuation", "-Candidate", "one")
+            self.assertNotEqual(0, rejected.returncode)
+            self.assert_ok(self.invoke(project, run_root, auth, "recheck-budget", "-Candidate", "one", "-BudgetEvidencePath", str(budget), "-HealthEvidencePath", str(health)))
+            self.assert_ok(self.invoke(project, run_root, auth, "grant-continuation", "-Candidate", "one"))
+            self.assert_ok(self.invoke(project, run_root, auth, "mutate", "-Candidate", "one"))
+            rejected = self.invoke(project, run_root, auth, "select", "-Candidate", "two")
             self.assertNotEqual(0, rejected.returncode)
 
     def test_terminal_runs_reject_more_gate_or_stop_events(self):

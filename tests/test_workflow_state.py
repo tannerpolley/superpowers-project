@@ -41,6 +41,16 @@ class WorkflowStateTests(unittest.TestCase):
             with self.assertRaisesRegex(WorkflowStateError, "already stopped"):
                 append_event(root, {"type": "run_stopped", "reason": "late"})
 
+    def test_loop_checkpoint_order_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            append_event(root, {"type": "run_started", "run_id": "trial-order"})
+            append_event(root, {"type": "candidate_selected", "candidate": "one"})
+            append_event(root, {"type": "budget_rechecked", "candidate": "one", "evidence": {"budget_path": "budget.json", "budget_hash": "a" * 64, "health_path": "health.json", "health_hash": "b" * 64}})
+            append_event(root, {"type": "mutation_applied", "candidate": "one"})
+            with self.assertRaisesRegex(WorkflowStateError, "immediately follow"):
+                append_event(root, {"type": "continuation_granted", "candidate": "one"})
+
     def test_second_candidate_is_fail_closed_until_all_gates(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -54,6 +64,19 @@ class WorkflowStateTests(unittest.TestCase):
             root = Path(tmp)
             append_event(root, {"type": "run_started", "run_id": "trial-repeat"})
             append_event(root, {"type": "candidate_selected", "candidate": "one"})
+            with self.assertRaisesRegex(WorkflowStateError, "already selected"):
+                append_event(root, {"type": "candidate_selected", "candidate": "one"})
+
+    def test_earlier_candidate_cannot_be_reselected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            append_event(root, {"type": "run_started", "run_id": "trial-cycle"})
+            append_event(root, {"type": "candidate_selected", "candidate": "one"})
+            append_event(root, {"type": "candidate_accepted", "candidate": "one"})
+            append_event(root, {"type": "verifier_passed", "candidate": "one"})
+            append_event(root, {"type": "budget_rechecked", "candidate": "one", "evidence": {"budget_path": "budget.json", "budget_hash": "a" * 64, "health_path": "health.json", "health_hash": "b" * 64}})
+            append_event(root, {"type": "continuation_granted", "candidate": "one"})
+            append_event(root, {"type": "candidate_selected", "candidate": "two"})
             with self.assertRaisesRegex(WorkflowStateError, "already selected"):
                 append_event(root, {"type": "candidate_selected", "candidate": "one"})
 

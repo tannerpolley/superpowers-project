@@ -66,7 +66,13 @@ def validate_governance(mode: str, authorization: Mapping[str, Any], *, noninter
     if noninteractive_trial and source != "trial-fixture":
         raise PolicyError("noninteractive trial requires trial-fixture provenance")
     candidates = authorization.get("candidate_scope") or []
-    if not isinstance(candidates, list) or not candidates or (mode != "looping" and len(candidates) > profile.max_candidates_per_iteration):
+    if (
+        not isinstance(candidates, list)
+        or not candidates
+        or any(not isinstance(candidate, str) or not candidate.strip() for candidate in candidates)
+        or len(set(candidates)) != len(candidates)
+        or (mode != "looping" and len(candidates) > profile.max_candidates_per_iteration)
+    ):
         raise PolicyError("candidate scope exceeds one-candidate iteration bound")
     if mode == "looping" and len(authorization.get("selected_candidates") or []) > profile.max_candidates_per_iteration:
         raise PolicyError("loop iteration selected more than one candidate")

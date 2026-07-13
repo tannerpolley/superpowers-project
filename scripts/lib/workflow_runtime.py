@@ -125,11 +125,13 @@ class WorkflowRuntime:
         scope = authorization.get("candidate_scope") or []
         if scope and candidate not in scope:
             raise WorkflowRuntimeError("candidate is outside the authorized scope")
+        if candidate in projection.selected_candidates:
+            raise WorkflowRuntimeError("candidate is already selected")
         if context["mode"] == "auto" and projection.selected_candidate is not None:
             raise WorkflowRuntimeError("Auto mode authorizes exactly one selected route")
         if context["mode"] == "looping" and projection.selected_candidate is not None:
-            if candidate == projection.selected_candidate:
-                raise WorkflowRuntimeError("candidate is already selected")
+            if projection.last_event_type != "continuation_granted":
+                raise WorkflowRuntimeError("next candidate must immediately follow continuation grant")
             self._validate_recorded_loop_evidence(projection.selected_candidate, projection)
         append_event(self.run_root, {"type": "candidate_selected", "candidate": candidate})
         return self.receipt("select")
@@ -203,6 +205,8 @@ class WorkflowRuntime:
                 )
             ):
                 raise WorkflowRuntimeError("continuation requires acceptance, verifier, and budget evidence")
+            if projection.last_event_type != "budget_rechecked":
+                raise WorkflowRuntimeError("continuation must immediately follow budget and health recheck")
             self._validate_recorded_loop_evidence(candidate, projection)
             event["source"] = "policy"
         append_event(self.run_root, event)
