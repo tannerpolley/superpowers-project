@@ -19,11 +19,15 @@ Use `superpowers:executing-plans` as the base. Use `superpowers:test-driven-deve
 
 Read `skills/advanced-user-input/SKILL.md` for global continuation and artifact review. This route keeps route-specific setup, topology, push, and handoff decisions local. Read labels from `docs/superpowers/workflow-contract.yml`.
 
+## Workspace Isolation
+
+Before editing, call `scripts/workspace-isolation.sh` with the lifecycle requirement and observed capabilities. Treat its result as an untrusted action decision: adopt or request `codex_managed_worktree`, or invoke `superpowers:using-git-worktrees` only for `local_git_worktree`. A shared subagent is delegation, not isolation. Local fallback is forbidden after native task creation. Record the provider observation as the existing `workspace_receipt`; detached native work may implement, but publication requires a fresh branch-bound receipt.
+
 ## Execution
 
 1. Require an approved plan under `docs/superpowers/plans/` and run `./scripts/validate-plan-outcome-proof.sh`, `./scripts/validate-plan-task-use-cases.sh`, and `./scripts/validate-decision-ledger.sh -Kind plan`.
 2. Start or reuse one immutable workflow run with `./scripts/workflow-run.sh`; record start, candidate selection, every mutation, acceptance, verification, and route completion.
-3. Activate a native goal, choose Inline or Worker through `implement_plan_topology`, and create an isolated development branch/worktree.
+3. Activate a native goal, choose Inline or Worker through `implement_plan_topology`, and satisfy the Workspace Isolation policy.
 4. Implement each task with its proof oracle. Commit intentional checkpoints; do not create issue mirrors or claim issue closure.
 5. Run the plan validations, repo suite, cleanup, and a structured readiness review covering plan alignment, correctness, maintainability, and reality evidence.
 6. Prepare `local_branch_proof` for merge-changes. Local integration requires no push or PR proof. `remote_publication_proof` is separate and only required when the user explicitly selects a remote route.

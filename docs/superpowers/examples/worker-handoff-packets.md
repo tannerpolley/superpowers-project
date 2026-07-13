@@ -11,7 +11,9 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   "source_plan": "docs/superpowers/plans/<source-plan>.md",
   "goal_command": "/goal Resolve the delegated issue with complete worker handoff and PR-ready proof.",
   "branch": "codex/issue-<issue-number>-<issue-slug>",
-  "branch_worktree_policy": "worker creates an isolated worktree for the branch",
+  "branch_worktree_policy": "workspace provider is selected before worker creation",
+  "workspace_provider": "codex_managed_worktree",
+  "workspace_receipt_ref": "sha256:<redacted-receipt-hash>",
   "reviewer_role": "main-thread-orchestrator",
   "proof_oracle": [
     "./scripts/test-worker-packets.sh",

@@ -13,7 +13,7 @@ Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `github`, `goals`
 
 ## Required Superpowers Pairings
 
-Use `superpowers:using-git-worktrees`, then `superpowers:executing-plans`. Require `superpowers:test-driven-development` unless the approved source plan records an explicit opt-out. Use `superpowers:systematic-debugging` for failures and unclear behavior. Require `superpowers:verification-before-completion` before PR-ready claims and `superpowers:finishing-a-development-branch` before PR creation.
+Use `superpowers:executing-plans`; use `superpowers:using-git-worktrees` only when the workspace provider selects local fallback. Require `superpowers:test-driven-development` unless the approved source plan records an explicit opt-out. Use `superpowers:systematic-debugging` for failures and unclear behavior. Require `superpowers:verification-before-completion` before PR-ready claims and `superpowers:finishing-a-development-branch` before PR creation.
 
 ## Shared Policy
 
@@ -23,9 +23,13 @@ Follow `skills/advanced-user-input/SKILL.md` for global continuation and artifac
 
 Require `docs/superpowers/issues/<number>-<slug>.md` with `Sub-Issue Role: leaf`, `Executable: true`, issue URL, source plan, Outcome Summary, acceptance criteria, and proof oracle. Run `skills/resolve-issue/scripts/preflight.sh`, `./scripts/validate-plan-outcome-proof.sh`, and `./scripts/validate-plan-task-use-cases.sh`. Parent, wrapper, `Source Plan: TBD`, and malformed mirrors are blocking.
 
+## Workspace Isolation
+
+Before editing, call `scripts/workspace-isolation.sh` with required isolation and observed capabilities. Treat its result as an untrusted action decision: adopt or request `codex_managed_worktree`, or invoke `superpowers:using-git-worktrees` only for `local_git_worktree`. A shared subagent is delegation, not isolation. Local fallback is forbidden after native task creation. Record the provider observation as the existing `workspace_receipt`; detached native work may implement, but `project_resolve_push_permission` requires a fresh branch-bound receipt.
+
 ## Execution
 
-1. Inspect setup with `prepare-execution.sh`, activate the native goal, create the issue branch/worktree, and validate setup with `validate-setup.sh`.
+1. Inspect setup with `prepare-execution.sh`, activate the native goal, satisfy Workspace Isolation, and validate setup with `validate-setup.sh`.
 2. Start or reuse the immutable `scripts/workflow-run.sh` run and record selection/mutations.
 3. Execute each plan task with TDD/debug discipline and commit scoped checkpoints.
 4. Verify acceptance coverage, proof oracle, repo tests, cleanup, outcome-proof carry-forward, and readiness review.

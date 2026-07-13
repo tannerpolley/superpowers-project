@@ -19,7 +19,7 @@ from package_provenance import runtime_contract_hash as package_contract_hash, r
 from command_catalog import load_command_catalog
 from command_support import *
 from commands import load_handlers
-from evidence_schema import EvidenceError, hash_bytes_ref
+from evidence_schema import EvidenceError, hash_bytes_ref, is_hash_ref
 from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
 
 try:
@@ -1222,6 +1222,7 @@ def command_validate_worker_packets(ctx: Context, args: dict[str, Any]) -> int:
         "validation": ["validation", "required_commands"],
         "reviewer": ["reviewer", "reviewer_role"],
         "merge": ["merge", "merge_handoff"],
+        "workspace receipt": ["workspace_receipt_ref"],
     }
     missing = [label for label, variants in required_groups.items() if not any(variant in lowered for variant in variants)]
     if ".ps1" in text or "pwsh" in text.lower():
@@ -1342,6 +1343,8 @@ def command_prepare_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     source_plan = field_value(text, "Source Plan")
     if not source_plan or source_plan.lower() == "none":
         raise ScriptError("Source Plan is required for worker orchestration")
+    if source_plan.startswith("`") and source_plan.endswith("`"):
+        source_plan = source_plan[1:-1].strip()
     source_plan_path = resolve_under(root, source_plan, "Source Plan")
     if not source_plan_path.is_file():
         raise ScriptError(f"Source Plan does not exist: {source_plan}")
@@ -1350,6 +1353,12 @@ def command_prepare_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     proof = section_bullets(text, "Proof Oracle")
     if not proof:
         raise ScriptError("Proof Oracle section with commands is required")
+    workspace_receipt_ref = arg_value(args, "WorkspaceReceiptRef")
+    workspace_provider = arg_value(args, "WorkspaceProvider")
+    if not is_hash_ref(workspace_receipt_ref):
+        raise ScriptError("WorkspaceReceiptRef must be a sha256 HashRef")
+    if workspace_provider not in {"codex_managed_worktree", "local_git_worktree"}:
+        raise ScriptError("WorkspaceProvider must identify an isolated provider")
     handoff = {
         "issue_mirror": normalize_rel(issue, root),
         "issue_url": field_value(text, "GitHub Issue"),
@@ -1358,7 +1367,9 @@ def command_prepare_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
         "goal_command": field_value(text, "Goal Command"),
         "worker_identity": identity_payload["identity"],
         "branch": identity_payload["identity"]["branch"],
-        "branch_worktree_policy": "worker creates an isolated worktree for the branch",
+        "branch_worktree_policy": "workspace provider is selected before worker creation",
+        "workspace_provider": workspace_provider,
+        "workspace_receipt_ref": workspace_receipt_ref,
         "reviewer_role": "main-thread-orchestrator",
         "proof_oracle": proof,
         "validation": {"required_commands": ["skills/orchestrate-issues/scripts/validate-worker-handoff.sh -RepoRoot . -HandoffPath <handoff-json>"]},
@@ -1390,7 +1401,7 @@ def capture_command(func) -> str:
 def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     handoff, _ = read_json_arg(root, args, "HandoffJson", "HandoffPath")
-    required = ["issue_mirror", "source_plan", "worker_identity", "branch", "branch_worktree_policy", "reviewer_role", "proof_oracle", "validation", "topology_handoff", "merge_handoff", "required_skills"]
+    required = ["issue_mirror", "source_plan", "worker_identity", "branch", "branch_worktree_policy", "workspace_provider", "workspace_receipt_ref", "reviewer_role", "proof_oracle", "validation", "topology_handoff", "merge_handoff", "required_skills"]
     for field in required:
         if field not in handoff or handoff[field] in (None, "", []):
             raise ScriptError(f"handoff missing {field}")
@@ -1410,10 +1421,14 @@ def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
         raise ScriptError("worker_must_not_merge must be true")
     if (handoff.get("merge_handoff") or {}).get("merge_owner") != "merge-changes":
         raise ScriptError("merge_handoff.merge_owner must be merge-changes")
+    if handoff.get("workspace_provider") not in {"codex_managed_worktree", "local_git_worktree"}:
+        raise ScriptError("workspace_provider must identify an isolated provider")
+    if not is_hash_ref(handoff.get("workspace_receipt_ref")):
+        raise ScriptError("workspace_receipt_ref must be a sha256 HashRef")
     for skill in ["superpowers:using-git-worktrees", "superpowers:test-driven-development", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]:
         if skill not in handoff.get("required_skills", []):
             raise ScriptError(f"required skill missing: {skill}")
-    return emit({"ok": True, "phase": "validate-worker-handoff", "reason": "worker handoff passed", "evidence": {"branch": handoff["branch"], "issue_mirror": handoff["issue_mirror"], "source_plan": handoff["source_plan"]}})
+    return emit({"ok": True, "phase": "validate-worker-handoff", "reason": "worker handoff passed", "evidence": {"branch": handoff["branch"], "issue_mirror": handoff["issue_mirror"], "source_plan": handoff["source_plan"], "workspace_receipt_ref": handoff["workspace_receipt_ref"], "recollection_required": True}})
 
 
 def command_collect_continuation(ctx: Context, args: dict[str, Any], phase: str) -> int:

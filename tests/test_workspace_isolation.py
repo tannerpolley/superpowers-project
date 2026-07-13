@@ -206,6 +206,101 @@ class WorkspaceIsolationTests(unittest.TestCase):
         self.assertEqual("workspace-isolation-decision", payload["phase"])
         self.assertEqual("fork_task", payload["decision"]["operation"])
 
+    def test_owner_skills_share_the_provider_contract(self):
+        root = Path(__file__).resolve().parents[1]
+        for skill in ("implement-plan", "resolve-issue", "orchestrate-issues"):
+            with self.subTest(skill=skill):
+                text = (root / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+                self.assertIn("scripts/workspace-isolation.sh", text)
+                self.assertIn("codex_managed_worktree", text)
+                self.assertIn("local_git_worktree", text)
+                self.assertIn("workspace_receipt", text)
+                self.assertRegex(text, r"shared subagent.*delegation")
+                self.assertRegex(text, r"fallback.*native task")
+
+        merge = (root / "skills/merge-changes/SKILL.md").read_text(encoding="utf-8")
+        for phrase in ("workspace_receipt", "codex_app", "plugin-owned", "user-owned"):
+            self.assertIn(phrase, merge)
+        self.assertRegex(merge, r"physical.*remov")
+
+    def test_startup_metadata_exposes_workspace_routing(self):
+        root = Path(__file__).resolve().parents[1]
+        for skill in ("implement-plan", "resolve-issue", "orchestrate-issues", "merge-changes"):
+            with self.subTest(skill=skill):
+                text = (root / "skills" / skill / "agents/openai.yaml").read_text(encoding="utf-8")
+                self.assertIn("workspace_receipt", text)
+                self.assertIn("Codex", text)
+
+    def test_worker_handoff_requires_workspace_receipt_reference(self):
+        root = Path(__file__).resolve().parents[1]
+        handoff = {
+            "issue_mirror": "docs/superpowers/issues/115-codex-native-workspace-isolation.md",
+            "source_plan": "docs/superpowers/plans/2026-07-10-codex-native-workspace-isolation-plan.md",
+            "worker_identity": {
+                "issue_number": 115,
+                "issue_slug": "codex-native-workspace-isolation",
+                "thread_title": "Resolve #115",
+                "branch": "codex/issue-115-codex-native-workspace-isolation",
+                "evidence_folder": "issue-115",
+                "pr_title": "Resolve #115",
+            },
+            "branch": "codex/issue-115-codex-native-workspace-isolation",
+            "branch_worktree_policy": "provider-selected isolated workspace",
+            "workspace_provider": "codex_managed_worktree",
+            "workspace_receipt_ref": "sha256:" + "a" * 64,
+            "reviewer_role": "main-thread-orchestrator",
+            "proof_oracle": ["./scripts/validate.sh"],
+            "validation": {"required_commands": ["./scripts/validate.sh"]},
+            "topology_handoff": {"worker_must_not_merge": True},
+            "merge_handoff": {"merge_owner": "merge-changes"},
+            "required_skills": [
+                "superpowers:using-git-worktrees",
+                "superpowers:test-driven-development",
+                "superpowers:verification-before-completion",
+                "superpowers:finishing-a-development-branch",
+            ],
+        }
+        script = root / "skills/orchestrate-issues/scripts/validate-worker-handoff.sh"
+        valid = subprocess.run(
+            ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(handoff)],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(0, valid.returncode, valid.stdout + valid.stderr)
+
+        handoff.pop("workspace_receipt_ref")
+        missing = subprocess.run(
+            ["bash", str(script), "-RepoRoot", str(root), "-HandoffJson", json.dumps(handoff)],
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(0, missing.returncode)
+        self.assertIn("workspace_receipt_ref", missing.stdout)
+
+    def test_worker_handoff_preparation_binds_workspace_reference(self):
+        root = Path(__file__).resolve().parents[1]
+        process = subprocess.run(
+            [
+                "bash",
+                str(root / "skills/orchestrate-issues/scripts/prepare-worker-handoff.sh"),
+                "-RepoRoot",
+                str(root),
+                "-IssueFile",
+                "docs/superpowers/issues/115-codex-native-workspace-isolation.md",
+                "-WorkspaceProvider",
+                "codex_managed_worktree",
+                "-WorkspaceReceiptRef",
+                "sha256:" + "a" * 64,
+            ],
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual(0, process.returncode, process.stdout + process.stderr)
+        handoff = json.loads(process.stdout)["handoff"]
+        self.assertEqual("codex_managed_worktree", handoff["workspace_provider"])
+        self.assertEqual("sha256:" + "a" * 64, handoff["workspace_receipt_ref"])
+
 
 if __name__ == "__main__":
     unittest.main()

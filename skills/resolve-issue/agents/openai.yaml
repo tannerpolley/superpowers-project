@@ -21,3 +21,4 @@ interface:
     project_resolve_push_permission has Push And Open PR and Hold. Auto Mode reuses the project_workflow_mode
     one-outcome ledger and resolves publication gates through the shared lifecycle mode policy. Terminal closeout
     uses collect-continuation-ledger.sh and validate-terminal-closeout.sh with explicit Stop.
+    Prefer Codex-managed worktrees through scripts/workspace-isolation.sh, bind workspace_receipt evidence, and require a branch-bound receipt before publication.
