@@ -75,9 +75,14 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             self.assert_ok(self.invoke(project, run_root, auth, "select", "-Candidate", "one"))
             rejected = self.invoke(project, run_root, auth, "select", "-Candidate", "two")
             self.assertNotEqual(0, rejected.returncode)
+            rejected = self.invoke(project, run_root, auth, "grant-continuation", "-Candidate", "one")
+            self.assertNotEqual(0, rejected.returncode)
             for action in ("accept", "verify", "recheck-budget", "grant-continuation"):
                 self.assert_ok(self.invoke(project, run_root, auth, action, "-Candidate", "one"))
             self.assert_ok(self.invoke(project, run_root, auth, "select", "-Candidate", "two"))
+            events = [json.loads(line) for line in (run_root / "events.jsonl").read_text().splitlines()]
+            grant = next(event for event in events if event["type"] == "continuation_granted")
+            self.assertEqual("policy", grant["source"])
 
     def test_tampering_and_project_scope_drift_fail_closed(self):
         with tempfile.TemporaryDirectory() as tmp:

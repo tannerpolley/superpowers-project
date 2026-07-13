@@ -22,6 +22,7 @@ class AdvancedUserInputPolicyTests(unittest.TestCase):
         self.assertIn("`Manual` returns `ask`", text)
         self.assertIn("`Auto` and `Looping` return `decide`", text)
         self.assertIn("scripts/workflow-run.sh -Action resolve-gate", text)
+        self.assertIn("This lifecycle mode policy takes precedence", text)
 
 if __name__ == "__main__":
     unittest.main()

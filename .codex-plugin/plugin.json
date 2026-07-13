@@ -32,7 +32,7 @@
     ],
     "defaultPrompt": [
       "At Superpowers Project startup before using any $superpowers-project:* route, run `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`, include `-ObservedSkillRoot` or `-ObservedPluginRoot` when the loaded root is known, and print the banner before routing.",
-      "Use $superpowers-project:initiate-workflow to ask `project_workflow_mode` before task routing. Manual Mode asks at each material decision; Auto Mode is one-route autonomy only; Looping Mode routes through $superpowers-project:loop-controller for bounded repeated maintenance candidates.",
+      "Use $superpowers-project:initiate-workflow to ask `project_workflow_mode` before task routing. Manual Mode asks at material gates; Auto Mode authorizes one outcome lifecycle; Looping Mode repeats bounded candidates through $superpowers-project:loop-controller.",
       "Use $superpowers-project:initiate-workflow to choose the next Superpowers Project route.",
       "Use $superpowers-project:setup-project to set up this repo's project context and tracker.",
       "Use $superpowers-project:audit-project to turn code and workflow review findings into a repair spec.",
@@ -41,7 +41,7 @@
       "Use $superpowers-project:create-issues to convert a plan into GitHub issue mirrors.",
       "Use $superpowers-project:write-plan to write the project implementation plan.",
       "Use $superpowers-project:companion-interface to create or refresh repo-owned Agent-Native visual-plan or visual-recap MDX artifacts for rich review while native Codex input remains the approval channel.",
-      "Use $superpowers-project:loop-controller to coordinate repeated workflow runs with run ledgers, budgets, verifier proof, metrics, and native continuation gates.",
+      "Use $superpowers-project:loop-controller to coordinate repeated workflow runs with run ledgers, budgets, verifier proof, metrics, and policy continuation.",
       "Use $superpowers-project:implement-plan to implement an approved plan on a development branch without creating issue mirrors.",
       "Use $superpowers-project:resolve-issue to resolve one GitHub issue directly with a native goal.",
       "Use $superpowers-project:orchestrate-issues to delegate issue work to a worker worktree thread.",

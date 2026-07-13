@@ -3,7 +3,7 @@ from scripts.lib.workflow_policy import PolicyError, resolve_gate, validate_gove
 
 
 class GovernancePolicyTests(unittest.TestCase):
-    def test_auto_is_noninteractive_and_one_route(self):
+    def test_auto_is_noninteractive_and_one_outcome(self):
         profile = validate_governance("auto", {"source": "trial-fixture", "candidate_scope": ["a"]}, noninteractive_trial=True)
         self.assertFalse(profile.interactive)
 

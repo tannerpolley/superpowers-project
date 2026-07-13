@@ -1,6 +1,6 @@
 ---
 name: loop-controller
-description: Use when Superpowers Project should coordinate repeated workflow runs across candidates while preserving Auto Mode authorization and native approval gates.
+description: Use when Superpowers Project should coordinate repeated bounded outcome lifecycles across candidates.
 ---
 
 # Loop Controller
@@ -25,7 +25,7 @@ For each iteration:
 2. Select exactly one ready executable candidate with `select-candidate.sh`.
 3. Record selection through `scripts/workflow-run.sh` and route to the graph owner.
 4. Record mutations, acceptance, and independent verifier proof.
-5. Recheck budget and collect explicit continuation evidence before any second candidate.
+5. Recheck budget and health, then record policy-sourced `grant-continuation` evidence before any second candidate. Do not ask a routine continuation question unless startup policy explicitly requires a checkpoint.
 6. Replay the event ledger; never edit `run.json` directly.
 7. Write metrics with `write-metrics-report.sh`.
 
@@ -33,4 +33,4 @@ Auto Mode is not a backlog drain and cannot reuse Looping continuation authority
 
 ## Stop Conditions And Completion
 
-Block on tampering, no ready candidate, budget exhaustion, failed verification, dirty unsafe state, owner mismatch, or missing continuation proof. `iteration` completion requires acceptance, verification, budget, and continuation evidence. `Done` is valid only at `project_loop_final_health_gate` after terminal proof and a clean worktree; otherwise use `project_loop_next_step` with the shared `Stop` route.
+Block on tampering, no ready candidate, budget exhaustion, failed verification, dirty unsafe state, owner mismatch, or missing continuation proof. `iteration` completion requires acceptance, verification, budget, and policy continuation evidence. Resolve `project_loop_final_health_gate` through the shared lifecycle mode policy; `Done` is valid only after terminal proof and a clean worktree.

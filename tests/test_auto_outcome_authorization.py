@@ -110,6 +110,34 @@ class AutoOutcomeAuthorizationTests(unittest.TestCase):
             {gate["question_id"] for gate in route["gates"]},
         )
 
+    def test_loop_contract_has_no_routine_continuation_question(self):
+        contract = yaml.safe_load((ROOT / "docs/superpowers/workflow-contract.yml").read_text(encoding="utf-8"))
+        route = contract["workflow_skills"]["loop-controller"]
+        self.assertNotIn("project_loop_next_step", route["question_ids"])
+        self.assertNotIn("project_loop_next_step", {gate["question_id"] for gate in route["gates"]})
+        policy = yaml.safe_load((ROOT / "docs/superpowers/loop-mode-contract.yml").read_text(encoding="utf-8"))
+        continuation = policy["loop_mode_contract"]["invariants"]["second_selection_requires"]
+        self.assertEqual("policy", continuation["source"])
+        self.assertEqual("continuation_granted", continuation["event_type"])
+        self.assertNotIn("project_loop_next_step", policy["loop_mode_contract"]["phase_order"])
+
+    def test_active_surfaces_use_outcome_semantics(self):
+        paths = [
+            ROOT / "README.md",
+            ROOT / ".codex-plugin/plugin.json",
+            ROOT / "skills/initiate-workflow/SKILL.md",
+            ROOT / "skills/advanced-user-input/SKILL.md",
+            ROOT / "skills/loop-controller/SKILL.md",
+            ROOT / "skills/merge-changes/SKILL.md",
+            *ROOT.glob("skills/*/agents/openai.yaml"),
+        ]
+        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
+        self.assertNotIn("project_auto_mode_authorization", text)
+        self.assertNotIn("one-route autonomy", text)
+        self.assertNotIn("ask the next native continuation", text)
+        self.assertIn("one outcome lifecycle", text)
+        self.assertIn("resolve `project_merge_approval`", text)
+
 
 if __name__ == "__main__":
     unittest.main()

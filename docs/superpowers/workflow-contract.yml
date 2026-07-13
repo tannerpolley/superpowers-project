@@ -641,20 +641,15 @@ workflow_skills:
         terminal_state: revisit
   loop-controller:
     owner: loop-controller
-    purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and continuation
-      gates.
+    purpose: Repeated workflow coordination across candidates with run ledgers, budgets, verifier proof, metrics, and policy continuation.
     question_ids:
     - project_loop_final_health_gate
-    - project_loop_next_step
     final_health_gate: project_loop_final_health_gate
     final_options:
     - Done
     - Revisit
     - Stop
-    top_level_options:
-    - 'Yes'
-    - Revisit
-    - Stop
+    top_level_options: []
     nested_routes: []
     validators:
     - skills/loop-controller/scripts/validate-run-ledger.sh
@@ -678,16 +673,6 @@ workflow_skills:
       options:
       - label: Done
         terminal_state: done
-      - label: Revisit
-        terminal_state: revisit
-      - label: Stop
-        terminal_state: stop
-    - question_id: project_loop_next_step
-      gate_type: top_level_continuation
-      prompt: Should I continue on with the loop workflow?
-      options:
-      - label: 'Yes'
-        terminal_state: continue
       - label: Revisit
         terminal_state: revisit
       - label: Stop

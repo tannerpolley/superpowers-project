@@ -48,6 +48,12 @@ class WorkflowGraphTests(unittest.TestCase):
         self.assertEqual(1, len(summaries))
         self.assertEqual(1, len(indexes))
 
+    def test_generated_summary_names_auto_outcome_not_route(self):
+        graph = load_workflow_graph(ROOT / "docs" / "superpowers" / "workflow-contract.yml")
+        summary = render_outcome_workflow(graph)
+        self.assertIn("`outcome`: the one authorized Auto outcome", summary)
+        self.assertNotIn("one authorized Auto route", summary)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -120,7 +120,7 @@ class WorkflowRuntime:
         return self.receipt("select")
 
     def record(self, action: str, candidate: str) -> dict[str, Any]:
-        _, projection = self._candidate(candidate)
+        context, projection = self._candidate(candidate)
         if projection.selected_candidate != candidate:
             raise WorkflowRuntimeError("event candidate must be the active selected candidate")
         event_types = {
@@ -133,7 +133,21 @@ class WorkflowRuntime:
         event_type = event_types.get(action)
         if event_type is None:
             raise WorkflowRuntimeError(f"unknown workflow action: {action}")
-        append_event(self.run_root, {"type": event_type, "candidate": candidate})
+        event = {"type": event_type, "candidate": candidate}
+        if action == "grant-continuation":
+            if context["mode"] != "looping":
+                raise WorkflowRuntimeError("continuation is only valid in Looping mode")
+            if not all(
+                candidate in values
+                for values in (
+                    projection.accepted_candidates,
+                    projection.verified_candidates,
+                    projection.budget_rechecks,
+                )
+            ):
+                raise WorkflowRuntimeError("continuation requires acceptance, verifier, and budget evidence")
+            event["source"] = "policy"
+        append_event(self.run_root, event)
         return self.receipt(action)
 
     def block(self, reason: str) -> dict[str, Any]:

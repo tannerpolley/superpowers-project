@@ -14,4 +14,4 @@ interface:
     artifacts. project_issue_next_step is the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml
     for resolve, orchestrate, and review child routes before starting the selected next skill.
     keep downstream routing compatible with the mandatory Superpowers companion skills enforced by $superpowers-project:resolve-issue and $superpowers-project:orchestrate-issues.
-    Use request_user_input for execution route and issue count decisions.
+    Resolve execution route and issue count through the shared lifecycle mode policy.

@@ -45,7 +45,7 @@ def run_worker(config: dict, run_root: Path) -> subprocess.CompletedProcess[str]
 
 
 class AutoLoopTrialTests(unittest.TestCase):
-    def test_auto_is_one_route_and_never_prompts_or_leaves_sandbox(self) -> None:
+    def test_auto_is_one_outcome_and_never_prompts_or_leaves_sandbox(self) -> None:
         with tempfile.TemporaryDirectory(prefix="sp-auto-trial-") as tmp:
             run_root = Path(tmp)
             result = run_worker(
@@ -53,7 +53,7 @@ class AutoLoopTrialTests(unittest.TestCase):
                     "mode": "auto",
                     "authorization": {
                         "source": "trial-fixture",
-                        "selected_authority": "bounded-auto-merge",
+                        "autonomy_scope": "one-outcome-lifecycle",
                         "mutation_scope": ["current-repo"],
                         "candidate_scope": ["candidate-a"],
                     },
@@ -73,7 +73,7 @@ class AutoLoopTrialTests(unittest.TestCase):
             self.assertTrue((run_root / "run.json").is_file())
             self.assertFalse((run_root / "outside-marker").exists())
 
-    def test_loop_requires_continuation_before_second_candidate(self) -> None:
+    def test_loop_policy_continues_after_budget_and_health(self) -> None:
         with tempfile.TemporaryDirectory(prefix="sp-loop-trial-") as tmp:
             run_root = Path(tmp)
             result = run_worker(
@@ -84,7 +84,8 @@ class AutoLoopTrialTests(unittest.TestCase):
                         "selected_mode": "looping",
                         "mutation_scope": ["current-repo"],
                         "candidate_scope": ["candidate-a", "candidate-b"],
-                        "continuation_grant": True,
+                        "budget_ok": True,
+                        "health_ok": True,
                     },
                     "candidates": ["candidate-a", "candidate-b"],
                 },
@@ -100,8 +101,9 @@ class AutoLoopTrialTests(unittest.TestCase):
             self.assertEqual(receipt["external_mutations"], [])
             events = [json.loads(line) for line in (run_root / "events.jsonl").read_text().splitlines()]
             self.assertEqual([event["type"] for event in events], ["candidate_selected", "candidate_verified", "continuation_granted", "candidate_selected", "candidate_verified"])
+            self.assertEqual("policy", events[2]["source"])
 
-    def test_loop_without_continuation_fails_before_second_mutation(self) -> None:
+    def test_loop_stops_when_budget_policy_fails(self) -> None:
         with tempfile.TemporaryDirectory(prefix="sp-loop-blocked-") as tmp:
             run_root = Path(tmp)
             result = run_worker(
@@ -112,14 +114,15 @@ class AutoLoopTrialTests(unittest.TestCase):
                         "selected_mode": "looping",
                         "mutation_scope": ["current-repo"],
                         "candidate_scope": ["candidate-a", "candidate-b"],
-                        "continuation_grant": False,
+                        "budget_ok": False,
+                        "health_ok": True,
                     },
                     "candidates": ["candidate-a", "candidate-b"],
                 },
                 run_root,
             )
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("continuation grant", result.stderr)
+            self.assertIn("loop policy stopped", result.stderr)
             receipt = json.loads((run_root / "run.json").read_text())
             self.assertEqual(receipt["selected_candidates"], ["candidate-a"])
             self.assertEqual(receipt["external_mutations"], [])
@@ -143,8 +146,8 @@ def _worker(config_path: Path) -> int:
     continuation_checks = 0
     if config["mode"] == "auto":
         validate_governance("auto", auth, noninteractive_trial=True)
-        if auth["selected_authority"] != "bounded-auto-merge":
-            raise RuntimeError("invalid Auto authority")
+        if auth["autonomy_scope"] != "one-outcome-lifecycle":
+            raise RuntimeError("invalid Auto outcome authority")
         if len(auth["candidate_scope"]) != 1:
             raise RuntimeError("Auto authorization must name one candidate")
         selected.append(candidates[0])
@@ -159,12 +162,12 @@ def _worker(config_path: Path) -> int:
         _write_event(events, "candidate_verified", iteration=1, candidate=selected[-1])
         continuation_checks += 1
         if len(candidates) > 1:
-            if not auth["continuation_grant"]:
-                _write_event(events, "blocked", reason="continuation grant required")
-                _write_run(run_root, config["mode"], selected, continuation_checks, "continuation grant required")
-                print("continuation grant required", file=sys.stderr)
+            if not auth["budget_ok"] or not auth["health_ok"]:
+                _write_event(events, "blocked", reason="loop policy stopped")
+                _write_run(run_root, config["mode"], selected, continuation_checks, "loop policy stopped")
+                print("loop policy stopped", file=sys.stderr)
                 return 2
-            _write_event(events, "continuation_granted", iteration=1)
+            _write_event(events, "continuation_granted", iteration=1, source="policy")
             selected.append(candidates[1])
             _write_event(events, "candidate_selected", iteration=2, candidate=selected[-1])
             _write_event(events, "candidate_verified", iteration=2, candidate=selected[-1])

@@ -18,6 +18,6 @@ interface:
     status, Outcome Summary, outcome_proof, readiness review, plan_alignment, reality_evidence, verification evidence,
     broader project context, recommended next route, and machine-readable artifacts. project_resolve_next_step is
     the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml for merge, another-issue, and review child routes before starting the selected next skill.
-    project_resolve_push_permission has Push And Open PR and Hold. Auto Mode authorization ledger uses
-    project_auto_mode_authorization with Bounded Auto Merge and Manual Mode plus bounded-auto-merge. Terminal closeout
+    project_resolve_push_permission has Push And Open PR and Hold. Auto Mode reuses the project_workflow_mode
+    one-outcome ledger and resolves publication gates through the shared lifecycle mode policy. Terminal closeout
     uses collect-continuation-ledger.sh and validate-terminal-closeout.sh with explicit Stop.
