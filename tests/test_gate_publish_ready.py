@@ -16,6 +16,7 @@ from scripts.lib.gate_publish_ready import validate_publish_ready
 from scripts.lib.gate_receipts import GateReceipt
 from scripts.lib.package_provenance import runtime_contract_hash, runtime_manifest
 from scripts.lib.workflow_state import append_event
+from scripts.lib.commands.distribution import ReleaseEvidenceError, base_release_tag, validate_dependency_pins
 import scripts.lib.evidence_collectors as evidence_collectors
 
 
@@ -141,6 +142,16 @@ def run_prepare(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 @unittest.skipIf(os.environ.get("SUPERPOWERS_VALIDATION_COLLECTION") == "1", "release-gate tests are skipped inside their trusted validation subprocess")
 class PublishReadyGateTests(unittest.TestCase):
+    def test_release_tags_and_dependencies_are_reproducible(self):
+        self.assertEqual([], validate_dependency_pins(ROOT / "requirements-validation.txt"))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "requirements.txt"
+            path.write_text("PyYAML>=6\n", encoding="utf-8")
+            self.assertTrue(validate_dependency_pins(path))
+        self.assertEqual("v0.3.0", base_release_tag("0.3.0+codex.local"))
+        with self.assertRaises(ReleaseEvidenceError):
+            base_release_tag("0.3")
+
     def setUp(self) -> None:
         self.repo = Path(tempfile.mkdtemp()) / "repo"
         shutil.copytree(ROOT, self.repo, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))

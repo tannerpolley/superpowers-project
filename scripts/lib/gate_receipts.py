@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Mapping
 
 try:
     from .evidence_schema import EvidenceEnvelope, EvidenceError, HashRef, RuleResult, canonical_json, hash_ref, is_hash_ref

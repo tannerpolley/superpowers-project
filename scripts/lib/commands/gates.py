@@ -5,7 +5,7 @@ import json
 from typing import Any
 
 try:
-    from ..command_support import Context, ScriptError, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
+    from ..command_support import Context, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
     from ..evidence_collectors import CollectionRequest, build_evidence_envelope
     from ..evidence_schema import EvidenceError, parse_envelope
     from ..gate_closeout import validate_closeout, validate_terminal_decision
@@ -15,7 +15,7 @@ try:
     from ..gate_publish_ready import validate_publish_ready
     from ..gate_receipts import parse_receipt
 except ImportError:  # pragma: no cover - direct module execution fallback
-    from command_support import Context, ScriptError, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
+    from command_support import Context, arg_value, emit, project_path_for, project_root_for, read_json_arg, write_text
     from evidence_collectors import CollectionRequest, build_evidence_envelope
     from evidence_schema import EvidenceError, parse_envelope
     from gate_closeout import validate_closeout, validate_terminal_decision

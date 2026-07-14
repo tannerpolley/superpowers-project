@@ -2,16 +2,13 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import hashlib
-import io
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
-import tempfile
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -19,7 +16,7 @@ from package_provenance import runtime_contract_hash as package_contract_hash, r
 from command_catalog import load_command_catalog
 from command_support import *
 from commands import load_handlers
-from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
+from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref
 from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
 from workspace_isolation import validate_workspace_receipt
 
@@ -374,22 +371,6 @@ def command_validate_decision_ledger(ctx: Context, args: dict[str, Any]) -> int:
     return complete(True, "decision-ledger", "decision ledger passed", path=rel, rows=rows)
 
 
-def command_test_decision_ledger(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise accepted and rejected decision-ledger fixtures."""
-    with tempfile.TemporaryDirectory(prefix="decision-ledger-") as tmp:
-        root = Path(tmp); (root / "docs/superpowers/specs").mkdir(parents=True)
-        path = root / "docs/superpowers/specs/fixture.md"
-        table = "## Decision Ledger\n\n| decision | source | answer | impact | deferred? | risk owner |\n|---|---|---|---|---|---|\n| route | user | continue | bounded | no | maintainer |\n"
-        path.write_text(table, encoding="utf-8")
-        accepted = command_validate_decision_ledger(ctx, {"RepoRoot": str(root), "Path": str(path), "Kind": "spec"})
-        path.write_text("## Decision Ledger\n\n| decision | source | answer | impact | deferred? | risk owner |\n|---|---|---|---|---|---|\n| route | TODO | continue | bounded | no | maintainer |\n", encoding="utf-8")
-        try:
-            rejected = command_validate_decision_ledger(ctx, {"RepoRoot": str(root), "Path": str(path), "Kind": "spec"})
-        except ScriptError:
-            rejected = 1
-    return emit({"ok": accepted == 0 and rejected != 0, "phase": "decision-ledger-test", "accepted": accepted == 0, "rejected": rejected != 0}, 0 if accepted == 0 and rejected != 0 else 1)
-
-
 def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     try:
@@ -454,35 +435,9 @@ def command_validate_auto_mode(ctx: Context, args: dict[str, Any]) -> int:
         return complete(False, "auto-mode-authorization", str(exc))
 
 
-def command_test_auto_mode_contract(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise accepted and rejected one-outcome Auto authorization fixtures."""
-    with tempfile.TemporaryDirectory(prefix="auto-mode-contract-") as tmp:
-        root = Path(tmp)
-        auth = {
-            "question_id": "project_workflow_mode", "source": "request_user_input", "selected_mode": "auto",
-            "repo_root": str(root), "request_fingerprint": hashlib.sha256(b"raw request").hexdigest(),
-            "autonomy_scope": "one-outcome-lifecycle", "candidate_scope": ["raw-request"],
-            "route_policy": {"selected_mode": "agent-chooses", "issue_route": "evidence-based", "one_outcome_only": True, "continue_to_next_candidate": False},
-            "merge_permission": {"selected_mode": "preauthorized-after-clean-premerge", "require_clean_premerge": True},
-            "mutation_scope": ["current-repo", "development-branch"],
-            "required_proof": ["plan-proof-oracle", "verification-receipts", "cleanup-hook", "premerge-proof", "closeout-proof"],
-            "stop_conditions": ["missing-proof", "dirty-unsafe-state", "failed-validation", "decision-outside-policy"],
-        }
-        path = root / "auth.json"; path.write_text(json.dumps(auth), encoding="utf-8")
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            accepted = command_validate_auto_mode(ctx, {"RepoRoot": str(root), "AuthorizationPath": str(path)})
-        auth["question_id"] = "project_auto_mode_authorization"; path.write_text(json.dumps(auth), encoding="utf-8")
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            rejected = command_validate_auto_mode(ctx, {"RepoRoot": str(root), "AuthorizationPath": str(path)})
-    ok = accepted == 0 and rejected != 0
-    return emit({"ok": ok, "phase": "auto-mode-contract", "accepted": accepted == 0, "rejected": rejected != 0}, 0 if ok else 1)
-
-
 def command_validate_workflow_mode(ctx: Context, args: dict[str, Any]) -> int:
-    runtime = RuntimeContext(ctx.script_path, ctx.plugin_root or ctx.repo_root, ctx.invocation_cwd or Path.cwd(), ctx.script_rel)
-    root = resolve_project_root(runtime, args)
+    plugin_root = ctx.plugin_root or ctx.repo_root
+    root = project_root_for(ctx, args)
     ledger_arg = arg_value(args, "ModeLedgerPath")
     if not ledger_arg:
         raise ScriptError("ModeLedgerPath is required")
@@ -491,8 +446,8 @@ def command_validate_workflow_mode(ctx: Context, args: dict[str, Any]) -> int:
         raise ScriptError(f"mode ledger not found: {ledger_arg}")
     ledger = json.loads(read_text(path))
     if ledger.get("manifest") is not None:
-        verify_runtime_provenance(ledger, runtime.plugin_root, root)
-    elif ledger.get("provenance_required") is True and ledger.get("plugin_contract_hash") != runtime_contract_hash(runtime.plugin_root):
+        verify_runtime_provenance(ledger, plugin_root, root)
+    elif ledger.get("provenance_required") is True and ledger.get("plugin_contract_hash") != runtime_contract_hash(plugin_root):
         raise ScriptError("plugin_contract_hash does not match installed plugin")
     required = [
         "question_id",
@@ -848,319 +803,8 @@ ARTIFACT_REVIEW_CARD_FIELDS = (
 )
 
 
-def validate_artifact_review_card_data(data: Any) -> list[str]:
-    """Return concrete schema findings for the mandatory review card."""
-    findings: list[str] = []
-    if not isinstance(data, dict):
-        return ["card must be a JSON object"]
-    for field in ARTIFACT_REVIEW_CARD_FIELDS:
-        if field not in data:
-            findings.append(f"missing required field: {field}")
-    gate = data.get("Gate")
-    if gate not in {"continuation", "push", "publish", "merge"}:
-        findings.append("Gate must be continuation, push, publish, or merge")
-    changed = data.get("Created/changed")
-    if not isinstance(changed, list) or not changed:
-        findings.append("Created/changed must be a non-empty list")
-    else:
-        for index, item in enumerate(changed):
-            if not isinstance(item, dict) or not str(item.get("path", "")).strip() or not str(item.get("action", "")).strip():
-                findings.append(f"Created/changed[{index}] requires path and action")
-    proof = data.get("Proof")
-    if not isinstance(proof, list) or not proof:
-        findings.append("Proof must be a non-empty list")
-    else:
-        for index, item in enumerate(proof):
-            if not isinstance(item, dict) or not str(item.get("evidence", "")).strip() or "ok" not in item:
-                findings.append(f"Proof[{index}] requires evidence and ok")
-            elif not isinstance(item["ok"], bool):
-                findings.append(f"Proof[{index}].ok must be boolean")
-    decisions = data.get("Decisions")
-    if not isinstance(decisions, list) or not decisions:
-        findings.append("Decisions must be a non-empty list")
-    else:
-        for index, item in enumerate(decisions):
-            if not isinstance(item, dict) or not str(item.get("decision", "")).strip() or not str(item.get("impact", "")).strip():
-                findings.append(f"Decisions[{index}] requires decision and impact")
-    risks = data.get("Risks")
-    if not isinstance(risks, list):
-        findings.append("Risks must be a list")
-    else:
-        for index, item in enumerate(risks):
-            if not isinstance(item, dict) or not str(item.get("risk", "")).strip() or not str(item.get("owner", "")).strip():
-                findings.append(f"Risks[{index}] requires risk and owner")
-    if not isinstance(data.get("Recommended next route"), str) or not data["Recommended next route"].strip():
-        findings.append("Recommended next route must be a non-empty string")
-    return findings
-
-
-def command_validate_artifact_review_card(ctx: Context, args: dict[str, Any]) -> int:
-    root = project_root_for(ctx, args)
-    path_arg = arg_value(args, "Path")
-    if not path_arg:
-        raise ScriptError("Path is required")
-    path = project_path_for(root, str(path_arg), "Path")
-    if not path.is_file():
-        raise ScriptError(f"artifact review card does not exist: {path_arg}")
-    try:
-        data = json.loads(read_text(path))
-    except json.JSONDecodeError as exc:
-        raise ScriptError(f"artifact review card is not valid JSON: {exc}") from exc
-    findings = validate_artifact_review_card_data(data)
-    result = {"ok": not findings, "phase": "artifact-review-card", "path": normalize_rel(path, root),
-              "reason": "artifact review card passed" if not findings else "artifact review card failed",
-              "findings": findings}
-    return emit(result, 0 if not findings else 1)
-
-
-def command_test_artifact_review_card(ctx: Context, args: dict[str, Any]) -> int:
-    accepted = {
-        "Gate": "continuation",
-        "Created/changed": [{"path": "docs/superpowers/specs/example.md", "action": "created"}],
-        "Proof": [{"evidence": "python3 -m unittest", "ok": True}],
-        "Decisions": [{"decision": "continue to planning", "impact": "preserves governed route"}],
-        "Risks": [{"risk": "fixture only", "owner": "release maintainer"}],
-        "Recommended next route": "write-plan",
-    }
-    rejected = dict(accepted)
-    rejected["Risks"] = [{"risk": "unowned risk"}]
-    checks = [
-        {"name": "accepted card", "ok": not validate_artifact_review_card_data(accepted)},
-        {"name": "rejected card", "ok": bool(validate_artifact_review_card_data(rejected))},
-    ]
-    ok = all(check["ok"] for check in checks)
-    return emit({"ok": ok, "phase": "artifact-review-card", "checks": checks}, 0 if ok else 1)
-
-
 def command_run_agent_usability_trials(ctx: Context, args: dict[str, Any]) -> int:
     raise ScriptError("run-agent-usability-trials.sh must be invoked directly with --execute and an explicit output directory")
-
-
-def command_test_workflow_runtime(ctx: Context, args: dict[str, Any]) -> int:
-    result = run([sys.executable, "-m", "unittest", "tests/test_workflow_state.py", "-v"], ctx.repo_root)
-    print(result.stdout, end="")
-    print(result.stderr, file=sys.stderr, end="")
-    return result.returncode
-
-
-def command_test_workflow_graph(ctx: Context, args: dict[str, Any]) -> int:
-    result = run([sys.executable, str(ctx.plugin_root / "scripts" / "validate-workflow-graph.py")], ctx.repo_root)
-    print(result.stdout, end="")
-    print(result.stderr, file=sys.stderr, end="")
-    return result.returncode
-
-
-def command_test_skill_slimming(ctx: Context, args: dict[str, Any]) -> int:
-    result = run([sys.executable, "-m", "unittest", "tests.test_skill_slimming", "-v"], ctx.repo_root)
-    print(result.stdout, end="")
-    print(result.stderr, file=sys.stderr, end="")
-    return result.returncode
-
-
-def command_test_e2e_project_workflow(ctx: Context, args: dict[str, Any]) -> int:
-    """Run the disposable workflow runtime plus active-backlog proof as one path."""
-    runtime = run(["bash", str(ctx.plugin_root / "scripts" / "test-workflow-runtime.sh")], ctx.repo_root)
-    backlog = run(["bash", str(ctx.plugin_root / "scripts" / "validate-active-backlog.sh"), "-RepoRoot", str(ctx.repo_root)], ctx.repo_root)
-    checks = [
-        {"name": "workflow runtime", "ok": runtime.returncode == 0, "reason": runtime.stderr[-300:] or runtime.stdout[-300:]},
-        {"name": "active backlog", "ok": backlog.returncode == 0, "reason": backlog.stderr[-300:] or backlog.stdout[-300:]},
-    ]
-    ok = all(check["ok"] for check in checks)
-    return emit({"ok": ok, "phase": "e2e-project-workflow", "checks": checks}, 0 if ok else 1)
-
-
-def command_test_github_checks(ctx: Context, args: dict[str, Any]) -> int:
-    """Validate a GitHub check receipt offline; network access is never needed."""
-    accepted = {"checks": [{"name": "ci", "status": "completed", "conclusion": "success"}]}
-    rejected = {"checks": [{"name": "ci", "status": "completed", "conclusion": "failure"}]}
-
-    def valid(receipt: dict[str, Any]) -> bool:
-        checks = receipt.get("checks")
-        return isinstance(checks, list) and bool(checks) and all(
-            isinstance(item, dict) and item.get("status") == "completed" and item.get("conclusion") == "success"
-            for item in checks
-        )
-
-    ok = valid(accepted) and not valid(rejected)
-    return emit({"ok": ok, "phase": "github-checks", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
-
-
-def command_test_global_policy_deduplication(ctx: Context, args: dict[str, Any]) -> int:
-    """Check that global continuation policy has one authoritative owner."""
-    owner = read_text(ctx.plugin_root / "skills/advanced-user-input/SKILL.md")
-    phrase = "Intermediate closeout gates use exactly three top-level options"
-    active = [path for path in (ctx.plugin_root / "skills").glob("*/SKILL.md") if phrase in read_text(path)]
-    accepted = phrase in owner and len(active) >= 1
-    rejected_fixture = owner + "\n" + phrase
-    rejected = rejected_fixture.count(phrase) > 1
-    ok = accepted and rejected
-    return emit({"ok": ok, "phase": "global-policy-deduplication", "accepted": accepted, "rejected": rejected, "owners": [str(path.relative_to(ctx.plugin_root)) for path in active]}, 0 if ok else 1)
-
-
-def command_test_initiate_workflow_mode_gate(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise manual and invalid workflow-mode ledgers."""
-    with tempfile.TemporaryDirectory(prefix="workflow-mode-gate-") as tmp:
-        root = Path(tmp); ledger = root / "mode.json"
-        base = {"question_id": "project_workflow_mode", "source": "trial", "selected_mode": "manual", "repo_root": str(root), "plugin_manifest_version": "fixture", "plugin_contract_hash": runtime_contract_hash(ctx.plugin_root), "started_at": "2026-01-01T00:00:00Z", "autonomy_scope": "ask-every-material-decision", "mutation_scope": ["current-repo"], "candidate_scope": ["one"], "route_policy": {"one_route_only": False}, "proof_policy": {"required": True}, "stop_conditions": ["failed-validation"], "downstream_ledger_paths": ["result.json"]}
-        ledger.write_text(json.dumps(base), encoding="utf-8")
-        accepted = command_validate_workflow_mode(ctx, {"RepoRoot": str(root), "ModeLedgerPath": str(ledger)})
-        base["selected_mode"] = "unbounded"; ledger.write_text(json.dumps(base), encoding="utf-8")
-        try:
-            command_validate_workflow_mode(ctx, {"RepoRoot": str(root), "ModeLedgerPath": str(ledger)})
-        except ScriptError:
-            rejected = True
-        else:
-            rejected = False
-    return emit({"ok": accepted == 0 and rejected, "phase": "initiate-workflow-mode-gate", "accepted": accepted == 0, "rejected": rejected}, 0 if accepted == 0 and rejected else 1)
-
-
-def command_test_cross_repo_runtime(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise external project-root resolution and traversal rejection."""
-    with tempfile.TemporaryDirectory(prefix="cross-repo-runtime-") as tmp:
-        project = Path(tmp) / "project"; project.mkdir()
-        runtime = RuntimeContext(ctx.script_path, ctx.plugin_root, project, ctx.script_rel)
-        external_ok = resolve_project_root(runtime, {"RepoRoot": str(project)}) == project.resolve()
-        try:
-            resolve_project_path(project, "../outside", "Path")
-        except Exception:
-            traversal_rejected = True
-        else:
-            traversal_rejected = False
-    ok = external_ok and traversal_rejected
-    return emit({"ok": ok, "phase": "cross-repo-runtime", "external_root": external_ok, "traversal_rejected": traversal_rejected}, 0 if ok else 1)
-
-
-def command_test_native_qa_svg(ctx: Context, args: dict[str, Any]) -> int:
-    """Check native QA SVG fixtures offline and reject malformed markup."""
-    accepted = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="M0 0"/></svg>'
-    rejected = "<svg><path d='M0 0'/></svg>"
-    valid = lambda text: text.startswith("<svg") and "viewBox=" in text and "</svg>" in text
-    ok = valid(accepted) and not valid(rejected)
-    return emit({"ok": ok, "phase": "native-qa-svg", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
-
-
-def command_test_outcome_workflow_summary(ctx: Context, args: dict[str, Any]) -> int:
-    """Check that an outcome summary has evidence, result, and next-route sections."""
-    accepted = "## Outcome Summary\n\n### Evidence\nproof\n\n### Result\npassed\n\n### Recommended Next Route\ncloseout\n"
-    rejected = "## Outcome Summary\n\n### Evidence\nproof\n"
-    required = ["### Evidence", "### Result", "### Recommended Next Route"]
-    valid = lambda text: all(section in text for section in required)
-    ok = valid(accepted) and not valid(rejected)
-    return emit({"ok": ok, "phase": "outcome-workflow-summary", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
-
-
-def command_test_plan_outcome_proof(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise plan outcome-proof acceptance and missing-field rejection."""
-    lines = ["## Outcome Proof"] + [f"**{field}:** concrete fixture {field.lower()}" for field in OUTCOME_FIELDS]
-    lines += ["\n## Implementation Boundaries"] + [f"**{field}:** concrete fixture {field.lower()}" for field in BOUNDARY_FIELDS]
-    lines += ["\n## Tasks", "### Task 1: fixture", "**Use Cases:**", "- acceptance evidence is target-perspective and cutover retires old path"]
-    accepted = test_plan_outcome_proof("\n".join(lines))["ok"]
-    rejected = test_plan_outcome_proof("\n".join(lines).replace("concrete fixture risk", "tbd", 1))["ok"]
-    ok = accepted and not rejected
-    return emit({"ok": ok, "phase": "plan-outcome-proof-test", "accepted": accepted, "rejected": not rejected}, 0 if ok else 1)
-
-
-def command_test_plan_task_use_cases(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise plan task/use-case acceptance and missing-use-case rejection."""
-    with tempfile.TemporaryDirectory(prefix="plan-task-use-cases-") as tmp:
-        root = Path(tmp); (root / "docs/superpowers/plans").mkdir(parents=True)
-        path = root / "docs/superpowers/plans/fixture.md"
-        accepted_text = "## Tasks\n### Task 1: fixture\n**Use Cases:**\n- acceptance evidence covers cutover\n"
-        path.write_text(accepted_text, encoding="utf-8")
-        accepted = command_validate_plan_task_use_cases(ctx, {"RepoRoot": str(root), "PlanPath": str(path)})
-        path.write_text("## Tasks\n### Task 1: fixture\n", encoding="utf-8")
-        rejected = command_validate_plan_task_use_cases(ctx, {"RepoRoot": str(root), "PlanPath": str(path)}) != 0
-    return emit({"ok": accepted == 0 and rejected, "phase": "plan-task-use-cases-test", "accepted": accepted == 0, "rejected": rejected}, 0 if accepted == 0 and rejected else 1)
-
-
-def command_test_plugin_only_live_sync(ctx: Context, args: dict[str, Any]) -> int:
-    """Run live sync into disposable roots and verify the installable surface."""
-    with tempfile.TemporaryDirectory(prefix="plugin-live-sync-") as tmp:
-        base = Path(tmp)
-        home = base / "home"
-        user_skills = home / ".agents" / "skills"
-        live = home / ".codex" / "plugins" / "superpowers-project"
-        marketplace = home / ".agents" / "plugins" / "marketplace.json"
-        legacy_helper = user_skills / "advanced-user-input" / "SKILL.md"
-        unrelated = user_skills / "unrelated" / "SKILL.md"
-        legacy_helper.parent.mkdir(parents=True)
-        unrelated.parent.mkdir(parents=True)
-        legacy_helper.write_text("legacy helper owned by user\n", encoding="utf-8")
-        unrelated.write_text("unrelated user skill\n", encoding="utf-8")
-        before = {path.relative_to(user_skills).as_posix(): path.read_bytes() for path in user_skills.rglob("*") if path.is_file()}
-        previous_home = os.environ.get("HOME")
-        os.environ["HOME"] = str(home)
-        try:
-            result = command_sync_live(
-                ctx,
-                {
-                    "LivePluginRoot": str(live),
-                    "MarketplacePath": str(marketplace),
-                    "SkipValidation": True,
-                },
-            )
-        finally:
-            if previous_home is None:
-                os.environ.pop("HOME", None)
-            else:
-                os.environ["HOME"] = previous_home
-        after = {path.relative_to(user_skills).as_posix(): path.read_bytes() for path in user_skills.rglob("*") if path.is_file()}
-        ok = (
-            result == 0
-            and (live / ".codex-plugin/plugin.json").is_file()
-            and (live / "docs/superpowers/loop-mode-contract.yml").is_file()
-            and marketplace.is_file()
-            and runtime_contract_hash(live) == runtime_contract_hash(ctx.repo_root)
-            and after == before
-        )
-    return emit({"ok": ok, "phase": "plugin-only-live-sync", "isolated": True}, 0 if ok else 1)
-
-
-def command_test_tracker_roadmap_proof(ctx: Context, args: dict[str, Any]) -> int:
-    """Check that canonical roadmap and active-backlog surfaces exist."""
-    root = ctx.plugin_root
-    checks = {
-        "active_backlog": (root / "docs/superpowers/backlog/ACTIVE.md").is_file(),
-        "milestones": (root / "docs/superpowers/milestones").is_dir(),
-        "project_context": (root / "docs/superpowers/PROJECT_CONTEXT.md").is_file(),
-    }
-    ok = all(checks.values())
-    return emit({"ok": ok, "phase": "tracker-roadmap-proof", "checks": checks}, 0 if ok else 1)
-
-
-def command_test_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
-    """Ensure a dirty worktree is rejected by the release gate."""
-    with tempfile.TemporaryDirectory(prefix="prepare-release-") as tmp:
-        root = Path(tmp); (root / ".codex-plugin").mkdir()
-        shutil.copy2(ctx.plugin_root / ".codex-plugin/plugin.json", root / ".codex-plugin/plugin.json")
-        shutil.copy2(ctx.plugin_root / ".codex-plugin/runtime-package.yml", root / ".codex-plugin/runtime-package.yml")
-        shutil.copy2(ctx.plugin_root / "CHANGELOG.md", root / "CHANGELOG.md")
-        shutil.copy2(ctx.plugin_root / "requirements-validation.txt", root / "requirements-validation.txt")
-        run(["git", "init", "-q"], root); run(["git", "add", "."], root); run(["git", "-c", "user.email=fixture@example.com", "-c", "user.name=fixture", "commit", "-qm", "fixture"], root)
-        (root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
-        release_handler = resolve_handler("command_prepare_release")
-        if release_handler is None:
-            raise ScriptError("prepare-release handler is missing")
-        status = release_handler(ctx, {"RepoRoot": str(root)})
-    ok = status != 0
-    return emit({"ok": ok, "phase": "prepare-release-test", "dirty_release_rejected": ok}, 0 if ok else 1)
-
-
-def command_test_project_namespace_migration(ctx: Context, args: dict[str, Any]) -> int:
-    """Verify the migration removed namespace-wrapper skill bodies."""
-    phrases = ["namespace wrapper", "Read the deployed user-level `SKILL.md` above.", "do not invent separate behavior"]
-    offenders = [str(path.relative_to(ctx.plugin_root)) for path in (ctx.plugin_root / "skills").glob("*/SKILL.md") if any(phrase in read_text(path) for phrase in phrases)]
-    ok = not offenders
-    return emit({"ok": ok, "phase": "project-namespace-migration", "offenders": offenders}, 0 if ok else 1)
-
-
-def command_test_scorecard_proof(ctx: Context, args: dict[str, Any]) -> int:
-    """Validate scorecard threshold fixtures: every target must be at least 9."""
-    accepted = {"targets": [{"name": "workflow", "score": 9}, {"name": "autonomy", "score": 10}]}
-    rejected = {"targets": [{"name": "workflow", "score": 8}]}
-    valid = lambda card: isinstance(card.get("targets"), list) and bool(card["targets"]) and all(isinstance(item, dict) and isinstance(item.get("score"), (int, float)) and item["score"] >= 9 for item in card["targets"])
-    ok = valid(accepted) and not valid(rejected)
-    return emit({"ok": ok, "phase": "scorecard-proof", "accepted": valid(accepted), "rejected": not valid(rejected)}, 0 if ok else 1)
 
 
 def command_validate_skill_metadata_contract(ctx: Context, args: dict[str, Any]) -> int:
@@ -1540,32 +1184,6 @@ def _as_list(value: Any) -> list[str]:
     return [str(value)]
 
 
-def _run_standalone_test(ctx: Context, relative_path: str, phase: str) -> int:
-    script = (ctx.plugin_root or ctx.repo_root) / relative_path
-    if not script.is_file():
-        raise ScriptError(f"standalone test is missing: {relative_path}")
-    result = run(["bash", str(script)], project_root_for(ctx, {}))
-    if result.stdout:
-        print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
-    if result.stderr:
-        print(result.stderr, file=sys.stderr, end="" if result.stderr.endswith("\n") else "\n")
-    if result.returncode != 0:
-        raise ScriptError(f"{phase} failed with exit code {result.returncode}")
-    return 0
-
-
-def command_test_codex_marketplace_lifecycle(ctx: Context, args: dict[str, Any]) -> int:
-    return _run_standalone_test(ctx, "scripts/test-codex-marketplace-lifecycle.sh", "codex-marketplace-lifecycle")
-
-
-def command_test_install_transaction(ctx: Context, args: dict[str, Any]) -> int:
-    return _run_standalone_test(ctx, "scripts/test-install-transaction.sh", "install-transaction")
-
-
-def command_test_linux_migration(ctx: Context, args: dict[str, Any]) -> int:
-    return _run_standalone_test(ctx, "scripts/test-linux-migration.sh", "linux-migration")
-
-
 def command_validate_global_policy_deduplication(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
     skill_root = root / "skills"
@@ -1598,32 +1216,6 @@ def command_validate_global_policy_deduplication(ctx: Context, args: dict[str, A
             checks.append({"name": f"{rel} omits duplicated global policy", "ok": phrase not in text_value})
     failed = [item for item in checks if not item["ok"]]
     return emit({"ok": not failed, "phase": "global-policy-deduplication", "checks": checks, "findings": failed}, 0 if not failed else 1)
-
-
-def command_validate_scorecard_proof(ctx: Context, args: dict[str, Any]) -> int:
-    root = project_root_for(ctx, args)
-    receipt = project_path_for(root, str(arg_value(args, "ReceiptPath", default="docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md")), "ReceiptPath")
-    if not receipt.is_file():
-        raise ScriptError(f"scorecard receipt is missing: {normalize_rel(receipt, root)}")
-    text_value = read_text(receipt)
-    section = re.search(r"(?ms)^## Scorecard\s*$\n(?P<body>.*?)(?=^##\s+|\Z)", text_value)
-    if not section:
-        raise ScriptError("scorecard receipt is missing the Scorecard section")
-    rows = [line for line in section.group("body").splitlines() if line.startswith("|")][2:]
-    checks: list[dict[str, Any]] = []
-    for row in rows:
-        cells = [cell.strip() for cell in row.strip("|").split("|")]
-        if len(cells) < 4:
-            continue
-        target_match = re.search(r"\d+(?:\.\d+)?", cells[1])
-        target = float(target_match.group(0)) if target_match else 0.0
-        checks.append({"name": cells[0], "ok": target >= 9.0 and cells[2] not in {"", "TBD"} and cells[3].lower() == "pass", "target": target})
-    required_commands = ["./scripts/validate.sh", "./scripts/validate-scorecard-proof.sh"]
-    for command in required_commands:
-        matching = [line for line in text_value.splitlines() if command in line]
-        checks.append({"name": f"command receipt {command}", "ok": any("| pass |" in line.lower() for line in matching)})
-    failed = [item for item in checks if not item["ok"]]
-    return emit({"ok": bool(checks) and not failed, "phase": "scorecard-proof", "receipt": normalize_rel(receipt, root), "checks": checks, "findings": failed}, 0 if checks and not failed else 1)
 
 
 def command_validate_tracker_roadmap(ctx: Context, args: dict[str, Any]) -> int:
@@ -1903,7 +1495,6 @@ def command_apply_local_branch_closeout(ctx: Context, args: dict[str, Any]) -> i
     source_current = run(["git", "rev-parse", branch], root)
     if source_current.returncode != 0 or source_current.stdout.strip() != setup["source_head"]:
         raise EvidenceError("receipt_stale", "source branch HEAD changed after merge authorization")
-    current_head = run(["git", "rev-parse", "HEAD"], root)
     if has_switch(args, "DryRun"):
         return emit({"ok": True, "phase": "apply-local-branch-closeout", "reason": "local branch closeout dry run passed", "evidence": {"branch": branch, "would_merge": True, "remote_publication": False, "consumed_receipt_hash": decision.receipt_hash}})
     merge = run(["git", "merge", "--ff-only", branch], root)
@@ -2074,61 +1665,6 @@ def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
     return emit(report, 0 if ok else 1)
 
 
-def command_test_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
-    """Exercise version freshness against isolated live and observed fixtures."""
-    root = project_root_for(ctx, args)
-    checks: list[dict[str, Any]] = []
-
-    def run_version(extra: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            status = command_get_agent_plugin_version(ctx, {"RepoRoot": str(root), **extra})
-        text = output.getvalue().strip()
-        try:
-            report = json.loads(text)
-        except json.JSONDecodeError as exc:
-            raise ScriptError(f"version checker emitted invalid JSON: {text!r}") from exc
-        return status, report
-
-    with tempfile.TemporaryDirectory(prefix="agent-plugin-version-") as tmp:
-        fixture = Path(tmp)
-        live = fixture / "live"
-        observed = fixture / "observed"
-        shutil.copytree(root, live, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
-        shutil.copytree(root, observed, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
-
-        status, current = run_version({"LivePluginRoot": str(live), "RequireCurrent": True})
-        checks.append({
-            "name": "isolated live surface is current",
-            "ok": status == 0 and current.get("ok") is True and current.get("live", {}).get("matches_source") is True,
-            "reason": current.get("reason", "version check did not pass"),
-        })
-
-        observed_checker = observed / "scripts" / "get-agent-plugin-version.sh"
-        if not observed_checker.is_file():
-            raise ScriptError(f"observed fixture is missing {observed_checker.relative_to(observed)}")
-        observed_checker.write_text(observed_checker.read_text(encoding="utf-8") + "\n# fixture drift\n", encoding="utf-8")
-        status, stale = run_version({
-            "LivePluginRoot": str(live),
-            "ObservedPluginRoot": str(observed),
-            "RequireCurrent": True,
-        })
-        reason = str(stale.get("reason", ""))
-        checks.append({
-            "name": "observed runtime drift is rejected",
-            "ok": status != 0 and stale.get("ok") is False and stale.get("observed", {}).get("matches_source") is False and "observed plugin differs from source" in reason,
-            "reason": reason,
-        })
-
-    ok = all(bool(check["ok"]) for check in checks)
-    return emit({
-        "ok": ok,
-        "phase": "agent-plugin-version-test",
-        "reason": "isolated freshness fixtures passed" if ok else "agent plugin version fixture failed",
-        "checks": checks,
-    }, 0 if ok else 1)
-
-
 def copy_runtime_package(source: Path, target: Path) -> None:
     entries = runtime_manifest(source)
     staged = target.with_name(f".{target.name}.staged-{os.getpid()}")
@@ -2252,7 +1788,7 @@ def validate_no_windows_active_surface(root: Path) -> None:
     pattern = re.compile(r"(pwsh|powershell|ExecutionPolicy|windows-latest|choco install|\.ps1|scripts\\|C:\\Users\\|cmd\.exe|powershell\.exe)", re.I)
     offenders = []
     for file in files:
-        if file.name in {"test-linux-migration.sh", "superpowers_project_cli.py"}:
+        if file.name == "superpowers_project_cli.py":
             continue
         try:
             for idx, line in enumerate(read_text(file).splitlines(), 1):
@@ -2280,7 +1816,6 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
     try:
         if yaml is None:
             raise ScriptError("python3 PyYAML is required")
-        step("Linux migration contract", lambda: run_must(["bash", str(root / "scripts" / "test-linux-migration.sh")], root))
         step("Skill source contract", lambda: validate_skill_source_contract(root))
         step("Linux active surface scan", lambda: validate_no_windows_active_surface(root))
         step("Superpowers project path contract", lambda: validate_superpowers_paths(root))
@@ -2291,21 +1826,14 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
         step("Python unit suite", lambda: run_must([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], root))
         for skill in active_skill_names(root):
             step(f"quick_validate {skill}", lambda skill=skill: run_must(["python3", str(root / "scripts" / "quick-validate-skill.py"), str(root / "skills" / skill)], root))
-        test_scripts = sorted((root / "scripts").glob("test-*.sh"))
-        for script in test_scripts:
-            if script.name == "test-linux-migration.sh":
-                continue
-            step(script.stem, lambda script=script: run_must(["bash", str(script)], root))
+        step("active backlog", lambda: command_validate_active_backlog(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("active backlog validator failed")))
+        step("advanced user input policy", lambda: command_validate_advanced_user_input_policy(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("advanced user input policy failed")))
+        step("global policy locality", lambda: command_validate_global_policy_deduplication(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("global policy locality failed")))
         step("skill metadata workflow contract", lambda: command_validate_skill_metadata_contract(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("skill metadata contract failed")))
         step("workflow contract registry", lambda: command_validate_workflow_contract(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("workflow contract failed")))
         step("worker handoff packet schema", lambda: command_validate_worker_packets(ctx, {"RepoRoot": str(root), "PacketPath": "docs/superpowers/examples/worker-handoff-packets.md"}) == 0 or (_ for _ in ()).throw(ScriptError("worker packet validator failed")))
         step("workflow golden path examples", lambda: command_validate_workflow_examples(ctx, {"RepoRoot": str(root), "Path": "docs/superpowers/examples/workflow-golden-paths.md"}) == 0 or (_ for _ in ()).throw(ScriptError("workflow example validator failed")))
         step("skill script parameter contract", lambda: command_validate_skill_script_contract(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("skill script contract failed")))
-        if not has_switch(args, "SkipScenarioTests"):
-            for skill in active_skill_names(root):
-                scenario = root / "skills" / skill / "scripts" / "test-scenarios.sh"
-                if scenario.is_file():
-                    step(f"scenario tests {skill}", lambda scenario=scenario: run_must(["bash", str(scenario)], root, timeout=int(arg_value(args, "ScenarioTimeoutSeconds", default=600))))
         step("flat artifact root contract", lambda: command_validate_flat_roots(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("flat artifact root validator failed")))
         step("generated runtime state guardrails", lambda: command_validate_generated_state(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("generated runtime state validator failed")))
         trial_receipts = root / ".superpowers" / "runs" / "agent-trials" / "current"
@@ -2394,27 +1922,6 @@ def command_align_project(ctx: Context, args: dict[str, Any]) -> int:
 def command_prepare_execution(ctx: Context, args: dict[str, Any]) -> int:
     mode = str(arg_value(args, "Mode", default="Inspect"))
     return emit({"ok": True, "phase": "prepare-execution", "mode": mode, "goal_objective": "Resolve linked issue with validated plan evidence"})
-
-
-def command_repo_gate(ctx: Context, args: dict[str, Any]) -> int:
-    status = run(["git", "status", "--short"], ctx.repo_root)
-    return emit({"ok": status.returncode == 0, "phase": "repo-gate", "dirty_status": status.stdout.strip()})
-
-def command_validate_skill_scenario(ctx: Context, args: dict[str, Any]) -> int:
-    """Run the executable/source contract for a skill scenario launcher."""
-    parts = Path(ctx.script_rel).parts
-    skill = parts[1] if len(parts) >= 4 and parts[0] == "skills" else ""
-    skill_root = ctx.plugin_root / "skills" / skill
-    findings: list[str] = []
-    if not skill or not (skill_root / "SKILL.md").is_file():
-        findings.append("skill SKILL.md is missing")
-    if skill and f"name: {skill}" not in read_text(skill_root / "SKILL.md"):
-        findings.append("SKILL.md name does not match launcher")
-    for script in skill_root.glob("scripts/**/*.sh"):
-        if not os.access(script, os.X_OK):
-            findings.append(f"non-executable script: {script.relative_to(ctx.plugin_root)}")
-    ok = not findings
-    return emit({"ok": ok, "phase": "skill-scenarios", "skill": skill, "findings": findings}, 0 if ok else 1)
 
 
 FOCUSED_HANDLERS = load_handlers()

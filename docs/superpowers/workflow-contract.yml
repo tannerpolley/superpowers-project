@@ -500,7 +500,7 @@ workflow_skills:
       - Revise Branch
       - Review Evidence
     validators:
-    - skills/implement-plan/scripts/test-scenarios.sh
+    - scripts/validate.sh
     artifacts:
     - docs/superpowers/plans
     next_routes:
@@ -839,9 +839,7 @@ workflow_skills:
       - Reassign Work
     validators:
     - skills/orchestrate-issues/scripts/validate-worker-handoff.sh
-    - skills/orchestrate-issues/scripts/test-scenarios.sh
     - scripts/validate-worker-packets.sh
-    - scripts/test-worker-packets.sh
     artifacts:
     - docs/superpowers/issues
     - docs/superpowers/examples/worker-handoff-packets.md

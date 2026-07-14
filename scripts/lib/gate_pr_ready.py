@@ -4,11 +4,11 @@ from __future__ import annotations
 from pathlib import Path
 
 try:
-    from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
+    from .evidence_schema import EvidenceEnvelope, RuleResult
     from .gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, review_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
     from .gate_receipts import GateReceipt, build_receipt
 except ImportError:  # pragma: no cover - CLI top-level import fallback
-    from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
+    from evidence_schema import EvidenceEnvelope, RuleResult
     from gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, review_rules, source_artifact_rule, workflow_binding_rule, workspace_rule
     from gate_receipts import GateReceipt, build_receipt
 

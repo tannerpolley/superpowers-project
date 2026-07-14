@@ -7,8 +7,17 @@ from typing import Mapping, Any
 
 import yaml
 
+try:
+    from .workflow_state import RunProjection
+except ImportError:
+    from workflow_state import RunProjection
+
 
 class PolicyError(ValueError):
+    pass
+
+
+class CompletionError(ValueError):
     pass
 
 
@@ -43,16 +52,25 @@ def load_governance_profiles(path: Path | None = None) -> dict[str, GovernancePr
     source = path or Path(__file__).resolve().parents[2] / "docs" / "superpowers" / "governance-profiles.yml"
     data = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
     profiles: dict[str, GovernanceProfile] = {}
-    for name, value in (data.get("profiles") or {}).items():
+    values = data.get("profiles")
+    if not isinstance(values, dict) or not values:
+        raise PolicyError("governance profiles are missing")
+    for name, value in values.items():
+        if not isinstance(value, dict):
+            raise PolicyError(f"profile {name} must be a mapping")
+        claims = value.get("completion_claims")
+        if not isinstance(claims, list) or not claims or any(
+            claim not in {"candidate", "route", "outcome", "iteration", "project"}
+            for claim in claims
+        ):
+            raise PolicyError(f"profile {name} has invalid completion claims")
         profiles[name] = GovernanceProfile(
             name=name,
             interactive=value.get("interactive") is True,
             max_candidates_per_iteration=int(value.get("max_candidates_per_iteration", 0)),
             requires_continuation=value.get("requires_continuation") is True,
-            completion_claims=tuple(value.get("completion_claims") or ()),
+            completion_claims=tuple(claims),
         )
-    if not profiles:
-        raise PolicyError("governance profiles are missing")
     return profiles
 
 
@@ -132,3 +150,31 @@ def resolve_gate(
     if not authorized or recommendation not in options:
         return GateDecision(gate_id, "block", None, "policy", "no authorized recommended option")
     return GateDecision(gate_id, "decide", recommendation, "policy", "selected safe recommendation")
+
+
+def validate_completion_claim(
+    profile: GovernanceProfile,
+    claim: str,
+    projection: RunProjection,
+    authorization: Mapping[str, Any],
+) -> None:
+    if claim not in profile.completion_claims:
+        raise CompletionError(f"{claim} completion is outside {profile.name} governance")
+    candidate = projection.selected_candidate
+    if not candidate:
+        raise CompletionError("completion requires a selected candidate")
+    if candidate not in projection.accepted_candidates:
+        raise CompletionError("completion requires candidate acceptance")
+    if candidate not in projection.verified_candidates:
+        raise CompletionError("completion requires verifier proof")
+    if claim in {"route", "outcome"}:
+        scope = authorization.get("candidate_scope") or []
+        if profile.name == "auto" and (len(scope) != 1 or scope[0] != candidate):
+            raise CompletionError("Auto outcome completion must match its one authorized candidate")
+    elif claim == "iteration":
+        if candidate not in projection.budget_rechecks:
+            raise CompletionError("iteration completion requires budget recheck evidence")
+        if profile.requires_continuation and candidate not in projection.continuation_grants:
+            raise CompletionError("iteration completion requires continuation evidence")
+    elif claim == "project" and projection.project_health_verified is not True:
+        raise CompletionError("project completion requires project health proof")
