@@ -128,7 +128,7 @@ class WorkflowRuntime:
         if candidate in projection.selected_candidates:
             raise WorkflowRuntimeError("candidate is already selected")
         if context["mode"] == "auto" and projection.selected_candidate is not None:
-            raise WorkflowRuntimeError("Auto mode authorizes exactly one selected route")
+            raise WorkflowRuntimeError("Auto mode authorizes exactly one selected outcome")
         if context["mode"] == "looping" and projection.selected_candidate is not None:
             if projection.last_event_type != "continuation_granted":
                 raise WorkflowRuntimeError("next candidate must immediately follow continuation grant")
@@ -226,8 +226,17 @@ class WorkflowRuntime:
         *,
         selected_option: str | None = None,
     ) -> dict[str, Any]:
-        context, _ = self._running()
+        context, projection = self._running()
         authorization = self._authorization()
+        if context["mode"] == "auto" and gate_id == "project_merge_final_health_gate" and recommendation == "Done":
+            candidate = projection.selected_candidate
+            if (
+                not candidate
+                or projection.mutation_count < 1
+                or candidate not in projection.accepted_candidates
+                or candidate not in projection.verified_candidates
+            ):
+                raise WorkflowRuntimeError("Auto merge closeout requires implementation and verifier evidence")
         contract = yaml.safe_load((self.plugin_root / "docs" / "superpowers" / "workflow-contract.yml").read_text(encoding="utf-8")) or {}
         gates = [
             gate

@@ -70,7 +70,14 @@ def run_trial(
         shutil.rmtree(trial_root)
     project, run_root, authorization = create_fixture(plugin_root, trial_root, scenario, repetition)
     prompt_path = plugin_root / "tests" / "workflow-trials" / "scenarios" / ("auto" if scenario == "auto-golden" else "loop") / "prompt.md"
-    source_skills = [plugin_root / "skills" / "initiate-workflow" / "SKILL.md", plugin_root / "skills" / ("implement-plan" if scenario == "auto-golden" else "loop-controller") / "SKILL.md"]
+    source_skills = [plugin_root / "skills" / "initiate-workflow" / "SKILL.md"]
+    if scenario == "auto-golden":
+        source_skills.extend([
+            plugin_root / "skills" / "implement-plan" / "SKILL.md",
+            plugin_root / "skills" / "merge-changes" / "SKILL.md",
+        ])
+    else:
+        source_skills.append(plugin_root / "skills" / "loop-controller" / "SKILL.md")
     prompt = prompt_path.read_text() + "\n\nRead these exact source contracts first:\n" + "\n".join(f"- {path}" for path in source_skills) + f"\nRuntime: {plugin_root / 'scripts/workflow-run.sh'}\nAuthorization: {authorization}\nRun root: {run_root}\nReturn only the requested JSON."
     observed_events: list[dict[str, object]] = []
     worker, worker_id = invoke_agent(project, prompt, worker_schema, trial_root / "worker-output.json")

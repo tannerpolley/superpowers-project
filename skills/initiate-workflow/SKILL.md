@@ -1,11 +1,11 @@
 ---
 name: initiate-workflow
-description: Use when a Superpowers Project request needs mode selection and routing to one owning workflow skill.
+description: Use when a Superpowers Project request needs mode selection and lifecycle routing.
 ---
 
 # Initiate Workflow
 
-Own `project_workflow_mode` and select one route owner.
+Own `project_workflow_mode`, start the current route owner, and preserve lifecycle authority across downstream routes.
 
 ## Capability Preflight
 
@@ -24,6 +24,8 @@ Follow `skills/advanced-user-input/SKILL.md` for shared gates and use `docs/supe
 Route missing context to setup-project; unresolved design to brainstorm-spec; critique to audit-project; approved design to write-plan; tracker slices to create-issues; approved non-issue plans to implement-plan; direct leaf issues to resolve-issue; delegated leaf issues to orchestrate-issues; integration to merge-changes; drift to align-project; repetition to loop-controller.
 
 Start the owner with `scripts/workflow-run.sh -RunRoot <run> -AuthorizationPath <ledger> -Action start`, then record selection with `-Action select` before mutation. Downstream routes reuse that run and authority.
+
+Auto owns the selected outcome through implementation, verification, integration, and verified final closeout. Specs, plans, issues, and PR-ready branches are intermediate route outputs, not Auto completion. Continue through safe graph routes without another user question; fail closed only on the stop conditions recorded at startup.
 
 ## Closeout
 

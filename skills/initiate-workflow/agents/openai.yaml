@@ -5,4 +5,5 @@ interface:
   default_prompt: >-
     Use $superpowers-project:initiate-workflow to select Manual, Auto, or Looping mode and route setup, planning,
     issues, implementation, merges, audits, or alignment. Read SKILL.md for startup authority and route ownership;
-    use docs/superpowers/workflow-contract.yml for options. Intermediate closeout uses Stop.
+    use docs/superpowers/workflow-contract.yml for options. Auto continues one outcome across intermediate routes
+    until verified merge closeout; Stop remains an explicit exit, not automatic plan completion.

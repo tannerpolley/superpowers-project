@@ -15,6 +15,8 @@ def proven() -> RunProjection:
         selected_candidate="one",
         accepted_candidates=["one"],
         verified_candidates=["one"],
+        gate_decisions=[{"gate_id": "project_merge_final_health_gate", "selected_option": "Done", "source": "policy"}],
+        mutation_count=1,
     )
 
 

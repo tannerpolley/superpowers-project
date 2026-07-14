@@ -83,14 +83,22 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         return payload
 
+    def merge_done(self, project: Path, run_root: Path, auth: Path):
+        return self.invoke(project, run_root, auth, "resolve-gate", "-GateId", "project_merge_final_health_gate", "-Recommendation", "Done")
+
     def test_auto_records_one_outcome_and_completes_after_proof(self):
         with tempfile.TemporaryDirectory() as tmp:
             project, run_root, auth = self.fixture(Path(tmp), "auto")
             self.assert_ok(self.invoke(project, run_root, auth, "start", "-RunId", "auto-1"))
             self.assert_ok(self.invoke(project, run_root, auth, "select", "-Candidate", "one"))
+            premature_closeout = self.merge_done(project, run_root, auth)
+            self.assertNotEqual(0, premature_closeout.returncode)
             self.assert_ok(self.invoke(project, run_root, auth, "mutate", "-Candidate", "one"))
             self.assert_ok(self.invoke(project, run_root, auth, "accept", "-Candidate", "one"))
             self.assert_ok(self.invoke(project, run_root, auth, "verify", "-Candidate", "one"))
+            premature = self.invoke(project, run_root, auth, "complete", "-Claim", "outcome")
+            self.assertNotEqual(0, premature.returncode)
+            self.assert_ok(self.merge_done(project, run_root, auth))
             completed = self.assert_ok(self.invoke(project, run_root, auth, "complete", "-Claim", "outcome"))
             self.assertEqual("completed", completed["projection"]["status"])
             rejected = self.invoke(project, run_root, auth, "select", "-Candidate", "two")
@@ -242,8 +250,10 @@ class WorkflowRuntimeIntegrationTests(unittest.TestCase):
             project, run_root, auth = self.fixture(Path(tmp), "auto")
             self.assert_ok(self.invoke(project, run_root, auth, "start", "-RunId", "auto-terminal"))
             self.assert_ok(self.invoke(project, run_root, auth, "select", "-Candidate", "one"))
+            self.assert_ok(self.invoke(project, run_root, auth, "mutate", "-Candidate", "one"))
             self.assert_ok(self.invoke(project, run_root, auth, "accept", "-Candidate", "one"))
             self.assert_ok(self.invoke(project, run_root, auth, "verify", "-Candidate", "one"))
+            self.assert_ok(self.merge_done(project, run_root, auth))
             self.assert_ok(self.invoke(project, run_root, auth, "complete", "-Claim", "outcome"))
             gate = self.invoke(project, run_root, auth, "resolve-gate", "-GateId", "project_issue_resolution_route", "-Recommendation", "Project Resolve")
             stop = self.invoke(project, run_root, auth, "block", "-Reason", "late")

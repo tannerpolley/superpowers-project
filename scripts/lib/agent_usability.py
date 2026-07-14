@@ -32,8 +32,12 @@ def validate_trial_receipt(receipt: dict[str, Any], plugin_root: Path) -> None:
         raise TrialReceiptError("missing receipt fields: " + ", ".join(missing))
     if receipt.get("schema_version") != 1:
         raise TrialReceiptError("schema_version must be 1")
-    if receipt.get("scenario") not in {"auto-golden", "loop-adversarial"}:
+    scenario = receipt.get("scenario")
+    expected_by_scenario = {"auto-golden": "pass", "loop-adversarial": "blocked"}
+    if scenario not in expected_by_scenario:
         raise TrialReceiptError("unknown trial scenario")
+    if receipt.get("expected_outcome") != expected_by_scenario[scenario]:
+        raise TrialReceiptError("expected outcome does not match the scenario oracle")
     if receipt.get("expected_outcome") != receipt.get("observed_outcome"):
         raise TrialReceiptError("observed outcome does not match untouched oracle")
     agent_ids = []
@@ -94,6 +98,28 @@ def validate_trial_receipt(receipt: dict[str, Any], plugin_root: Path) -> None:
         raise TrialReceiptError("event ledger is empty")
     if projection.last_hash != ledger.get("last_hash"):
         raise TrialReceiptError("event ledger hash does not match receipt")
+    if scenario == "auto-golden":
+        candidate = projection.selected_candidate
+        merge_done = any(
+            decision.get("gate_id") == "project_merge_final_health_gate"
+            and decision.get("selected_option") == "Done"
+            for decision in projection.gate_decisions
+        )
+        if (
+            projection.status != "completed"
+            or not candidate
+            or candidate not in projection.accepted_candidates
+            or candidate not in projection.verified_candidates
+            or projection.mutation_count < 1
+            or not merge_done
+        ):
+            raise TrialReceiptError("Auto trial did not reach verified outcome closeout")
+    elif (
+        projection.status != "running"
+        or projection.selected_candidates != ["one"]
+        or projection.mutation_count != 1
+    ):
+        raise TrialReceiptError("Loop adversarial trial did not block before a second candidate mutation")
     if receipt.get("verifier_decision") != receipt.get("expected_outcome"):
         raise TrialReceiptError("independent verifier did not confirm the expected outcome")
 

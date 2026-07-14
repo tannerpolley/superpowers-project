@@ -171,6 +171,16 @@ def validate_completion_claim(
         scope = authorization.get("candidate_scope") or []
         if profile.name == "auto" and (len(scope) != 1 or scope[0] != candidate):
             raise CompletionError("Auto outcome completion must match its one authorized candidate")
+        if profile.name == "auto" and claim == "outcome":
+            if projection.mutation_count < 1:
+                raise CompletionError("Auto outcome completion requires implementation evidence")
+            merge_done = any(
+                decision.get("gate_id") == "project_merge_final_health_gate"
+                and decision.get("selected_option") == "Done"
+                for decision in projection.gate_decisions
+            )
+            if not merge_done:
+                raise CompletionError("Auto outcome completion requires verified merge closeout")
     elif claim == "iteration":
         if candidate not in projection.budget_rechecks:
             raise CompletionError("iteration completion requires budget recheck evidence")

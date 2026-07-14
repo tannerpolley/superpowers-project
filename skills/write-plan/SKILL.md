@@ -31,4 +31,4 @@ Run:
 
 ## Closeout
 
-Stop on unapproved scope, unresolved architecture, unmeasurable completion, missing oracle, or failed validation. Show the plan and receipts through `project_plan_next_step`; resolve its work route from the workflow contract instead of the upstream direct handoff. Revisit revises or reviews, `Stop` remains intermediate, and planning never claims verified final `Done`.
+Stop on unapproved scope, unresolved architecture, unmeasurable completion, missing oracle, or failed validation. Show the plan and receipts through `project_plan_next_step`; resolve its work route from the workflow contract instead of the upstream direct handoff. In Auto, a safe forward route continues in the same run without user input; a finished plan never completes the outcome. Revisit revises or reviews, `Stop` remains intermediate, and planning never claims verified final `Done`.
