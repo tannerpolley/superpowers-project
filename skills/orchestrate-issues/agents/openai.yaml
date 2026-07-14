@@ -3,19 +3,6 @@ interface:
   display_name: "Orchestrate Issues"
   short_description: "Delegate ready issue work to worker worktree threads and collect PR-ready handoff evidence."
   default_prompt: >-
-    Use $superpowers-project:orchestrate-issues when a ready issue should be delegated to a worker thread/worktree
-    and reviewed by the current thread. Read SKILL.md for worker identity, handoff, communication, and integration
-    gates. GitHub hierarchy parents and plan-wrappers are rollup records; worker execution is leaf-only and requires Sub-Issue Role leaf with Executable true when hierarchy fields exist.
-    Read docs/superpowers/workflow-contract.yml for route question ids and options. This route is the
-    delegated adapter for superpowers:subagent-driven-development. Use derive-worker-identity.sh for worker-thread
-    identity and route completed worker PRs through merge-changes. Auto Mode reuses the project_workflow_mode
-    one-outcome ledger and resolves routine gates through the shared lifecycle mode policy. summarize
-    artifact review gate status, broader project context, recommended next route, and machine-readable artifacts.
-    Use docs/superpowers/examples/worker-handoff-packets.md and scripts/validate-worker-packets.sh for worker
-    handoff and PR-ready return packet fields.
-    The orchestrator must use that delegation discipline. Require superpowers:using-git-worktrees only for local_git_worktree; every handoff requires
-    superpowers:test-driven-development, superpowers:executing-plans or superpowers:subagent-driven-development,
-    superpowers:verification-before-completion, and superpowers:finishing-a-development-branch. Do not create or
-    launch a worker without that companion skill set in the handoff.
-    Intermediate closeout uses Stop; Done is reserved for verified final states.
-    Resolve Codex-native versus vanilla local isolation before delegation and bind workspace_receipt evidence; a shared subagent is not isolation.
+    Use $superpowers-project:orchestrate-issues to delegate one executable leaf issue while the current thread
+    reviews and integrates. Read SKILL.md for isolation, worker identity, immutable handoff, companion skills,
+    review, merge routing, and Stop conditions.

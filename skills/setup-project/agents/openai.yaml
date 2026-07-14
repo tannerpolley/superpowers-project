@@ -3,14 +3,6 @@ interface:
   display_name: "Setup Project"
   short_description: "Set up project context, roadmap, milestones, tracker config, and GitHub project board evidence."
   default_prompt: >-
-    Use $superpowers-project:setup-project to create or maintain project context, roadmap, milestone pages, tracker
-    configuration, labels, hierarchy tracker labels, issue type planning, and GitHub Project setup. Read SKILL.md for setup gates and
-    docs/superpowers/workflow-contract.yml for route question ids and options. Start from
-    docs/superpowers/PROJECT_CONTEXT.md, keep canonical specs/plans/issues in flat canonical roots, and treat
-    Milestone pages are index views with frontmatter plus milestone indexes. summarize artifact review gate status,
-    what the agent thinks those results mean, machine-readable artifacts, broader project context, and recommended next route.
-    project_setup_next_step is the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml
-    for planning, issue, and alignment child routes before starting the selected next skill. GitHub Project board setup covers board creation. Use request_user_input before
-    creating or repairing tracker state. Metadata should identify setup scope without
-    replacing the detailed setup contract.
-    Intermediate closeout uses Stop; Done is reserved for verified final states.
+    Use $superpowers-project:setup-project for project context, roadmap, milestones, tracker configuration, or
+    optional board evidence. Read SKILL.md for artifact ownership, approval, validation, project_setup_next_step,
+    and Stop behavior. The helper plans or validates a board; it does not create one.

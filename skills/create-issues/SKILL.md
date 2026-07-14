@@ -1,36 +1,26 @@
 ---
 name: create-issues
-description: Use when a Superpowers Project spec, plan, PRD, or approved scope needs vertical-slice GitHub issues and synced issue mirrors.
+description: Use when approved scope needs executable GitHub issue slices and synchronized local mirrors.
 ---
 
 # Project Issue
 
-Convert approved scope into executable vertical slices and synchronized local mirrors. GitHub mutation is separate from drafting and requires native approval.
+Convert approved scope into testable vertical slices. GitHub publication requires separate native approval.
 
 ## Capability Preflight
 
-Require `filesystem.read`, `filesystem.write`, `shell`, `github`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before issue preparation if any required capability is absent.
+Require `filesystem.read`, `filesystem.write`, `shell`, `github`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before drafting when one is absent.
 
-## Shared Policy
+Follow `skills/advanced-user-input/SKILL.md` for shared gates and `docs/superpowers/workflow-contract.yml` for labels.
 
-Follow `skills/advanced-user-input/SKILL.md` for global native questions and artifact review. This route owns route-specific hierarchy, mirror, publication, and execution choices. Exact route labels live in `docs/superpowers/workflow-contract.yml`.
+## Contract
 
-## Inputs And Slicing
+Require approved scope with acceptance criteria and a proof oracle. Use independently testable vertical slices and record dependencies. Hierarchy modes are `flat`, `issue-set`, and `sub-milestone`; only leaf mirrors with `Sub-Issue Role: leaf` and `Executable: true` may execute. Run `validate-issue-title-policy.sh -Title <title>` and `build-issue-hierarchy-plan.sh -SourcePlanPath <plan> -HierarchyMode <mode> -LeafTitles <titles>` under `skills/create-issues/scripts/`; non-flat modes also require `-ParentTitle`.
 
-Require an approved spec, plan, PRD, or explicit scope with acceptance criteria and proof oracle. Prefer independently testable vertical slices. Record dependencies; do not create implementation-layer fragments that cannot deliver a user-observable outcome.
+Write `docs/superpowers/issues/<number>-<slug>.md` with issue identity, source artifact and plan, milestone, labels, dependencies, branch policy, execution role, acceptance criteria, proof oracle, non-goals, and Outcome Summary fields: Intent, Target Output, Owner, Interface, Cutover, Replaced Path, Acceptance Proof, Stop Criteria, and Avoid.
 
-Hierarchy modes are `flat`, `issue-set`, and `sub-milestone`. Parent and plan-wrapper mirrors are rollups with `Executable: false`; only leaf mirrors with `Sub-Issue Role: leaf` and `Executable: true` may execute. Run `skills/create-issues/scripts/validate-issue-title-policy.sh` for every clean title and `skills/create-issues/scripts/build-issue-hierarchy-plan.sh` before publication.
+Run `skills/create-issues/scripts/validate-issue-mirror.sh -IssueFile <mirror>` and `skills/create-issues/scripts/validate-issue-hierarchy.sh -IssueMirrorPath <mirror> -GitHubIssueFixturePath <fixture>`. External issues remain intake until `skills/create-issues/scripts/hydrate-external-issue.sh -IssueJsonPath <issue>` produces a valid plan and mirror. `Source Plan: TBD` blocks execution.
 
-## Mirror Contract
+## Closeout
 
-Write `docs/superpowers/issues/<number>-<slug>.md`. Include issue URL/number, source artifact and plan, milestone, labels, dependencies, branch policy, execution role, acceptance criteria, proof oracle, non-goals, and `## Outcome Summary` with Intent, Target Output, Owner, Interface, Cutover, Replaced Path, Acceptance Proof, Stop Criteria, and Avoid.
-
-Validate each mirror with `skills/create-issues/scripts/validate-issue-mirror.sh -IssueFile <mirror>`. Validate hierarchy against GitHub evidence with `skills/create-issues/scripts/validate-issue-hierarchy.sh`.
-
-External issues are intake until hydrated with `skills/create-issues/scripts/hydrate-external-issue.sh` and both the local plan and mirror validate. `Source Plan: TBD` is never execution-ready.
-
-## Publication And Stop Conditions
-
-Show the dry hierarchy plan, titles, bodies, labels, milestone, parents, and mirror paths before native publication approval. Stop on missing approval, ambiguous slicing, invalid title/mirror, unresolved dependency, or GitHub mismatch. Never infer publication authority from Auto execution authority.
-
-After publication, show URLs and validation receipts and use `project_issue_next_step`. Yes routes to direct resolution or orchestration, Revisit repairs/reviews, and `Stop` is the intermediate terminal choice. This route never claims verified final `Done`.
+Show the dry hierarchy, issue content, metadata, and mirror paths before publication approval. Stop on missing approval, ambiguous slicing, invalid artifacts, unresolved dependencies, or GitHub mismatch. After publication, show URLs and receipts through `project_issue_next_step`; Yes resolves or orchestrates, Revisit repairs, and `Stop` exits. This route has no verified final `Done`.

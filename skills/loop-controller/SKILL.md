@@ -5,32 +5,28 @@ description: Use when Superpowers Project should coordinate repeated bounded out
 
 # Loop Controller
 
-Coordinate bounded repeated maintenance. It selects candidates and verifies iteration evidence; owning route skills perform the actual work.
+Select candidates and verify iteration evidence; owner routes perform the work.
 
 ## Capability Preflight
 
-Require `filesystem.read`, `filesystem.write`, `shell`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before candidate selection when any capability is absent.
+Require `filesystem.read`, `filesystem.write`, `shell`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before selection when one is absent.
 
-## Shared Policy
-
-Use `skills/advanced-user-input/SKILL.md` for global continuation and artifact review. This skill keeps route-specific loop budget, inventory, verifier, continuation, and final-health rules local. Read route ownership from `docs/superpowers/workflow-contract.yml`.
+Follow `skills/advanced-user-input/SKILL.md` for shared gates.
 
 ## Loop Contract
 
-Generated state lives under `.superpowers/runs/<run-id>/`; it is evidence, not canonical backlog. Prefer `docs/superpowers/backlog/ACTIVE.md` as the ready-candidate source. Validate run, budget, verifier, state-machine, and terminal ledgers with the scripts under `skills/loop-controller/scripts/`.
+Store generated evidence under `.superpowers/runs/<run-id>/`. Candidate source precedence lives in `docs/superpowers/loop-mode-contract.yml`; pass `select-candidate.sh` a JSON `-InventoryPath` whose ready items were derived from those sources. The Markdown backlog is not a selector input. Validate run, budget, verifier, state machine, and terminal ledgers with `skills/loop-controller/scripts/`.
 
 For each iteration:
 
-1. Recheck elapsed/token/candidate budgets with `validate-budget.sh`.
-2. Select exactly one ready executable candidate with `select-candidate.sh`.
-3. Record selection through `scripts/workflow-run.sh` and route to the graph owner.
-4. Record mutations, acceptance, and independent verifier proof.
-5. Recheck budget and health with `recheck-budget -BudgetEvidencePath <budget-ledger> -HealthEvidencePath <verifier-ledger>`, then record policy-sourced `grant-continuation` evidence before any second candidate. The runtime hashes and revalidates both ledgers. Do not ask a routine continuation question unless startup policy explicitly requires a checkpoint.
-6. Replay the event ledger; never edit `run.json` directly.
-7. Write metrics with `write-metrics-report.sh`.
+1. Check elapsed, token, and candidate budgets with `validate-budget.sh`.
+2. Select one ready executable candidate with `select-candidate.sh -InventoryPath <inventory>`, record it through `scripts/workflow-run.sh -Action select`, and invoke its graph owner.
+3. Record mutations, acceptance, and independent verification.
+4. Run `scripts/workflow-run.sh -Action recheck-budget -BudgetEvidencePath <budget-ledger> -HealthEvidencePath <verifier-ledger>`, then `-Action grant-continuation` before another candidate. The runtime hashes and validates both ledgers.
+5. Let runtime actions replay the event ledger; never edit `run.json`. Run `write-metrics-report.sh -MetricsInputPath <metrics> -OutputPath <report>`.
 
-Auto Mode is not a backlog drain and cannot reuse Looping continuation authority. Parent and plan-wrapper issues are rollup work, not implementation candidates.
+Auto cannot drain a backlog or reuse Looping continuation authority. Parent and wrapper issues are not implementation candidates.
 
-## Stop Conditions And Completion
+## Closeout
 
-Block on tampering, no ready candidate, budget exhaustion, failed verification, dirty unsafe state, owner mismatch, or missing continuation proof. `iteration` completion requires acceptance, verification, budget, and policy continuation evidence. Resolve `project_loop_final_health_gate` through the shared lifecycle mode policy; `Done` is valid only after terminal proof and a clean worktree.
+Block on tampering, no ready candidate, exhausted budget, failed verification, dirty unsafe state, owner mismatch, or missing continuation proof. `iteration` completion requires acceptance, verification, budget, and continuation evidence. Resolve `project_loop_final_health_gate` through shared mode policy; `Done` requires terminal proof and a clean worktree.

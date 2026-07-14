@@ -1,47 +1,33 @@
 ---
 name: resolve-issue
-description: Use when one ready GitHub issue mirror under docs/superpowers/issues must be implemented directly in the current thread through native goal activation, Superpowers execution, pushed branch, opened PR, and PR-ready handoff.
+description: Use when one ready executable GitHub issue mirror must be implemented directly and handed off with PR-ready evidence.
 ---
 
 # Project Resolve
 
-Directly implement one ready executable leaf issue in the current thread and produce verified PR-ready evidence for merge-changes.
+Implement one executable leaf issue in the current thread and hand verified PR-ready evidence to merge-changes.
 
 ## Capability Preflight
 
-Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `github`, `goals`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before preflight when a capability is absent.
+Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `github`, `goals`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Stop before preflight when one is absent.
 
-## Required Superpowers Pairings
+Follow `skills/advanced-user-input/SKILL.md` for shared gates.
 
-Use `superpowers:executing-plans`; use `superpowers:using-git-worktrees` only when the workspace provider selects local fallback. Require `superpowers:test-driven-development` unless the approved source plan records an explicit opt-out. Use `superpowers:systematic-debugging` for failures and unclear behavior. Require `superpowers:verification-before-completion` before PR-ready claims and `superpowers:finishing-a-development-branch` before PR creation.
+Use `superpowers:executing-plans`; use `superpowers:using-git-worktrees` only for local fallback. Require `superpowers:test-driven-development` unless the source plan opts out, `superpowers:systematic-debugging` for failures, `superpowers:verification-before-completion` before PR-ready claims, and `superpowers:finishing-a-development-branch` before PR creation.
 
-## Shared Policy
+## Preconditions And Execution
 
-Follow `skills/advanced-user-input/SKILL.md` for global continuation and artifact review. This route owns route-specific issue setup, goal, push, PR-ready, and handoff gates only. Canonical labels live in `docs/superpowers/workflow-contract.yml`.
+1. Require `docs/superpowers/issues/<number>-<slug>.md` with leaf/executable state, issue URL, source plan, Outcome Summary, acceptance criteria, and proof oracle. Run `skills/resolve-issue/scripts/preflight.sh -IssueMirrorPath <mirror>`, `./scripts/validate-plan-outcome-proof.sh -PlanPath <source-plan>`, and `./scripts/validate-plan-task-use-cases.sh -PlanPath <source-plan>`. Parent, wrapper, `Source Plan: TBD`, or malformed mirrors block.
+2. Call `scripts/workspace-isolation.sh` with request and capability evidence. Adopt or request `codex_managed_worktree`; use `superpowers:using-git-worktrees` only for `local_git_worktree`. Shared subagents do not prove isolation, and native task creation forbids later local fallback. Publication needs a fresh branch-bound `workspace_receipt`.
+3. Run `skills/resolve-issue/scripts/prepare-execution.sh`, activate the goal, and validate its setup ledger with `skills/resolve-issue/scripts/validate-setup.sh -SetupLedgerPath <ledger>`.
+4. Start or reuse the immutable workflow run; record selection and mutations. Execute plan tasks with scoped commits.
+5. Verify acceptance, proof oracle, tests, cleanup, outcome proof, and readiness review.
+6. Resolve `project_resolve_push_permission`; push and open a PR only with explicit permission or matching publication preauthorization.
 
-## Preconditions
+## Evidence And Closeout
 
-Require `docs/superpowers/issues/<number>-<slug>.md` with `Sub-Issue Role: leaf`, `Executable: true`, issue URL, source plan, Outcome Summary, acceptance criteria, and proof oracle. Run `skills/resolve-issue/scripts/preflight.sh`, `./scripts/validate-plan-outcome-proof.sh`, and `./scripts/validate-plan-task-use-cases.sh`. Parent, wrapper, `Source Plan: TBD`, and malformed mirrors are blocking.
+`skills/resolve-issue/scripts/collect-pr-ready-ledger.sh` requires one complete `CollectionRequestJson|Path` and persists its repository-bound envelope only when `OutputPath` is set. `skills/resolve-issue/scripts/validate-pr-ready.sh` accepts one `EvidenceEnvelopeJson|Path` and returns a bound `pr_ready` receipt or structured failure; missing evidence and legacy objects fail closed. Hand that receipt to merge-changes without skipping the authenticated chain.
 
-## Workspace Isolation
+After integration, `skills/resolve-issue/scripts/validate-terminal-closeout.sh` consumes the current `merge_decision` receipt, matching closeout envelope, and explicit terminal decision.
 
-Before editing, call `scripts/workspace-isolation.sh` with required isolation and observed capabilities. Treat its result as an untrusted action decision: adopt or request `codex_managed_worktree`, or invoke `superpowers:using-git-worktrees` only for `local_git_worktree`. A shared subagent is delegation, not isolation. Local fallback is forbidden after native task creation. Record the provider observation as the existing `workspace_receipt`; detached native work may implement, but `project_resolve_push_permission` requires a fresh branch-bound receipt.
-
-## Execution
-
-1. Inspect setup with `prepare-execution.sh`, activate the native goal, satisfy Workspace Isolation, and validate setup with `validate-setup.sh`.
-2. Start or reuse the immutable `scripts/workflow-run.sh` run and record selection/mutations.
-3. Execute each plan task with TDD/debug discipline and commit scoped checkpoints.
-4. Verify acceptance coverage, proof oracle, repo tests, cleanup, outcome-proof carry-forward, and readiness review.
-5. Show full branch and verification evidence, then ask `project_resolve_push_permission`. Push/open PR only after explicit permission or valid preauthorization that includes remote publication.
-6. Collect and validate the PR-ready ledger, then hand off to `$superpowers-project:merge-changes`.
-
-## Evidence Gate Contract
-
-Collection and validation are separate operations. `collect-pr-ready-ledger.sh` must receive a complete `CollectionRequestJson` or `CollectionRequestPath` and emits a version-1 repository-bound evidence envelope only when `OutputPath` is explicit. `validate-pr-ready.sh` requires exactly one `EvidenceEnvelopeJson` or `EvidenceEnvelopePath`; it returns a hash-bound `pr_ready` receipt or a structured nonzero error. Missing evidence is `evidence_missing`, and legacy ledgers or bare `ok: true` objects are `legacy_evidence_unsupported` rather than compatibility passes.
-
-Resolve terminal closeout is final lifecycle closeout: it consumes the current `merge_decision` receipt after integration, a matching closeout envelope, and an explicit terminal decision. PR-ready proof is handed to merge-changes as the immediately preceding input to premerge; no route skips or splices the authenticated receipt chain.
-
-## Stop Conditions And Closeout
-
-Stop on invalid setup, non-leaf issue, missing goal, failed proof, scope drift, missing push authority, CI failure, or stale PR evidence. Record the graph-owned continuation decision. `Stop` requires terminal closeout validation; PR readiness is not verified final `Done`.
+Stop on invalid setup, non-leaf work, missing goal, failed proof, scope drift, missing publication authority, CI failure, or stale evidence. Record the graph continuation decision. `Stop` requires terminal closeout; PR readiness is not verified final `Done`.

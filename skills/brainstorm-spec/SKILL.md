@@ -1,28 +1,26 @@
 ---
 name: brainstorm-spec
-description: Use when repo-backed ideas, specs, PRDs, architecture concepts, or broad feature requests need Superpowers brainstorming plus project context and native user-input grilling.
+description: Use when repo-backed ideas, specs, PRDs, architecture concepts, or broad feature requests need design decisions.
 ---
 
 # Project Brainstorm
 
-Use this design-only adapter before planning or implementation. Announce that `$superpowers-project:brainstorm-spec` is paired with `superpowers:brainstorming`.
+Pair `$superpowers-project:brainstorm-spec` with `superpowers:brainstorming`. This route produces an approved design before planning or implementation.
 
 ## Capability Preflight
 
-Require `filesystem.read`, `filesystem.write`, and `native.user-input` from `docs/superpowers/capabilities.yml`. The paired upstream skill owns any browser transport. Stop with an exact missing-capability finding.
+Require `filesystem.read`, `filesystem.write`, and `native.user-input` from `docs/superpowers/capabilities.yml`. The paired skill owns browser transport. Stop with the missing capability.
 
-## Required Method
+Follow `skills/advanced-user-input/SKILL.md` for shared question geometry and `docs/superpowers/workflow-contract.yml` for labels.
 
-Run `superpowers:brainstorming` without weakening its checklist: inspect knowable context, ask one unresolved decision at a time, compare two or three viable approaches, recommend one, present architecture/components/data flow/error handling/testing in reviewable sections, obtain approval, write the spec, and invite review. Honor its just-in-time visual companion when a question genuinely benefits from visual comparison; browser events are advisory and native Codex input remains authoritative. Treat `.superpowers/brainstorm/` as generated ignored state, stop its server after use, and do not invent a second companion route. Do not implement, branch, create issues, or write an implementation plan here.
+## Method
 
-## Shared Policy
+Inspect knowable context, ask one unresolved decision at a time, compare two or three viable approaches, recommend one, and present design sections for approval. Use the upstream visual companion only when comparison benefits from visuals; native input remains authoritative. Treat `.superpowers/brainstorm/` as ignored generated state and stop its server after use. This project gate replaces the upstream commit and direct planning handoff.
 
-Use `skills/advanced-user-input/SKILL.md` for global question geometry and artifact review. Keep route-specific spec decisions and gates local. Canonical labels and ownership live in `docs/superpowers/workflow-contract.yml`.
+Write `docs/superpowers/specs/YYYY-MM-DD-<slug>-design.md` with context, goals, non-goals, alternatives, selected design, interfaces, data flow, errors, testing, risks, unresolved decisions, and Decision Ledger. Run `./scripts/validate-decision-ledger.sh -Path <saved-spec-path> -Kind spec`.
 
-## Spec Contract
+Do not implement, branch, create issues, or write a plan in this route.
 
-Write `docs/superpowers/specs/YYYY-MM-DD-<slug>-design.md` with context, goals, non-goals, alternatives, selected design, interfaces, data flow, errors, testing, risks, unresolved decisions, and a Decision Ledger. Validate with `./scripts/validate-decision-ledger.sh -Path <saved-spec-path> -Kind spec`.
+## Closeout
 
-## Stop Conditions And Closeout
-
-Stop when a material design decision remains unresolved, the user rejects all viable approaches, or the artifact cannot be grounded in repository evidence. Show the saved spec and decision summary, then use `project_brainstorm_next_step`. Yes routes to planning, Revisit revises/reviews/restarts, and `Stop` is the intermediate terminal choice. This route never claims verified final `Done`.
+Stop on unresolved material design, rejected approaches, or claims unsupported by repository evidence. Show the spec and decisions through `project_brainstorm_next_step`; Yes plans, Revisit revises or reviews, and `Stop` exits. This route has no verified final `Done`.

@@ -3,21 +3,6 @@ interface:
   display_name: "Implement Plan"
   short_description: "Implement an approved plan on a development branch without issue mirrors."
   default_prompt: >-
-    Use $superpowers-project:implement-plan for approved non-issue implementation plans that need branch-backed
-    proof. Execute an approved plan under `docs/superpowers/plans`; this route does not create issue mirrors and
-    must not claim GitHub issue closure. Read SKILL.md for exact setup, push, PR, and closeout gates; read docs/superpowers/workflow-contract.yml
-    for route question ids and options. Task # Use Cases are a strict requirement; run
-    scripts/validate-plan-task-use-cases.sh before implementation. This route is the non-issue adapter for
-    superpowers:executing-plans. Require native `/goal` activation and a development branch. Resolve
-    implement_plan_topology with Inline, Worker, and Stop through the shared lifecycle mode policy. implement_plan_push_permission has Push Branch
-    and Hold. Require branch push proof, outcome proof, readiness review, merge-ready local-branch handoff to
-    merge-changes, and no open pull requests for local-only merge handoff. Auto Mode reuses the project_workflow_mode
-    one-outcome ledger, preauthorized-after-clean-premerge, and stop-outside-policy behavior. Require superpowers:executing-plans as the base method, require
-    superpowers:test-driven-development for feature and bug work unless the approved plan records an explicit opt-out,
-    require superpowers:systematic-debugging or diagnose for bugs, regressions, CI failures, performance work, or unclear failure modes, require
-    superpowers:verification-before-completion before any success claim, commit, or local merge, require
-    superpowers:subagent-driven-development whenever worker topology is selected, and Do not treat those companion
-    skills as optional suggestions. Closeout summarizes artifact review gate, verification evidence, broader project context,
-    recommended next route, and machine-readable artifacts. Do not recommend Stop merely because the branch is clean, validated, or already pushed.
-    Do not ask for push approval first and explain later.
-    Prefer Codex-managed worktrees through scripts/workspace-isolation.sh; bind the observed workspace_receipt and use vanilla local fallback only when selected.
+    Use $superpowers-project:implement-plan for approved branch-backed work without issue mirrors. Read SKILL.md for
+    companion methods, goal and workspace setup, proof, publication approval, merge handoff, and Stop behavior.
+    Use docs/superpowers/workflow-contract.yml for route options.

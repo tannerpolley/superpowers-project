@@ -3,10 +3,6 @@ interface:
   display_name: "Loop Controller"
   short_description: "Coordinate repeated Superpowers Project workflow runs with run ledgers, budgets, and verifier proof."
   default_prompt: >-
-    Use $superpowers-project:loop-controller for bounded repeated maintenance across ready candidates in Looping
-    Mode. Read SKILL.md for run ledgers, budget ledgers, candidate inventory, verifier proof, metrics, and terminal
-    closeout; resolve plugin-owned validators and docs from the loaded Superpowers Project plugin root, not from
-    the active target repo, and read docs/superpowers/workflow-contract.yml for route question ids and options. Generated state lives
-    under .superpowers/runs and is not canonical committed backlog. Select one candidate at a time, validate budget
-    and run ledgers, route actual work to the owning skill, then record policy continuation after acceptance,
-    verifier, and budget proof. Resolve final health through the shared lifecycle mode policy.
+    Use $superpowers-project:loop-controller for bounded repeated work across ready candidates. Read SKILL.md for
+    inventory, budget, verifier, continuation, metrics, and Stop conditions. Generated run state is evidence, not a
+    committed backlog.

@@ -48,7 +48,7 @@ def validate_skill_slimming(root: Path, contract: dict[str, Any]) -> tuple[list[
         route_lines += len(text.splitlines())
         if "## Capability Preflight" not in text:
             findings.append({"code": "missing-capability-preflight", "route": route})
-        if "skills/advanced-user-input/SKILL.md" not in text or "route-specific" not in text:
+        if "skills/advanced-user-input/SKILL.md" not in text:
             findings.append({"code": "missing-global-policy-reference", "route": route})
         for phrase in duplicate_phrases:
             if phrase in text:

@@ -1,38 +1,29 @@
 ---
 name: orchestrate-issues
-description: Use when a ready Superpowers Project issue should be delegated to a Codex worktree worker thread while the current thread acts as orchestrator and reviewer.
+description: Use when a ready executable issue should be delegated to an isolated Codex worker while the current thread reviews and integrates.
 ---
 
 # Project Orchestrate
 
-Delegate one executable leaf issue while the current thread remains reviewer and integration owner. Workers never merge their own work.
+Delegate one leaf issue. The current thread reviews and merges; workers never merge.
 
 ## Capability Preflight
 
-Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `subagents`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Require `github` for issue/PR evidence. Stop before worker creation when any required capability is absent.
+Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `subagents`, and `native.user-input` from `docs/superpowers/capabilities.yml`; add `github` for issue or PR evidence. Stop before worker creation when one is absent.
 
-## Required Superpowers Pairings
+Follow `skills/advanced-user-input/SKILL.md` for shared gates.
 
-The orchestrator uses `superpowers:subagent-driven-development`. Every handoff requires `superpowers:test-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`, plus `superpowers:executing-plans` or the delegated method. Require `superpowers:using-git-worktrees` only for local fallback.
+Use `superpowers:subagent-driven-development`, `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Use `superpowers:using-git-worktrees` only for local fallback.
 
-## Shared Policy
+## Handoff And Review
 
-Use `skills/advanced-user-input/SKILL.md` for global continuation and artifact review. This route keeps route-specific worker identity, packet, review, and integration gates local. Read question labels from `docs/superpowers/workflow-contract.yml`.
+1. Require a mirror with `Sub-Issue Role: leaf`, `Executable: true`, valid source plan, acceptance criteria, and proof oracle.
+2. Call `scripts/workspace-isolation.sh` with `RequestJson|Path` and `CapabilitiesJson|Path`. Adopt or request `codex_managed_worktree`; use local worktrees only for `local_git_worktree`. Shared subagents do not prove isolation, and native task creation forbids later local fallback. Bind `workspace_receipt` to the handoff and refresh it before publication.
+3. Run `skills/orchestrate-issues/scripts/derive-worker-identity.sh -IssueFile <mirror>`.
+4. Run `skills/orchestrate-issues/scripts/prepare-worker-handoff.sh` with `-IssueFile`, workspace receipt, workflow run ID, candidate ID, and output path; run `skills/orchestrate-issues/scripts/validate-worker-handoff.sh -HandoffPath <handoff>` and compare `docs/superpowers/examples/worker-handoff-packets.md`.
+5. Send the immutable packet and record workflow selection and mutations.
+6. Review the diff, task evidence, tests, branch, and PR-ready packet against repository evidence. Send accepted work to `$superpowers-project:merge-changes`.
 
-## Workspace Isolation
+## Closeout
 
-Before worker creation, call `scripts/workspace-isolation.sh`. Adopt or request `codex_managed_worktree`; invoke vanilla worktree creation only for `local_git_worktree`. A shared subagent is delegation, not isolation, and its identity cannot replace `workspace_receipt` evidence. Local fallback is forbidden after native task creation. Bind the receipt to the handoff, and require a fresh branch-bound receipt before publication.
-
-## Procedure
-
-1. Require a ready mirror with `Sub-Issue Role: leaf`, `Executable: true`, a valid source plan, acceptance criteria, and proof oracle.
-2. Run `skills/orchestrate-issues/scripts/derive-worker-identity.sh`.
-3. Satisfy Workspace Isolation and collect its receipt before preparing the handoff.
-4. Run `prepare-worker-handoff.sh`, then validate the packet with `validate-worker-handoff.sh` and `docs/superpowers/examples/worker-handoff-packets.md`.
-5. Create the worker and send the immutable packet. Record workflow selection and mutations.
-6. Review the worker's diff, task evidence, tests, branch state, and PR-ready packet independently. Reject narrative that disagrees with repository evidence.
-7. Route accepted work to `$superpowers-project:merge-changes`; the main thread owns approval and merge.
-
-## Stop Conditions And Closeout
-
-Stop on a rollup issue, missing plan/proof oracle, identity collision, unsafe topology, incomplete handoff, worker scope drift, failed verification, or absent reviewer capacity. Show the worker identity, packet, changed artifacts, verification, and next owner. Use graph-owned orchestration routes; `Stop` is intermediate and this skill never claims verified final `Done`.
+Stop on rollup issues, missing plan or oracle, identity collision, unsafe topology, invalid handoff, scope drift, failed verification, or absent reviewer capacity. Show identity, packet, artifacts, verification, and next owner through `project_orchestrate_next_step`. Retain `Stop`; this route has no verified final `Done`.
