@@ -1008,7 +1008,7 @@ def command_prepare_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     _validate_worker_workspace(root, workspace_receipt, str(workflow_run_id), str(candidate_id))
     workspace_provider = workspace_receipt["provider"]
     workspace_receipt_ref = str(hash_ref(dict(workspace_receipt)))
-    required_skills = ["superpowers:test-driven-development", "superpowers:executing-plans", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]
+    required_skills = ["superpowers:executing-plans", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]
     if workspace_provider == "local_git_worktree":
         required_skills.insert(0, "superpowers:using-git-worktrees")
     handoff = {
@@ -1117,7 +1117,7 @@ def command_validate_worker_handoff(ctx: Context, args: dict[str, Any]) -> int:
     if workspace_receipt.get("provider") != handoff.get("workspace_provider"):
         raise ScriptError("workspace provider does not match receipt")
     _validate_worker_workspace(root, workspace_receipt, run_id, candidate_id)
-    for skill in ["superpowers:test-driven-development", "superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]:
+    for skill in ["superpowers:verification-before-completion", "superpowers:finishing-a-development-branch"]:
         if skill not in handoff.get("required_skills", []):
             raise ScriptError(f"required skill missing: {skill}")
     local_skill = "superpowers:using-git-worktrees"

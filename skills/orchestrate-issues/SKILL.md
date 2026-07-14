@@ -13,7 +13,7 @@ Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `subagents`, and 
 
 Follow `skills/advanced-user-input/SKILL.md` for shared gates.
 
-Use `superpowers:subagent-driven-development`, `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Use `superpowers:using-git-worktrees` only for local fallback.
+Use `superpowers:subagent-driven-development`, `superpowers:executing-plans`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Follow the repository verification policy; include `superpowers:test-driven-development` in a worker handoff only when that policy selects TDD. Use `superpowers:using-git-worktrees` only for local fallback.
 
 ## Handoff And Review
 

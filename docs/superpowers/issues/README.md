@@ -28,7 +28,7 @@ New issue mirrors should include:
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
-**TDD Policy:** Required
+**Verification Policy:** Repository profile
 **Parallelization Plan:** None
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only

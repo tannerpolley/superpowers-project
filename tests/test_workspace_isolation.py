@@ -134,7 +134,6 @@ class WorkspaceIsolationTests(unittest.TestCase):
             "topology_handoff": {"worker_must_not_merge": True},
             "merge_handoff": {"merge_owner": "merge-changes"},
             "required_skills": [
-                "superpowers:test-driven-development",
                 "superpowers:executing-plans",
                 "superpowers:verification-before-completion",
                 "superpowers:finishing-a-development-branch",

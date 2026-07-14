@@ -30,7 +30,7 @@ routes:
   implement-plan:
     required: [filesystem.read, filesystem.write, shell, git, goals, native.user-input]
     optional: [subagents]
-    method_pairings: [superpowers:executing-plans, superpowers:test-driven-development, superpowers:systematic-debugging, superpowers:verification-before-completion, superpowers:finishing-a-development-branch, superpowers:subagent-driven-development]
+    method_pairings: [superpowers:executing-plans, superpowers:systematic-debugging, superpowers:verification-before-completion, superpowers:finishing-a-development-branch, superpowers:subagent-driven-development]
   initiate-workflow:
     required: [filesystem.read, shell, native.user-input]
     optional: []
@@ -46,11 +46,11 @@ routes:
   orchestrate-issues:
     required: [filesystem.read, filesystem.write, shell, git, subagents, native.user-input]
     optional: [github]
-    method_pairings: [superpowers:subagent-driven-development, superpowers:using-git-worktrees, superpowers:test-driven-development, superpowers:verification-before-completion, superpowers:finishing-a-development-branch]
+    method_pairings: [superpowers:subagent-driven-development, superpowers:using-git-worktrees, superpowers:verification-before-completion, superpowers:finishing-a-development-branch]
   resolve-issue:
     required: [filesystem.read, filesystem.write, shell, git, github, goals, native.user-input]
     optional: []
-    method_pairings: [superpowers:using-git-worktrees, superpowers:executing-plans, superpowers:test-driven-development, superpowers:systematic-debugging, superpowers:verification-before-completion, superpowers:finishing-a-development-branch]
+    method_pairings: [superpowers:using-git-worktrees, superpowers:executing-plans, superpowers:systematic-debugging, superpowers:verification-before-completion, superpowers:finishing-a-development-branch]
   setup-project:
     required: [filesystem.read, filesystem.write, shell, native.user-input]
     optional: [github]
@@ -58,4 +58,4 @@ routes:
   write-plan:
     required: [filesystem.read, filesystem.write, shell, native.user-input]
     optional: []
-    method_pairings: [superpowers:writing-plans, superpowers:test-driven-development, superpowers:systematic-debugging, superpowers:verification-before-completion]
+    method_pairings: [superpowers:writing-plans, superpowers:systematic-debugging, superpowers:verification-before-completion]

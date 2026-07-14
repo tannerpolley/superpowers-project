@@ -13,7 +13,7 @@ Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `goals`, and `nat
 
 Follow `skills/advanced-user-input/SKILL.md` for shared gates.
 
-Use `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Use `superpowers:systematic-debugging` for failures and `superpowers:subagent-driven-development` for Worker topology. A plan may record an explicit TDD opt-out.
+Use `superpowers:executing-plans`, `superpowers:verification-before-completion`, and `superpowers:finishing-a-development-branch`. Follow the repository verification policy; invoke `superpowers:test-driven-development` only when it selects TDD. Use `superpowers:systematic-debugging` for failures and `superpowers:subagent-driven-development` for Worker topology.
 
 ## Execution
 

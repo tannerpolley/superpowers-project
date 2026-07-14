@@ -2,6 +2,8 @@
 
 This repository is the canonical source of truth for the local Superpowers Project Codex plugin.
 
+Repository Profile: application-development
+
 ## Rules
 
 - Treat this repo as source. Treat `/home/tnnrpolley21/.codex/plugins/superpowers-project` as the deployed plugin copy.
