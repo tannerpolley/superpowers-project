@@ -13,7 +13,7 @@ Require `filesystem.read`, `filesystem.write`, `shell`, `git`, `github`, `goals`
 
 Follow `skills/advanced-user-input/SKILL.md` for shared gates.
 
-Use `superpowers:executing-plans`; use `superpowers:using-git-worktrees` only for local fallback. Require `superpowers:test-driven-development` unless the source plan opts out, `superpowers:systematic-debugging` for failures, `superpowers:verification-before-completion` before PR-ready claims, and `superpowers:finishing-a-development-branch` before PR creation.
+Use `superpowers:executing-plans`; use `superpowers:using-git-worktrees` only for local fallback. Follow the repository verification policy and invoke `superpowers:test-driven-development` only when it selects TDD. Require `superpowers:systematic-debugging` for failures, `superpowers:verification-before-completion` before PR-ready claims, and `superpowers:finishing-a-development-branch` before PR creation.
 
 ## Preconditions And Execution
 

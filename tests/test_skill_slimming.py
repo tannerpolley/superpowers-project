@@ -11,6 +11,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SkillSlimmingTests(unittest.TestCase):
+    def test_execution_routes_defer_to_repository_verification_policy(self):
+        capabilities = (ROOT / "docs" / "superpowers" / "capabilities.yml").read_text(encoding="utf-8")
+        self.assertNotIn("superpowers:test-driven-development", capabilities)
+
+        for route in ["write-plan", "implement-plan", "resolve-issue", "orchestrate-issues"]:
+            text = (ROOT / "skills" / route / "SKILL.md").read_text(encoding="utf-8").lower()
+            self.assertIn("repository verification policy", text, route)
+        self.assertNotIn("red/green/refactor steps", (ROOT / "skills" / "write-plan" / "SKILL.md").read_text(encoding="utf-8").lower())
+
     def test_skill_text_is_compact_and_current(self):
         skill_files = sorted((ROOT / "skills").glob("*/SKILL.md"))
         words = {path.parent.name: len(path.read_text(encoding="utf-8").split()) for path in skill_files}

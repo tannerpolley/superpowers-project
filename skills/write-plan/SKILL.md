@@ -13,7 +13,7 @@ Require `filesystem.read`, `filesystem.write`, `shell`, and `native.user-input` 
 
 Follow `skills/advanced-user-input/SKILL.md` for shared gates.
 
-Use `superpowers:test-driven-development` for feature and bug plans unless the user records an opt-out, `superpowers:systematic-debugging` for bugs, regressions, CI, or performance, and `superpowers:verification-before-completion` for implementation completion.
+Follow the repository verification policy selected by its applicable `AGENTS.md`. Use `superpowers:test-driven-development` only when that policy selects TDD. Use `superpowers:systematic-debugging` for bugs, regressions, CI, or performance, and `superpowers:verification-before-completion` for implementation completion.
 
 ## Plan Contract
 
@@ -21,7 +21,7 @@ Write `docs/superpowers/plans/YYYY-MM-DD-<slug>-plan.md` linked to its approved 
 
 Outcome Proof names Intent, Current Behavior, Expected Outcome, Target Output, Owner, Interface, Cutover, Replaced Path, Evidence, Acceptance Proof, Stop Criteria, Avoid, and Risk. Boundaries name files to create, modify, and avoid; sources of truth; read/write paths; integrations; migration; replaced paths; and acceptance gate.
 
-Each task contains non-empty Use Cases, exact Files and Interfaces, RED/GREEN/refactor steps, commands with expected results, and a checkpoint commit. Prefer vertical tasks.
+Each task contains non-empty Use Cases, exact Files and Interfaces, the selected Verification Method, Acceptance Evidence, commands with expected results, and a checkpoint commit. Prefer vertical tasks.
 
 Run:
 

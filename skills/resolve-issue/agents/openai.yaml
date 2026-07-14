@@ -1,7 +1,7 @@
 interface:
   capabilities: [filesystem.read, filesystem.write, shell, git, github, goals, native.user-input]
   display_name: "Resolve Issue"
-  short_description: "Resolve one ready issue directly with goal proof, TDD, verification, and a PR-ready handoff."
+  short_description: "Resolve one ready issue with repository-selected verification and a PR-ready handoff."
   default_prompt: >-
     Use $superpowers-project:resolve-issue to implement one executable leaf issue directly. Read SKILL.md for plan
     and workspace preflight, companion methods, goal proof, publication approval, PR-ready receipts, merge handoff,
