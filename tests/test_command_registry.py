@@ -1,12 +1,15 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from shutil import copytree
 from pathlib import Path
 
 from scripts.lib.command_catalog import CommandSpec, ScriptError, _COMMANDS, build_command_registry, load_command_catalog, resolve_command
+from scripts.lib.command_support import Context, project_path_for, project_root_for
 from scripts.lib.commands import load_handlers
 
 
@@ -66,6 +69,16 @@ class CommandRegistryTests(unittest.TestCase):
         }
         self.assertEqual({}, incomplete)
 
+    def test_public_catalog_excludes_test_only_launchers(self):
+        offenders = {
+            path: spec.handler
+            for path, spec in load_command_catalog(ROOT).items()
+            if Path(path).name.startswith("test-")
+            or Path(path).name == "test-scenarios.sh"
+            or spec.handler.startswith("command_test_")
+        }
+        self.assertEqual({}, offenders)
+
     def test_every_registered_handler_is_callable(self):
         sys.path.insert(0, str(ROOT / "scripts" / "lib"))
         try:
@@ -78,7 +91,7 @@ class CommandRegistryTests(unittest.TestCase):
         self.assertEqual([], missing)
         expected_modules = {
             "command_workflow_run": "commands.workflow",
-            "command_validate_agent_usability_receipt": "commands.validation",
+            "command_validate_agent_usability_receipt": "commands.distribution",
             "command_select_candidate": "commands.project",
             "command_prepare_release": "commands.distribution",
         }
@@ -97,7 +110,7 @@ class CommandRegistryTests(unittest.TestCase):
         catalog = load_command_catalog(ROOT)
         self.assertTrue(catalog)
         self.assertTrue(all(isinstance(spec, CommandSpec) for spec in catalog.values()))
-        self.assertTrue(all(spec.kind in {"validator", "test", "workflow", "distribution", "project"} for spec in catalog.values()))
+        self.assertTrue(all(spec.kind in {"validator", "workflow", "distribution", "project"} for spec in catalog.values()))
         self.assertTrue(all(spec.mutation in {"none", "project", "git", "deployment", "external"} for spec in catalog.values()))
         self.assertEqual(set(catalog), {spec.path for spec in catalog.values()})
 
@@ -113,6 +126,28 @@ class CommandRegistryTests(unittest.TestCase):
         payload = __import__("json").loads(process.stdout)
         self.assertTrue(payload["ok"])
         self.assertEqual("workflow-contract", payload["phase"])
+
+    def test_project_paths_are_scoped_to_the_invocation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            ctx = Context(Path(__file__), root, "tests/x", "x", [], plugin_root=ROOT, invocation_cwd=root)
+            self.assertEqual(root, project_root_for(ctx, {"RepoRoot": "."}))
+            self.assertEqual(root, project_root_for(ctx, {"RepoRoot": str(root)}))
+            with self.assertRaisesRegex(Exception, "outside project root"):
+                project_path_for(root, "../outside", "Path")
+
+    def test_nested_validation_clears_read_only_collection_marker(self):
+        sys.path.insert(0, str(ROOT / "scripts" / "lib"))
+        try:
+            from superpowers_project_cli import run_without_read_only_collection
+        finally:
+            sys.path.pop(0)
+        with patch.dict(os.environ, {"SUPERPOWERS_READ_ONLY_COLLECTION": "1"}):
+            result = run_without_read_only_collection(
+                ["bash", "-c", 'test -z "${SUPERPOWERS_READ_ONLY_COLLECTION:-}"'],
+                ROOT,
+            )
+        self.assertEqual(0, result.returncode)
 
     def test_evidence_launchers_fail_closed_without_a_request(self):
         paths = (

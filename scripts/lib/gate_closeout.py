@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import Mapping
 
 try:
-    from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, canonical_json
+    from .evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
     from .gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, source_artifact_rule, workflow_binding_rule, workspace_rule
     from .gate_receipts import GateReceipt, build_receipt, parse_receipt, verify_transition_receipt
 except ImportError:  # pragma: no cover - CLI top-level import fallback
-    from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult, canonical_json
+    from evidence_schema import EvidenceEnvelope, EvidenceError, RuleResult
     from gate_common import authorization_rule, cleanup_rule, command_rule, current_git_state, finalize_gate_rules, git_state_rule, identity_rules, require_evidence, require_gate, source_artifact_rule, workflow_binding_rule, workspace_rule
     from gate_receipts import GateReceipt, build_receipt, parse_receipt, verify_transition_receipt
 

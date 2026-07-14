@@ -4,7 +4,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import hashlib
 import json
-import os
 import fnmatch
 from pathlib import Path
 from typing import Any, Iterable
@@ -87,7 +86,6 @@ def validate_runtime_reads(plugin_root: Path, package: RuntimePackage | None = N
         "docs/superpowers/backlog/ACTIVE.md",
         "docs/superpowers/examples/workflow-golden-paths.md",
         "docs/superpowers/examples/worker-handoff-packets.md",
-        "docs/superpowers/milestones/M1-score-9-loop-mode-hardening-receipt.md",
     }
     for source_root in (root / "scripts", root / "skills"):
         for path in source_root.rglob("*") if source_root.is_dir() else []:

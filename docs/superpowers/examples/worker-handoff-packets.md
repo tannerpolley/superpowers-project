@@ -36,8 +36,7 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   },
   "reviewer_role": "main-thread-orchestrator",
   "proof_oracle": [
-    "./scripts/test-worker-packets.sh",
-    "./skills/orchestrate-issues/scripts/test-scenarios.sh"
+    "./scripts/validate-worker-packets.sh"
   ],
   "validation": {
     "required_commands": [
@@ -60,7 +59,7 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   "source_plan": "docs/superpowers/plans/<source-plan>.md",
   "branch": "codex/issue-<issue-number>-<issue-slug>",
   "proof_oracle": [
-    "./scripts/test-worker-packets.sh",
+    "./scripts/validate-worker-packets.sh",
     "./scripts/validate.sh"
   ],
   "diff_scope": {
@@ -73,11 +72,7 @@ These packets define the minimum evidence shape for orchestrated issue work. The
   "validation_receipt": {
     "commands": [
       {
-        "command": "./scripts/test-worker-packets.sh",
-        "exit_code": 0
-      },
-      {
-        "command": "./skills/orchestrate-issues/scripts/test-scenarios.sh",
+        "command": "./scripts/validate-worker-packets.sh",
         "exit_code": 0
       }
     ]

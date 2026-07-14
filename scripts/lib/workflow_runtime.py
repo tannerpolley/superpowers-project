@@ -10,10 +10,10 @@ import yaml
 
 try:
     from .workflow_policy import GovernanceProfile, resolve_gate, validate_governance, validate_loop_evidence
-    from .workflow_state import WorkflowStateError, append_event, replay_events
+    from .workflow_state import append_event, replay_events
 except ImportError:
     from workflow_policy import GovernanceProfile, resolve_gate, validate_governance, validate_loop_evidence
-    from workflow_state import WorkflowStateError, append_event, replay_events
+    from workflow_state import append_event, replay_events
 
 
 class WorkflowRuntimeError(ValueError):
@@ -262,12 +262,12 @@ class WorkflowRuntime:
 
     def complete(self, claim: str) -> dict[str, Any]:
         try:
-            from .workflow_completion import load_profiles, validate_completion_claim
+            from .workflow_policy import load_governance_profiles, validate_completion_claim
         except ImportError:
-            from workflow_completion import load_profiles, validate_completion_claim
+            from workflow_policy import load_governance_profiles, validate_completion_claim
 
         context, projection = self._running()
-        profiles = load_profiles(self.plugin_root / "docs" / "superpowers" / "governance-profiles.yml")
+        profiles = load_governance_profiles(self.plugin_root / "docs" / "superpowers" / "governance-profiles.yml")
         profile = profiles.get(context["mode"])
         if profile is None:
             raise WorkflowRuntimeError(f"governance profile is missing: {context['mode']}")

@@ -9,7 +9,7 @@ import math
 import re
 import subprocess
 from pathlib import Path
-from typing import Any, Callable, Mapping, NewType
+from typing import Callable, Mapping, NewType
 
 
 SUPPORTED_GATES = frozenset({"pr_ready", "premerge", "merge_decision", "closeout", "publish_ready"})

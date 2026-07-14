@@ -9,11 +9,6 @@ import subprocess
 import sys
 from typing import Any
 
-try:
-    from .superpowers_project_context import RuntimeContext, resolve_project_path, resolve_project_root
-except ImportError:
-    from superpowers_project_context import RuntimeContext, resolve_project_path, resolve_project_root
-
 
 class ScriptError(Exception):
     pass
@@ -62,12 +57,24 @@ def resolve_under(root: Path, value: str, label: str = "path") -> Path:
 
 
 def project_root_for(ctx: Context, args: dict[str, Any]) -> Path:
-    runtime = RuntimeContext(ctx.script_path, ctx.plugin_root or ctx.repo_root, ctx.invocation_cwd or Path.cwd(), ctx.script_rel)
-    return resolve_project_root(runtime, args)
+    base = (ctx.invocation_cwd or Path.cwd()).resolve()
+    value = arg_value(args, "RepoRoot", "repo_root")
+    if value is None:
+        return base
+    root = Path(str(value))
+    return (base / root).resolve() if not root.is_absolute() else root.resolve()
 
 
 def project_path_for(root: Path, value: str, label: str = "path") -> Path:
-    return resolve_project_path(root, value, label)
+    candidate = Path(value)
+    if not candidate.is_absolute():
+        candidate = root / candidate
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(root.resolve())
+    except ValueError as exc:
+        raise ScriptError(f"{label}: {resolved} is outside project root") from exc
+    return resolved
 
 
 def parse_ps_args(argv: list[str]) -> dict[str, Any]:

@@ -7,23 +7,43 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from ..agent_usability import validate_trial_set
-    from ..command_support import Context, arg_value, emit, has_switch, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
+    from ..agent_usability import validate_trial_receipt, validate_trial_set
+    from ..command_support import Context, ScriptError, arg_value, emit, has_switch, normalize_rel, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
     from ..evidence_collectors import CollectionRequest, build_evidence_envelope
-    from ..evidence_collectors import collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
+    from ..evidence_collectors import collect_agent_trial, collect_installation_state, collect_package_provenance
     from ..evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
     from ..gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
     from ..package_provenance import runtime_contract_hash, runtime_manifest
-    from ..release_evidence import base_release_tag, validate_dependency_pins
 except ImportError:
-    from agent_usability import validate_trial_set
-    from command_support import Context, arg_value, emit, has_switch, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
+    from agent_usability import validate_trial_receipt, validate_trial_set
+    from command_support import Context, ScriptError, arg_value, emit, has_switch, normalize_rel, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
     from evidence_collectors import CollectionRequest, build_evidence_envelope
-    from evidence_collectors import collect_agent_trial, collect_command_result, collect_installation_state, collect_package_provenance
+    from evidence_collectors import collect_agent_trial, collect_installation_state, collect_package_provenance
     from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
     from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
     from package_provenance import runtime_contract_hash, runtime_manifest
-    from release_evidence import base_release_tag, validate_dependency_pins
+
+
+class ReleaseEvidenceError(ValueError):
+    pass
+
+
+def validate_dependency_pins(path: Path) -> list[str]:
+    findings = []
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        value = line.strip()
+        if value and not value.startswith("#") and (
+            "==" not in value or any(operator in value for operator in (">=", "<=", "~=", "!="))
+        ):
+            findings.append(f"line {number} is not exactly pinned: {value}")
+    return findings
+
+
+def base_release_tag(version: str) -> str:
+    base = version.split("+", 1)[0]
+    if re.fullmatch(r"\d+\.\d+\.\d+", base) is None:
+        raise ReleaseEvidenceError("release version must have a numeric major.minor.patch base")
+    return f"v{base}"
 
 
 def _package_hash(root):
@@ -39,12 +59,11 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
     if head.returncode != 0 or branch.returncode != 0 or not head.stdout.strip() or not branch.stdout.strip():
         raise EvidenceError("evidence_missing", "current Git identity is required for publish-ready collection")
     package = _package_hash(root)
-    manifest = json.loads(read_text(root / ".codex-plugin" / "plugin.json"))
     live_value = arg_value(args, "LivePluginRoot", default=str(Path.home() / ".codex" / "plugins" / "superpowers-project"))
     live_root = Path(str(live_value)).expanduser().resolve()
     try:
-        installed_package = _package_hash(live_root)
-        installed_contract = runtime_contract_hash(live_root)
+        _package_hash(live_root)
+        runtime_contract_hash(live_root)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         raise EvidenceError("evidence_missing", "current installed plugin provenance is required") from exc
 
@@ -55,7 +74,7 @@ def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
         raise EvidenceError("evidence_missing", "agent trial receipts are required")
     try:
         receipts = [json.loads(path.read_text(encoding="utf-8")) for path in receipt_paths]
-        trial_metrics = validate_trial_set(receipts, root)
+        validate_trial_set(receipts, root)
     except Exception as exc:
         raise EvidenceError("required_rule_failed", f"agent trial receipts are invalid: {exc}", "agent_trial") from exc
     tool_calls: list[dict[str, object]] = []
@@ -240,9 +259,7 @@ def _command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
         {"name": "validation dependencies pinned", "ok": not pin_findings, "reason": "passed" if not pin_findings else "; ".join(pin_findings)},
     ]
     package_hash = runtime_contract_hash(root)
-    release_evidence = None
     publish_receipt = None
-    trial_metrics = None
     if not check_only:
         checks.extend([
             {"name": "worktree clean", "ok": not dirty, "reason": "passed" if not dirty else "release publishing requires a clean worktree"},
@@ -261,8 +278,9 @@ def _command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
         "dirty": dirty, "dirty_status": status.stdout.strip(),
         "changelog": {"has_unreleased": has_unreleased, "has_version_entry": has_version, "path": "CHANGELOG.md"},
         "required_gates": ["scripts/validate.sh", "scripts/sync-live.sh --validate", "git status --short"],
-        "publish_ready": bool(not check_only and publish_receipt is not None and ok), "publish_ready_receipt_hash": publish_receipt.receipt_hash if publish_receipt else None, "agent_trial_metrics": trial_metrics,
-        "release_evidence": release_evidence, "checks": checks,
+        "publish_ready": bool(not check_only and publish_receipt is not None and ok),
+        "publish_ready_receipt_hash": publish_receipt.receipt_hash if publish_receipt else None,
+        "checks": checks,
     }
     output = arg_value(args, "OutputPath")
     if output:
@@ -279,4 +297,34 @@ def command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
         return _error("prepare-release", EvidenceError("schema_invalid", str(exc)))
 
 
-HANDLERS = {"command_prepare_release": command_prepare_release}
+def command_validate_agent_usability_receipt(ctx: Context, args: dict[str, Any]) -> int:
+    root = project_root_for(ctx, args)
+    receipt_path = arg_value(args, "ReceiptPath")
+    receipt_dir = arg_value(args, "ReceiptDir")
+    if bool(receipt_path) == bool(receipt_dir):
+        raise ScriptError("provide exactly one of ReceiptPath or ReceiptDir")
+    if receipt_path:
+        path = project_path_for(root, str(receipt_path), "ReceiptPath")
+        validate_trial_receipt(json.loads(read_text(path)), ctx.plugin_root or ctx.repo_root)
+        return emit({"ok": True, "phase": "agent-usability-receipt", "receipt": normalize_rel(path, root)})
+    directory = project_path_for(root, str(receipt_dir), "ReceiptDir")
+    receipt_paths = sorted(directory.glob("**/receipt.json"))
+    receipts = [json.loads(read_text(path)) for path in receipt_paths]
+    metrics = validate_trial_set(receipts, ctx.plugin_root or ctx.repo_root)
+    index_path = directory / "receipt-index.json"
+    if not index_path.is_file():
+        raise ScriptError("agent trial receipt index is missing")
+    index = json.loads(read_text(index_path))
+    plugin_root = ctx.plugin_root or ctx.repo_root
+    expected_paths = [normalize_rel(path, plugin_root) for path in receipt_paths]
+    if index.get("package_hash") != runtime_contract_hash(plugin_root):
+        raise ScriptError("agent trial receipt index package hash is stale")
+    if index.get("receipts") != expected_paths:
+        raise ScriptError("agent trial receipt index must contain sorted plugin-relative paths")
+    return emit({"ok": True, "phase": "agent-usability-receipt", "receipt_count": len(receipts), "metrics": metrics})
+
+
+HANDLERS = {
+    "command_prepare_release": command_prepare_release,
+    "command_validate_agent_usability_receipt": command_validate_agent_usability_receipt,
+}

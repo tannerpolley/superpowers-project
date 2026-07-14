@@ -1,8 +1,50 @@
 import unittest
-from scripts.lib.workflow_policy import PolicyError, resolve_gate, validate_governance
+from pathlib import Path
+
+from scripts.lib.workflow_policy import CompletionError, PolicyError, load_governance_profiles, resolve_gate, validate_completion_claim, validate_governance
+from scripts.lib.workflow_state import RunProjection
+
+
+PROFILES = Path(__file__).resolve().parents[1] / "docs" / "superpowers" / "governance-profiles.yml"
+
+
+def proven() -> RunProjection:
+    return RunProjection(
+        run_id="run",
+        status="running",
+        selected_candidate="one",
+        accepted_candidates=["one"],
+        verified_candidates=["one"],
+    )
 
 
 class GovernancePolicyTests(unittest.TestCase):
+    def test_completion_claims_follow_profile_and_replayed_evidence(self):
+        profiles = load_governance_profiles(PROFILES)
+        self.assertEqual({"manual", "auto", "looping", "trial.local"}, set(profiles))
+        self.assertEqual(("outcome",), profiles["auto"].completion_claims)
+
+        projection = proven()
+        validate_completion_claim(profiles["manual"], "candidate", projection, {})
+        validate_completion_claim(profiles["auto"], "outcome", projection, {"candidate_scope": ["one"]})
+        projection.verified_candidates.clear()
+        with self.assertRaises(CompletionError):
+            validate_completion_claim(profiles["auto"], "outcome", projection, {"candidate_scope": ["one"]})
+
+        projection = proven()
+        with self.assertRaises(CompletionError):
+            validate_completion_claim(profiles["looping"], "iteration", projection, {})
+        projection.budget_rechecks.append("one")
+        projection.continuation_grants.append("one")
+        validate_completion_claim(profiles["looping"], "iteration", projection, {})
+
+        with self.assertRaises(CompletionError):
+            validate_completion_claim(profiles["manual"], "project", projection, {})
+        projection.project_health_verified = True
+        validate_completion_claim(profiles["manual"], "project", projection, {})
+        with self.assertRaises(CompletionError):
+            validate_completion_claim(profiles["auto"], "project", projection, {})
+
     def test_auto_is_noninteractive_and_one_outcome(self):
         profile = validate_governance("auto", {"source": "trial-fixture", "candidate_scope": ["a"]}, noninteractive_trial=True)
         self.assertFalse(profile.interactive)
