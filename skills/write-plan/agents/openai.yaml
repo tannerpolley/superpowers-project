@@ -3,24 +3,6 @@ interface:
   display_name: "Write Plan"
   short_description: "Write implementation plans from approved specs or issues with native grilling gates."
   default_prompt: >-
-    Use $superpowers-project:write-plan when an approved Superpowers Project spec or issue mirror needs an
-    implementation plan under docs/superpowers/plans. Keep plan and merge review in Markdown and native Codex;
-    do not reuse the brainstorming visual companion as a planning or recap surface.
-    Read SKILL.md for exact planning gates and
-    docs/superpowers/workflow-contract.yml for route question ids and options. Task # Use Cases are a strict requirement;
-    run scripts/validate-plan-task-use-cases.sh before marking any plan ready. Use superpowers:writing-plans,
-    request_user_input, flat canonical roots, plans include creation date and milestone identity where applicable,
-    link source specs/issues, and preserve docs/superpowers/plans filenames. Plans record what counts as test
-    complete, what metrics define pass versus fail, scientific or engineering-oriented numerical metrics,
-    thresholds, tolerances, units, Outcome Proof, Implementation Boundaries, Owner, Interface, Cutover, Replaced Path,
-    Evidence, Stop Criteria, Avoid, validate-plan-outcome-proof.sh, validate-plan-task-use-cases.sh,
-    artifact review gate, and broader project context. project_plan_next_step summarizes output and can continue;
-    start the selected next skill. project_plan_work_route has Project Issue First, Project Implement, and Use Ready
-    Issue. Project Implement routes to `$superpowers-project:implement-plan` using the saved plan path; Project
-    Issue First routes to `$superpowers-project:create-issues` using the saved plan path; Use Ready Issue requires a
-    compatible ready issue mirror already exists. project_plan_issue_execution_route has Resolve Issue and
-    Orchestrate Issues only. Recommend `Project Implement` for branch-backed non-issue implementation and Recommend
-    `Project Issue First` when the GitHub issue backbone is desired. Revisit routes include Review First and Revise Plan.
-    Use advanced-user-input sequential branching. Do not show Continue children as peer top-level options;
-    Nested branch questions and independent bulk gates may use as many native questions or options as the decision
-    requires.
+    Use $superpowers-project:write-plan for an approved spec or issue that needs an implementation plan. Pair it
+    with superpowers:writing-plans. Read SKILL.md for required proof, task content, validators,
+    project_plan_next_step, route handoff, and Stop behavior.

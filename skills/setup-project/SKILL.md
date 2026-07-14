@@ -1,30 +1,26 @@
 ---
 name: setup-project
-description: Create or maintain the Superpowers Project setup, milestone map, GitHub tracker configuration, GitHub Project board configuration, and roadmap artifacts under docs/superpowers.
+description: Use when Superpowers Project context, roadmap, tracker, milestone, or optional GitHub Project configuration needs creation or repair.
 ---
 
 # Setup Project
 
-Create or repair the minimal project context, roadmap, tracker, and optional GitHub Project evidence used by downstream routes.
+Maintain the project context and tracker artifacts used by downstream routes.
 
 ## Capability Preflight
 
-Require `filesystem.read`, `filesystem.write`, `shell`, and `native.user-input` from `docs/superpowers/capabilities.yml`. Require `github` only for live tracker or board work. Stop before setup when a required capability is absent.
+Require `filesystem.read`, `filesystem.write`, `shell`, and `native.user-input` from `docs/superpowers/capabilities.yml`; add `github` for live tracker or board work. Stop before setup when one is absent.
 
-## Shared Policy
+Follow `skills/advanced-user-input/SKILL.md` for shared gates and `docs/superpowers/workflow-contract.yml` for question labels.
 
-Use `skills/advanced-user-input/SKILL.md` for global native questions and artifact review. This route keeps route-specific setup scope, board approval, and tracker decisions local. Read labels and ownership from `docs/superpowers/workflow-contract.yml`.
+## Artifacts And Board
 
-## Required Artifacts
+Maintain `docs/superpowers/PROJECT_CONTEXT.md`, milestone indexes under `docs/superpowers/milestones/`, and `docs/agents/project-roadmap.json`. Keep specs, plans, and issues in flat roots. Milestone pages are dashboards; GitHub milestones remain tracker records.
 
-Maintain `docs/superpowers/PROJECT_CONTEXT.md`, milestone index pages under `docs/superpowers/milestones/`, and `docs/agents/project-roadmap.json`. Specs, plans, and issues stay in their flat `docs/superpowers/` roots. Milestone pages are dashboards, not replacements for GitHub milestones.
+Project context records purpose, architecture, source-of-truth roles, validation, tracker policy, artifact roots, and constraints. Roadmap JSON records repository, templates, tracker labels, triage states, hierarchy labels, and optional board evidence.
 
-Project context records product purpose, architecture, source-of-truth roles, validation commands, tracker policy, artifact roots, and current constraints. Roadmap JSON records repository, templates, labels, triage states, hierarchy labels, and optional board evidence.
+Run `skills/setup-project/scripts/prepare-github-project-board.sh -Mode Plan`, then ask `project_setup_board_approval`. `Verify Only` is read-only; `Stop` blocks mutation. An approved Create Board choice hands mutation to the authenticated GitHub workflow owner; the helper does not create the board. Validate configuration with `-Mode ValidateConfig`.
 
-## Board Boundary
+## Closeout
 
-Run `skills/setup-project/scripts/prepare-github-project-board.sh -Mode Plan` before approval. Ask `project_setup_board_approval`. `Create Board` requires explicit native evidence; `Verify Only` is read-only; `Stop` prevents mutation. Validate existing configuration with `-Mode ValidateConfig`.
-
-## Validation And Closeout
-
-Run `./scripts/validate-tracker-roadmap-proof.sh`, `./scripts/validate-workflow-contract.sh`, and `./scripts/validate.sh`. Stop on ambiguous ownership, conflicting tracker state, missing approval, or validation failure. Show changed setup files and receipts, then use `project_setup_next_step`; `Stop` is intermediate and this route has no final `Done` claim.
+Run `./scripts/validate-tracker-roadmap-proof.sh`, `./scripts/validate-workflow-contract.sh`, and `./scripts/validate.sh`. Stop on ambiguous ownership, conflicting tracker state, missing approval, or failed validation. Show files and receipts through `project_setup_next_step`; retain `Stop`. This route has no verified final `Done`.

@@ -3,24 +3,6 @@ interface:
   display_name: "Initiate Workflow"
   short_description: "Route Superpowers Project setup, specs, plans, issues, implementation, merges, and audits."
   default_prompt: >-
-    Use $superpowers-project:initiate-workflow as the router for Superpowers Project setup, brainstorming, audits,
-    planning, issue creation, issue resolution, orchestration, merge cleanup, alignment, Auto Mode, and Looping
-    Mode. project_workflow_mode has Manual Mode, Auto Mode, and Looping Mode. Read SKILL.md for startup gates and docs/superpowers/workflow-contract.yml for canonical route structure.
-    Selecting Auto Mode at project_workflow_mode is the Auto Mode invocation; resolve the loaded Superpowers Project plugin root
-    and use <Superpowers Project plugin root>/scripts/validate-auto-mode-authorization.sh.
-    workflow mode ledger validation uses <Superpowers Project plugin root>/scripts/validate-workflow-mode-ledger.sh,
-    not an active-repo script unless the active repo is the plugin source checkout. Route summaries include artifact review gate status,
-    what the agent thinks those results mean, machine-readable artifacts, broader project context,
-    recommended next route, selected native answers, executable routing, and start selected continuation routes.
-    Auto Mode authorizes one outcome lifecycle from the raw request; downstream gates use the shared lifecycle mode policy.
-    Support bounded repeated maintenance autonomy. Implement approved plan without a GitHub issue
-    through implement-plan on a development branch; non-trivial issue-backed work routes through
-    project_issue_resolution_route with Project Resolve, Project Orchestrate, and Review First.
-    Routing is not complete until the paired Superpowers companion method is also enforced: brainstorm-spec with
-    superpowers:brainstorming; write-plan with superpowers:writing-plans; implement-plan with
-    superpowers:executing-plans plus required TDD/debug/verification companions; create-issues with downstream
-    resolve/orchestrate method compatibility; resolve-issue with using-git-worktrees plus executing-plans plus
-    TDD/debug/verification plus finishing-a-development-branch; orchestrate-issues with subagent-driven-development
-    plus the worker companion skill set; merge-changes with finishing-a-development-branch plus upstream
-    verification-before-completion proof. Do not treat those pairings as optional guidance.
-    Intermediate closeout uses Stop; Done is reserved for verified final states.
+    Use $superpowers-project:initiate-workflow to select Manual, Auto, or Looping mode and route setup, planning,
+    issues, implementation, merges, audits, or alignment. Read SKILL.md for startup authority and route ownership;
+    use docs/superpowers/workflow-contract.yml for options. Intermediate closeout uses Stop.

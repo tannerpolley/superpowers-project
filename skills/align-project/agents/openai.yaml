@@ -3,14 +3,6 @@ interface:
   display_name: "Align Project"
   short_description: "Audit Superpowers Project workflow drift, tracker alignment, and repair paths."
   default_prompt: >-
-    Use $superpowers-project:align-project for structure alignment, migration drift, tracker hygiene, live plugin
-    sync drift, live plugin sync drift, issue mirror drift, milestone dashboard presence, optional exact milestone membership, labels, and roadmap evidence. Read SKILL.md for repair gates
-    and docs/superpowers/workflow-contract.yml for route ids and options. Start from
-    docs/superpowers/PROJECT_CONTEXT.md and flat canonical roots. Use skills/align-project/scripts/align-project.sh
-    with -Mode LocalDocs or -Mode GitHubAware as SKILL.md requires; findings are blocking, repairable,
-    informational, or healthy and require native repair approval before mutation. Rule: GitHub milestones are authoritative by default;
-    local milestone pages are dashboard views unless they opt into Membership Mode: Exact. Rule: nested canonical milestone artifact folders are drift
-    unless explicitly generated index/view output. summarize machine-readable artifacts,
-    artifact review gate status, broader project context, and recommended next route. project_align_next_step is
-    the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml for child routes before starting the selected next skill. Use
-    request_user_input before tracker or live mutations.
+    Use $superpowers-project:align-project for repository, tracker, milestone, or live-sync drift. Read SKILL.md for
+    evidence, repair approval, validation, Stop behavior, and the project_align_next_step route. Inspect GitHub only
+    when its capability and approved scope are present.

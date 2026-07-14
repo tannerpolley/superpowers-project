@@ -769,8 +769,8 @@ def command_validate_advanced_user_input_policy(ctx: Context, args: dict[str, An
         "Use Stop for mid-loop exits",
         "Use Done only for verified final states",
         "Intermediate closeout gates use exactly three top-level options: Yes, Revisit, and Stop",
-        "Final clean closeout gates may use Yes, Revisit, and Done",
-        "custom answers that claim completion before proof exists are treated as Stop",
+        "Verified final health gates use exactly three top-level options: Done, Revisit, and Stop",
+        "A Custom request for Stop or Done requires a new native confirmation",
     ], "advanced-user-input policy")
     require_text(metadata, ["request_user_input", "Never use debug mode to approve mutation"], "advanced-user-input metadata")
 
@@ -790,7 +790,7 @@ def command_validate_advanced_user_input_policy(ctx: Context, args: dict[str, An
     for skill in intermediate:
         for path in [skill_root / skill / "SKILL.md", skill_root / skill / "agents" / "openai.yaml"]:
             require_text(path, ["Stop"], f"{skill} intermediate route")
-    for skill in ["merge-changes", "audit-project"]:
+    for skill in ["merge-changes"]:
         require_text(skill_root / skill / "SKILL.md", ["Done", "verified final"], f"{skill} final route")
 
     if findings:
@@ -1211,7 +1211,6 @@ def command_validate_global_policy_deduplication(ctx: Context, args: dict[str, A
         text_value = read_text(path)
         rel = normalize_rel(path, root)
         checks.append({"name": f"{rel} references policy owner", "ok": "advanced-user-input/SKILL.md" in text_value})
-        checks.append({"name": f"{rel} keeps route policy local", "ok": "route-specific" in text_value})
         for phrase in duplicate_phrases:
             checks.append({"name": f"{rel} omits duplicated global policy", "ok": phrase not in text_value})
     failed = [item for item in checks if not item["ok"]]

@@ -3,18 +3,6 @@ interface:
   display_name: "Merge Changes"
   short_description: "Merge issue-backed PR work or branch-ready local work with approvals, cleanup, and closeout proof."
   default_prompt: >-
-    Use $superpowers-project:merge-changes for PR-ready or local-branch integration, merge approval, linked issue
-    closure, branch/worktree cleanup, mirror cleanup, and clean repo proof. Intake may be an issue-backed PR URL or
-    local-branch handoff; modes include pr-issue and local-branch. Resolve merge approval through the shared lifecycle mode policy. Read SKILL.md for premerge, approval,
-    closeout, and terminal gates; read docs/superpowers/workflow-contract.yml for route question ids and options.
-    Require readiness_review with plan_alignment and reality_evidence, plus verification evidence. summarize artifact review gate status,
-    broader project context, recommended next route, and machine-readable artifacts.
-    project_merge_next_step is the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml
-    for child routes before starting the selected next skill.
-    Terminal closeout uses collect-continuation-ledger.sh and validate-terminal-closeout.sh with explicit Stop or
-    verified final Done. Reassessment routing can Reassess Plan or Reassess Spec through request_agent_input.
-    Auto Mode uses the project_workflow_mode ledger for one outcome lifecycle and preauthorized-after-clean-premerge.
-    This route is the closeout adapter for superpowers:finishing-a-development-branch. Require upstream
-    superpowers:verification-before-completion proof, and do not treat merge-time judgment as a substitute for
-    missing execution-time verification or branch-finish discipline.
-    Consume the Codex or local workspace_receipt; preserve app/user-owned workspaces, and let only provenance-backed vanilla finishing clean a plugin-owned local worktree.
+    Use $superpowers-project:merge-changes for reviewed PR or local-branch integration. Read SKILL.md for intake,
+    receipt order, approval, cleanup, project_merge_next_step, verified final Done, and Stop conditions. Require
+    upstream verification and branch-finish proof.

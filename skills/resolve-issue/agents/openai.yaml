@@ -3,22 +3,6 @@ interface:
   display_name: "Resolve Issue"
   short_description: "Resolve one ready issue directly with goal proof, TDD, verification, and a PR-ready handoff."
   default_prompt: >-
-    Use $superpowers-project:resolve-issue for one ready issue mirror under docs/superpowers/issues that will be
-    implemented directly in the current thread using flat canonical roots. Milestone pages are index views. Read SKILL.md for setup, goal, push, PR-ready, and handoff gates;
-    GitHub hierarchy parents and plan-wrappers are rollup records; direct execution is leaf-only and requires Sub-Issue Role leaf with Executable true when hierarchy fields exist.
-    read docs/superpowers/workflow-contract.yml for route question ids and options. Task # Use Cases are a strict requirement;
-    run scripts/validate-plan-task-use-cases.sh before issue execution. This route is the issue-backed
-    adapter for superpowers:executing-plans. Use superpowers:using-git-worktrees only when workspace policy selects local_git_worktree; require
-    superpowers:executing-plans as the base execution method, require superpowers:test-driven-development unless the
-    source plan records an explicit opt-out, require superpowers:systematic-debugging or diagnose for bugs,
-    regressions, failing tests, CI failures, performance work, or unclear failure modes, require
-    superpowers:verification-before-completion before PR-ready claims, require
-    superpowers:finishing-a-development-branch after verification and before PR creation, and Do not collapse this
-    into generic Superpowers execution or treat the companion skills as optional. summarize artifact review gate
-    status, Outcome Summary, outcome_proof, readiness review, plan_alignment, reality_evidence, verification evidence,
-    broader project context, recommended next route, and machine-readable artifacts. project_resolve_next_step is
-    the top-level continuation gate; use SKILL.md and docs/superpowers/workflow-contract.yml for merge, another-issue, and review child routes before starting the selected next skill.
-    project_resolve_push_permission has Push And Open PR and Hold. Auto Mode reuses the project_workflow_mode
-    one-outcome ledger and resolves publication gates through the shared lifecycle mode policy. Terminal closeout
-    uses collect-continuation-ledger.sh and validate-terminal-closeout.sh with explicit Stop.
-    Prefer Codex-managed worktrees through scripts/workspace-isolation.sh, bind workspace_receipt evidence, and require a branch-bound receipt before publication.
+    Use $superpowers-project:resolve-issue to implement one executable leaf issue directly. Read SKILL.md for plan
+    and workspace preflight, companion methods, goal proof, publication approval, PR-ready receipts, merge handoff,
+    and Stop conditions.

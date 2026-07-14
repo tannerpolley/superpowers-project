@@ -2,8 +2,6 @@ interface:
   display_name: "Advanced User Input"
   short_description: "Use native user input for Project workflow gates, large option menus, and worker questions."
   default_prompt: >-
-    Use $superpowers-project:advanced-user-input when native request_user_input choices, sequential branching,
-    Custom Other handling, debug-question ledgers, or artifact-review policy shape matters. Read SKILL.md for the
-    global continuation and artifact review policy, and docs/superpowers/workflow-contract.yml for project route
-    question ids and option sets. This helper owns shared native UI policy; route skills add only route-specific
-    gates, artifacts, validators, and stop points. Never use debug mode to approve mutation.
+    Use $superpowers-project:advanced-user-input for request_user_input choices, branching, Custom answers,
+    artifact review, or worker questions. Read SKILL.md and docs/superpowers/workflow-contract.yml.
+    Never use debug mode to approve mutation.

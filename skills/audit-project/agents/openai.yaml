@@ -3,11 +3,6 @@ interface:
   display_name: "Audit Project"
   short_description: "Turn evidence-backed code and workflow review findings into a Superpowers Project spec."
   default_prompt: >-
-    Use $superpowers-project:audit-project for evidence-backed workflow, code, test, skill, or repo behavior audits
-    that should become repair specs or issue slices. Read SKILL.md for audit output requirements and
-    docs/superpowers/workflow-contract.yml for route question ids, options, validators, and next routes. Classify
-    findings as P0, P1, P2, or P3. Pair with diagnose, thermo-nuclear-code-quality-review,
-    improve-codebase-architecture, or react-doctor as applicable. project_audit_next_step uses Yes, Revisit,
-    and Stop. Yes asks project_audit_progress_route with Write Plan, Auto Mode, and Create Issues. Revisit asks project_audit_revisit_route
-    with Review First, Gather More Evidence, and Rerun Focused Audit. Auto Mode reuses its project_workflow_mode
-    one-outcome ledger and evidence-based issue routing. Resolve material gates through the shared lifecycle mode policy.
+    Use $superpowers-project:audit-project for evidence-backed workflow, code, test, skill, or behavior audits that
+    should produce a repair spec. Read SKILL.md for severity, proof, project_audit_next_step, and Stop behavior;
+    read docs/superpowers/workflow-contract.yml for route options.
