@@ -23,4 +23,4 @@ Do not implement, branch, create issues, or write a plan in this route.
 
 ## Closeout
 
-Stop on unresolved material design, rejected approaches, or claims unsupported by repository evidence. Show the spec and decisions through `project_brainstorm_next_step`; Yes plans, Revisit revises or reviews, and `Stop` exits. This route has no verified final `Done`.
+Stop on unresolved material design, rejected approaches, or claims unsupported by repository evidence. Show the spec and decisions through `project_brainstorm_next_step`; Yes plans, Revisit revises or reviews, and `Stop` exits. In Auto, an approved spec continues to planning in the same run. This route has no verified final `Done`.

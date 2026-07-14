@@ -127,6 +127,33 @@ class CommandRegistryTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual("workflow-contract", payload["phase"])
 
+    def test_workflow_examples_reject_stale_ids_and_truncated_auto_lifecycle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            examples = root / "docs/superpowers/examples"
+            examples.mkdir(parents=True)
+            contract = ROOT / "docs/superpowers/workflow-contract.yml"
+            (root / "docs/superpowers/workflow-contract.yml").write_text(contract.read_text(encoding="utf-8"), encoding="utf-8")
+            (examples / "workflow-golden-paths.md").write_text(
+                """# Workflow Golden Paths
+
+## Audit To Auto Mode
+
+**Route sequence:** audit-project -> write-plan
+**Question IDs:** project_audit_next_step, project_auto_mode_authorization
+**Stop point:** project_plan_next_step after one route.
+""",
+                encoding="utf-8",
+            )
+            process = subprocess.run(
+                ["bash", str(ROOT / "scripts/validate-workflow-examples.sh"), "-RepoRoot", str(root)],
+                cwd="/tmp", text=True, capture_output=True,
+            )
+            self.assertNotEqual(0, process.returncode)
+            reasons = " ".join(item["reason"] for item in json.loads(process.stdout)["findings"])
+            self.assertIn("unknown question ID: project_auto_mode_authorization", reasons)
+            self.assertIn("Auto Mode route must end at merge-changes", reasons)
+
     def test_project_paths_are_scoped_to_the_invocation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

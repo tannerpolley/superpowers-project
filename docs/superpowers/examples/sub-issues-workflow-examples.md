@@ -133,23 +133,7 @@ Leaf closeout records parent progress but does not close the parent issue automa
 }
 ```
 
-Parent or wrapper closeout needs a separate native approval ledger and child proof:
-
-```json
-{
-  "role": "parent",
-  "rollup_policy": "all-required-children-closed",
-  "child_states": [
-    { "url": "https://github.com/example/repo/issues/41", "state": "CLOSED", "disposition": "closed", "required": true },
-    { "url": "https://github.com/example/repo/issues/43", "state": "OPEN", "disposition": "skipped", "required": true, "skip_reason": "approved follow-up split" }
-  ],
-  "parent_closeout": {
-    "auto_closed": false,
-    "requires_native_approval": true,
-    "approval": { "question_id": "project_rollup_closeout_approval", "selected_action": "close-rollup" }
-  }
-}
-```
+Parent or wrapper closeout remains open until a separately authorized workflow owns it and all required child proof is current. This leaf-closeout example grants no parent-closeout authority.
 
 ## Selective Migration
 

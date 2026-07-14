@@ -45,8 +45,16 @@ def write_trial_receipts(root: Path) -> None:
             result.write_text("complete\n", encoding="utf-8")
             run_root = project_root / ".superpowers" / "runs" / name
             append_event(run_root, {"type": "run_started", "run_id": name})
+            append_event(run_root, {"type": "candidate_selected", "candidate": "one"})
+            append_event(run_root, {"type": "mutation_applied", "candidate": "one"})
+            if scenario == "auto-golden":
+                append_event(run_root, {"type": "candidate_accepted", "candidate": "one"})
+                append_event(run_root, {"type": "verifier_passed", "candidate": "one"})
+                append_event(run_root, {"type": "gate_resolved", "gate_id": "project_merge_final_health_gate", "selected_option": "Done", "source": "policy"})
+                append_event(run_root, {"type": "run_completed", "claim": "outcome", "candidate": "one"})
             ledger = run_root / "events.jsonl"
             last_hash = json.loads(ledger.read_text(encoding="utf-8").splitlines()[-1])["hash"]
+            expected = "pass" if scenario == "auto-golden" else "blocked"
             receipt = {
                 "schema_version": 1,
                 "trial_id": name,
@@ -57,15 +65,15 @@ def write_trial_receipts(root: Path) -> None:
                 "package_hash": package,
                 "trial_root": trial_root.relative_to(root).as_posix(),
                 "project_root": project_root.relative_to(root).as_posix(),
-                "expected_outcome": "pass",
-                "observed_outcome": "pass",
+                "expected_outcome": expected,
+                "observed_outcome": expected,
                 "friction": 1,
                 "user_input_calls": 0,
                 "external_mutations": 0,
                 "repository_evidence": [{"path": "result.txt", "sha256": hashlib.sha256(result.read_bytes()).hexdigest()}],
                 "event_ledger": {"path": ledger.relative_to(project_root).as_posix(), "last_hash": last_hash},
                 "worker_claim": {"result": "complete"},
-                "verifier_decision": "pass",
+                "verifier_decision": expected,
             }
             receipt_path = trial_root / "receipt.json"
             receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")

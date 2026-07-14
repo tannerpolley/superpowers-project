@@ -885,14 +885,41 @@ def command_validate_workflow_examples(ctx: Context, args: dict[str, Any]) -> in
     sub = arg_value(args, "SubIssuesPath")
     if sub:
         paths.append(sub)
+    if yaml is None:
+        raise ScriptError("PyYAML is required")
+    contract = yaml.safe_load(read_text(root / "docs/superpowers/workflow-contract.yml")) or {}
+    routes = contract.get("workflow_skills") or {}
+    question_ids = {
+        str(gate.get("question_id"))
+        for route in routes.values()
+        for gate in (route.get("gates") or [])
+        if gate.get("question_id")
+    }
     findings = []
     for value in paths:
         path = resolve_under(root, str(value), "Path")
         text = read_text(path)
+        rel = normalize_rel(path, root)
         if ".ps1" in text or "pwsh" in text.lower():
-            findings.append({"path": normalize_rel(path, root), "reason": "PowerShell reference remains"})
+            findings.append({"path": rel, "reason": "PowerShell reference remains"})
         if not text.strip():
-            findings.append({"path": normalize_rel(path, root), "reason": "workflow example file is empty"})
+            findings.append({"path": rel, "reason": "workflow example file is empty"})
+        for question_id in sorted(set(re.findall(r"\bproject_[a-z0-9_]+\b", text)) - question_ids):
+            findings.append({"path": rel, "reason": f"unknown question ID: {question_id}"})
+        for route_line in re.findall(r"(?m)^\*\*Route sequence:\*\*\s*(.+)$", text):
+            for route_name in (item.strip() for item in route_line.split("->")):
+                if route_name not in routes:
+                    findings.append({"path": rel, "reason": f"unknown workflow route: {route_name}"})
+        for section in re.split(r"(?m)^##\s+", text)[1:]:
+            heading, _, body = section.partition("\n")
+            if "Auto Mode" not in heading:
+                continue
+            route_match = re.search(r"(?m)^\*\*Route sequence:\*\*\s*(.+)$", body)
+            route_names = [item.strip() for item in route_match.group(1).split("->")] if route_match else []
+            if not route_names or route_names[-1] != "merge-changes":
+                findings.append({"path": rel, "reason": "Auto Mode route must end at merge-changes"})
+            if "project_merge_final_health_gate" not in body:
+                findings.append({"path": rel, "reason": "Auto Mode must reach project_merge_final_health_gate"})
     if findings:
         return emit({"ok": False, "phase": "workflow-examples", "reason": "workflow examples failed", "findings": findings}, 1)
     return emit({"ok": True, "phase": "workflow-examples", "reason": "workflow examples passed", "paths": [str(p) for p in paths]})
@@ -1831,7 +1858,7 @@ def command_validate(ctx: Context, args: dict[str, Any]) -> int:
         step("skill metadata workflow contract", lambda: command_validate_skill_metadata_contract(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("skill metadata contract failed")))
         step("workflow contract registry", lambda: command_validate_workflow_contract(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("workflow contract failed")))
         step("worker handoff packet schema", lambda: command_validate_worker_packets(ctx, {"RepoRoot": str(root), "PacketPath": "docs/superpowers/examples/worker-handoff-packets.md"}) == 0 or (_ for _ in ()).throw(ScriptError("worker packet validator failed")))
-        step("workflow golden path examples", lambda: command_validate_workflow_examples(ctx, {"RepoRoot": str(root), "Path": "docs/superpowers/examples/workflow-golden-paths.md"}) == 0 or (_ for _ in ()).throw(ScriptError("workflow example validator failed")))
+        step("workflow examples", lambda: command_validate_workflow_examples(ctx, {"RepoRoot": str(root), "Path": "docs/superpowers/examples/workflow-golden-paths.md", "SubIssuesPath": "docs/superpowers/examples/sub-issues-workflow-examples.md"}) == 0 or (_ for _ in ()).throw(ScriptError("workflow example validator failed")))
         step("skill script parameter contract", lambda: command_validate_skill_script_contract(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("skill script contract failed")))
         step("flat artifact root contract", lambda: command_validate_flat_roots(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("flat artifact root validator failed")))
         step("generated runtime state guardrails", lambda: command_validate_generated_state(ctx, {"RepoRoot": str(root)}) == 0 or (_ for _ in ()).throw(ScriptError("generated runtime state validator failed")))

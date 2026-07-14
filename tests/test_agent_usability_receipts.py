@@ -55,6 +55,12 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
         result = project / "result.txt"
         result.write_text("complete\n", encoding="utf-8")
         append_event(run, {"type": "run_started", "run_id": "trial"})
+        append_event(run, {"type": "candidate_selected", "candidate": "one"})
+        append_event(run, {"type": "mutation_applied", "candidate": "one"})
+        append_event(run, {"type": "candidate_accepted", "candidate": "one"})
+        append_event(run, {"type": "verifier_passed", "candidate": "one"})
+        append_event(run, {"type": "gate_resolved", "gate_id": "project_merge_final_health_gate", "selected_option": "Done", "source": "policy"})
+        append_event(run, {"type": "run_completed", "claim": "outcome", "candidate": "one"})
         last = json.loads((run / "events.jsonl").read_text().splitlines()[-1])
         return {
             "schema_version": 1,
@@ -77,7 +83,7 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
             "verifier_decision": "pass",
         }
 
-    def test_valid_receipt_and_five_adversarial_classes(self):
+    def test_valid_receipt_and_seven_adversarial_classes(self):
         with tempfile.TemporaryDirectory() as tmp:
             receipt = self.fixture(Path(tmp))
             validate_trial_receipt(receipt, ROOT)
@@ -87,6 +93,15 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
             scope = copy.deepcopy(receipt); scope["project_root"] = "/tmp/outside"; variants.append(scope)
             stale = copy.deepcopy(receipt); stale["package_hash"] = "0" * 64; variants.append(stale)
             tampered = copy.deepcopy(receipt); tampered["repository_evidence"][0]["sha256"] = "0" * 64; variants.append(tampered)
+            wrong_oracle = copy.deepcopy(receipt); wrong_oracle["scenario"] = "loop-adversarial"; variants.append(wrong_oracle)
+            incomplete_run = Path(receipt["project_root"]) / ".superpowers/runs/incomplete"
+            incomplete_event = append_event(incomplete_run, {"type": "run_started", "run_id": "incomplete"})
+            incomplete = copy.deepcopy(receipt)
+            incomplete["event_ledger"] = {
+                "path": str(incomplete_run / "events.jsonl"),
+                "last_hash": incomplete_event["hash"],
+            }
+            variants.append(incomplete)
             for variant in variants:
                 with self.assertRaises(TrialReceiptError):
                     validate_trial_receipt(variant, ROOT)

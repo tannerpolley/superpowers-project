@@ -23,4 +23,4 @@ Follow `skills/advanced-user-input/SKILL.md` for shared gates; `initiate-workflo
 
 ## Closeout
 
-Stop on ambiguous scope, missing evidence, required mutation, or preference-only conclusions. Show the findings spec and evidence through `project_audit_next_step`. This route has no final `Done`; use Yes, Revisit, or `Stop` through the shared policy.
+Stop on ambiguous scope, missing evidence, required mutation, or preference-only conclusions. Show the findings spec and evidence through `project_audit_next_step`. In Auto, repair-ready findings continue through planning and implementation in the same run. This route has no final `Done`; use Yes, Revisit, or `Stop` through the shared policy.
