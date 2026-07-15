@@ -16,3 +16,4 @@ include:
   - docs/superpowers/examples/**
   - docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md
   - docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md
+  - docs/project-truss/contract.yml
