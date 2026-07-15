@@ -7,7 +7,7 @@ from pathlib import Path
 from shutil import copytree
 
 from scripts.lib.command_catalog import CommandSpec, ScriptError, _COMMANDS, build_command_registry, load_command_catalog, resolve_command
-from scripts.lib.command_support import Context, project_path_for, project_root_for
+from scripts.lib.command_support import Context, normalize_rel, project_path_for, project_root_for
 from scripts.lib.commands import load_handlers
 
 
@@ -106,6 +106,8 @@ class CommandRegistryTests(unittest.TestCase):
             ctx = Context(Path(__file__), root, "tests/x", "x", [], plugin_root=ROOT, invocation_cwd=root)
             self.assertEqual(root, project_root_for(ctx, {"RepoRoot": "."}))
             self.assertEqual(root, project_root_for(ctx, {"RepoRoot": str(root)}))
+            self.assertEqual(".project-truss/receipt.json", normalize_rel(root / ".project-truss/receipt.json", root))
+            self.assertEqual("../outside", normalize_rel(root.parent / "outside", root))
             with self.assertRaisesRegex(Exception, "outside project root"):
                 project_path_for(root, "../outside", "Path")
 

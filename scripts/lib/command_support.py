@@ -41,7 +41,8 @@ def normalize_rel(path: Path | str, root: Path | None = None) -> str:
             value = value.resolve().relative_to(root.resolve())
         except Exception:
             value = Path(os.path.relpath(str(value), str(root)))
-    return value.as_posix().lstrip("./")
+    text = value.as_posix()
+    return text[2:] if text.startswith("./") else text
 
 
 def resolve_under(root: Path, value: str, label: str = "path") -> Path:
