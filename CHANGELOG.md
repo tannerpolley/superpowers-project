@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.0.0 - 2026-07-14
+
+- Renamed the product and plugin identity to Project Truss.
+- Reduced the lifecycle surface to five skills with `$project-truss:start` as the public entry point.
+- Made native GitHub issues, milestones, sub-issues, dependencies, pull requests, Git, CI, and current worktrees the only durable lifecycle truth.
+- Added seven compact, independently phrased method cards informed by `mattpocock/skills` under MIT.
+- Deleted the predecessor modes, ledgers, mirrors, workflow/evidence control plane, generated workflow documentation, and obsolete tests.
+- Preserved upstream Superpowers as the owner of coding mechanics and repository profiles as the owner of verification policy.
+
 ## 0.3.0 - 2026-07-09
 
 - Completed every public Bash launcher with typed ownership, exact dispatch probes, and substantive named behavior.

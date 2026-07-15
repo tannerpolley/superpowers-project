@@ -1,8 +1,0 @@
-interface:
-  capabilities: [filesystem.read, filesystem.write, shell, native.user-input]
-  display_name: "Write Plan"
-  short_description: "Write implementation plans from approved specs or issues with native grilling gates."
-  default_prompt: >-
-    Use $superpowers-project:write-plan for an approved spec or issue that needs an implementation plan. Pair it
-    with superpowers:writing-plans. Read SKILL.md for required proof, task content, validators,
-    project_plan_next_step, route handoff, and Stop behavior.

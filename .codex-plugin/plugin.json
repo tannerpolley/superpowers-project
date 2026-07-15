@@ -1,7 +1,7 @@
 {
-  "name": "superpowers-project",
-  "version": "0.3.0",
-  "description": "Superpowers extension for durable project setup, GitHub issues and milestones, native user-input grilling, goal-backed execution, and worker-thread orchestration.",
+  "name": "project-truss",
+  "version": "1.0.0",
+  "description": "Lean GitHub-native outcome coordination for coding agents, with direct work left direct.",
   "author": {
     "name": "Tanner Polley"
   },
@@ -10,16 +10,15 @@
   "license": "MIT",
   "keywords": [
     "codex",
-    "superpowers",
     "github-issues",
-    "project-management",
-    "agent-workflows"
+    "agent-coordination",
+    "project-management"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Superpowers Project",
-    "shortDescription": "Project setup, GitHub issues, milestones, goal-backed execution, and orchestration for Superpowers.",
-    "longDescription": "Superpowers Project extends Superpowers with large-scope project setup, roadmap and milestone mapping, GitHub issue mirrors, issue triage, native request_user_input grilling, native /goal-backed issue resolution, and Manual, Auto, or Looping workflow modes.",
+    "displayName": "Project Truss",
+    "shortDescription": "Adaptive GitHub coordination for durable coding outcomes.",
+    "longDescription": "Project Truss keeps ordinary coding direct and adds the smallest native GitHub structure needed for multi-step outcomes, delegation, publication, re-entry, and truthful closeout.",
     "developerName": "Tanner Polley",
     "category": "Productivity",
     "brandColor": "#0F766E",
@@ -31,20 +30,7 @@
       "Workflow"
     ],
     "defaultPrompt": [
-      "At Superpowers Project startup before using any $superpowers-project:* route, run `scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`, include `-ObservedSkillRoot` or `-ObservedPluginRoot` when the loaded root is known, and print the banner before routing.",
-      "Use $superpowers-project:initiate-workflow to ask `project_workflow_mode` before task routing. Manual Mode asks at material gates; Auto Mode authorizes one outcome lifecycle; Looping Mode repeats bounded candidates through $superpowers-project:loop-controller.",
-      "Use $superpowers-project:initiate-workflow to choose the next Superpowers Project route.",
-      "Use $superpowers-project:setup-project to set up this repo's project context and tracker.",
-      "Use $superpowers-project:audit-project to turn code and workflow review findings into a repair spec.",
-      "Use $superpowers-project:align-project to align Superpowers Project workflow drift, tracker state, and live sync.",
-      "Use $superpowers-project:brainstorm-spec to brainstorm a project idea with native grilling.",
-      "Use $superpowers-project:create-issues to convert a plan into GitHub issue mirrors.",
-      "Use $superpowers-project:write-plan to write the project implementation plan.",
-      "Use $superpowers-project:loop-controller to coordinate repeated workflow runs with run ledgers, budgets, verifier proof, metrics, and policy continuation.",
-      "Use $superpowers-project:implement-plan to implement an approved plan on a development branch without creating issue mirrors.",
-      "Use $superpowers-project:resolve-issue to resolve one GitHub issue directly with a native goal.",
-      "Use $superpowers-project:orchestrate-issues to delegate issue work to a worker worktree thread.",
-      "Use $superpowers-project:merge-changes to merge issue-backed PR work or approved local branch work."
+      "Use $project-truss:start only for explicit or hard-trigger governed work; ordinary coding stays direct."
     ]
   }
 }

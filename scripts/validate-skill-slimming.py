@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from skill_slimming import load_capabilities, validate_skill_slimming
+from skill_slimming import validate_skill_slimming
 
 
 def main() -> int:
@@ -15,8 +15,7 @@ def main() -> int:
     parser.add_argument("--repo-root", default=str(Path(__file__).resolve().parents[1]))
     args = parser.parse_args()
     root = Path(args.repo_root).resolve()
-    contract = load_capabilities(root / "docs" / "superpowers" / "capabilities.yml")
-    findings, metrics = validate_skill_slimming(root, contract)
+    findings, metrics = validate_skill_slimming(root)
     print(json.dumps({"ok": not findings, "phase": "skill-slimming", "metrics": metrics, "findings": findings}, indent=2))
     return 0 if not findings else 1
 

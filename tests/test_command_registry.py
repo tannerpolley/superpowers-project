@@ -1,12 +1,10 @@
 import json
-import os
 import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
-from shutil import copytree
 from pathlib import Path
+from shutil import copytree
 
 from scripts.lib.command_catalog import CommandSpec, ScriptError, _COMMANDS, build_command_registry, load_command_catalog, resolve_command
 from scripts.lib.command_support import Context, project_path_for, project_root_for
@@ -25,9 +23,6 @@ class CommandRegistryTests(unittest.TestCase):
         self.assertEqual("command_workspace_isolation", _COMMANDS["scripts/workspace-isolation.sh"])
         self.assertEqual("none", load_command_catalog(ROOT)["scripts/workspace-isolation.sh"].mutation)
 
-    def test_known_skill_launcher_is_explicitly_configured(self):
-        self.assertIn("skills/loop-controller/scripts/validate-budget.sh", _COMMANDS)
-
     def test_registry_drift_reports_extra_launcher(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -41,7 +36,12 @@ class CommandRegistryTests(unittest.TestCase):
     def test_every_shipped_launcher_has_one_entry(self):
         registry = build_command_registry(ROOT)
         catalog = load_command_catalog(ROOT)
-        launchers = {p.relative_to(ROOT).as_posix() for base in (ROOT / "scripts", ROOT / "skills") for p in base.rglob("*.sh") if "/lib/" not in p.as_posix()}
+        launchers = {
+            path.relative_to(ROOT).as_posix()
+            for base in (ROOT / "scripts", ROOT / "skills")
+            for path in base.rglob("*.sh")
+            if "/lib/" not in path.as_posix()
+        }
         self.assertEqual(launchers, set(registry))
         for path, spec in catalog.items():
             with self.subTest(path=path):
@@ -57,106 +57,48 @@ class CommandRegistryTests(unittest.TestCase):
                     json.loads(process.stdout),
                 )
 
-    def test_library_file_is_not_classified_as_test(self):
-        registry = build_command_registry(ROOT)
-        self.assertNotIn("scripts/lib/superpowers_project_cli.py", registry)
+    def test_dispatcher_is_not_classified_as_a_launcher(self):
+        self.assertNotIn("scripts/lib/project_truss_cli.py", build_command_registry(ROOT))
 
     def test_unknown_path_fails_closed(self):
         with self.assertRaisesRegex(Exception, "unregistered script path"):
             resolve_command("scripts/test-unknown.sh", ROOT)
 
-    def test_registry_has_no_generic_failure_handlers(self):
-        incomplete = {
-            path: handler
-            for path, handler in _COMMANDS.items()
-            if handler.endswith("_unimplemented")
-        }
-        self.assertEqual({}, incomplete)
-
-    def test_public_catalog_excludes_test_only_launchers(self):
-        offenders = {
-            path: spec.handler
-            for path, spec in load_command_catalog(ROOT).items()
-            if Path(path).name.startswith("test-")
-            or Path(path).name == "test-scenarios.sh"
-            or spec.handler.startswith("command_test_")
-        }
-        self.assertEqual({}, offenders)
+    def test_registry_has_no_retired_or_unimplemented_handlers(self):
+        self.assertFalse(any(handler.endswith("_unimplemented") for handler in _COMMANDS.values()))
+        retired = ("workflow", "gate", "evidence")
+        self.assertFalse(any(any(word in handler for word in retired) for handler in _COMMANDS.values()))
 
     def test_every_registered_handler_is_callable(self):
         sys.path.insert(0, str(ROOT / "scripts" / "lib"))
         try:
-            import superpowers_project_cli as cli
+            import project_truss_cli as cli
         finally:
             sys.path.pop(0)
-        missing = sorted(
-            {handler for handler in _COMMANDS.values() if not callable(cli.resolve_handler(handler))}
-        )
+        missing = sorted({handler for handler in _COMMANDS.values() if not callable(cli.resolve_handler(handler))})
         self.assertEqual([], missing)
-        expected_modules = {
-            "command_workflow_run": "commands.workflow",
-            "command_validate_agent_usability_receipt": "commands.distribution",
-            "command_select_candidate": "commands.project",
-            "command_prepare_release": "commands.distribution",
-        }
         handlers = load_handlers()
+        expected_modules = {
+            "command_project_truss": "commands.project",
+            "command_prepare_release": "commands.distribution",
+            "command_validate_agent_usability_receipt": "commands.distribution",
+        }
         for name, module in expected_modules.items():
             self.assertTrue(handlers[name].__module__.endswith(module))
-
-    def test_execution_kernel_collection_handlers_are_registered(self):
-        handlers = load_handlers()
-        self.assertEqual(
-            {"command_collect_pr_ready", "command_collect_premerge", "command_collect_closeout"},
-            {name for name in handlers if name.startswith("command_collect_") and name in {"command_collect_pr_ready", "command_collect_premerge", "command_collect_closeout"}},
-        )
 
     def test_typed_catalog_has_known_kinds_and_mutation_classes(self):
         catalog = load_command_catalog(ROOT)
         self.assertTrue(catalog)
         self.assertTrue(all(isinstance(spec, CommandSpec) for spec in catalog.values()))
-        self.assertTrue(all(spec.kind in {"validator", "workflow", "distribution", "project"} for spec in catalog.values()))
+        self.assertTrue(all(spec.kind in {"validator", "distribution", "project"} for spec in catalog.values()))
         self.assertTrue(all(spec.mutation in {"none", "project", "git", "deployment", "external"} for spec in catalog.values()))
         self.assertEqual(set(catalog), {spec.path for spec in catalog.values()})
 
     def test_public_validator_runs_from_arbitrary_cwd(self):
-        script = ROOT / "scripts/validate-workflow-contract.sh"
-        process = subprocess.run(
-            ["bash", str(script), "-RepoRoot", str(ROOT)],
-            cwd="/tmp",
-            text=True,
-            capture_output=True,
-        )
+        script = ROOT / "scripts" / "validate-skill-metadata-contract.sh"
+        process = subprocess.run(["bash", str(script), "-RepoRoot", str(ROOT)], cwd="/tmp", text=True, capture_output=True)
         self.assertEqual(0, process.returncode, process.stdout + process.stderr)
-        payload = __import__("json").loads(process.stdout)
-        self.assertTrue(payload["ok"])
-        self.assertEqual("workflow-contract", payload["phase"])
-
-    def test_workflow_examples_reject_stale_ids_and_truncated_auto_lifecycle(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            examples = root / "docs/superpowers/examples"
-            examples.mkdir(parents=True)
-            contract = ROOT / "docs/superpowers/workflow-contract.yml"
-            (root / "docs/superpowers/workflow-contract.yml").write_text(contract.read_text(encoding="utf-8"), encoding="utf-8")
-            (examples / "workflow-golden-paths.md").write_text(
-                """# Workflow Golden Paths
-
-## Audit To Auto Mode
-
-**Route sequence:** audit-project -> write-plan
-**Question IDs:** project_audit_next_step, project_auto_mode_authorization
-**Stop point:** project_plan_next_step after one route.
-""",
-                encoding="utf-8",
-            )
-            process = subprocess.run(
-                ["bash", str(ROOT / "scripts/validate-workflow-examples.sh"), "-RepoRoot", str(root)],
-                cwd="/tmp", text=True, capture_output=True,
-            )
-            self.assertNotEqual(0, process.returncode)
-            reasons = " ".join(item["reason"] for item in json.loads(process.stdout)["findings"])
-            self.assertIn("unknown question ID: project_auto_mode_authorization", reasons)
-            self.assertIn("Auto Mode route must end at merge-changes", reasons)
+        self.assertTrue(json.loads(process.stdout)["ok"])
 
     def test_project_paths_are_scoped_to_the_invocation(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -167,31 +109,6 @@ class CommandRegistryTests(unittest.TestCase):
             with self.assertRaisesRegex(Exception, "outside project root"):
                 project_path_for(root, "../outside", "Path")
 
-    def test_nested_validation_clears_read_only_collection_marker(self):
-        sys.path.insert(0, str(ROOT / "scripts" / "lib"))
-        try:
-            from superpowers_project_cli import run_without_read_only_collection
-        finally:
-            sys.path.pop(0)
-        with patch.dict(os.environ, {"SUPERPOWERS_READ_ONLY_COLLECTION": "1"}):
-            result = run_without_read_only_collection(
-                ["bash", "-c", 'test -z "${SUPERPOWERS_READ_ONLY_COLLECTION:-}"'],
-                ROOT,
-            )
-        self.assertEqual(0, result.returncode)
 
-    def test_evidence_launchers_fail_closed_without_a_request(self):
-        paths = (
-            "skills/resolve-issue/scripts/validate-pr-ready.sh",
-            "skills/merge-changes/scripts/premerge.sh",
-            "skills/merge-changes/scripts/validate-merge-decision.sh",
-            "skills/merge-changes/scripts/closeout.sh",
-            "skills/resolve-issue/scripts/collect-pr-ready-ledger.sh",
-            "skills/merge-changes/scripts/collect-premerge-ledger.sh",
-            "skills/merge-changes/scripts/collect-closeout-ledger.sh",
-        )
-        for path in paths:
-            with self.subTest(path=path):
-                process = subprocess.run(["bash", str(ROOT / path)], cwd=ROOT, text=True, capture_output=True)
-                self.assertNotEqual(0, process.returncode)
-                self.assertEqual("evidence_missing", json.loads(process.stdout)["error"]["code"])
+if __name__ == "__main__":
+    unittest.main()

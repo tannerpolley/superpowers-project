@@ -130,8 +130,8 @@ class GitHubClient:
         checks = payload["statusCheckRollup"]
         if not isinstance(checks, list):
             raise GitHubObservationError("github_capability_missing", f"pull request #{number} checks are unavailable")
-        complete = True
-        successful = True
+        complete = bool(checks)
+        successful = bool(checks)
         for check in checks:
             if not isinstance(check, Mapping):
                 raise GitHubObservationError("github_capability_missing", f"pull request #{number} check is malformed")
@@ -191,6 +191,12 @@ class GitHubClient:
         blocking = self._connection(node, "blocking")
         pr_refs = self._connection(node, "closedByPullRequestsReferences")
         comments = self._connection(node, "comments")
+        assignee_logins = []
+        for value in assignees:
+            login = value.get("login") if isinstance(value, Mapping) else None
+            if not isinstance(login, str) or not login.strip():
+                raise GitHubObservationError("github_capability_missing", "assignee identity is missing")
+            assignee_logins.append(login)
         prs = [self._pull_request(repository, value) for value in pr_refs]
         issue = self._issue(node)
         parent = self._issue(node["parent"]) if node["parent"] else None
@@ -217,7 +223,7 @@ class GitHubClient:
                 "observed_at": self.clock(),
                 "repository": repository,
                 "issue": issue,
-                "assignees": [str(value.get("login") or "") for value in assignees],
+                "assignees": assignee_logins,
                 "children": child_issues,
                 "blocked_by": [self._issue(value) for value in blocked_by],
                 "blocking": [self._issue(value) for value in blocking],

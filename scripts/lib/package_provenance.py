@@ -1,11 +1,12 @@
-"""Deterministic provenance for the installable plugin surface."""
+"""Deterministic provenance for the installable Project Truss surface."""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import fnmatch
 import hashlib
 import json
-import fnmatch
 from pathlib import Path
+import re
 from typing import Any, Iterable
 
 import yaml
@@ -29,24 +30,19 @@ class RuntimePackage:
 
 
 def load_runtime_package(plugin_root: Path) -> RuntimePackage:
-    root = Path(plugin_root).resolve()
-    path = root / ".codex-plugin" / "runtime-package.yml"
+    path = Path(plugin_root).resolve() / ".codex-plugin" / "runtime-package.yml"
     if not path.is_file():
         raise ValueError("runtime package manifest is missing")
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     patterns = data.get("include")
     if data.get("version") != 1 or not isinstance(patterns, list) or not patterns or any(not isinstance(item, str) or not item.strip() for item in patterns):
         raise ValueError("runtime package manifest requires version 1 and non-empty include patterns")
-    return RuntimePackage(version=1, include=tuple(patterns))
+    return RuntimePackage(1, tuple(patterns))
 
 
 def _included(path: Path, root: Path, package: RuntimePackage) -> bool:
     rel = path.relative_to(root).as_posix()
-    if any(part in {"__pycache__", ".git"} for part in path.parts):
-        return False
-    if path.suffix in {".pyc", ".pyo"}:
-        return False
-    return any(fnmatch.fnmatchcase(rel, pattern) for pattern in package.include)
+    return not any(part in {"__pycache__", ".git"} for part in path.parts) and path.suffix not in {".pyc", ".pyo"} and any(fnmatch.fnmatchcase(rel, pattern) for pattern in package.include)
 
 
 def _files(root: Path, package: RuntimePackage) -> Iterable[Path]:
@@ -56,16 +52,10 @@ def _files(root: Path, package: RuntimePackage) -> Iterable[Path]:
 def runtime_manifest(plugin_root: Path) -> list[PackageEntry]:
     root = Path(plugin_root).resolve()
     package = load_runtime_package(root)
-    entries: list[PackageEntry] = []
-    for path in sorted(_files(root, package), key=lambda p: p.relative_to(root).as_posix()):
+    entries = []
+    for path in sorted(_files(root, package), key=lambda item: item.relative_to(root).as_posix()):
         data = path.read_bytes()
-        mode = 0o755 if path.stat().st_mode & 0o111 else 0o644
-        entries.append(PackageEntry(
-            path=path.relative_to(root).as_posix(),
-            mode=mode,
-            length=len(data),
-            sha256=hashlib.sha256(data).hexdigest(),
-        ))
+        entries.append(PackageEntry(path.relative_to(root).as_posix(), 0o755 if path.stat().st_mode & 0o111 else 0o644, len(data), hashlib.sha256(data).hexdigest()))
     return entries
 
 
@@ -76,16 +66,9 @@ def validate_runtime_reads(plugin_root: Path, package: RuntimePackage | None = N
     required = {
         ".codex-plugin/plugin.json",
         ".codex-plugin/runtime-package.yml",
-        "docs/superpowers/workflow-contract.yml",
-        "docs/superpowers/loop-mode-contract.yml",
-        "docs/superpowers/governance-profiles.yml",
-        "docs/superpowers/capabilities.yml",
-        "docs/superpowers/PROJECT_CONTEXT.md",
-        "docs/superpowers/OUTCOME_WORKFLOW.md",
-        "docs/superpowers/WORKFLOW_ROUTE_INDEX.md",
-        "docs/superpowers/backlog/ACTIVE.md",
-        "docs/superpowers/examples/workflow-golden-paths.md",
-        "docs/superpowers/examples/worker-handoff-packets.md",
+        "docs/project-truss/contract.yml",
+        "docs/project-truss/METHODS.md",
+        "docs/project-truss/README.md",
     }
     for source_root in (root / "scripts", root / "skills"):
         for path in source_root.rglob("*") if source_root.is_dir() else []:
@@ -95,28 +78,22 @@ def validate_runtime_reads(plugin_root: Path, package: RuntimePackage | None = N
                 text = path.read_text(encoding="utf-8")
             except UnicodeDecodeError:
                 continue
-            for match in __import__("re").finditer(r"docs/superpowers/[A-Za-z0-9_./-]+\.(?:md|ya?ml)", text):
-                rel = match.group(0)
-                if (root / rel).is_file():
-                    required.add(rel)
+            for match in re.finditer(r"docs/project-truss/[A-Za-z0-9_./-]+\.(?:md|ya?ml)", text):
+                if (root / match.group(0)).is_file():
+                    required.add(match.group(0))
     return [f"runtime read is excluded from package: {path}" for path in sorted(required - included)]
 
 
 def runtime_contract_hash(plugin_root: Path) -> str:
     payload = [entry.to_dict() for entry in runtime_manifest(plugin_root)]
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.sha256(encoded).hexdigest()
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
-def verify_runtime_provenance(ledger: dict[str, Any], plugin_root: Path, project_root: Path) -> None:
-    expected = [entry.to_dict() for entry in runtime_manifest(plugin_root)]
-    supplied = ledger.get("manifest")
-    if supplied != expected:
+def verify_runtime_provenance(record: dict[str, Any], plugin_root: Path, project_root: Path) -> None:
+    if record.get("manifest") != [entry.to_dict() for entry in runtime_manifest(plugin_root)]:
         raise ValueError("runtime provenance manifest does not match plugin package")
-    actual_hash = runtime_contract_hash(plugin_root)
-    if ledger.get("contract_hash") != actual_hash:
+    if record.get("contract_hash") != runtime_contract_hash(plugin_root):
         raise ValueError("runtime provenance contract hash does not match plugin package")
-    expected_project = str(Path(project_root).resolve())
-    supplied_project = ledger.get("project_root")
-    if supplied_project is None or str(Path(str(supplied_project)).resolve()) != expected_project:
+    supplied = record.get("project_root")
+    if supplied is None or str(Path(str(supplied)).resolve()) != str(Path(project_root).resolve()):
         raise ValueError("runtime provenance project root does not match invocation")

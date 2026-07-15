@@ -1,8 +1,0 @@
-interface:
-  capabilities: [filesystem.read, shell, native.user-input]
-  display_name: "Audit Project"
-  short_description: "Turn evidence-backed code and workflow review findings into a Superpowers Project spec."
-  default_prompt: >-
-    Use $superpowers-project:audit-project for evidence-backed workflow, code, test, skill, or behavior audits that
-    should produce a repair spec. Read SKILL.md for severity, proof, project_audit_next_step, and Stop behavior;
-    read docs/superpowers/workflow-contract.yml for route options.

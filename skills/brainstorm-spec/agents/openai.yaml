@@ -1,8 +1,0 @@
-interface:
-  capabilities: [filesystem.read, filesystem.write, native.user-input]
-  display_name: "Brainstorm Spec"
-  short_description: "Brainstorm project specs with Superpowers, codebase context, and native user input."
-  default_prompt: >-
-    Use $superpowers-project:brainstorm-spec for repository-backed ideas or design decisions before planning. Pair
-    it with superpowers:brainstorming. Read SKILL.md for spec content, approval, visual-companion boundaries,
-    project_brainstorm_next_step, and Stop behavior; use the workflow contract for route options.

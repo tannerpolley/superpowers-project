@@ -1,40 +1,34 @@
-"""Release preparation command handlers."""
+"""Project Truss distribution, version, release, and trial handlers."""
 from __future__ import annotations
 
 import json
-import re
+import os
 from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
 from typing import Any
 
 try:
     from ..agent_usability import validate_trial_receipt, validate_trial_set
-    from ..command_support import Context, ScriptError, arg_value, emit, has_switch, normalize_rel, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
-    from ..evidence_collectors import CollectionRequest, build_evidence_envelope
-    from ..evidence_collectors import collect_agent_trial, collect_installation_state, collect_package_provenance
-    from ..evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
-    from ..gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
+    from ..command_support import Context, ScriptError, arg_value, emit, has_switch, normalize_rel, project_path_for, project_root_for, read_text, run, write_text
     from ..package_provenance import runtime_contract_hash, runtime_manifest
 except ImportError:
     from agent_usability import validate_trial_receipt, validate_trial_set
-    from command_support import Context, ScriptError, arg_value, emit, has_switch, normalize_rel, project_path_for, project_root_for, read_json_arg, read_text, resolve_under, run, write_text
-    from evidence_collectors import CollectionRequest, build_evidence_envelope
-    from evidence_collectors import collect_agent_trial, collect_installation_state, collect_package_provenance
-    from evidence_schema import EvidenceError, hash_bytes_ref, hash_ref, is_hash_ref
-    from gate_receipts import EXPECTED_VALIDATORS, verify_receipt_hash
+    from command_support import Context, ScriptError, arg_value, emit, has_switch, normalize_rel, project_path_for, project_root_for, read_text, run, write_text
     from package_provenance import runtime_contract_hash, runtime_manifest
 
 
-class ReleaseEvidenceError(ValueError):
-    pass
+PLUGIN_NAME = "project-truss"
+PREDECESSOR_NAME = "superpowers" + "-project"
 
 
 def validate_dependency_pins(path: Path) -> list[str]:
     findings = []
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         value = line.strip()
-        if value and not value.startswith("#") and (
-            "==" not in value or any(operator in value for operator in (">=", "<=", "~=", "!="))
-        ):
+        if value and not value.startswith("#") and ("==" not in value or any(operator in value for operator in (">=", "<=", "~=", "!="))):
             findings.append(f"line {number} is not exactly pinned: {value}")
     return findings
 
@@ -42,259 +36,225 @@ def validate_dependency_pins(path: Path) -> list[str]:
 def base_release_tag(version: str) -> str:
     base = version.split("+", 1)[0]
     if re.fullmatch(r"\d+\.\d+\.\d+", base) is None:
-        raise ReleaseEvidenceError("release version must have a numeric major.minor.patch base")
+        raise ValueError("release version must have a numeric major.minor.patch base")
     return f"v{base}"
 
 
-def _package_hash(root):
-    return hash_ref([entry.to_dict() for entry in runtime_manifest(root)])
+def plugin_manifest(root: Path) -> dict[str, Any] | None:
+    path = root / ".codex-plugin" / "plugin.json"
+    return json.loads(read_text(path)) if path.is_file() else None
 
 
-def _collect_publish_ready(root: Path, args: dict[str, Any]) -> int:
-    authorization, _ = read_json_arg(root, args, "AuthorizationJson", "AuthorizationPath", required=False)
-    if not isinstance(authorization, dict) or authorization.get("authorized") is not True:
-        raise EvidenceError("evidence_missing", "an approved AuthorizationJson or AuthorizationPath is required")
-    head = run(["git", "rev-parse", "HEAD"], root)
-    branch = run(["git", "branch", "--show-current"], root)
-    if head.returncode != 0 or branch.returncode != 0 or not head.stdout.strip() or not branch.stdout.strip():
-        raise EvidenceError("evidence_missing", "current Git identity is required for publish-ready collection")
-    package = _package_hash(root)
-    live_value = arg_value(args, "LivePluginRoot", default=str(Path.home() / ".codex" / "plugins" / "superpowers-project"))
-    live_root = Path(str(live_value)).expanduser().resolve()
-    try:
-        _package_hash(live_root)
-        runtime_contract_hash(live_root)
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        raise EvidenceError("evidence_missing", "current installed plugin provenance is required") from exc
-
-    receipt_dir_value = arg_value(args, "AgentReceiptDir", default=".superpowers/runs/agent-trials/current")
-    receipt_dir = project_path_for(root, str(receipt_dir_value), "AgentReceiptDir")
-    receipt_paths = sorted(receipt_dir.glob("**/receipt.json")) if receipt_dir.is_dir() else []
-    if not receipt_paths:
-        raise EvidenceError("evidence_missing", "agent trial receipts are required")
-    try:
-        receipts = [json.loads(path.read_text(encoding="utf-8")) for path in receipt_paths]
-        validate_trial_set(receipts, root)
-    except Exception as exc:
-        raise EvidenceError("required_rule_failed", f"agent trial receipts are invalid: {exc}", "agent_trial") from exc
-    tool_calls: list[dict[str, object]] = []
-    external_mutations = 0
-    for path, receipt in zip(receipt_paths, receipts):
-        ledger = receipt.get("event_ledger", {}) if isinstance(receipt, dict) else {}
-        project_value = receipt.get("project_root") if isinstance(receipt, dict) else None
-        project_root = Path(str(project_value)) if isinstance(project_value, str) else root
-        if not project_root.is_absolute():
-            project_root = root / project_root
-        ledger_value = ledger.get("path") if isinstance(ledger, dict) else None
-        ledger_path = Path(str(ledger_value)) if isinstance(ledger_value, str) else Path("missing")
-        if not ledger_path.is_absolute():
-            ledger_path = project_root / ledger_path
-        events = []
-        if ledger_path.is_file():
-            events = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-        tool_calls.extend({"receipt": path.relative_to(root).as_posix(), "type": event.get("type"), "hash": event.get("hash")} for event in events if isinstance(event, dict))
-        external_mutations += int(receipt.get("external_mutations", 0))
-    source = {
-        "spec_path": arg_value(args, "SpecPath", default="docs/superpowers/specs/2026-07-10-execution-kernel-release-trust-design.md"),
-        "plan_path": arg_value(args, "PlanPath", default="docs/superpowers/plans/2026-07-10-execution-kernel-release-trust-plan.md"),
+def _surface(name: str, root: Path | None, source_hash: str) -> dict[str, Any]:
+    exists = root is not None and root.is_dir()
+    manifest = plugin_manifest(root) if exists and root is not None else None
+    contract = ""
+    error = ""
+    if exists and root is not None:
+        try:
+            contract = runtime_contract_hash(root)
+        except (OSError, ValueError) as exc:
+            error = str(exc)
+    return {
+        "name": name,
+        "path": str(root.resolve()) if root is not None else "",
+        "exists": bool(exists),
+        "manifest_name": manifest.get("name", "") if manifest else "",
+        "manifest_version": manifest.get("version", "") if manifest else "",
+        "contract_hash": contract,
+        "matches_source": bool(exists and contract == source_hash),
+        "error": error,
     }
-    run_id = str(arg_value(args, "RunId", default=f"publish-ready-{head.stdout.strip()[:12]}"))
-    candidate_id = str(arg_value(args, "CandidateId", default="source"))
-    plan_hash = hash_bytes_ref(resolve_under(root, str(source["plan_path"]), "PlanPath").read_bytes())
-    required_authorization = {
-        "authorized": True,
-        "scope": "publish_ready",
-        "run_id": run_id,
-        "candidate_id": candidate_id,
-        "source_plan_hash": plan_hash,
-        "package_hash": package,
-    }
-    if authorization != required_authorization:
-        raise EvidenceError("authorization_mismatch", "publish authorization must bind scope, run, candidate, source plan, and package")
-    workflow = {
-        "run_id": run_id,
-        "candidate_id": candidate_id,
-        "mode": str(arg_value(args, "Mode", default="manual")),
-        "authorization_hash": hash_ref(authorization),
-    }
-    provider_inputs = {
-        "authorization": authorization,
-        "package_observation_id": "package_current",
-        "installation_observation_id": "installation_current",
-        "agent_trial_observation_id": "agent_trials_current",
-        "installation_root": str(live_root),
-        "agent_trial_receipt_dir": str(receipt_dir_value),
-    }
-    request = CollectionRequest(
-        gate="publish_ready",
-        repository_root=root,
-        workflow=workflow,
-        source=source,
-        target={"task_id": "issue-113", "workspace_id": "local", "branch": branch.stdout.strip(), "isolation_required": False, "installation_root": str(live_root), "agent_trial_root": str(receipt_dir.resolve())},
-        commands=("source_validation", "sync_live_validation"),
-        provider_inputs=provider_inputs,
-    )
-    envelope = build_evidence_envelope(request)
-    output_value = arg_value(args, "OutputPath")
-    output_rel = ""
-    if output_value:
-        output = project_path_for(root, str(output_value), "OutputPath")
-        write_text(output, json.dumps(envelope, indent=2, ensure_ascii=False) + "\n")
-        output_rel = str(output.relative_to(root))
-    return emit({"ok": True, "phase": "collect-publish-ready", "evidence_envelope": envelope, "output_path": output_rel})
 
 
-def _error(phase: str, error: EvidenceError) -> int:
-    payload: dict[str, object] = {
-        "ok": False,
-        "phase": phase,
-        "error": {"code": error.code, "message": error.message},
-    }
-    if error.rule is not None:
-        payload["error"]["rule"] = error.rule  # type: ignore[index]
-    return emit(payload, 1)
+def command_get_agent_plugin_version(ctx: Context, args: dict[str, Any]) -> int:
+    from revision_status import evaluate_revision_status
 
-
-def _load_publish_receipt(root, args):
-    data, _ = read_json_arg(root, args, "PublishReadyReceiptJson", "PublishReadyReceiptPath", required=False)
-    if data is None:
-        raise EvidenceError("evidence_missing", "PublishReadyReceiptJson or PublishReadyReceiptPath is required")
-    receipt = verify_receipt_hash(data)
-    if receipt.gate != "publish_ready" or receipt.validator_id != EXPECTED_VALIDATORS["publish_ready"] or receipt.disposition != "passed":
-        raise EvidenceError("receipt_stale", "a passing publish-ready receipt is required")
-    expected_rules = {
-        "repository_identity", "target_identity", "workflow_binding", "target_state", "authorization_binding",
-        "source_artifacts", "implementation_verification", "source_validation", "sync_validation",
-        "package_provenance", "installation_state", "agent_trial", "publish_authorization",
-        "package_observation_current", "installation_observation_current", "agent_trial_observation_current", "cleanup_state",
-    }
-    rule_ids = [rule.rule_id for rule in receipt.rules]
-    if len(rule_ids) != len(expected_rules) or set(rule_ids) != expected_rules or not all(rule.ok for rule in receipt.rules):
-        raise EvidenceError("receipt_stale", "publish-ready receipt does not contain the complete passing rule set")
-    bindings = receipt.bindings
-    repository = bindings.get("repository") if isinstance(bindings, dict) else None
-    source = bindings.get("source") if isinstance(bindings, dict) else None
-    target = bindings.get("target") if isinstance(bindings, dict) else None
-    root_value = str(Path(str(repository.get("root"))).resolve()) if isinstance(repository, dict) else ""
-    if root_value != str(root.resolve()):
-        raise EvidenceError("repository_mismatch", "publish-ready receipt repository does not match invocation")
-    current = run(["git", "rev-parse", "HEAD"], root)
-    branch = run(["git", "branch", "--show-current"], root)
-    status = run(["git", "status", "--short"], root)
-    if current.returncode != 0 or receipt.observations.get("head") != current.stdout.strip() or receipt.observations.get("branch") != branch.stdout.strip() or status.stdout.strip():
-        raise EvidenceError("receipt_stale", "publish-ready receipt no longer matches current Git state")
-    if not isinstance(source, dict) or not isinstance(target, dict):
-        raise EvidenceError("receipt_stale", "publish-ready receipt bindings are incomplete")
-    plan_path = source.get("plan_path")
-    try:
-        plan_file = resolve_under(root, str(plan_path), "publish-ready source plan")
-    except Exception as exc:
-        raise EvidenceError("repository_mismatch", "publish-ready source plan is outside the repository") from exc
-    if not isinstance(plan_path, str) or not plan_file.is_file() or hash_bytes_ref(plan_file.read_bytes()) != source.get("plan_hash"):
-        raise EvidenceError("artifact_hash_mismatch", "publish-ready receipt plan hash is stale")
-    expected_branch = target.get("branch") if isinstance(target, dict) else None
-    if expected_branch != branch.stdout.strip():
-        raise EvidenceError("receipt_stale", "publish-ready receipt target branch is stale")
-    manifest = json.loads(read_text(root / ".codex-plugin" / "plugin.json"))
-    if receipt.observations.get("package_hash") != _package_hash(root) or receipt.observations.get("manifest_version") != manifest.get("version") or receipt.observations.get("contract_hash") != runtime_contract_hash(root):
-        raise EvidenceError("receipt_stale", "publish-ready package identity is stale")
-    trusted = receipt.observations.get("trusted_evidence")
-    if not isinstance(trusted, dict):
-        raise EvidenceError("receipt_stale", "publish-ready trusted observation bindings are missing")
-    if not isinstance(target, dict) or not isinstance(target.get("installation_root"), str) or not isinstance(target.get("agent_trial_root"), str):
-        raise EvidenceError("receipt_stale", "publish-ready receipt root bindings are missing")
-    live_root = Path(str(target["installation_root"])).expanduser().resolve()
-    trial_root = project_path_for(root, str(target["agent_trial_root"]), "publish-ready agent trial root")
-    requested_live_root = arg_value(args, "LivePluginRoot")
-    if requested_live_root is not None and Path(str(requested_live_root)).expanduser().resolve() != live_root:
-        raise EvidenceError("repository_mismatch", "LivePluginRoot does not match the receipt binding")
-    requested_trial_root = arg_value(args, "AgentReceiptDir")
-    if requested_trial_root is not None and project_path_for(root, str(requested_trial_root), "AgentReceiptDir") != trial_root:
-        raise EvidenceError("repository_mismatch", "AgentReceiptDir does not match the receipt binding")
-    try:
-        fresh = {
-            "package_provenance": collect_package_provenance(root),
-            "installation_state": collect_installation_state(root, "installation_current", live_root),
-            "agent_trial": collect_agent_trial(root, "agent_trials_current", trial_root),
-        }
-        for kind, observation in fresh.items():
-            expected = trusted.get(kind)
-            if not isinstance(expected, dict) or expected.get("observation_id") != observation.payload.get("observation_id") or expected.get("payload_hash") != hash_ref(observation.payload):
-                raise EvidenceError("receipt_stale", f"publish-ready {kind} observation is stale or forged")
-        command_hashes = trusted.get("commands")
-        if not isinstance(command_hashes, dict) or not all(command_id in command_hashes and is_hash_ref(command_hashes[command_id]) for command_id in ("source_validation", "sync_live_validation")):
-            raise EvidenceError("receipt_stale", "publish-ready command observation bindings are missing")
-    except EvidenceError:
-        raise
-    except Exception as exc:
-        raise EvidenceError("receipt_stale", f"publish-ready trusted observation is unavailable: {exc}") from exc
-    authorization = trusted.get("authorization")
-    workflow = bindings.get("workflow")
-    if not isinstance(authorization, dict) or not isinstance(workflow, dict) or hash_ref(authorization) != workflow.get("authorization_hash") or authorization.get("scope") != "publish_ready" or authorization.get("run_id") != workflow.get("run_id") or authorization.get("candidate_id") != workflow.get("candidate_id") or authorization.get("source_plan_hash") != source.get("plan_hash") or authorization.get("package_hash") != receipt.observations.get("package_hash"):
-        raise EvidenceError("authorization_mismatch", "publish authorization snapshot is stale or incomplete")
-    return receipt
-
-
-def _command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
     root = project_root_for(ctx, args)
-    if has_switch(args, "CollectOnly"):
-        return _collect_publish_ready(root, args)
-    manifest = json.loads(read_text(root / ".codex-plugin" / "plugin.json"))
-    version = str(arg_value(args, "Version", default=manifest.get("version", ""))).lstrip("v")
-    base = version.split("+", 1)[0]
-    changelog = read_text(root / "CHANGELOG.md")
-    has_unreleased = bool(re.search(r"(?m)^##\s+Unreleased\s*$", changelog))
-    has_version = bool(re.search(rf"(?m)^##\s+v?{re.escape(base)}(\s|$)", changelog))
+    live_root = Path(str(arg_value(args, "LivePluginRoot", default=str(Path.home() / ".codex" / "plugins" / PLUGIN_NAME)))).expanduser()
+    manifest = plugin_manifest(root)
+    if manifest is None:
+        raise ScriptError("source plugin manifest is missing")
+    source_hash = runtime_contract_hash(root)
     head = run(["git", "rev-parse", "HEAD"], root)
     status = run(["git", "status", "--short"], root)
-    branch = run(["git", "branch", "--show-current"], root)
-    dirty = bool(status.stdout.strip())
-    check_only = has_switch(args, "CheckOnly")
-    pin_findings = validate_dependency_pins(root / "requirements-validation.txt")
-    checks = [
-        {"name": "manifest name", "ok": manifest.get("name") == "superpowers-project", "reason": "passed" if manifest.get("name") == "superpowers-project" else "manifest name must be superpowers-project"},
-        {"name": "manifest version present", "ok": bool(manifest.get("version")), "reason": "passed" if manifest.get("version") else "manifest version is empty"},
-        {"name": "changelog has release evidence", "ok": has_unreleased or has_version, "reason": "passed" if has_unreleased or has_version else f"CHANGELOG.md needs Unreleased or {base} entry"},
-        {"name": "git head available", "ok": head.returncode == 0, "reason": "passed" if head.returncode == 0 else head.stderr.strip()},
-        {"name": "validation dependencies pinned", "ok": not pin_findings, "reason": "passed" if not pin_findings else "; ".join(pin_findings)},
-    ]
-    package_hash = runtime_contract_hash(root)
-    publish_receipt = None
-    if not check_only:
-        checks.extend([
-            {"name": "worktree clean", "ok": not dirty, "reason": "passed" if not dirty else "release publishing requires a clean worktree"},
-            {"name": "version entry exists", "ok": has_version, "reason": "passed" if has_version else "release publishing requires a versioned changelog entry"},
-        ])
-        if arg_value(args, "ReleaseEvidenceJson", "ReleaseEvidencePath") is not None:
-            raise EvidenceError("legacy_evidence_unsupported", "release preparation consumes PublishReadyReceiptJson or PublishReadyReceiptPath")
-        publish_receipt = _load_publish_receipt(root, args)
-        checks.append({"name": "publish-ready receipt current", "ok": True, "reason": "passed"})
-    ok = all(item["ok"] for item in checks)
-    receipt = {
-        "ok": ok, "phase": "prepare-release", "check_only": check_only,
-        "manifest_name": manifest.get("name", ""), "manifest_version": manifest.get("version", ""),
-        "release_version": version, "release_base_version": base, "release_tag": base_release_tag(version),
-        "package_hash": package_hash, "branch": branch.stdout.strip(), "commit": head.stdout.strip() if head.returncode == 0 else "",
-        "dirty": dirty, "dirty_status": status.stdout.strip(),
-        "changelog": {"has_unreleased": has_unreleased, "has_version_entry": has_version, "path": "CHANGELOG.md"},
-        "required_gates": ["scripts/validate.sh", "scripts/sync-live.sh --validate", "git status --short"],
-        "publish_ready": bool(not check_only and publish_receipt is not None and ok),
-        "publish_ready_receipt_hash": publish_receipt.receipt_hash if publish_receipt else None,
-        "checks": checks,
+    source = {
+        "name": "source",
+        "path": str(root),
+        "manifest_name": manifest.get("name", ""),
+        "manifest_version": manifest.get("version", ""),
+        "git_commit": head.stdout.strip() if head.returncode == 0 else "",
+        "dirty": bool(status.stdout.strip()),
+        "contract_hash": source_hash,
     }
-    output = arg_value(args, "OutputPath")
-    if output:
-        write_text(resolve_under(root, str(output), "OutputPath"), json.dumps(receipt, indent=2))
-    return emit(receipt, 0 if ok else 1)
+    live = _surface("live", live_root, source_hash)
+    observed_root = None
+    observed_plugin = arg_value(args, "ObservedPluginRoot")
+    observed_skill = arg_value(args, "ObservedSkillRoot")
+    if observed_plugin:
+        observed_root = Path(str(observed_plugin)).expanduser().resolve()
+    elif observed_skill:
+        cursor = Path(str(observed_skill)).expanduser().resolve()
+        cursor = cursor.parent if cursor.is_file() else cursor
+        while cursor != cursor.parent:
+            if (cursor / ".codex-plugin" / "plugin.json").is_file():
+                observed_root = cursor
+                break
+            cursor = cursor.parent
+        if observed_root is None:
+            raise ScriptError(f"could not resolve plugin root from observed skill root: {observed_skill}")
+    observed = _surface("observed", observed_root, source_hash) if observed_root else None
+    if has_switch(args, "RevisionStatus"):
+        supplied = arg_value(args, "RevisionEvidenceJson")
+        path_value = arg_value(args, "RevisionEvidencePath")
+        if supplied and path_value:
+            raise ScriptError("provide RevisionEvidenceJson or RevisionEvidencePath, not both")
+        evidence = json.loads(str(supplied)) if supplied else json.loads(read_text(project_path_for(root, str(path_value), "RevisionEvidencePath"))) if path_value else {
+            "source_dirty": source["dirty"],
+            "validation_current": False,
+            "source_committed": not source["dirty"] and bool(source["git_commit"]),
+            "deployment_current": live["matches_source"],
+            "installation_current": False,
+            "cleanup_current": False,
+            "fresh_session_acknowledged": has_switch(args, "FreshSessionAcknowledged"),
+        }
+        return emit({"ok": True, "phase": "plugin-revision-status", **evaluate_revision_status(evidence)})
+    failures = []
+    if not live["matches_source"]:
+        failures.append("live plugin differs from source")
+    if observed and not observed["matches_source"]:
+        failures.append("observed plugin differs from source")
+    if live["manifest_version"] != manifest.get("version"):
+        failures.append("live plugin manifest version differs from source")
+    ok = not failures if has_switch(args, "RequireCurrent") else True
+    reason = "source, live, and observed plugin surfaces are current" if not failures else "; ".join(failures)
+    if has_switch(args, "Banner"):
+        print("\n".join([
+            "Project Truss plugin",
+            f"manifest_version: {source['manifest_version']}",
+            f"git_commit: {source['git_commit']}",
+            f"source_dirty: {source['dirty']}",
+            f"contract_hash: {source['contract_hash']}",
+            f"source/live: {'current' if live['matches_source'] else 'stale'}",
+            f"observed: {'not supplied' if observed is None else ('current' if observed['matches_source'] else 'stale')}",
+            f"reason: {reason}",
+        ]))
+        return 0 if ok else 1
+    return emit({"ok": ok, "phase": "agent-plugin-version", "reason": reason, "source": source, "live": live, "observed": observed}, 0 if ok else 1)
+
+
+def _deployment_root(value: str, source: Path, label: str) -> Path:
+    target = Path(value).expanduser().resolve()
+    if target in {Path(target.anchor), Path.home().resolve(), source} or target in source.parents or source in target.parents:
+        raise ScriptError(f"{label} deployment path overlaps a protected source or home boundary: {target}")
+    return target
+
+
+def _copy_runtime_package(source: Path, target: Path) -> None:
+    staged = target.with_name(f".{target.name}.staged-{os.getpid()}")
+    backup = target.with_name(f".{target.name}.backup-{os.getpid()}")
+    if staged.exists():
+        shutil.rmtree(staged)
+    if backup.exists():
+        shutil.rmtree(backup)
+    staged.mkdir(parents=True)
+    promoted = False
+    preserved = False
+    try:
+        for entry in runtime_manifest(source):
+            destination = staged / entry.path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source / entry.path, destination)
+        if target.exists():
+            if not target.is_dir():
+                raise ScriptError(f"live plugin target is not a directory: {target}")
+            target.replace(backup)
+            preserved = True
+        try:
+            staged.replace(target)
+            promoted = True
+        except Exception as promotion_error:
+            if preserved:
+                try:
+                    backup.replace(target)
+                except Exception as rollback_error:
+                    raise ScriptError(f"live promotion failed and rollback also failed: {rollback_error}") from promotion_error
+            raise
+    finally:
+        if staged.exists():
+            shutil.rmtree(staged)
+        if promoted and backup.exists():
+            shutil.rmtree(backup)
+
+
+def command_sync_live(ctx: Context, args: dict[str, Any]) -> int:
+    root = ctx.repo_root.resolve()
+    home = Path.home()
+    live_root = _deployment_root(str(arg_value(args, "LivePluginRoot", default=os.environ.get("PROJECT_TRUSS_LIVE_PLUGIN_ROOT", str(home / ".codex" / "plugins" / PLUGIN_NAME)))), root, "live plugin")
+    marketplace = Path(str(arg_value(args, "MarketplacePath", default=str(home / ".agents" / "plugins" / "marketplace.json")))).expanduser()
+    predecessor_live = _deployment_root(str(arg_value(args, "PredecessorLiveRoot", default=str(home / ".codex" / "plugins" / PREDECESSOR_NAME))), root, "predecessor plugin")
+    if has_switch(args, "Validate", "validate"):
+        result = subprocess.run(["bash", str(root / "scripts" / "validate.sh")], cwd=root, text=True)
+        if result.returncode != 0:
+            raise ScriptError("validation failed before sync")
+    _copy_runtime_package(root, live_root)
+    source_manifest = [entry.to_dict() for entry in runtime_manifest(root)]
+    live_manifest = [entry.to_dict() for entry in runtime_manifest(live_root)]
+    if source_manifest != live_manifest:
+        raise ScriptError("live install differs from the runtime package manifest")
+    marketplace.parent.mkdir(parents=True, exist_ok=True)
+    data = json.loads(read_text(marketplace)) if marketplace.is_file() else {"name": "personal", "interface": {"displayName": "Personal"}, "plugins": []}
+    data["plugins"] = [plugin for plugin in data.get("plugins", []) if plugin.get("name") not in {PLUGIN_NAME, PREDECESSOR_NAME, "milestones", "project"}]
+    data["plugins"].append({"name": PLUGIN_NAME, "source": {"source": "local", "path": f"./.codex/plugins/{PLUGIN_NAME}"}, "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}, "category": "Productivity"})
+    write_text(marketplace, json.dumps(data, indent=2) + "\n")
+    if predecessor_live != live_root and predecessor_live.is_dir():
+        shutil.rmtree(predecessor_live)
+    return emit({
+        "ok": True,
+        "source": str(root),
+        "live_plugin_root": str(live_root),
+        "marketplace": {"marketplace_path": str(marketplace), "plugin_name": PLUGIN_NAME, "source_path": f"./.codex/plugins/{PLUGIN_NAME}"},
+        "deployed_plugin_skills": sorted(path.name for path in (root / "skills").iterdir() if path.is_dir()),
+        "runtime_package": {"files": len(source_manifest), "bytes": sum(item["length"] for item in source_manifest)},
+    })
+
+
+def command_install(ctx: Context, args: dict[str, Any]) -> int:
+    manifest = plugin_manifest(ctx.repo_root)
+    if not manifest or manifest.get("name") != PLUGIN_NAME:
+        raise ScriptError(f"plugin manifest name must be {PLUGIN_NAME}")
+    sync_args = dict(args)
+    if not has_switch(args, "SkipValidation"):
+        sync_args["Validate"] = True
+    return command_sync_live(ctx, sync_args)
 
 
 def command_prepare_release(ctx: Context, args: dict[str, Any]) -> int:
-    try:
-        return _command_prepare_release(ctx, args)
-    except EvidenceError as exc:
-        return _error("prepare-release", exc)
-    except Exception as exc:
-        return _error("prepare-release", EvidenceError("schema_invalid", str(exc)))
+    root = project_root_for(ctx, args)
+    manifest = plugin_manifest(root) or {}
+    version = str(arg_value(args, "Version", default=manifest.get("version", ""))).lstrip("v")
+    base = version.split("+", 1)[0]
+    changelog = read_text(root / "CHANGELOG.md")
+    head = run(["git", "rev-parse", "HEAD"], root)
+    status = run(["git", "status", "--short"], root)
+    check_only = has_switch(args, "CheckOnly")
+    checks = [
+        {"name": "manifest name", "ok": manifest.get("name") == PLUGIN_NAME},
+        {"name": "manifest version", "ok": manifest.get("version") == version and bool(version)},
+        {"name": "release tag", "ok": bool(base_release_tag(version))},
+        {"name": "changelog entry", "ok": bool(re.search(rf"(?m)^##\s+v?{re.escape(base)}(?:\s|$)", changelog))},
+        {"name": "runtime package", "ok": bool(runtime_manifest(root))},
+        {"name": "validation dependencies pinned", "ok": not validate_dependency_pins(root / "requirements-validation.txt")},
+        {"name": "git head", "ok": head.returncode == 0},
+    ]
+    if not check_only:
+        checks.append({"name": "worktree clean", "ok": not status.stdout.strip()})
+    ok = all(check["ok"] for check in checks)
+    result = {"ok": ok, "phase": "prepare-release", "check_only": check_only, "manifest_name": manifest.get("name", ""), "manifest_version": manifest.get("version", ""), "release_tag": base_release_tag(version), "package_hash": runtime_contract_hash(root), "commit": head.stdout.strip(), "dirty": bool(status.stdout.strip()), "checks": checks}
+    output = arg_value(args, "OutputPath")
+    if output:
+        write_text(project_path_for(root, str(output), "OutputPath"), json.dumps(result, indent=2) + "\n")
+    return emit(result, 0 if ok else 1)
 
 
 def command_validate_agent_usability_receipt(ctx: Context, args: dict[str, Any]) -> int:
@@ -303,28 +263,36 @@ def command_validate_agent_usability_receipt(ctx: Context, args: dict[str, Any])
     receipt_dir = arg_value(args, "ReceiptDir")
     if bool(receipt_path) == bool(receipt_dir):
         raise ScriptError("provide exactly one of ReceiptPath or ReceiptDir")
+    plugin_root = ctx.plugin_root or ctx.repo_root
     if receipt_path:
         path = project_path_for(root, str(receipt_path), "ReceiptPath")
-        validate_trial_receipt(json.loads(read_text(path)), ctx.plugin_root or ctx.repo_root)
+        validate_trial_receipt(json.loads(read_text(path)), plugin_root)
         return emit({"ok": True, "phase": "agent-usability-receipt", "receipt": normalize_rel(path, root)})
     directory = project_path_for(root, str(receipt_dir), "ReceiptDir")
     receipt_paths = sorted(directory.glob("**/receipt.json"))
     receipts = [json.loads(read_text(path)) for path in receipt_paths]
-    metrics = validate_trial_set(receipts, ctx.plugin_root or ctx.repo_root)
+    metrics = validate_trial_set(receipts, plugin_root)
     index_path = directory / "receipt-index.json"
     if not index_path.is_file():
         raise ScriptError("agent trial receipt index is missing")
     index = json.loads(read_text(index_path))
-    plugin_root = ctx.plugin_root or ctx.repo_root
-    expected_paths = [normalize_rel(path, plugin_root) for path in receipt_paths]
     if index.get("package_hash") != runtime_contract_hash(plugin_root):
         raise ScriptError("agent trial receipt index package hash is stale")
-    if index.get("receipts") != expected_paths:
+    expected = [normalize_rel(path, plugin_root) for path in receipt_paths]
+    if index.get("receipts") != expected:
         raise ScriptError("agent trial receipt index must contain sorted plugin-relative paths")
     return emit({"ok": True, "phase": "agent-usability-receipt", "receipt_count": len(receipts), "metrics": metrics})
 
 
+def command_run_agent_usability_trials(ctx: Context, args: dict[str, Any]) -> int:
+    raise ScriptError("run-agent-usability-trials.sh must be invoked directly with --execute and an explicit output directory")
+
+
 HANDLERS = {
+    "command_get_agent_plugin_version": command_get_agent_plugin_version,
+    "command_install": command_install,
     "command_prepare_release": command_prepare_release,
+    "command_run_agent_usability_trials": command_run_agent_usability_trials,
+    "command_sync_live": command_sync_live,
     "command_validate_agent_usability_receipt": command_validate_agent_usability_receipt,
 }

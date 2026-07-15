@@ -1,8 +1,0 @@
-interface:
-  capabilities: [filesystem.read, filesystem.write, shell, native.user-input]
-  display_name: "Loop Controller"
-  short_description: "Coordinate repeated Superpowers Project workflow runs with run ledgers, budgets, and verifier proof."
-  default_prompt: >-
-    Use $superpowers-project:loop-controller for bounded repeated work across ready candidates. Read SKILL.md for
-    inventory, budget, verifier, continuation, metrics, and Stop conditions. Generated run state is evidence, not a
-    committed backlog.

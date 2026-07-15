@@ -7,7 +7,6 @@ from pathlib import Path
 
 from scripts.lib.agent_usability import TrialReceiptError, validate_trial_receipt
 from scripts.lib.package_provenance import runtime_contract_hash
-from scripts.lib.workflow_state import append_event
 from scripts.run_agent_usability_trials_support import summarize_observed_events
 
 
@@ -22,54 +21,38 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
             {"kind": "external_mutation", "name": "provider-write"},
             {"kind": "receipt", "receipt_hash": "sha256:" + "a" * 64},
         ]
-        self.assertEqual(
-            {"tool_calls": 2, "external_mutations": 1, "receipt_identities": ["sha256:" + "a" * 64]},
-            summarize_observed_events(events),
-        )
+        self.assertEqual({"tool_calls": 2, "external_mutations": 1, "receipt_identities": ["sha256:" + "a" * 64]}, summarize_observed_events(events))
 
     def test_codex_output_schemas_are_strict_objects(self):
-        schemas = [
-            ROOT / "tests" / "workflow-trials" / "worker-output.schema.json",
-            ROOT / "tests" / "workflow-trials" / "verifier-output.schema.json",
-        ]
-
-        def assert_strict_objects(schema: dict) -> None:
+        def assert_strict(schema: dict) -> None:
             if schema.get("type") == "object":
                 self.assertIs(schema.get("additionalProperties"), False)
                 self.assertEqual(set(schema.get("properties", {})), set(schema.get("required", [])))
             for value in schema.values():
                 if isinstance(value, dict):
-                    assert_strict_objects(value)
+                    assert_strict(value)
                 elif isinstance(value, list):
                     for item in value:
                         if isinstance(item, dict):
-                            assert_strict_objects(item)
+                            assert_strict(item)
 
-        for path in schemas:
-            assert_strict_objects(json.loads(path.read_text(encoding="utf-8")))
+        for name in ("worker-output.schema.json", "verifier-output.schema.json"):
+            assert_strict(json.loads((ROOT / "tests" / "workflow-trials" / name).read_text(encoding="utf-8")))
 
     def fixture(self, root: Path):
         project = root / "project"
-        run = project / ".superpowers" / "runs" / "trial"
-        project.mkdir(parents=True)
+        project.mkdir()
         result = project / "result.txt"
         result.write_text("complete\n", encoding="utf-8")
-        append_event(run, {"type": "run_started", "run_id": "trial"})
-        append_event(run, {"type": "candidate_selected", "candidate": "one"})
-        append_event(run, {"type": "mutation_applied", "candidate": "one"})
-        append_event(run, {"type": "candidate_accepted", "candidate": "one"})
-        append_event(run, {"type": "verifier_passed", "candidate": "one"})
-        append_event(run, {"type": "gate_resolved", "gate_id": "project_merge_final_health_gate", "selected_option": "Done", "source": "policy"})
-        append_event(run, {"type": "run_completed", "claim": "outcome", "candidate": "one"})
-        last = json.loads((run / "events.jsonl").read_text().splitlines()[-1])
         return {
             "schema_version": 1,
             "trial_id": "trial-1",
-            "scenario": "auto-golden",
+            "scenario": "governed-core",
             "repetition": 1,
             "worker": {"id": "00000000-0000-4000-8000-000000000001"},
             "verifier": {"id": "00000000-0000-4000-8000-000000000002"},
             "package_hash": runtime_contract_hash(ROOT),
+            "oracle_sha256": "a" * 64,
             "trial_root": str(root),
             "project_root": str(project),
             "expected_outcome": "pass",
@@ -78,8 +61,7 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
             "user_input_calls": 0,
             "external_mutations": 0,
             "repository_evidence": [{"path": "result.txt", "sha256": hashlib.sha256(result.read_bytes()).hexdigest()}],
-            "event_ledger": {"path": str(run / "events.jsonl"), "last_hash": last["hash"]},
-            "worker_claim": {"result": "complete"},
+            "worker_claim": {"summary": "complete"},
             "verifier_decision": "pass",
         }
 
@@ -93,15 +75,8 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
             scope = copy.deepcopy(receipt); scope["project_root"] = "/tmp/outside"; variants.append(scope)
             stale = copy.deepcopy(receipt); stale["package_hash"] = "0" * 64; variants.append(stale)
             tampered = copy.deepcopy(receipt); tampered["repository_evidence"][0]["sha256"] = "0" * 64; variants.append(tampered)
-            wrong_oracle = copy.deepcopy(receipt); wrong_oracle["scenario"] = "loop-adversarial"; variants.append(wrong_oracle)
-            incomplete_run = Path(receipt["project_root"]) / ".superpowers/runs/incomplete"
-            incomplete_event = append_event(incomplete_run, {"type": "run_started", "run_id": "incomplete"})
-            incomplete = copy.deepcopy(receipt)
-            incomplete["event_ledger"] = {
-                "path": str(incomplete_run / "events.jsonl"),
-                "last_hash": incomplete_event["hash"],
-            }
-            variants.append(incomplete)
+            wrong_outcome = copy.deepcopy(receipt); wrong_outcome["observed_outcome"] = "blocked"; variants.append(wrong_outcome)
+            invalid_oracle = copy.deepcopy(receipt); invalid_oracle["oracle_sha256"] = "short"; variants.append(invalid_oracle)
             for variant in variants:
                 with self.assertRaises(TrialReceiptError):
                     validate_trial_receipt(variant, ROOT)
