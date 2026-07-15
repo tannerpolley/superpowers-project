@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 import re
+import shlex
 
 
 WORKER_SCHEMA = {
@@ -33,13 +35,6 @@ VERIFIER_SCHEMA = {
     "additionalProperties": False,
 }
 
-_MUTATING_COMMAND = re.compile(
-    r"\b(?:git\s+push|codex\s+plugin\s+(?:add|remove)|gh\s+(?:issue\s+(?:create|edit|close|reopen)|"
-    r"pr\s+(?:create|merge|close|reopen)|repo\s+rename|api\b[^\n]*(?:-X|--method)\s*(?:POST|PUT|PATCH|DELETE))|"
-    r"(?:curl|wget)\b[^\n]*(?:-X|--method)\s*"
-    r"(?:POST|PUT|PATCH|DELETE))\b",
-    re.I,
-)
 _MUTATING_TOOL = re.compile(r"(?:^|[._:-])(?:create|update|edit|delete|remove|close|reopen|merge|push|publish|send)(?:[._:-]|$)", re.I)
 _TOOL_TYPES = {"command_execution", "file_change", "mcp_tool_call", "request_user_input", "web_search"}
 
@@ -51,6 +46,43 @@ def _tool_name(item: Mapping[str, object]) -> str:
         tool = str(item.get("tool") or item.get("name") or "unknown")
         return f"{server}.{tool}"
     return kind
+
+
+def _mutates_externally(command: str) -> bool:
+    try:
+        words = shlex.split(command)
+        if words and Path(words[0]).name in {"bash", "sh", "zsh"}:
+            option = next((index for index, word in enumerate(words) if word.startswith("-") and "c" in word), -1)
+            command = words[option + 1] if 0 <= option < len(words) - 1 else command
+        lexer = shlex.shlex(command.replace("\n", ";"), posix=True, punctuation_chars=";&|")
+        lexer.whitespace_split = True
+        groups: list[list[str]] = [[]]
+        for word in lexer:
+            if word and all(char in ";&|" for char in word):
+                groups.append([])
+            else:
+                groups[-1].append(word)
+    except ValueError:
+        return False
+    for words in groups:
+        while words and (words[0] in {"!", "command", "do", "elif", "else", "env", "if", "nohup", "sudo", "then", "time", "until", "while"} or re.match(r"^[A-Za-z_]\w*=", words[0])):
+            words.pop(0)
+        if not words:
+            continue
+        executable = Path(words[0]).name.lower()
+        args = [word.lower() for word in words[1:]]
+        if executable == "git" and args[:1] == ["push"]:
+            return True
+        if executable == "codex" and args[:2] in (["plugin", "add"], ["plugin", "remove"]):
+            return True
+        if executable == "gh" and len(args) >= 2:
+            if args[:2] in (["repo", "rename"],) or (args[0] == "issue" and args[1] in {"create", "edit", "close", "reopen"}) or (args[0] == "pr" and args[1] in {"create", "merge", "close", "reopen"}):
+                return True
+            if args[0] == "api" and any(method in args for method in {"post", "put", "patch", "delete"}):
+                return True
+        if executable in {"curl", "wget"} and any(method in args for method in {"post", "put", "patch", "delete"}):
+            return True
+    return False
 
 
 def summarize_observed_events(events: Sequence[Mapping[str, object]]) -> dict[str, object]:
@@ -76,6 +108,6 @@ def summarize_observed_events(events: Sequence[Mapping[str, object]]) -> dict[st
             user_input_calls += 1
         command = item.get("command")
         command_text = " ".join(map(str, command)) if isinstance(command, Sequence) and not isinstance(command, str) else str(command or "")
-        if (kind == "command_execution" and _MUTATING_COMMAND.search(command_text)) or (kind == "mcp_tool_call" and _MUTATING_TOOL.search(name)):
+        if (kind == "command_execution" and _mutates_externally(command_text)) or (kind == "mcp_tool_call" and _MUTATING_TOOL.search(name)):
             external_mutations += 1
     return {"tool_calls": tool_calls, "user_input_calls": user_input_calls, "external_mutations": external_mutations}

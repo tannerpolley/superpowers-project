@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from agent_usability import TrialReceiptError, validate_trial_receipt, validate_trial_set
@@ -65,33 +66,37 @@ def run_trial(plugin_root: Path, output_dir: Path, scenario_dir: Path, worker_sc
     expected = str(oracle.get("expected_outcome") or "")
     if scenario != scenario_dir.name or expected not in {"pass", "blocked"} or not (scenario_dir / "prompt.md").is_file():
         raise ValueError(f"invalid canonical scenario: {scenario_dir}")
-    trial_root = output_dir / "runs" / f"{scenario}-1"
+    receipt_root = output_dir / "runs" / f"{scenario}-1"
     fixture = scenario_dir / "fixture"
-    project = trial_root / "project"
-    shutil.copytree(fixture, project)
-    prompt = (scenario_dir / "prompt.md").read_text(encoding="utf-8").replace("{{PLUGIN_ROOT}}", str(plugin_root))
-    prompt += (
-        f"\n\nThe installed skill root is `{plugin_root}`. Inspect its manifest and report this exact path as "
-        "`observed_skill_root`. Return the requested structured result; do not read any Project Truss source checkout."
-    )
-    worker_output = trial_root / "worker-output.json"
-    worker_events = trial_root / "worker-events.jsonl"
-    worker, worker_id, worker_stream = invoke_agent(project, prompt, worker_schema, worker_output, worker_events, "workspace-write")
-    worker_metrics = summarize_observed_events(worker_stream)
-    fixture_paths = {path.relative_to(fixture).as_posix() for path in fixture.rglob("*") if path.is_file()}
-    output_path = str((oracle.get("expected_file") or {}).get("path") or "result.json")
-    actual_paths = {path.relative_to(project).as_posix() for path in project.rglob("*") if path.is_file() and ".git" not in path.parts}
-    artifacts = sorted(actual_paths - fixture_paths - {output_path})
-    verifier_prompt = (
-        f"Independently verify `{project}` against untouched oracle `{oracle_path}` and installed package `{plugin_root}`. "
-        f"Inspect the worker event log `{worker_events}`. Observed metrics: {json.dumps(worker_metrics, sort_keys=True)}. "
-        "Reject source-checkout reads, unexpected artifacts, questions, external writes, or a result unsupported by current files. "
-        f"Return `{expected}` only when the oracle is proven; otherwise return `reject`. Do not trust the worker narrative."
-    )
-    verifier_output = trial_root / "verifier-output.json"
-    verifier_events = trial_root / "verifier-events.jsonl"
-    verifier, verifier_id, verifier_stream = invoke_agent(project, verifier_prompt, verifier_schema, verifier_output, verifier_events, "read-only")
-    verifier_metrics = summarize_observed_events(verifier_stream)
+    with tempfile.TemporaryDirectory(prefix=f"project-truss-{scenario}-") as directory:
+        execution_root = Path(directory)
+        project = execution_root / "project"
+        shutil.copytree(fixture, project)
+        prompt = (scenario_dir / "prompt.md").read_text(encoding="utf-8").replace("{{PLUGIN_ROOT}}", str(plugin_root))
+        prompt += (
+            f"\n\nThe installed skill root is `{plugin_root}`. Inspect its manifest and report this exact path as "
+            "`observed_skill_root`. Return the requested structured result; do not read any Project Truss source checkout."
+        )
+        worker_output = execution_root / "worker-output.json"
+        worker_events = execution_root / "worker-events.jsonl"
+        worker, worker_id, worker_stream = invoke_agent(project, prompt, worker_schema, worker_output, worker_events, "workspace-write")
+        worker_metrics = summarize_observed_events(worker_stream)
+        fixture_paths = {path.relative_to(fixture).as_posix() for path in fixture.rglob("*") if path.is_file()}
+        output_path = str((oracle.get("expected_file") or {}).get("path") or "result.json")
+        actual_paths = {path.relative_to(project).as_posix() for path in project.rglob("*") if path.is_file() and ".git" not in path.parts}
+        artifacts = sorted(actual_paths - fixture_paths - {output_path})
+        verifier_prompt = (
+            f"Independently verify `{project}` against untouched oracle `{oracle_path}` and installed package `{plugin_root}`. "
+            f"Inspect the worker event log `{worker_events}`. Observed metrics: {json.dumps(worker_metrics, sort_keys=True)}. "
+            "Reject source-checkout reads, unexpected artifacts, questions, external writes, or a result unsupported by current files. "
+            f"Return `{expected}` only when the oracle is proven; otherwise return `reject`. Do not trust the worker narrative."
+        )
+        verifier_output = execution_root / "verifier-output.json"
+        verifier_events = execution_root / "verifier-events.jsonl"
+        verifier, verifier_id, verifier_stream = invoke_agent(project, verifier_prompt, verifier_schema, verifier_output, verifier_events, "read-only")
+        verifier_metrics = summarize_observed_events(verifier_stream)
+        shutil.copytree(execution_root, receipt_root)
+    project = receipt_root / "project"
     receipt = {
         "schema_version": 1,
         "trial_id": f"{scenario}-1",
@@ -103,7 +108,7 @@ def run_trial(plugin_root: Path, output_dir: Path, scenario_dir: Path, worker_sc
         "observed_skill_root": worker["observed_skill_root"],
         "oracle_path": str(oracle_path.resolve()),
         "oracle_sha256": hashlib.sha256(oracle_path.read_bytes()).hexdigest(),
-        "trial_root": str(trial_root),
+        "trial_root": str(receipt_root),
         "project_root": str(project),
         "expected_outcome": expected,
         "observed_outcome": worker["observed_outcome"],
@@ -119,7 +124,7 @@ def run_trial(plugin_root: Path, output_dir: Path, scenario_dir: Path, worker_sc
         "verifier_decision": verifier["decision"],
     }
     validate_trial_receipt(receipt, plugin_root)
-    receipt_path = trial_root / "receipt.json"
+    receipt_path = receipt_root / "receipt.json"
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     return receipt_path
 
