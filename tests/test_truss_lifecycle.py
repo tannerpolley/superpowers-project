@@ -117,6 +117,9 @@ class DirectAndShapeTests(unittest.TestCase):
         incomplete = parse_issue_contract(VALID_BODY.replace("## Verification basis", "## Evidence"))
         self.assertFalse(incomplete.ok)
         self.assertIn("Verification basis", incomplete.missing)
+        duplicate = parse_issue_contract(VALID_BODY + "\n## Acceptance criteria\n\n- [x] Duplicate.\n")
+        self.assertFalse(duplicate.ok)
+        self.assertIn("Acceptance criteria", duplicate.missing)
 
         with tempfile.TemporaryDirectory() as directory:
             invalid = Path(directory) / "contract.yml"

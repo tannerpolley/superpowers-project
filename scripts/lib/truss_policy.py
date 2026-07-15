@@ -290,9 +290,15 @@ def load_contract(path: Path) -> dict[str, Any]:
 def _sections(body: str) -> dict[str, str]:
     matches = list(re.finditer(r"(?m)^#{1,6}\s+(.+?)\s*$", body))
     result: dict[str, str] = {}
+    duplicates: set[str] = set()
     for index, match in enumerate(matches):
         end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
-        result[match.group(1).strip().casefold()] = body[match.end():end].strip()
+        key = match.group(1).strip().casefold()
+        if key in result:
+            duplicates.add(key)
+        result[key] = body[match.end():end].strip()
+    for key in duplicates:
+        result[key] = ""
     return result
 
 
