@@ -64,7 +64,7 @@ def snapshot(**overrides):
     data = {
         "authoritative": True,
         "observed_at": "2026-07-14T12:01:00Z",
-        "repository": "tannerpolley/superpowers-project",
+        "repository": "tannerpolley/project-truss",
         "issue": {
             "number": 129,
             "title": "Add the Project Truss semantic core",
@@ -284,7 +284,7 @@ class GitHubObservationTests(unittest.TestCase):
             return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr="")
 
         current = GitHubClient(runner=runner, clock=lambda: "2026-07-14T12:00:00Z").snapshot(
-            "tannerpolley/superpowers-project", 116
+            "tannerpolley/project-truss", 116
         )
         self.assertTrue(current.authoritative)
         self.assertEqual([115], [item.number for item in current.blocked_by])
@@ -294,13 +294,13 @@ class GitHubObservationTests(unittest.TestCase):
         self.assertEqual(2, len(commands))
 
         pr_payload["statusCheckRollup"] = []
-        unchecked = GitHubClient(runner=runner).snapshot("tannerpolley/superpowers-project", 116)
+        unchecked = GitHubClient(runner=runner).snapshot("tannerpolley/project-truss", 116)
         self.assertFalse(unchecked.closing_prs[0].checks_complete)
         self.assertFalse(unchecked.closing_prs[0].checks_successful)
 
         issue_payload["data"]["repository"]["issue"]["assignees"]["nodes"] = [{}]
         with self.assertRaisesRegex(GitHubObservationError, "assignee identity"):
-            GitHubClient(runner=runner).snapshot("tannerpolley/superpowers-project", 116)
+            GitHubClient(runner=runner).snapshot("tannerpolley/project-truss", 116)
 
     def test_provider_errors_map_to_closed_blocker_vocabulary(self):
         def unavailable(command, timeout):
@@ -320,6 +320,16 @@ class GitHubObservationTests(unittest.TestCase):
             digest = derive_digest(fixture)
             self.assertEqual((), digest.ready_frontier)
             self.assertIn("external_state_unavailable", digest.blockers_or_decisions)
+
+            parent = snapshot(children=[{
+                "number": 130,
+                "title": "copied ready child",
+                "state": "OPEN",
+                "url": "https://github.example/issues/130",
+                "lifecycle_state": "Ready",
+            }])
+            path.write_text(json.dumps(parent.to_dict()), encoding="utf-8")
+            self.assertEqual((), derive_digest(load_fixture(path)).ready_frontier)
 
 
 class LauncherTests(unittest.TestCase):

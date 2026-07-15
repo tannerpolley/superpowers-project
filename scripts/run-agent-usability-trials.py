@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run explicit Project Truss scenario fixtures with independent Codex verification."""
+"""Run the four Project Truss scenarios against the installed plugin."""
 from __future__ import annotations
 
 import argparse
@@ -7,81 +7,118 @@ from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from agent_usability import TrialReceiptError, validate_trial_receipt, validate_trial_set
 from package_provenance import runtime_contract_hash
-from run_agent_usability_trials_support import summarize_observed_events
+from run_agent_usability_trials_support import VERIFIER_SCHEMA, WORKER_SCHEMA, summarize_observed_events
 
 
-WORKER_SCHEMA = {
-    "type": "object",
-    "required": ["observed_outcome", "friction", "claim"],
-    "properties": {
-        "observed_outcome": {"enum": ["pass", "blocked", "fail"]},
-        "friction": {"type": "integer", "minimum": 1, "maximum": 5},
-        "claim": {"type": "object", "required": ["summary"], "properties": {"summary": {"type": "string"}}, "additionalProperties": False},
-    },
-    "additionalProperties": False,
-}
-VERIFIER_SCHEMA = {
-    "type": "object",
-    "required": ["decision", "reason"],
-    "properties": {"decision": {"enum": ["pass", "blocked", "reject"]}, "reason": {"type": "string"}},
-    "additionalProperties": False,
-}
+def installed_plugin_root() -> Path:
+    result = subprocess.run(["codex", "plugin", "list", "--json"], text=True, capture_output=True, stdin=subprocess.DEVNULL)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "could not inspect installed plugins")
+    installed = json.loads(result.stdout).get("installed", [])
+    matches = [item for item in installed if item.get("pluginId") == "project-truss@personal" and item.get("installed") and item.get("enabled")]
+    if len(matches) != 1:
+        raise RuntimeError("project-truss@personal must be the one enabled Project Truss installation")
+    root = Path(str((matches[0].get("source") or {}).get("path", ""))).resolve()
+    manifest = json.loads((root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    if (manifest.get("name"), manifest.get("version")) != ("project-truss", "1.0.0"):
+        raise RuntimeError("installed Project Truss identity is not 1.0.0")
+    return root
 
 
-def invoke_agent(project: Path, prompt: str, schema: Path, output: Path) -> tuple[dict, str]:
+def invoke_agent(project: Path, prompt: str, schema: Path, output: Path, events_path: Path, sandbox: str) -> tuple[dict, str, list[dict]]:
     result = subprocess.run([
-        "codex", "exec", "--ephemeral", "--ignore-user-config", "--sandbox", "workspace-write",
+        "codex", "exec", "--ephemeral", "--json", "--color", "never", "--sandbox", sandbox,
         "--skip-git-repo-check", "-C", str(project), "--output-schema", str(schema),
         "--output-last-message", str(output), prompt,
-    ], cwd=project, text=True, capture_output=True)
+    ], cwd=project, text=True, capture_output=True, stdin=subprocess.DEVNULL)
+    events_path.write_text(result.stdout, encoding="utf-8")
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "Codex agent failed")
-    session = re.search(r"(?m)^session id:\s*(\S+)\s*$", result.stderr)
-    if session is None:
-        raise RuntimeError("Codex agent completed without a session id")
-    return json.loads(output.read_text(encoding="utf-8")), session.group(1)
+    try:
+        events = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
+        session = next(str(event["thread_id"]) for event in events if event.get("type") == "thread.started")
+        response = json.loads(output.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, KeyError, StopIteration) as exc:
+        raise RuntimeError("Codex agent did not emit a valid event stream and structured result") from exc
+    return response, session, events
 
 
-def run_trial(plugin_root: Path, output_dir: Path, scenario_dir: Path, repetition: int, worker_schema: Path, verifier_schema: Path) -> Path:
-    prompt_path = scenario_dir / "prompt.md"
+def _evidence(project: Path) -> list[dict[str, str]]:
+    return [
+        {"path": path.relative_to(project).as_posix(), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        for path in sorted(project.rglob("*"))
+        if path.is_file() and ".git" not in path.parts
+    ]
+
+
+def run_trial(plugin_root: Path, output_dir: Path, scenario_dir: Path, worker_schema: Path, verifier_schema: Path) -> Path:
     oracle_path = scenario_dir / "oracle.json"
-    if not prompt_path.is_file() or not oracle_path.is_file():
-        raise ValueError(f"scenario requires prompt.md and oracle.json: {scenario_dir}")
     oracle = json.loads(oracle_path.read_text(encoding="utf-8"))
-    scenario = str(oracle.get("scenario") or scenario_dir.name)
+    scenario = str(oracle.get("scenario") or "")
     expected = str(oracle.get("expected_outcome") or "")
-    if expected not in {"pass", "blocked"}:
-        raise ValueError(f"scenario expected_outcome must be pass or blocked: {scenario_dir}")
-    trial_root = output_dir / "runs" / f"{scenario}-{repetition}"
-    if trial_root.exists():
-        shutil.rmtree(trial_root)
+    if scenario != scenario_dir.name or expected not in {"pass", "blocked"} or not (scenario_dir / "prompt.md").is_file():
+        raise ValueError(f"invalid canonical scenario: {scenario_dir}")
+    trial_root = output_dir / "runs" / f"{scenario}-1"
     fixture = scenario_dir / "fixture"
     project = trial_root / "project"
-    shutil.copytree(fixture, project) if fixture.is_dir() else project.mkdir(parents=True)
-    prompt = prompt_path.read_text(encoding="utf-8") + f"\n\nUse the Project Truss source at {plugin_root}. Return only the requested JSON."
-    worker, worker_id = invoke_agent(project, prompt, worker_schema, trial_root / "worker-output.json")
-    verifier_prompt = f"Independently verify repository {project} against untouched oracle {oracle_path}. Do not trust the worker narrative. Return the oracle outcome only when current repository evidence supports it; otherwise return reject."
-    verifier, verifier_id = invoke_agent(project, verifier_prompt, verifier_schema, trial_root / "verifier-output.json")
-    observed_events = [{"kind": "tool_call", "name": "worker", "session_id": worker_id}, {"kind": "tool_call", "name": "verifier", "session_id": verifier_id}]
-    metrics = summarize_observed_events(observed_events)
-    evidence = []
-    for path in sorted(item for item in project.rglob("*") if item.is_file() and ".git" not in item.parts):
-        evidence.append({"path": path.relative_to(project).as_posix(), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    shutil.copytree(fixture, project)
+    prompt = (scenario_dir / "prompt.md").read_text(encoding="utf-8").replace("{{PLUGIN_ROOT}}", str(plugin_root))
+    prompt += (
+        f"\n\nThe installed skill root is `{plugin_root}`. Inspect its manifest and report this exact path as "
+        "`observed_skill_root`. Return the requested structured result; do not read any Project Truss source checkout."
+    )
+    worker_output = trial_root / "worker-output.json"
+    worker_events = trial_root / "worker-events.jsonl"
+    worker, worker_id, worker_stream = invoke_agent(project, prompt, worker_schema, worker_output, worker_events, "workspace-write")
+    worker_metrics = summarize_observed_events(worker_stream)
+    fixture_paths = {path.relative_to(fixture).as_posix() for path in fixture.rglob("*") if path.is_file()}
+    output_path = str((oracle.get("expected_file") or {}).get("path") or "result.json")
+    actual_paths = {path.relative_to(project).as_posix() for path in project.rglob("*") if path.is_file() and ".git" not in path.parts}
+    artifacts = sorted(actual_paths - fixture_paths - {output_path})
+    verifier_prompt = (
+        f"Independently verify `{project}` against untouched oracle `{oracle_path}` and installed package `{plugin_root}`. "
+        f"Inspect the worker event log `{worker_events}`. Observed metrics: {json.dumps(worker_metrics, sort_keys=True)}. "
+        "Reject source-checkout reads, unexpected artifacts, questions, external writes, or a result unsupported by current files. "
+        f"Return `{expected}` only when the oracle is proven; otherwise return `reject`. Do not trust the worker narrative."
+    )
+    verifier_output = trial_root / "verifier-output.json"
+    verifier_events = trial_root / "verifier-events.jsonl"
+    verifier, verifier_id, verifier_stream = invoke_agent(project, verifier_prompt, verifier_schema, verifier_output, verifier_events, "read-only")
+    verifier_metrics = summarize_observed_events(verifier_stream)
     receipt = {
-        "schema_version": 1, "trial_id": f"{scenario}-{repetition}", "scenario": scenario, "repetition": repetition,
-        "worker": {"id": worker_id}, "verifier": {"id": verifier_id}, "package_hash": runtime_contract_hash(plugin_root),
-        "oracle_sha256": hashlib.sha256(oracle_path.read_bytes()).hexdigest(), "trial_root": str(trial_root), "project_root": str(project),
-        "expected_outcome": expected, "observed_outcome": worker["observed_outcome"], "friction": worker["friction"],
-        "user_input_calls": 0, "external_mutations": metrics["external_mutations"], "repository_evidence": evidence,
-        "worker_claim": worker["claim"], "verifier_decision": verifier["decision"],
+        "schema_version": 1,
+        "trial_id": f"{scenario}-1",
+        "scenario": scenario,
+        "repetition": 1,
+        "worker": {"id": worker_id},
+        "verifier": {"id": verifier_id},
+        "package_hash": runtime_contract_hash(plugin_root),
+        "observed_skill_root": worker["observed_skill_root"],
+        "oracle_path": str(oracle_path.resolve()),
+        "oracle_sha256": hashlib.sha256(oracle_path.read_bytes()).hexdigest(),
+        "trial_root": str(trial_root),
+        "project_root": str(project),
+        "expected_outcome": expected,
+        "observed_outcome": worker["observed_outcome"],
+        "friction": worker["friction"],
+        "user_input_calls": int(worker_metrics["user_input_calls"]) + int(verifier_metrics["user_input_calls"]),
+        "truss_artifacts": artifacts,
+        "external_mutations": int(worker_metrics["external_mutations"]) + int(verifier_metrics["external_mutations"]),
+        "tool_calls": [f"worker:{name}" for name in worker_metrics["tool_calls"]] + [f"verifier:{name}" for name in verifier_metrics["tool_calls"]],
+        "source_urls": worker["source_urls"],
+        "blocker": worker["blocker"],
+        "repository_evidence": _evidence(project),
+        "worker_claim": worker["claim"],
+        "verifier_decision": verifier["decision"],
     }
+    validate_trial_receipt(receipt, plugin_root)
     receipt_path = trial_root / "receipt.json"
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     return receipt_path
@@ -91,33 +128,42 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--scenario-dir", action="append", required=True)
-    parser.add_argument("--repetitions", type=int, default=1)
-    parser.add_argument("--parallelism", type=int, default=1)
+    parser.add_argument("--parallelism", type=int, default=2)
     args = parser.parse_args()
     if not args.execute:
         parser.error("--execute is required because this command starts fresh Codex agents")
-    if shutil.which("codex") is None:
-        parser.error("codex CLI is required")
-    if not 1 <= args.parallelism <= 4 or args.repetitions < 1:
-        parser.error("parallelism must be 1-4 and repetitions must be positive")
-    plugin_root = Path(__file__).resolve().parents[1]
+    if shutil.which("codex") is None or not 1 <= args.parallelism <= 4:
+        parser.error("codex is required and parallelism must be 1-4")
+    source_root = Path(__file__).resolve().parents[1]
     output_dir = Path(args.output_dir).resolve()
     try:
-        output_dir.relative_to(plugin_root)
+        relative_output = output_dir.relative_to(source_root)
     except ValueError:
         parser.error("--output-dir must be inside the Project Truss source root")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    worker_schema = output_dir / "worker-output.schema.json"
-    verifier_schema = output_dir / "verifier-output.schema.json"
-    worker_schema.write_text(json.dumps(WORKER_SCHEMA), encoding="utf-8")
-    verifier_schema.write_text(json.dumps(VERIFIER_SCHEMA), encoding="utf-8")
-    jobs = [(Path(directory).resolve(), repetition) for directory in args.scenario_dir for repetition in range(1, args.repetitions + 1)]
-    with ThreadPoolExecutor(max_workers=args.parallelism) as executor:
-        receipts = list(executor.map(lambda item: run_trial(plugin_root, output_dir, item[0], item[1], worker_schema, verifier_schema), jobs))
-    relative = [path.relative_to(plugin_root).as_posix() if path.is_relative_to(plugin_root) else str(path) for path in receipts]
-    (output_dir / "receipt-index.json").write_text(json.dumps({"package_hash": runtime_contract_hash(plugin_root), "receipts": relative}, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"ok": True, "phase": "agent-usability-trials", "receipts": relative}, indent=2))
+    if not relative_output.parts or relative_output.parts[0] != ".project-truss":
+        parser.error("--output-dir must be under .project-truss")
+    try:
+        plugin_root = installed_plugin_root()
+        if plugin_root == source_root:
+            raise RuntimeError("installed-product trials cannot use the source checkout")
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        output_dir.mkdir(parents=True)
+        worker_schema = output_dir / "worker-output.schema.json"
+        verifier_schema = output_dir / "verifier-output.schema.json"
+        worker_schema.write_text(json.dumps(WORKER_SCHEMA, indent=2) + "\n", encoding="utf-8")
+        verifier_schema.write_text(json.dumps(VERIFIER_SCHEMA, indent=2) + "\n", encoding="utf-8")
+        scenarios = sorted((source_root / "tests" / "project-truss-trials").iterdir())
+        with ThreadPoolExecutor(max_workers=args.parallelism) as executor:
+            receipt_paths = list(executor.map(lambda path: run_trial(plugin_root, output_dir, path, worker_schema, verifier_schema), scenarios))
+        receipts = [json.loads(path.read_text(encoding="utf-8")) for path in receipt_paths]
+        metrics = validate_trial_set(receipts, plugin_root)
+    except (OSError, ValueError, RuntimeError, TrialReceiptError, json.JSONDecodeError) as exc:
+        parser.exit(1, f"agent usability trials failed: {exc}\n")
+    relative = sorted(path.relative_to(source_root).as_posix() for path in receipt_paths)
+    index = {"package_hash": runtime_contract_hash(plugin_root), "observed_skill_root": str(plugin_root), "receipts": relative}
+    (output_dir / "receipt-index.json").write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"ok": True, "phase": "installed-product-trials", "receipts": relative, "metrics": metrics}, indent=2))
     return 0
 
 

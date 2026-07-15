@@ -263,22 +263,29 @@ def command_validate_agent_usability_receipt(ctx: Context, args: dict[str, Any])
     receipt_dir = arg_value(args, "ReceiptDir")
     if bool(receipt_path) == bool(receipt_dir):
         raise ScriptError("provide exactly one of ReceiptPath or ReceiptDir")
-    plugin_root = ctx.plugin_root or ctx.repo_root
+    source_root = ctx.plugin_root or ctx.repo_root
     if receipt_path:
         path = project_path_for(root, str(receipt_path), "ReceiptPath")
-        validate_trial_receipt(json.loads(read_text(path)), plugin_root)
+        receipt = json.loads(read_text(path))
+        observed_root = Path(str(receipt.get("observed_skill_root", ""))).resolve()
+        if runtime_contract_hash(observed_root) != runtime_contract_hash(source_root):
+            raise ScriptError("installed Project Truss package does not match source")
+        validate_trial_receipt(receipt, observed_root)
         return emit({"ok": True, "phase": "agent-usability-receipt", "receipt": normalize_rel(path, root)})
     directory = project_path_for(root, str(receipt_dir), "ReceiptDir")
     receipt_paths = sorted(directory.glob("**/receipt.json"))
     receipts = [json.loads(read_text(path)) for path in receipt_paths]
-    metrics = validate_trial_set(receipts, plugin_root)
     index_path = directory / "receipt-index.json"
     if not index_path.is_file():
         raise ScriptError("agent trial receipt index is missing")
     index = json.loads(read_text(index_path))
-    if index.get("package_hash") != runtime_contract_hash(plugin_root):
+    observed_root = Path(str(index.get("observed_skill_root", ""))).resolve()
+    if runtime_contract_hash(observed_root) != runtime_contract_hash(source_root):
+        raise ScriptError("installed Project Truss package does not match source")
+    metrics = validate_trial_set(receipts, observed_root)
+    if index.get("package_hash") != runtime_contract_hash(observed_root):
         raise ScriptError("agent trial receipt index package hash is stale")
-    expected = [normalize_rel(path, plugin_root) for path in receipt_paths]
+    expected = [normalize_rel(path, source_root) for path in receipt_paths]
     if index.get("receipts") != expected:
         raise ScriptError("agent trial receipt index must contain sorted plugin-relative paths")
     return emit({"ok": True, "phase": "agent-usability-receipt", "receipt_count": len(receipts), "metrics": metrics})

@@ -56,6 +56,6 @@ Never edit deployed or cached plugin files directly. Start a fresh Codex session
 
 ## Status
 
-Project Truss 1.0.0 is a clean product cutover. The GitHub repository URL still uses its predecessor path until the separately authorized repository rename and installed-product closeout are complete.
+Project Truss 1.0.0 is a clean product cutover. Its repository and plugin identities are `tannerpolley/project-truss` and `project-truss`; no predecessor compatibility namespace is supported.
 
 License: MIT.
