@@ -432,7 +432,7 @@ def derive_digest(snapshot: OutcomeSnapshot) -> OutcomeDigest:
     ready = tuple(
         {"number": item.number, "title": item.title, "url": item.url}
         for item in candidates
-        if item.state == "OPEN" and (item.lifecycle_state == "Ready" if snapshot.children else state == "Ready")
+        if snapshot.authoritative and item.state == "OPEN" and (item.lifecycle_state == "Ready" if snapshot.children else state == "Ready")
     )
     active: dict[str, Any] = {}
     if snapshot.assignees:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from scripts.lib.agent_usability import TrialReceiptError, validate_trial_receipt
 from scripts.lib.package_provenance import runtime_contract_hash
-from scripts.run_agent_usability_trials_support import summarize_observed_events
+from scripts.run_agent_usability_trials_support import VERIFIER_SCHEMA, WORKER_SCHEMA, summarize_observed_events
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,12 +16,15 @@ ROOT = Path(__file__).resolve().parents[1]
 class AgentUsabilityReceiptTests(unittest.TestCase):
     def test_trial_metrics_are_derived_from_observed_events(self):
         events = [
-            {"kind": "tool_call", "name": "worker"},
-            {"kind": "tool_call", "name": "verifier"},
-            {"kind": "external_mutation", "name": "provider-write"},
-            {"kind": "receipt", "receipt_hash": "sha256:" + "a" * 64},
+            {"type": "item.completed", "item": {"type": "command_execution", "command": "pwd"}},
+            {"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "github", "tool": "get_issue"}},
+            {"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "github", "tool": "update_issue"}},
+            {"type": "item.completed", "item": {"type": "error", "message": "request_user_input is not supported in exec mode"}},
         ]
-        self.assertEqual({"tool_calls": 2, "external_mutations": 1, "receipt_identities": ["sha256:" + "a" * 64]}, summarize_observed_events(events))
+        self.assertEqual(
+            {"tool_calls": ["command_execution", "github.get_issue", "github.update_issue", "request_user_input"], "user_input_calls": 1, "external_mutations": 1},
+            summarize_observed_events(events),
+        )
 
     def test_codex_output_schemas_are_strict_objects(self):
         def assert_strict(schema: dict) -> None:
@@ -36,30 +39,37 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
                         if isinstance(item, dict):
                             assert_strict(item)
 
-        for name in ("worker-output.schema.json", "verifier-output.schema.json"):
-            assert_strict(json.loads((ROOT / "tests" / "workflow-trials" / name).read_text(encoding="utf-8")))
+        for schema in (WORKER_SCHEMA, VERIFIER_SCHEMA):
+            assert_strict(schema)
 
     def fixture(self, root: Path):
         project = root / "project"
         project.mkdir()
         result = project / "result.txt"
         result.write_text("complete\n", encoding="utf-8")
+        oracle = ROOT / "tests" / "project-truss-trials" / "direct" / "oracle.json"
         return {
             "schema_version": 1,
-            "trial_id": "trial-1",
-            "scenario": "governed-core",
+            "trial_id": "direct-1",
+            "scenario": "direct",
             "repetition": 1,
             "worker": {"id": "00000000-0000-4000-8000-000000000001"},
             "verifier": {"id": "00000000-0000-4000-8000-000000000002"},
             "package_hash": runtime_contract_hash(ROOT),
-            "oracle_sha256": "a" * 64,
+            "observed_skill_root": str(ROOT),
+            "oracle_path": str(oracle),
+            "oracle_sha256": hashlib.sha256(oracle.read_bytes()).hexdigest(),
             "trial_root": str(root),
             "project_root": str(project),
             "expected_outcome": "pass",
             "observed_outcome": "pass",
             "friction": 2,
             "user_input_calls": 0,
+            "truss_artifacts": [],
             "external_mutations": 0,
+            "tool_calls": ["worker:file_change"],
+            "source_urls": [],
+            "blocker": None,
             "repository_evidence": [{"path": "result.txt", "sha256": hashlib.sha256(result.read_bytes()).hexdigest()}],
             "worker_claim": {"summary": "complete"},
             "verifier_decision": "pass",

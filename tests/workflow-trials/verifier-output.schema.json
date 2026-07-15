@@ -1,9 +1,0 @@
-{
-  "type": "object",
-  "required": ["decision", "reason"],
-  "properties": {
-    "decision": {"enum": ["pass", "blocked", "reject"]},
-    "reason": {"type": "string"}
-  },
-  "additionalProperties": false
-}
