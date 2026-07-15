@@ -17,6 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CommandRegistryTests(unittest.TestCase):
+    def test_project_truss_launcher_is_registered_as_mutation_free(self):
+        self.assertEqual("command_project_truss", _COMMANDS["scripts/project-truss.sh"])
+        self.assertEqual("none", load_command_catalog(ROOT)["scripts/project-truss.sh"].mutation)
+
     def test_workspace_policy_launcher_is_registered_as_mutation_free(self):
         self.assertEqual("command_workspace_isolation", _COMMANDS["scripts/workspace-isolation.sh"])
         self.assertEqual("none", load_command_catalog(ROOT)["scripts/workspace-isolation.sh"].mutation)

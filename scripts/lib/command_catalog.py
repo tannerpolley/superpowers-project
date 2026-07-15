@@ -14,6 +14,7 @@ _COMMANDS: dict[str, str] = {
     'scripts/get-agent-plugin-version.sh': 'command_get_agent_plugin_version',
     'scripts/install.sh': 'command_install',
     'scripts/prepare-release.sh': 'command_prepare_release',
+    'scripts/project-truss.sh': 'command_project_truss',
     'scripts/run-agent-usability-trials.sh': 'command_run_agent_usability_trials',
     'scripts/sync-live.sh': 'command_sync_live',
     'scripts/validate-agent-usability-receipt.sh': 'command_validate_agent_usability_receipt',
