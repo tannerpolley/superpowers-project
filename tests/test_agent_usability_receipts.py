@@ -18,12 +18,14 @@ class AgentUsabilityReceiptTests(unittest.TestCase):
         events = [
             {"type": "item.completed", "item": {"type": "error", "message": "Under-development feature enabled: default_mode_request_user_input"}},
             {"type": "item.completed", "item": {"type": "command_execution", "command": "pwd"}},
+            {"type": "item.completed", "item": {"type": "command_execution", "command": "/bin/bash -lc \"rg 'git push|gh issue edit' worker-events.jsonl\""}},
+            {"type": "item.completed", "item": {"type": "command_execution", "command": "/bin/bash -lc 'git push origin HEAD'"}},
             {"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "github", "tool": "get_issue"}},
             {"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "github", "tool": "update_issue"}},
             {"type": "item.completed", "item": {"type": "error", "message": "request_user_input is not supported in exec mode"}},
         ]
         self.assertEqual(
-            {"tool_calls": ["command_execution", "github.get_issue", "github.update_issue", "request_user_input"], "user_input_calls": 1, "external_mutations": 1},
+            {"tool_calls": ["command_execution", "command_execution", "command_execution", "github.get_issue", "github.update_issue", "request_user_input"], "user_input_calls": 1, "external_mutations": 2},
             summarize_observed_events(events),
         )
 
