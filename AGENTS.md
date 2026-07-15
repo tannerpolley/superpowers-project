@@ -1,50 +1,44 @@
-# Superpowers Project Plugin Repo
+# Project Truss Plugin Repo
 
-This repository is the canonical source of truth for the local Superpowers Project Codex plugin.
+This repository is the canonical source for the Project Truss Codex plugin.
 
 Repository Profile: application-development
 
 ## Rules
 
-- Treat this repo as source. Treat `/home/tnnrpolley21/.codex/plugins/superpowers-project` as the deployed plugin copy.
-- Do not edit the live deployed copy directly when this repo is available; edit this repo, validate, then run `scripts/sync-live.sh`.
-- For routine revisions and fixes to this project plugin's own skills, choose the smallest workflow that fits the task. This repo policy does not require a default skill sequence, and ordinary project-plugin maintenance should not route through `$superpowers-project:create-issues`, `$superpowers-project:resolve-issue`, or `$superpowers-project:merge-changes` unless the user explicitly asks for GitHub issue/PR workflow coverage.
-- Keep skills self-contained and testable with their bundled scenario scripts.
-- Canonical specs, PRDs, plans, issue mirrors, and milestone pages for this repo belong under `docs/superpowers/`.
-- New specs or PRDs belong under `docs/superpowers/specs/`.
-- New implementation plans belong under `docs/superpowers/plans/`.
-- Local GitHub issue mirrors belong under `docs/superpowers/issues/`.
-- Roadmap milestone pages belong under `docs/superpowers/milestones/`.
-- Treat specs, plans, issue mirrors, and milestone pages as working artifacts. Delete them after the related work is merged or closed unless active runtime code, validation, or an explicit retention marker still requires them.
-- Use Git history and GitHub as the durable record of completed work; do not retain duplicate local history summaries by default.
-- Do not create canonical artifacts under `docs/ideas`, root-level `docs/issues`, root-level `docs/plans`, or retired `docs/milestones/<milestone-folder>/ideas|issues|plans`.
+- Treat this repository as source and `~/.codex/plugins/project-truss` as the deployed source copy.
+- Never edit deployed or plugin-cache files directly. Edit source, validate, commit, then use the supported sync and plugin commands.
+- Prefer the smallest maintainable change. Delete displaced code, tests, generated output, and working artifacts in the same change.
+- Tests protect behavior families, authority, dependency ordering, merge safety, and truthful closeout; do not add helper-level or coverage-driven bulk.
+- Ordinary maintenance remains direct unless Project Truss is explicit or a hard continuity trigger exists.
+- Governed lifecycle truth comes from GitHub, Git, CI, and current worktrees. Do not add a second persistent state store.
+- Keep durable issue comments to claim/start, blocker or decision, handoff, and verified closeout.
+- Use hidden Codex worktrees for issue implementation. After merge, restore canonical local `main` with no feature branch or linked worktree.
+- Product documentation belongs under `docs/project-truss/`. Local specs and plans are temporary working artifacts; retire them once GitHub and Git history make them redundant.
+- Repository profiles select verification behavior. Scientific repositories use domain invariants and engineering tolerances; application repositories use meaningful behavior, integration, and product acceptance.
 
 ## Required Post-Revision Loop
 
-Changes under `.codex-plugin/`, `skills/`, `assets/`, `scripts/`, or runtime-included `docs/superpowers/` paths change the installable plugin surface. This repo applies the same loop to all `docs/superpowers/` revisions to keep the policy simple. Before reporting such a revision complete, future agents must complete this sequence in order:
+Changes under `.codex-plugin/`, `skills/`, `assets/`, `scripts/`, or runtime-included `docs/project-truss/` paths change the installable surface. Before reporting such a revision complete:
 
 1. Run `./scripts/validate.sh`.
-2. Commit the intended source changes. If commit authorization is absent, request it and stop before live deployment.
+2. Commit the intended source changes. If commit authority is absent, request it and stop before deployment.
 3. Run `./scripts/sync-live.sh --validate`.
-4. Run `codex plugin add superpowers-project@personal --json` to install or refresh the supported marketplace snapshot.
+4. Run `codex plugin add project-truss@personal --json`.
 5. Run `./scripts/get-agent-plugin-version.sh -Banner -RequireCurrent`.
 6. Run `bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .`.
-7. Confirm `git status --short --branch` shows the expected clean branch state.
-8. Tell the user to start a fresh Codex session so the updated prompt and skill text load.
+7. Confirm `git status --short --branch` shows the expected branch state.
+8. Tell the user to start a fresh Codex session.
 
-Report every skipped or failed gate. Validation-only and sync-only sequences do not complete an installable-surface revision. Never edit deployed copies or plugin cache files to bypass this loop.
-
-Changes outside the listed installable paths require proportionate validation and cleanup, but do not require live sync or plugin refresh unless they alter runtime behavior.
+Report every skipped or failed gate. Validation or sync alone does not complete an installable revision.
 
 ## Validation
-
-Before reporting repo changes complete, run:
 
 ```bash
 ./scripts/validate.sh
 ```
 
-Before updating the live install, run:
+Before updating the live source copy:
 
 ```bash
 ./scripts/sync-live.sh --validate

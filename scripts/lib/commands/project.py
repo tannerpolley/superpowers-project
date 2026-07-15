@@ -1,30 +1,18 @@
-"""Project artifact and candidate command handlers."""
+"""Project Truss lifecycle and workspace handlers."""
 from __future__ import annotations
 
-import json
 from typing import Any
 
 try:
-    from ..command_support import Context, ScriptError, arg_value, emit, project_root_for, read_json_arg, read_text, resolve_under
+    from ..command_support import Context, ScriptError, arg_value, emit, project_root_for, read_json_arg, resolve_under
     from ..truss_github import GitHubClient, load_fixture
     from ..truss_policy import FinalHealth, WorkRequest, closeout_findings, derive_digest, load_contract, plan_work
     from ..workspace_isolation import resolve_workspace_isolation
 except ImportError:
-    from command_support import Context, ScriptError, arg_value, emit, project_root_for, read_json_arg, read_text, resolve_under
+    from command_support import Context, ScriptError, arg_value, emit, project_root_for, read_json_arg, resolve_under
     from truss_github import GitHubClient, load_fixture
     from truss_policy import FinalHealth, WorkRequest, closeout_findings, derive_digest, load_contract, plan_work
     from workspace_isolation import resolve_workspace_isolation
-
-
-def command_select_candidate(ctx: Context, args: dict[str, Any]) -> int:
-    root = project_root_for(ctx, args)
-    inventory_arg = arg_value(args, "InventoryPath")
-    candidates = []
-    if inventory_arg:
-        inventory = json.loads(read_text(resolve_under(root, str(inventory_arg), "InventoryPath")))
-        candidates = inventory.get("candidates", inventory if isinstance(inventory, list) else [])
-    selected = next((candidate for candidate in candidates if candidate.get("ready") is True), None) if isinstance(candidates, list) else None
-    return emit({"ok": selected is not None, "phase": "select-candidate", "selected_candidate": selected, "reason": "candidate selected" if selected else "no ready candidates"}, 0 if selected else 1)
 
 
 def command_workspace_isolation(ctx: Context, args: dict[str, Any]) -> int:
@@ -61,14 +49,12 @@ def command_project_truss(ctx: Context, args: dict[str, Any]) -> int:
         if snapshot_arg:
             raise ScriptError("Closeout does not accept SnapshotPath")
         health, _ = read_json_arg(root, args, "HealthJson", "HealthPath")
-        snapshot = GitHubClient().snapshot(repository, issue)
-        findings = closeout_findings(snapshot, FinalHealth.from_mapping(health))
+        findings = closeout_findings(GitHubClient().snapshot(repository, issue), FinalHealth.from_mapping(health))
         return emit({"ok": not findings, "action": action, "source": "live", "findings": list(findings)}, 0 if not findings else 1)
     raise ScriptError("Action must be Plan, Status, or Closeout")
 
 
 HANDLERS = {
     "command_project_truss": command_project_truss,
-    "command_select_candidate": command_select_candidate,
     "command_workspace_isolation": command_workspace_isolation,
 }

@@ -238,6 +238,7 @@ class OutcomeSnapshot:
 class FinalHealth:
     verification_passed: bool
     integration_healthy: bool
+    source_clean: bool
     head_sha: str
 
     @classmethod
@@ -246,6 +247,7 @@ class FinalHealth:
         return cls(
             verification_passed=_bool(values, "verification_passed"),
             integration_healthy=_bool(values, "integration_healthy"),
+            source_clean=_bool(values, "source_clean"),
             head_sha=str(values.get("head_sha") or ""),
         )
 
@@ -323,7 +325,8 @@ def _open(items: tuple[Issue, ...]) -> bool:
 
 
 def _pr_verified(pr: PullRequest) -> bool:
-    return pr.merged and pr.state == "MERGED" and pr.checks_complete and pr.checks_successful
+    review_clear = pr.review_decision not in {"CHANGES_REQUESTED", "REVIEW_REQUIRED"}
+    return pr.merged and pr.state == "MERGED" and pr.checks_complete and pr.checks_successful and review_clear
 
 
 def closeout_findings(snapshot: OutcomeSnapshot, health: FinalHealth) -> tuple[str, ...]:
@@ -351,6 +354,8 @@ def closeout_findings(snapshot: OutcomeSnapshot, health: FinalHealth) -> tuple[s
         findings.append("state_contradiction")
     elif contradictory_child:
         findings.append("state_contradiction")
+    elif not health.source_clean:
+        findings.append("state_contradiction")
     elif not rollup and (len(prs) != 1 or not prs[0].merged or not health.head_sha or prs[0].head_sha != health.head_sha):
         findings.append("state_contradiction")
     if not snapshot.authoritative:
@@ -359,6 +364,8 @@ def closeout_findings(snapshot: OutcomeSnapshot, health: FinalHealth) -> tuple[s
 
 
 def derive_state(snapshot: OutcomeSnapshot) -> str:
+    if not snapshot.authoritative:
+        return "Blocked"
     contract = parse_issue_contract(snapshot.issue.body)
     failed_pr = any(pr.checks_complete and not pr.checks_successful for pr in snapshot.closing_prs)
     missing_active_claim = not snapshot.children and bool(snapshot.closing_prs or snapshot.issue.state == "CLOSED") and len(snapshot.assignees) != 1
@@ -433,6 +440,8 @@ def derive_digest(snapshot: OutcomeSnapshot) -> OutcomeDigest:
     if snapshot.closing_prs:
         active["pull_request"] = {"number": snapshot.closing_prs[0].number, "url": snapshot.closing_prs[0].url}
     blockers: list[str] = [value for value in snapshot.provider_findings if value in BLOCKERS]
+    if not snapshot.authoritative:
+        blockers.append("external_state_unavailable")
     if not contract.ok:
         blockers.append("contract_incomplete")
     if _open(snapshot.blocked_by):

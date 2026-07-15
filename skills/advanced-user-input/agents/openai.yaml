@@ -1,7 +1,5 @@
 interface:
+  capabilities: [native.user-input]
   display_name: "Advanced User Input"
-  short_description: "Use native user input for Project workflow gates, large option menus, and worker questions."
-  default_prompt: >-
-    Use $superpowers-project:advanced-user-input for request_user_input choices, branching, Custom answers,
-    artifact review, or worker questions. Read SKILL.md and docs/superpowers/workflow-contract.yml.
-    Never use debug mode to approve mutation.
+  short_description: "Resolve one material Project Truss decision or authority boundary."
+  default_prompt: "Use $project-truss:advanced-user-input only when a bounded decision or authority question is required."

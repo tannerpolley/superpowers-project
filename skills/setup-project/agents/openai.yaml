@@ -1,8 +1,0 @@
-interface:
-  capabilities: [filesystem.read, filesystem.write, shell, native.user-input, github]
-  display_name: "Setup Project"
-  short_description: "Set up project context, roadmap, milestones, tracker config, and GitHub project board evidence."
-  default_prompt: >-
-    Use $superpowers-project:setup-project for project context, roadmap, milestones, tracker configuration, or
-    optional board evidence. Read SKILL.md for artifact ownership, approval, validation, project_setup_next_step,
-    and Stop behavior. The helper plans or validates a board; it does not create one.

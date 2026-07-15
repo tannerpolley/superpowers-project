@@ -1,9 +1,0 @@
-interface:
-  capabilities: [filesystem.read, shell, native.user-input]
-  display_name: "Initiate Workflow"
-  short_description: "Route Superpowers Project setup, specs, plans, issues, implementation, merges, and audits."
-  default_prompt: >-
-    Use $superpowers-project:initiate-workflow to select Manual, Auto, or Looping mode and route setup, planning,
-    issues, implementation, merges, audits, or alignment. Read SKILL.md for startup authority and route ownership;
-    use docs/superpowers/workflow-contract.yml for options. Auto continues one outcome across intermediate routes
-    until verified merge closeout; Stop remains an explicit exit, not automatic plan completion.

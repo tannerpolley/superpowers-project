@@ -180,7 +180,7 @@ class TruthfulCloseoutTests(unittest.TestCase):
         )
         self.assertEqual(
             ("claim_conflict",),
-            closeout_findings(current, FinalHealth(True, True, "abc123")),
+            closeout_findings(current, FinalHealth(True, True, True, "abc123")),
         )
 
     def test_verified_parent_rollup_does_not_require_a_parent_code_pr(self):
@@ -188,7 +188,7 @@ class TruthfulCloseoutTests(unittest.TestCase):
             issue={"number": 128, "title": "parent", "state": "CLOSED", "body": VALID_BODY, "url": "https://github.example/issues/128"},
             children=[{"number": 129, "title": "child", "state": "CLOSED", "url": "https://github.example/issues/129", "lifecycle_state": "Done"}],
         )
-        health = FinalHealth(True, True, "integrated-head")
+        health = FinalHealth(True, True, True, "integrated-head")
         self.assertEqual("Done", derive_state(parent))
         self.assertEqual((), closeout_findings(parent, health))
 
@@ -200,7 +200,7 @@ class TruthfulCloseoutTests(unittest.TestCase):
         self.assertEqual("Blocked", derive_state(parent))
         self.assertEqual(
             ("integration_unhealthy", "state_contradiction"),
-            closeout_findings(parent, FinalHealth(True, True, "integrated-head")),
+            closeout_findings(parent, FinalHealth(True, True, True, "integrated-head")),
         )
 
     def test_fixture_and_open_dependency_block_closeout_in_contract_order(self):
@@ -211,7 +211,7 @@ class TruthfulCloseoutTests(unittest.TestCase):
             blocked_by=[{"number": 128, "title": "blocker", "state": "OPEN", "url": "https://github.example/issues/128"}],
             closing_prs=[passing_pr()],
         )
-        health = FinalHealth(True, True, "abc123")
+        health = FinalHealth(True, True, True, "abc123")
         self.assertEqual(
             ("dependency_blocked", "external_state_unavailable"),
             closeout_findings(current, health),
@@ -224,11 +224,21 @@ class TruthfulCloseoutTests(unittest.TestCase):
             children=[{"number": 130, "title": "child", "state": "OPEN", "url": "https://github.example/issues/130"}],
             closing_prs=[{**passing_pr(), "checks_successful": False}],
         )
-        findings = closeout_findings(current, FinalHealth(False, False, "different"))
+        findings = closeout_findings(current, FinalHealth(False, False, False, "different"))
         self.assertEqual(
             ("claim_conflict", "verification_failed", "integration_unhealthy", "state_contradiction"),
             findings,
         )
+        reviewed = snapshot(
+            issue={"number": 129, "title": "core", "state": "CLOSED", "body": VALID_BODY, "url": "https://github.example/issues/129"},
+            assignees=["one"],
+            closing_prs=[{**passing_pr(), "review_decision": "CHANGES_REQUESTED"}],
+        )
+        self.assertEqual(("verification_failed",), closeout_findings(reviewed, FinalHealth(True, True, True, "abc123")))
+        self.assertEqual(("state_contradiction",), closeout_findings(snapshot(
+            issue={"number": 129, "title": "core", "state": "CLOSED", "body": VALID_BODY, "url": "https://github.example/issues/129"},
+            assignees=["one"], closing_prs=[passing_pr()],
+        ), FinalHealth(True, True, False, "abc123")))
 
 
 class GitHubObservationTests(unittest.TestCase):
@@ -283,6 +293,15 @@ class GitHubObservationTests(unittest.TestCase):
         self.assertIn("https://github.example/pull/120", current.source_urls)
         self.assertEqual(2, len(commands))
 
+        pr_payload["statusCheckRollup"] = []
+        unchecked = GitHubClient(runner=runner).snapshot("tannerpolley/superpowers-project", 116)
+        self.assertFalse(unchecked.closing_prs[0].checks_complete)
+        self.assertFalse(unchecked.closing_prs[0].checks_successful)
+
+        issue_payload["data"]["repository"]["issue"]["assignees"]["nodes"] = [{}]
+        with self.assertRaisesRegex(GitHubObservationError, "assignee identity"):
+            GitHubClient(runner=runner).snapshot("tannerpolley/superpowers-project", 116)
+
     def test_provider_errors_map_to_closed_blocker_vocabulary(self):
         def unavailable(command, timeout):
             return SimpleNamespace(returncode=1, stdout="", stderr="not logged in")
@@ -295,7 +314,12 @@ class GitHubObservationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "snapshot.json"
             path.write_text(json.dumps(snapshot().to_dict()), encoding="utf-8")
-            self.assertFalse(load_fixture(path).authoritative)
+            fixture = load_fixture(path)
+            self.assertFalse(fixture.authoritative)
+            self.assertEqual("Blocked", derive_state(fixture))
+            digest = derive_digest(fixture)
+            self.assertEqual((), digest.ready_frontier)
+            self.assertIn("external_state_unavailable", digest.blockers_or_decisions)
 
 
 class LauncherTests(unittest.TestCase):

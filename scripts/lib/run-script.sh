@@ -24,8 +24,8 @@ while [[ "$search_dir" != "/" ]]; do
 done
 
 if [[ -z "$repo_root" ]]; then
-  echo "Could not locate Superpowers Project plugin root for $script_path" >&2
+  echo "Could not locate Project Truss plugin root for $script_path" >&2
   exit 127
 fi
 
-exec python3 "$repo_root/scripts/lib/superpowers_project_cli.py" "$script_path" "$@"
+exec python3 "$repo_root/scripts/lib/project_truss_cli.py" "$script_path" "$@"

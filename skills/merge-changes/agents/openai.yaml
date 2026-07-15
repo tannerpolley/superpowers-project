@@ -1,8 +1,0 @@
-interface:
-  capabilities: [filesystem.read, filesystem.write, shell, git, native.user-input, github]
-  display_name: "Merge Changes"
-  short_description: "Merge issue-backed PR work or branch-ready local work with approvals, cleanup, and closeout proof."
-  default_prompt: >-
-    Use $superpowers-project:merge-changes for reviewed PR or local-branch integration. Read SKILL.md for intake,
-    receipt order, approval, cleanup, project_merge_next_step, verified final Done, and Stop conditions. Require
-    upstream verification and branch-finish proof.

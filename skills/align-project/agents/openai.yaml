@@ -1,8 +1,0 @@
-interface:
-  capabilities: [filesystem.read, shell, git, github, native.user-input]
-  display_name: "Align Project"
-  short_description: "Audit Superpowers Project workflow drift, tracker alignment, and repair paths."
-  default_prompt: >-
-    Use $superpowers-project:align-project for repository, tracker, milestone, or live-sync drift. Read SKILL.md for
-    evidence, repair approval, validation, Stop behavior, and the project_align_next_step route. Inspect GitHub only
-    when its capability and approved scope are present.
