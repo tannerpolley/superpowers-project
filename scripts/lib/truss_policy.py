@@ -133,6 +133,7 @@ class Issue:
     state: str
     url: str
     body: str = ""
+    lifecycle_state: str | None = None
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "Issue":
@@ -142,6 +143,7 @@ class Issue:
             state=str(data["state"]).upper(),
             url=str(data["url"]),
             body=str(data.get("body") or ""),
+            lifecycle_state=str(data["lifecycle_state"]) if data.get("lifecycle_state") else None,
         )
 
 
@@ -333,11 +335,15 @@ def closeout_findings(snapshot: OutcomeSnapshot, health: FinalHealth) -> tuple[s
         findings.append("verification_failed")
     if not rollup and (len(prs) != 1 or (prs and not _pr_verified(prs[0]))):
         findings.append("verification_failed")
-    if _open(snapshot.children) or not health.integration_healthy:
+    incomplete_child = any(child.state != "CLOSED" or child.lifecycle_state != "Done" for child in snapshot.children)
+    contradictory_child = any(child.state == "CLOSED" and child.lifecycle_state != "Done" for child in snapshot.children)
+    if incomplete_child or not health.integration_healthy:
         findings.append("integration_unhealthy")
     if snapshot.issue.state != "CLOSED":
         findings.append("state_contradiction")
     elif rollup and prs:
+        findings.append("state_contradiction")
+    elif contradictory_child:
         findings.append("state_contradiction")
     elif not rollup and (len(prs) != 1 or not prs[0].merged or not health.head_sha or prs[0].head_sha != health.head_sha):
         findings.append("state_contradiction")
@@ -357,13 +363,14 @@ def derive_state(snapshot: OutcomeSnapshot) -> str:
         or missing_active_claim
         or bool(snapshot.provider_findings)
         or failed_pr
-        or _open(snapshot.children) and snapshot.issue.state == "CLOSED"
+        or snapshot.issue.state == "CLOSED" and any(child.state != "CLOSED" or child.lifecycle_state != "Done" for child in snapshot.children)
     )
     if blocked:
         return "Blocked"
     if snapshot.issue.state == "CLOSED":
         if snapshot.children:
-            return "Done" if snapshot.authoritative and contract.acceptance_complete and not _open(snapshot.children) else "Blocked"
+            complete = all(child.state == "CLOSED" and child.lifecycle_state == "Done" for child in snapshot.children)
+            return "Done" if snapshot.authoritative and contract.acceptance_complete and complete else "Blocked"
         if (
             snapshot.authoritative
             and contract.acceptance_complete
@@ -412,7 +419,7 @@ def derive_digest(snapshot: OutcomeSnapshot) -> OutcomeDigest:
     ready = tuple(
         {"number": item.number, "title": item.title, "url": item.url}
         for item in candidates
-        if item.state == "OPEN" and state == "Ready"
+        if item.state == "OPEN" and (item.lifecycle_state == "Ready" if snapshot.children else state == "Ready")
     )
     active: dict[str, Any] = {}
     if snapshot.assignees:
@@ -426,7 +433,19 @@ def derive_digest(snapshot: OutcomeSnapshot) -> OutcomeDigest:
         blockers.append("dependency_blocked")
     if len(snapshot.assignees) > 1:
         blockers.append("claim_conflict")
-    if state == "Ready":
+    child_blockers = [f"child #{item.number} is {item.lifecycle_state}" for item in snapshot.children if item.lifecycle_state == "Blocked"]
+    active_child = next((item for item in snapshot.children if item.lifecycle_state in {"Claimed", "In review"}), None)
+    if snapshot.children and active_child:
+        active["issue"] = {"number": active_child.number, "title": active_child.title, "url": active_child.url, "state": active_child.lifecycle_state}
+        next_action = f"Continue active child #{active_child.number}."
+    elif snapshot.children and ready:
+        next_action = f"Claim ready child #{ready[0]['number']} before implementation."
+    elif snapshot.children and child_blockers:
+        blocked_number = next(item.number for item in snapshot.children if item.lifecycle_state == "Blocked")
+        next_action = f"Resolve blockers on child #{blocked_number} before continuing."
+    elif snapshot.children:
+        next_action = f"Verify rollup health before closing parent issue #{snapshot.issue.number}."
+    elif state == "Ready":
         next_action = f"Claim ready issue #{snapshot.issue.number} before implementation."
     elif state == "Claimed":
         next_action = f"Continue claimed issue #{snapshot.issue.number}."
@@ -440,7 +459,7 @@ def derive_digest(snapshot: OutcomeSnapshot) -> OutcomeDigest:
         outcome=outcome,
         ready_frontier=ready,
         active=active,
-        blockers_or_decisions=_ordered(blockers),
+        blockers_or_decisions=(*_ordered(blockers), *child_blockers),
         next_safe_action=next_action,
         source="live" if snapshot.authoritative else "fixture",
         source_urls=snapshot.source_urls,

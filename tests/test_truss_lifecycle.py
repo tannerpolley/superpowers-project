@@ -156,6 +156,18 @@ class LifecycleAndDigestTests(unittest.TestCase):
         self.assertEqual("live", digest["source"])
         self.assertEqual(["https://github.example/issues/129"], digest["source_urls"])
 
+        parent = snapshot(
+            issue={"number": 128, "title": "parent", "state": "OPEN", "body": VALID_BODY, "url": "https://github.example/issues/128"},
+            children=[
+                {"number": 129, "title": "ready", "state": "OPEN", "url": "https://github.example/issues/129", "lifecycle_state": "Ready"},
+                {"number": 130, "title": "blocked", "state": "OPEN", "url": "https://github.example/issues/130", "lifecycle_state": "Blocked"},
+            ],
+        )
+        parent_digest = derive_digest(parent)
+        self.assertEqual([129], [item["number"] for item in parent_digest.ready_frontier])
+        self.assertEqual(["child #130 is Blocked"], list(parent_digest.blockers_or_decisions))
+        self.assertEqual("Claim ready child #129 before implementation.", parent_digest.next_safe_action)
+
 
 class TruthfulCloseoutTests(unittest.TestCase):
     def test_code_leaf_closeout_requires_exactly_one_current_claim(self):
@@ -171,11 +183,22 @@ class TruthfulCloseoutTests(unittest.TestCase):
     def test_verified_parent_rollup_does_not_require_a_parent_code_pr(self):
         parent = snapshot(
             issue={"number": 128, "title": "parent", "state": "CLOSED", "body": VALID_BODY, "url": "https://github.example/issues/128"},
-            children=[{"number": 129, "title": "child", "state": "CLOSED", "url": "https://github.example/issues/129"}],
+            children=[{"number": 129, "title": "child", "state": "CLOSED", "url": "https://github.example/issues/129", "lifecycle_state": "Done"}],
         )
         health = FinalHealth(True, True, "integrated-head")
         self.assertEqual("Done", derive_state(parent))
         self.assertEqual((), closeout_findings(parent, health))
+
+    def test_closed_but_unverified_descendant_blocks_parent_rollup(self):
+        parent = snapshot(
+            issue={"number": 128, "title": "parent", "state": "CLOSED", "body": VALID_BODY, "url": "https://github.example/issues/128"},
+            children=[{"number": 129, "title": "child", "state": "CLOSED", "url": "https://github.example/issues/129", "lifecycle_state": "Blocked"}],
+        )
+        self.assertEqual("Blocked", derive_state(parent))
+        self.assertEqual(
+            ("integration_unhealthy", "state_contradiction"),
+            closeout_findings(parent, FinalHealth(True, True, "integrated-head")),
+        )
 
     def test_fixture_and_open_dependency_block_closeout_in_contract_order(self):
         current = snapshot(

@@ -8,9 +8,9 @@ import subprocess
 from typing import Any, Callable, Mapping
 
 try:
-    from .truss_policy import OutcomeSnapshot
+    from .truss_policy import OutcomeSnapshot, derive_state
 except ImportError:  # public dispatcher imports scripts/lib as a top-level path
-    from truss_policy import OutcomeSnapshot
+    from truss_policy import OutcomeSnapshot, derive_state
 
 
 API_VERSION = "2026-03-10"
@@ -155,6 +155,9 @@ class GitHubClient:
         }
 
     def snapshot(self, repository: str, issue_number: int) -> OutcomeSnapshot:
+        return self._snapshot(repository, issue_number, expand_children=True)
+
+    def _snapshot(self, repository: str, issue_number: int, *, expand_children: bool) -> OutcomeSnapshot:
         parts = repository.split("/")
         if len(parts) != 2 or not all(parts) or type(issue_number) is not int or issue_number < 1:
             raise ValueError("repository must be OWNER/REPO and issue must be a positive integer")
@@ -200,6 +203,14 @@ class GitHubClient:
             urls.append(parent["url"])
         if milestone:
             urls.append(milestone["url"])
+        child_issues = []
+        for value in children:
+            child = self._issue(value)
+            if expand_children:
+                child_snapshot = self._snapshot(repository, int(child["number"]), expand_children=False)
+                child["lifecycle_state"] = derive_state(child_snapshot)
+                urls.extend(child_snapshot.source_urls)
+            child_issues.append(child)
         return OutcomeSnapshot.from_mapping(
             {
                 "authoritative": True,
@@ -207,7 +218,7 @@ class GitHubClient:
                 "repository": repository,
                 "issue": issue,
                 "assignees": [str(value.get("login") or "") for value in assignees],
-                "children": [self._issue(value) for value in children],
+                "children": child_issues,
                 "blocked_by": [self._issue(value) for value in blocked_by],
                 "blocking": [self._issue(value) for value in blocking],
                 "closing_prs": prs,
