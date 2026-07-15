@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class AgentUsabilityReceiptTests(unittest.TestCase):
     def test_trial_metrics_are_derived_from_observed_events(self):
         events = [
+            {"type": "item.completed", "item": {"type": "error", "message": "Under-development feature enabled: default_mode_request_user_input"}},
             {"type": "item.completed", "item": {"type": "command_execution", "command": "pwd"}},
             {"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "github", "tool": "get_issue"}},
             {"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "github", "tool": "update_issue"}},

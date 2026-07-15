@@ -64,7 +64,7 @@ def summarize_observed_events(events: Sequence[Mapping[str, object]]) -> dict[st
         if not isinstance(item, Mapping):
             continue
         kind = str(item.get("type") or "")
-        if kind == "error" and "request_user_input" in str(item.get("message") or ""):
+        if kind == "error" and "request_user_input is not supported in exec mode" in str(item.get("message") or ""):
             tool_calls.append("request_user_input")
             user_input_calls += 1
             continue
